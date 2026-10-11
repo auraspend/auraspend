@@ -6,7 +6,6 @@ import android.content.pm.PackageManager
 import android.os.Process
 import androidx.core.content.ContextCompat
 import com.awbuilds.auraspend.AuraSpendApp
-import com.awbuilds.auraspend.data.ai.SmsAiEnricher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -84,22 +83,13 @@ object BackgroundClassificationCoordinator {
                     runCatching { SmsIngestor.ingest(context = appContext, dao = dao) }
 
                     // 2. Classify one-by-one with AI enrichment + learned-memory fast path.
-                    val enricher = SmsAiEnricher(appContext, app.classificationMemory)
-                    val processor = SmsPipelineProcessor(
+                    //    Constructed by the shared factory: this path used to omit
+                    //    `recordUnrecognized`, so unreadable-but-real money
+                    //    movements vanished here while the worker recorded them.
+                    val processor = buildSmsPipelineProcessor(
+                        context = appContext,
+                        app = app,
                         dao = dao,
-                        transactionRepository = app.transactionRepository,
-                        enrich = { classified, categories ->
-                            enricher.enrich(classified, categories)
-                        },
-                        onSaved = { transaction ->
-                            runCatching {
-                                app.classificationMemory.learn(
-                                    transaction,
-                                    com.awbuilds.auraspend.data.local.entities
-                                        .ClassificationMemoryEntity.SOURCE_AUTO_SAVE
-                                )
-                            }
-                        },
                         interMessageDelayMs = INTER_MESSAGE_DELAY_MS
                     )
                     val result = processor.processPending(maxMessages = MESSAGES_PER_PASS)

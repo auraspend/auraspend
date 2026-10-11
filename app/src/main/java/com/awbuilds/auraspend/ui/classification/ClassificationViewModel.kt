@@ -2,6 +2,7 @@ package com.awbuilds.auraspend.ui.classification
 
 import com.awbuilds.auraspend.core.AuraLog
 import com.awbuilds.auraspend.core.boundary
+import com.awbuilds.auraspend.core.boundaryOrNull
 import com.awbuilds.auraspend.ui.core.UiError
 
 import android.Manifest
@@ -23,6 +24,7 @@ import com.awbuilds.auraspend.data.classification.SmsIngestor
 import com.awbuilds.auraspend.data.classification.SmsStatus
 import com.awbuilds.auraspend.data.classification.pendingInbox
 import com.awbuilds.auraspend.data.classification.TransactionClassifier
+import com.awbuilds.auraspend.data.classification.toClassifiedSms
 import com.awbuilds.auraspend.data.local.entities.SmsMessageEntity
 import com.awbuilds.auraspend.data.local.entities.SmsMessageStatus
 import com.awbuilds.auraspend.domain.model.ParsedBankMessage
@@ -30,11 +32,16 @@ import com.awbuilds.auraspend.domain.model.Transaction
 import com.awbuilds.auraspend.domain.model.TransactionType
 import com.awbuilds.auraspend.domain.usecase.ClassifyMessageUseCase
 import com.awbuilds.auraspend.domain.usecase.SaveTransactionUseCase
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.withContext
@@ -50,6 +57,23 @@ class ClassificationViewModel(
 
     private val _state = MutableStateFlow(ClassificationViewState())
     val state: StateFlow<ClassificationViewState> = _state.asStateFlow()
+
+    /**
+     * One-shot results of a triage gesture.
+     *
+     * The triage swipe used to fire the save intent and show "Saved" with an undo
+     * action in the same breath, without ever looking at the outcome — so a
+     * message the classifier could not resolve (`NO_TRANSACTION_FOUND`) or a
+     * failed write still produced a green "Saved" snackbar and a row that vanished
+     * from the inbox with nothing behind it. The outcome is an event, not state:
+     * re-emitting it on recomposition would re-show a snackbar for a save that
+     * happened once.
+     */
+    private val _triageOutcomes = Channel<SmsTriageSaved>(Channel.BUFFERED)
+    val triageOutcomes = _triageOutcomes.receiveAsFlow()
+
+    /** The single live observer of the SMS queue; re-entry cancels the previous one. */
+    private var smsQueueJob: Job? = null
 
     init {
         LocalLlmProvider.init(context)
@@ -71,7 +95,8 @@ class ClassificationViewModel(
     fun handleIntent(intent: ClassificationViewIntent) {
         when (intent) {
             is ClassificationViewIntent.MessageChanged -> {
-                _state.update { it.copy(rawMessage = intent.message) }
+                // Typed or pasted: there is no sender to route by.
+                _state.update { it.copy(rawMessage = intent.message, rawMessageSender = null) }
             }
             is ClassificationViewIntent.ClassifyMessage -> classify()
             is ClassificationViewIntent.SelectCategory -> {
@@ -108,6 +133,7 @@ class ClassificationViewModel(
                 _state.update {
                     it.copy(
                         rawMessage = intent.sms.body,
+                        rawMessageSender = intent.sms.address,
                         parsedMessage = null
                     )
                 }
@@ -153,51 +179,14 @@ class ClassificationViewModel(
                 ModelDownloadManager.sync(context)
                 _state.update { it.copy(aiModelState = ModelDownloadManager.state.value) }
             }
-
-            // Duplicate detection
-            is ClassificationViewIntent.CheckForDuplicates -> checkForDuplicates()
-            is ClassificationViewIntent.DuplicateDetected -> {
-                _state.update { 
-                    it.copy(
-                        potentialDuplicate = intent.duplicate,
-                        showDuplicateDialog = true
-                    )
-                }
-            }
-            is ClassificationViewIntent.IgnoreDuplicate -> {
-                _state.update { 
-                    it.copy(
-                        potentialDuplicate = null,
-                        showDuplicateDialog = false
-                    )
-                }
-            }
-            is ClassificationViewIntent.MarkAsDuplicate -> {
-                _state.update { 
-                    it.copy(
-                        potentialDuplicate = null,
-                        showDuplicateDialog = false,
-                        saveSuccess = true // Mark as saved since duplicate is detected
-                    )
-                }
-            }
         }
-    }
-
-    private fun checkForDuplicates() {
-        // Will be called before saving
-        val currentState = _state.value
-        if (currentState.parsedMessage?.amount == null) return
-        
-        // For now, just proceed - duplicate checking will be done during save
-        // This can be extended to check against existing transactions
     }
 
     private fun classify() {
         val message = _state.value.rawMessage
         if (message.isBlank()) return
 
-        val parsed = classifyMessageUseCase(message)
+        val parsed = classifyMessageUseCase(message, _state.value.rawMessageSender)
 
         // Get merchant confidence from repository
         var merchantConfidence = 0f
@@ -274,23 +263,14 @@ class ClassificationViewModel(
                     manualDate = LocalDateTime.now()
                 )
 
-                // Check for duplicates before saving
-                // Note: This is a simplified check - in production you'd want to fetch actual transactions from DB
-                val potentialDuplicate = checkPotentialDuplicate(transaction)
-                
-                if (potentialDuplicate != null && s.potentialDuplicate == null) {
-                    // Show duplicate dialog and pause save
-                    _state.update { 
-                        it.copy(
-                            isSaving = false,
-                            potentialDuplicate = potentialDuplicate,
-                            showDuplicateDialog = true
-                        )
-                    }
-                    return@launch
-                }
-
-                // If user confirmed to ignore or no duplicate found, proceed with save
+                // Duplicate detection is *not* attempted here. The stub that used to
+                // sit at this point always returned null, so the guard below it could
+                // never fire and the dialog it opened was unreachable — while a
+                // "Mark as duplicate" branch that set `saveSuccess = true` would have
+                // closed the editor *without saving* had it ever been reached. The
+                // CSV import path still checks duplicates (`DuplicateDetector`, via
+                // NavGraph); finishing this path is a feature (review Direction 1),
+                // not a fix, and it needs a repository read the ViewModel does not have.
                 saveTransactionUseCase(transaction)
                 rememberClassification(transaction)
                 _state.update { it.copy(isSaving = false, saveSuccess = true) }
@@ -301,16 +281,6 @@ class ClassificationViewModel(
         }
     }
 
-    private suspend fun checkPotentialDuplicate(newTransaction: Transaction): Pair<Transaction, Float>? {
-        // This is a placeholder - in production, you'd fetch existing transactions from the repository
-        // For now, we'll just return null since we can't access the database from here
-        // The actual implementation would be:
-        // 1. Fetch recent transactions from repository
-        // 2. Use duplicate detection to find similar ones
-        // 3. Return the most likely duplicate if found
-        return null
-    }
-
     private fun loadAndClassifyAll() {
         if (ContextCompat.checkSelfPermission(context, Manifest.permission.READ_SMS)
             != PackageManager.PERMISSION_GRANTED
@@ -319,14 +289,19 @@ class ClassificationViewModel(
         val app = context.applicationContext as? AuraSpendApp ?: return
         val dao = app.database.smsMessageDao()
 
-        viewModelScope.launch {
+        // One observer, not one per trigger. This used to launch a fresh
+        // never-cancelled full-table collector on each of its three intents, so
+        // every extra trigger re-mapped every row on every database write for the
+        // lifetime of the screen.
+        smsQueueJob?.cancel()
+        smsQueueJob = viewModelScope.launch {
             _state.update { it.copy(isBatchClassifying = true, error = null) }
 
             // Snapshot new device messages into the persistent queue (idempotent on the provider
             // `_id`). Everything below reads the queue, so the list is stable across background
             // runs instead of being a fresh inbox scan each time.
             withContext(Dispatchers.IO) {
-                SmsIngestor.ingest(context = context, dao = dao)
+                boundaryOrNull(TAG) { SmsIngestor.ingest(context = context, dao = dao) }
             }
             AutoClassificationWorker.runNow(context)
 
@@ -334,6 +309,15 @@ class ClassificationViewModel(
             // them, and the UI reflects real status instead of a one-shot snapshot.
             dao.observeAll()
                 .map { rows -> rows.map { it.toClassifiedSms() } }
+                // A read failure must not leave the tab spinning with a stale list
+                // and no explanation: report it like every other failed load, and
+                // let the retryable error state offer the way out.
+                .catch { e ->
+                    AuraLog.e(TAG, "Observing the SMS queue failed", e)
+                    _state.update {
+                        it.copy(isBatchClassifying = false, error = UiError.LOAD_FAILED)
+                    }
+                }
                 .collectLatest { classified ->
                     _state.update {
                         it.copy(
@@ -366,37 +350,6 @@ class ClassificationViewModel(
         }
     }
 
-    private fun SmsMessageEntity.toClassifiedSms(): ClassifiedSms {
-        val parsed = if (amount != null && type != null) {
-            ParsedBankMessage(
-                amount = amount,
-                type = TransactionType.valueOf(type!!),
-                merchant = merchant,
-                categoryId = categoryId,
-                date = null,
-                note = body.take(100),
-                rawMessage = body
-            )
-        } else {
-            TransactionClassifier.classify(body)
-        }
-        val uiStatus = when (SmsMessageStatus.valueOf(status)) {
-            SmsMessageStatus.NEW -> SmsStatus.PENDING
-            SmsMessageStatus.PROCESSED -> SmsStatus.CLASSIFYING
-            SmsMessageStatus.SAVED -> SmsStatus.SAVED
-            SmsMessageStatus.SKIPPED -> SmsStatus.SKIPPED
-            SmsMessageStatus.FAILED -> SmsStatus.FAILED
-        }
-        return ClassifiedSms(
-            sms = SmsInfo(id = id, address = address, body = body, timestamp = receivedAt),
-            parsed = parsed,
-            isSaved = status == SmsMessageStatus.SAVED.name,
-            isDismissed = status == SmsMessageStatus.SKIPPED.name,
-            isSubscription = isSubscription,
-            status = uiStatus
-        )
-    }
-
     private fun saveClassifiedSms(smsId: String) {
         viewModelScope.launch {
             try {
@@ -408,6 +361,10 @@ class ClassificationViewModel(
                 // Never persist a message without an amount and direction — that would
                 // create a meaningless ₹0 expense (OTP / promo / balance alerts).
                 if (classified.parsed.amount == null || classified.parsed.type == null) {
+                    AuraLog.w(
+                        TAG,
+                        "Triage save skipped: ${classified.sms.id} has no amount/type"
+                    )
                     _state.update { it.copy(error = UiError.NO_TRANSACTION_FOUND) }
                     return@launch
                 }
@@ -433,8 +390,13 @@ class ClassificationViewModel(
                         )
                     )
                 }
+                // Only now is "Saved" a true statement. The screen shows the success
+                // surface (and its undo) off this event, never off the intent.
+                _triageOutcomes.trySend(SmsTriageSaved(smsId))
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
-                AuraLog.e(TAG, "Saving all transactions failed", e)
+                AuraLog.e(TAG, "Saving a classified message failed", e)
                 _state.update { it.copy(error = UiError.SAVE_FAILED) }
             }
         }

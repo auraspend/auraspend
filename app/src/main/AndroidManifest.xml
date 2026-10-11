@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.READ_SMS" />
     <uses-permission android:name="android.permission.INTERNET" />
@@ -18,7 +19,19 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.AuraSpend">
 
-        <!-- Macrobenchmark / baseline profile generation needs a profileable app. -->
+        <!--
+            `profileable android:shell="true"` lets the shell user (adb) attach a
+            profiler and take a **heap dump of a live process**. On a device with
+            USB debugging enabled that reads the decrypted finance database and the
+            plaintext backup JSON out of memory, so it may not ship.
+
+            Macrobenchmark and baseline-profile generation do need it, and
+            `:benchmark` links a *release* variant. So the shipping `prod` flavor
+            removes the tag (`app/src/prodRelease/AndroidManifest.xml`) and the
+            development `dev` flavor keeps it — same code, same R8 configuration,
+            different application id — which is what `:benchmark:connectedDev…`
+            runs against. See README's baseline-profile command.
+        -->
         <profileable android:shell="true" />
 
         <activity

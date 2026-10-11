@@ -15,6 +15,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.CloudDownload
+import androidx.compose.material.icons.filled.Payments
 import androidx.compose.material.icons.filled.Savings
 import androidx.compose.material.icons.filled.Wallet
 import androidx.compose.material3.*
@@ -34,7 +35,9 @@ import androidx.compose.ui.unit.sp
 import com.awbuilds.auraspend.R
 import com.awbuilds.auraspend.ui.designsystem.AuraCard
 import com.awbuilds.auraspend.ui.designsystem.AuraCardStyle
+import androidx.compose.ui.platform.LocalConfiguration
 import com.awbuilds.auraspend.ui.designsystem.AuraGradients
+import com.awbuilds.auraspend.ui.designsystem.CurrencyPickerList
 import com.awbuilds.auraspend.ui.designsystem.AuraSpacing
 import kotlinx.coroutines.launch
 import kotlin.math.abs
@@ -60,12 +63,30 @@ private val onboardingPages = listOf(
         R.string.onboarding_page3_title,
         R.string.onboarding_page3_description,
         Icons.Default.Savings
+    ),
+    // Last, and interactive: the user should know what the app will do before
+    // granting SMS access on the button below, and currency is the one setting
+    // whose default (their device's) they may actively want to change.
+    OnboardingPage(
+        R.string.onboarding_page4_title,
+        R.string.onboarding_page4_description,
+        Icons.Default.Payments
     )
 )
+
+/** The page that hosts the currency picker instead of only text. */
+private val currencyPageIndex = onboardingPages.lastIndex
 
 @Composable
 fun OnboardingScreen(
     onFinished: () -> Unit,
+    /**
+     * The picked ISO code, or null while the user has not chosen (in which case
+     * the app follows the device locale — the preselection shown on the currency
+     * page). Hoisted so the choice reaches the theme immediately.
+     */
+    currencyCode: String? = null,
+    onCurrencyChanged: (String) -> Unit = {},
     onRestoreFromDrive: () -> Unit = {},
     isRestoring: Boolean = false,
     restoreError: String? = null,
@@ -78,6 +99,15 @@ fun OnboardingScreen(
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
     ) { onFinished() }
+
+    // What the picker shows as chosen: the user's pick, or the device's own
+    // currency — the same fallback `rememberCurrencyStyle` uses, so the highlighted
+    // row is the currency the app is actually rendering in.
+    val locale = LocalConfiguration.current.locales[0]
+    val deviceCurrencyCode = remember(locale) {
+        runCatching { java.util.Currency.getInstance(locale).currencyCode }.getOrNull()
+    }
+    val effectiveCurrencyCode = currencyCode ?: deviceCurrencyCode
 
     LaunchedEffect(restoreError) {
         restoreError?.let {
@@ -111,7 +141,20 @@ fun OnboardingScreen(
             ) { page ->
                 val pageOffset =
                     (pagerState.currentPage - page) + pagerState.currentPageOffsetFraction
-                OnboardingPageContent(onboardingPages[page], pageOffset)
+                val isCurrencyPage = page == currencyPageIndex
+                OnboardingPageContent(
+                    page = onboardingPages[page],
+                    pageOffset = pageOffset,
+                    interactive = isCurrencyPage
+                ) {
+                    if (isCurrencyPage) {
+                        CurrencyPickerList(
+                            selectedCode = effectiveCurrencyCode,
+                            onSelect = onCurrencyChanged,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                }
             }
 
             PageIndicator(
@@ -212,7 +255,12 @@ fun OnboardingScreen(
 }
 
 @Composable
-private fun OnboardingPageContent(page: OnboardingPage, pageOffset: Float) {
+private fun OnboardingPageContent(
+    page: OnboardingPage,
+    pageOffset: Float,
+    interactive: Boolean = false,
+    extra: @Composable () -> Unit = {}
+) {
     val alpha by animateFloatAsState(
         targetValue = (1f - abs(pageOffset) * 0.6f).coerceIn(0f, 1f),
         label = "pageAlpha"
@@ -232,11 +280,18 @@ private fun OnboardingPageContent(page: OnboardingPage, pageOffset: Float) {
                 translationX = pageOffset * 120f
             },
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+        // The interactive page lays out from the top: it has to hand the picker
+        // the remaining height so the list scrolls instead of being clipped.
+        verticalArrangement = if (interactive) Arrangement.Top else Arrangement.Center
     ) {
+        if (interactive) Spacer(modifier = Modifier.height(AuraSpacing.md))
+
+        // A smaller badge on the interactive page, to leave the 30 rows room.
+        val badgeSize = if (interactive) 72.dp else 148.dp
+        val iconSize = if (interactive) 32.dp else 60.dp
         Box(
             modifier = Modifier
-                .size(148.dp)
+                .size(badgeSize)
                 .clip(CircleShape)
                 .background(AuraGradients.aurora),
             contentAlignment = Alignment.Center
@@ -245,11 +300,11 @@ private fun OnboardingPageContent(page: OnboardingPage, pageOffset: Float) {
                 page.icon,
                 contentDescription = null,
                 tint = AuraGradients.onAurora,
-                modifier = Modifier.size(60.dp)
+                modifier = Modifier.size(iconSize)
             )
         }
 
-        Spacer(modifier = Modifier.height(AuraSpacing.xxxl))
+        Spacer(modifier = Modifier.height(if (interactive) AuraSpacing.lg else AuraSpacing.xxxl))
 
         Text(
             stringResource(page.titleRes),
@@ -269,6 +324,13 @@ private fun OnboardingPageContent(page: OnboardingPage, pageOffset: Float) {
             textAlign = TextAlign.Center,
             modifier = Modifier.padding(horizontal = AuraSpacing.lg)
         )
+
+        if (interactive) {
+            Spacer(modifier = Modifier.height(AuraSpacing.md))
+            // Bounded height, so the list scrolls inside the page rather than
+            // pushing the button off-screen.
+            Box(modifier = Modifier.weight(1f).fillMaxWidth()) { extra() }
+        }
     }
 }
 

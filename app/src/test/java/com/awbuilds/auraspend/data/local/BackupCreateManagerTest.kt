@@ -55,7 +55,7 @@ class BackupCreateManagerTest {
 
     @Test
     fun `backup carries a row from every user-owned table`() = runBlocking {
-        db.transactionDao().insertTransaction(
+        db.transactionDao().insertTransactionIfAbsent(
             TransactionEntity(
                 id = "tx-1",
                 amount = 149.0,

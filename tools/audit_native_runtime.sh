@@ -10,6 +10,18 @@
 # does not reliably hand to a statically-linked library. Before wiring it in, the
 # question "can this code phone home?" deserves a direct answer.
 #
+# The decisive check is the import scan: a network capability has to come from a
+# symbol the artifact *imports*, so `-u` has to reach `nm`, and a scan that reads
+# no imports at all is a failure rather than a clean result. An earlier version
+# of this script got both of those wrong and reported a clean result for every
+# artifact it was given.
+#
+# Exactly one dlopen/dlsym use is allowed, by name and only on evidence: ONNX
+# Runtime's execution-provider loader, which loads the
+# libonnxruntime_providers_*.so plugins shipped beside it in the same APK. The
+# exception is granted only when those plugin names are embedded in the
+# artifact; any other loader symbol, or any network symbol, still fails.
+#
 # Usage:  tools/audit_native_runtime.sh <path-to-lib.a> [expected-symbol-regex]
 # Re-run whenever the vendor publishes a new build; a changed digest means the
 # answer below no longer applies and this must be repeated.
@@ -36,8 +48,19 @@ fail=0
 # table, so `nm` alone returns nothing and the scan below would be reading an
 # empty file — which is exactly the failure this validation exists to catch.
 # Try each in turn and report which one answered.
-nm_defined()  { nm "$LIB" 2>/dev/null | grep -E ' [TtWw] '; }
-nm_dynamic()  { nm -D "$LIB" 2>/dev/null | grep -E ' [TtWw] '; }
+#
+# The optional `-u` (undefined symbols, i.e. the imports) has to reach `nm`
+# itself. An earlier version of this script filtered the *defined* symbol list
+# for "U" lines, which matches nothing in any artifact — so the import checks
+# below reported a clean result for every library it was given, including one
+# that links a network stack. The probes forward their arguments, and the filter
+# follows the mode: in `-u` mode a weak undefined symbol (`w`, `v`) is an import
+# too, and dropping it would hide a weakly-linked `socket`.
+nm_filter() {
+  if [[ "${1:-}" == "-u" ]]; then grep -E ' [Uwv] '; else grep -E ' [TtWw] '; fi
+}
+nm_defined()  { nm "$@" "$LIB" 2>/dev/null | nm_filter "$@"; }
+nm_dynamic()  { nm -D "$@" "$LIB" 2>/dev/null | nm_filter "$@"; }
 SYM_SRC=""
 SYM_COUNT=0
 for probe in nm_defined nm_dynamic; do
@@ -66,6 +89,19 @@ else
   echo "       would be meaningless. Do not trust this run."
   exit 1
 fi
+
+# The import scan needs its own proof, for the same reason the defined-symbol
+# scan does. Every real shared library imports libc, so zero imports means `-u`
+# read nothing and every check below would be vacuous again.
+IMPORTS=$($SYM_SRC -u 2>/dev/null | wc -l | tr -d ' ')
+if [[ "$IMPORTS" -eq 0 ]]; then
+  echo "[FAIL] the import scan (-u) found no undefined symbols. This artifact"
+  echo "       imports nothing at all, which means the scan read nothing — the"
+  echo "       network and loader checks below would prove nothing. Do not trust"
+  echo "       this run."
+  exit 1
+fi
+echo "[ok]   import scan: $IMPORTS undefined symbols (what the checks below read)"
 echo
 
 # The decisive check: a network capability has to come from an import, because
@@ -93,8 +129,10 @@ fi
 #
 # What is NOT filtered is a URL whose *host* looks like a service rather than
 # documentation, which is the shape a real callback would take. Verified against
-# onnxruntime-android 1.22.0: 79 doc URLs, 0 service hosts, and zero network
-# symbol imports, so the check has evidence behind it rather than a preference.
+# onnxruntime-android 1.22.0: 0 service hosts and zero network symbol imports, so
+# the check has evidence behind it rather than a preference. (The doc-reference
+# count itself varies with the `strings` implementation — 77 here, 79 when the
+# check was written — which is exactly why it is reported, not asserted.)
 DOC_HOST='arxiv\.org|doi\.org|wikipedia\.org|docs\.scipy\.org|scipy\.org|numpy\.org|ieeexplore\.ieee\.org|github\.com|android\.googlesource\.com|docs\.nvidia\.com|devblogs\.nvidia\.com|opensource\.org|pytorch\.org|huggingface\.co/(blog|docs)|papers\.nips\.cc|tensorflow\.org|keras\.io|microsoft\.com/en-us/research|dl\.acm\.org|aclanthology\.org'
 URLS=$(strings -a "$LIB" 2>/dev/null | grep -oE 'https?://[a-zA-Z0-9._/-]+' | grep -vE "$DOC_HOST" | sort -u)
 if [[ -z "$URLS" ]]; then
@@ -106,14 +144,50 @@ else
   fail=1
 fi
 
-# Runtime code loading is how a static scan gets side-stepped.
-DYN=$($SYM_SRC -u 2>/dev/null | grep -cE '^(.* )U _(dlopen|dlsym|system|popen|fork|execve)$')
-if [[ "$DYN" -eq 0 ]]; then
+# Runtime code loading is how a static scan gets side-stepped, so these symbols
+# fail by default — `dlopen` included, unless the artifact is doing the one
+# thing named below.
+#
+# The single allowed loader is ONNX Runtime's execution-provider loader. The
+# shipped libonnxruntime.so imports dlopen/dlsym, and the names embedded in the
+# binary are the provider plugins that ship beside it in the same APK
+# (libonnxruntime_providers_*.so). That is static plugin loading: no URL, no
+# download, and the network scan above is never relaxed for it. The exception is
+# granted per artifact and on evidence — if those plugin names are absent, the
+# artifact is loading something else, and this fails.
+#
+# Symbol naming has to be normalised and matched exactly: bionic imports
+# `dlopen@LIBC` with no leading underscore, a Mach-O artifact would import
+# `_dlopen`, and the earlier `U _(dlopen|...)$` pattern matched neither on
+# Android. Matching a *substring* is not good enough either — `__register_atfork`
+# ends in "fork" and `__system_property_get` starts with "system", and neither is
+# runtime code loading. The symbol name is the last field of an nm line.
+ALLOWED_DYN='dlopen|dlsym'
+DENIED_DYN='dlopen|dlsym|system|popen|fork|execve'
+DYN_LIST=$($SYM_SRC -u 2>/dev/null \
+  | awk '{print $NF}' \
+  | sed 's/^_//; s/@.*$//' \
+  | grep -xE "$DENIED_DYN" | sort -u || true)
+if [[ -z "$DYN_LIST" ]]; then
   echo "[ok]   no dlopen/dlsym/system/exec - no runtime code loading"
 else
-  echo "[FAIL] runtime code loading symbols present:"
-  $SYM_SRC -u 2>/dev/null | grep -E 'U _(dlopen|dlsym|system|popen|fork|execve)$' | head
-  fail=1
+  DYN_OTHER="$(printf '%s\n' "$DYN_LIST" | grep -vxE "$ALLOWED_DYN" || true)"
+  DYN_PLUGINS="$(strings -a "$LIB" 2>/dev/null | grep -cE 'libonnxruntime_providers_[a-z0-9_]+\.so' || true)"
+  if [[ -n "$DYN_OTHER" ]]; then
+    echo "[FAIL] runtime code loading symbols present:"
+    printf '%s\n' "$DYN_OTHER" | sed 's/^/         /'
+    fail=1
+  elif [[ "$DYN_PLUGINS" -gt 0 ]]; then
+    echo "[ok]   dlopen/dlsym allowed by name: ONNX Runtime execution-provider loader"
+    echo "       ($(printf '%s ' $DYN_LIST)against $DYN_PLUGINS embedded libonnxruntime_providers_*.so"
+    echo "        name(s) — static plugin loading, no URL, no download. Any other"
+    echo "        loader symbol, or a dlopen without those names, still fails.)"
+  else
+    echo "[FAIL] dlopen/dlsym present but no execution-provider plugin name is embedded:"
+    echo "       this artifact loads something else at runtime, which is the case this"
+    echo "       check exists to catch. Do not ship it until that is understood."
+    fail=1
+  fi
 fi
 
 # Explicit telemetry surface, independent of any capability to use it.

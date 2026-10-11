@@ -11,6 +11,9 @@ object UnavailableClassifier : OnDeviceClassifier {
 
     override val id: String = "unavailable"
 
+    /** By definition: this runtime is used precisely because nothing loaded. */
+    override val isOperational: Boolean = false
+
     override suspend fun extract(
         smsBody: String,
         categoryIdByName: Map<String, String>

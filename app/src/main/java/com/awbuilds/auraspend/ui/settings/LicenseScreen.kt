@@ -17,8 +17,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.MenuBook
-import androidx.compose.material.icons.filled.OpenInNew
+import androidx.compose.material.icons.automirrored.filled.MenuBook
+import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -87,12 +87,6 @@ private val THIRD_PARTY = listOf(
         license = "MIT",
         role = ThirdPartyRole.BUNDLED,
         url = "https://onnxruntime.ai/"
-    ),
-    ThirdPartyComponent(
-        name = "Lottie",
-        license = "Apache-2.0",
-        role = ThirdPartyRole.BUNDLED,
-        url = "https://airbnb.io/lottie/"
     ),
     ThirdPartyComponent(
         name = "AndroidX — Room, Compose, Lifecycle, Work, Navigation, Paging, ProfileInstaller",
@@ -283,7 +277,7 @@ private fun LicenseTextPane(text: String?) {
         // No raw exception in screen state: log the cause, show a recoverable
         // state. See AGENTS.md rule 1.
         AuraEmptyState(
-            icon = Icons.Default.MenuBook,
+            icon = Icons.AutoMirrored.Filled.MenuBook,
             title = stringResource(R.string.license_text_unavailable_title),
             message = stringResource(R.string.license_text_unavailable_body)
         )
@@ -333,7 +327,7 @@ private fun OpenLinkButton(label: String, url: String) {
         Text(label)
         Spacer(modifier = Modifier.width(AuraSpacing.xs))
         Icon(
-            Icons.Default.OpenInNew,
+            Icons.AutoMirrored.Filled.OpenInNew,
             contentDescription = null,
             modifier = Modifier.size(16.dp)
         )

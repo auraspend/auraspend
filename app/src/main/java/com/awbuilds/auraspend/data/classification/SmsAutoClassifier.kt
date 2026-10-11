@@ -118,18 +118,24 @@ object SmsAutoClassifier {
     }
 
     /**
-     * Next scan cursor: the newest timestamp in the batch. The worker only calls this after every
-     * message in the batch is terminal (saved, already saved, or recorded as ignored), so nothing
-     * is silently stranded below the cursor and unparsed messages are never re-read forever.
+     * Latest bank-like messages from the device inbox.
+     *
+     * The bounds are **exclusive**, so a message sharing a cursor's exact
+     * timestamp is re-readable rather than permanently skipped — re-reads are
+     * ignored by the queue's `OR IGNORE` insert, whereas a skipped message is
+     * lost. [oldestFirst] exists for the incremental scan: walking forward from a
+     * high-water mark is the only ordering that makes progress when more than one
+     * page has arrived, because newest-first would return the same page for ever.
+     *
+     * [beforeTimestamp] is the history walk's upper bound; [sinceTimestamp] alone
+     * cannot express "older than what I have already looked at".
      */
-    fun nextScanCursor(messages: List<ClassifiedSms>): Long? =
-        messages.maxOfOrNull { it.sms.timestamp }
-
-    /** Latest bank-like messages from the device inbox, newest first. */
     fun queryBankSms(
         context: Context,
         sinceTimestamp: Long = 0L,
-        maxMessages: Int = 500
+        maxMessages: Int = 500,
+        beforeTimestamp: Long = Long.MAX_VALUE,
+        oldestFirst: Boolean = false
     ): List<SmsInfo> {
         val uri = Telephony.Sms.Inbox.CONTENT_URI
         val projection = arrayOf(
@@ -144,8 +150,12 @@ object SmsAutoClassifier {
             if (sinceTimestamp > 0L) {
                 append(" AND ${Telephony.Sms.Inbox.DATE} > $sinceTimestamp")
             }
+            if (beforeTimestamp != Long.MAX_VALUE) {
+                append(" AND ${Telephony.Sms.Inbox.DATE} < $beforeTimestamp")
+            }
         }
-        val sortOrder = "${Telephony.Sms.Inbox.DATE} DESC LIMIT $maxMessages"
+        val direction = if (oldestFirst) "ASC" else "DESC"
+        val sortOrder = "${Telephony.Sms.Inbox.DATE} $direction LIMIT $maxMessages"
 
         val cursor = context.contentResolver.query(uri, projection, selection, null, sortOrder)
 
@@ -188,15 +198,19 @@ object SmsAutoClassifier {
     /** A currency amount written the way banks write it. */
     private val amountMarker = Regex("""(?:Rs\.?|INR|₹)\s*\d|₹\s*\d|\d+\s*(?:Rs|INR)""")
 
-    /** A verb that means money actually moved. */
-    private val movementVerb = Regex(
-        "(?:debited|credited|spent|paid|transferred|withdrawn)",
-        RegexOption.IGNORE_CASE
-    )
-
-    /** True when the message states both an amount and a movement — i.e. it is a transaction. */
-    private fun looksLikeTransaction(message: String): Boolean =
-        amountMarker.containsMatchIn(message) && movementVerb.containsMatchIn(message)
+    /**
+     * True when the message states both an amount and a movement — i.e. it is a
+     * transaction.
+     *
+     * The movement half comes from [BankMessageParser.hasMovementVerb] so this
+     * filter and the parser can never disagree about what money moving looks
+     * like. The local six-word copy it replaced (`debited|credited|spent|paid|
+     * transferred|withdrawn`) omitted the whole credit lexicon, so a deposit or
+     * refund carrying a balance tail was dropped as an "alert" even though it
+     * named a completed movement.
+     */
+    fun looksLikeTransaction(message: String): Boolean =
+        amountMarker.containsMatchIn(message) && BankMessageParser.hasMovementVerb(message)
 
     fun isOtpOrAlertMessage(message: String): Boolean {
         // OTPs are skipped — unless the message is really a debit that happens to

@@ -40,7 +40,6 @@ import com.awbuilds.auraspend.data.ai.AiModelState
 import com.awbuilds.auraspend.data.classification.ClassifiedSms
 import com.awbuilds.auraspend.domain.model.TransactionType
 import com.awbuilds.auraspend.ui.core.isNotificationPermissionNeeded
-import com.awbuilds.auraspend.ui.core.rememberNotificationPermissionLauncher
 import com.awbuilds.auraspend.ui.designsystem.AnimatedMoney
 import com.awbuilds.auraspend.ui.designsystem.AuraCard
 import com.awbuilds.auraspend.ui.designsystem.AuraErrorBanner
@@ -79,16 +78,12 @@ fun ClassificationScreen(
     val state by viewModel.state.collectAsState()
     val context = LocalContext.current
 
-    var showCategoryDialog by remember { mutableStateOf(false) }
-    var showDuplicateDialog by remember { mutableStateOf(state.showDuplicateDialog) }
 
     val smsPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
     ) { granted ->
         viewModel.handleIntent(ClassificationViewIntent.SmsPermissionResult(granted))
     }
-
-    val notificationPermissionLauncher = rememberNotificationPermissionLauncher()
 
     LaunchedEffect(Unit) {
         if (state.smsPermissionGranted) {
@@ -102,10 +97,6 @@ fun ClassificationScreen(
         }
     }
 
-    LaunchedEffect(state.showDuplicateDialog) {
-        showDuplicateDialog = state.showDuplicateDialog
-    }
-
     var selectedTab by remember { mutableIntStateOf(0) }
 
     // Undo surface for the triage swipes. Held here rather than in the tab so
@@ -113,6 +104,32 @@ fun ClassificationScreen(
     // Scaffold that owns the content.
     val triageSnackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
+
+    // Read in composition scope: `stringResource` is @Composable, and the success
+    // snackbar is now driven by a flow collector outside the tab's scope.
+    val savedMessage = stringResource(R.string.classification_sms_saved)
+    val dismissedMessage = stringResource(R.string.classification_sms_dismissed)
+    val undoActionLabel = stringResource(R.string.action_undo)
+
+    // "Saved" is shown when the save reports that it happened, not when the swipe
+    // is read. The two used to be the same moment, so swiping a message the
+    // classifier could not resolve — or a write that failed — still produced a
+    // green "Saved" with an undo action for a transaction that was never created.
+    // Failures surface through `state.error` (an AuraErrorBanner in the tab).
+    LaunchedEffect(viewModel) {
+        viewModel.triageOutcomes.collect { outcome ->
+            val result = triageSnackbarHostState.showSnackbar(
+                message = savedMessage,
+                actionLabel = undoActionLabel,
+                duration = SnackbarDuration.Short
+            )
+            if (result == SnackbarResult.ActionPerformed) {
+                viewModel.handleIntent(
+                    ClassificationViewIntent.UndoSaveClassifiedSms(outcome.smsId)
+                )
+            }
+        }
+    }
 
     Scaffold(
         snackbarHost = { SnackbarHost(triageSnackbarHostState) },
@@ -231,12 +248,6 @@ fun ClassificationScreen(
             }
         }
 
-            // Read here, in composition scope: `onTriageSwipe` is a plain
-            // lambda, and stringResource is @Composable.
-            val savedMessage = stringResource(R.string.classification_sms_saved)
-            val dismissedMessage = stringResource(R.string.classification_sms_dismissed)
-            val undoActionLabel = stringResource(R.string.action_undo)
-
             when (selectedTab) {
                 0 -> PasteMessageTab(state, viewModel)
                 1 -> SmsListTab(state, viewModel, smsPermissionLauncher)
@@ -249,21 +260,11 @@ fun ClassificationScreen(
                         // transaction and a dismiss hides a message, so neither
                         // should be one accidental gesture from being permanent.
                         if (save) {
+                            // The "Saved" snackbar is emitted by the outcome
+                            // collector above, once the transaction exists.
                             viewModel.handleIntent(
                                 ClassificationViewIntent.SaveClassifiedSms(smsId)
                             )
-                            scope.launch {
-                                val result = triageSnackbarHostState.showSnackbar(
-                                    message = savedMessage,
-                                    actionLabel = undoActionLabel,
-                                    duration = SnackbarDuration.Short
-                                )
-                                if (result == SnackbarResult.ActionPerformed) {
-                                    viewModel.handleIntent(
-                                        ClassificationViewIntent.UndoSaveClassifiedSms(smsId)
-                                    )
-                                }
-                            }
                         } else {
                             viewModel.handleIntent(
                                 ClassificationViewIntent.DismissClassifiedSms(smsId)
@@ -289,37 +290,5 @@ fun ClassificationScreen(
                 AiDownloadStatusBanner(progress = d.progress)
             }
         }
-    }
-
-    // Hierarchical category selector dialog
-    if (showCategoryDialog) {
-        HierarchicalCategoryDialog(
-            categories = state.availableCategories,
-            selectedCategoryId = state.selectedCategoryId,
-            onCategorySelected = { id ->
-                viewModel.handleIntent(ClassificationViewIntent.SelectCategory(id))
-            },
-            onDismiss = { showCategoryDialog = false },
-            merchantSuggestion = if (state.merchantConfidence > 0) {
-                Pair(state.parsedMessage?.merchant ?: stringResource(R.string.classification_unknown_merchant), state.merchantConfidence)
-            } else null
-        )
-    }
-
-    // Duplicate detection warning dialog
-    val potentialDuplicate = state.potentialDuplicate
-    if (showDuplicateDialog && potentialDuplicate != null) {
-        DuplicateDetectionDialog(
-            duplicateTransaction = potentialDuplicate,
-            onIgnore = {
-                viewModel.handleIntent(ClassificationViewIntent.IgnoreDuplicate)
-            },
-            onMarkAsDuplicate = {
-                viewModel.handleIntent(ClassificationViewIntent.MarkAsDuplicate)
-            },
-            onDismiss = {
-                viewModel.handleIntent(ClassificationViewIntent.IgnoreDuplicate)
-            }
-        )
     }
 }

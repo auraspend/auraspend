@@ -19,7 +19,6 @@ import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import com.awbuilds.auraspend.AuraSpendApp
-import com.awbuilds.auraspend.data.ai.SmsAiEnricher
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -78,38 +77,21 @@ class AutoClassificationWorker(
         // 1. Snapshot new device messages into the queue (idempotent).
         SmsIngestor.ingest(context = applicationContext, dao = dao)
 
-        // 2. Process pending rows one at a time with AI enrichment + learned-memory fast path.
-        val enricher = SmsAiEnricher(applicationContext, app.classificationMemory)
-        val processor = SmsPipelineProcessor(
+        // 2. Retention sweep for the unrecognized-SMS list. Runs on this
+        //    periodic tick because it is the only reliable recurring entry
+        //    point: the retention policy was documented but never called, so the
+        //    table grew forever and every Drive backup carried the whole archive.
+        app.unrecognizedSms.purgeOlderThan()
+
+        // 3. Process pending rows one at a time with AI enrichment + learned-memory fast path.
+        //    Built by the shared factory so this path and the in-process
+        //    coordinator cannot drift apart again (they already had).
+        val processor = buildSmsPipelineProcessor(
+            context = applicationContext,
+            app = app,
             dao = dao,
-            transactionRepository = app.transactionRepository,
-            enrich = { classified, categories -> enricher.enrich(classified, categories) },
-            onSaved = { transaction ->
-                runCatching {
-                    app.classificationMemory.learn(
-                        transaction,
-                        com.awbuilds.auraspend.data.local.entities.ClassificationMemoryEntity.SOURCE_AUTO_SAVE
-                    )
-                }
-            },
             // Breathing room between LLM generations keeps the UI at full frame rate.
-            interMessageDelayMs = INTER_MESSAGE_DELAY_MS,
-            // A bank message that looks like money moving but that no parser could
-            // read is surfaced to the user instead of vanishing. Best-effort: a
-            // failure here must not stop the batch, so the row is simply not
-            // recorded and the message is skipped as before.
-            recordUnrecognized = { id: String, sender: String, body: String, receivedAt: Long ->
-                runCatching {
-                    app.unrecognizedSms.record(id, sender, body, receivedAt)
-                }.onFailure {
-                    com.awbuilds.auraspend.core.AuraLog.w(
-                        "AutoClassificationWorker",
-                        "Failed to record an unrecognized SMS",
-                        it
-                    )
-                }
-                Unit
-            }
+            interMessageDelayMs = INTER_MESSAGE_DELAY_MS
         )
         val result = processor.processPending(maxMessages = MAX_BATCH)
 

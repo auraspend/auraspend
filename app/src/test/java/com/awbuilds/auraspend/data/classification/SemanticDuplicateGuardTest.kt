@@ -38,6 +38,9 @@ class SemanticDuplicateGuardTest {
         override suspend fun update(message: SmsMessageEntity) { rows[message.id] = message }
         override suspend fun getMaxReceivedAt(): Long = rows.values.maxOfOrNull { it.receivedAt } ?: 0L
 
+        override suspend fun countByStatus(status: String): Int =
+            rows.values.count { it.status == status }
+
         // Added for the atomic Drive restore path; unused by these tests.
         override suspend fun clear() = rows.clear()
 
@@ -54,12 +57,13 @@ class SemanticDuplicateGuardTest {
         )
         override fun getAllTransactions(): Flow<List<Transaction>> =
             MutableStateFlow(existing + saved)
+        override suspend fun getTransactionById(id: String): Transaction? =
+            (existing + saved).firstOrNull { it.id == id }
         override fun getTransactionsInRange(start: Long, end: Long): Flow<List<Transaction>> =
             MutableStateFlow((existing + saved).filter {
                 val ts = it.date.atZone(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli()
                 ts in start..end
             })
-        override fun searchTransactions(query: String): Flow<List<Transaction>> = getAllTransactions()
         override fun getTransactionsByCategory(categoryId: String): Flow<List<Transaction>> = getAllTransactions()
         override fun getRecurringTransactions(): Flow<List<Transaction>> = MutableStateFlow(emptyList())
         override suspend fun saveTransaction(transaction: Transaction) { saved.add(transaction) }

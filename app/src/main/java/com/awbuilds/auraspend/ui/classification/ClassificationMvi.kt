@@ -4,15 +4,21 @@ import com.awbuilds.auraspend.ui.core.UiError
 
 import com.awbuilds.auraspend.data.ai.AiModelState
 import com.awbuilds.auraspend.data.classification.ClassifiedSms
-import com.awbuilds.auraspend.data.classification.DuplicateTransaction
 import com.awbuilds.auraspend.domain.model.Category
 import com.awbuilds.auraspend.domain.model.ParsedBankMessage
-import com.awbuilds.auraspend.domain.model.Transaction
 import com.awbuilds.auraspend.domain.model.TransactionType
 import java.time.LocalDateTime
 
 data class ClassificationViewState(
     val rawMessage: String = "",
+    /**
+     * Sender of [rawMessage] when it came from the inbox.
+     *
+     * Null for a pasted message. Carried through classification so the manual
+     * path routes by sender exactly like the background pipeline does — the
+     * per-bank parser is chosen from this, not from guessing at the body.
+     */
+    val rawMessageSender: String? = null,
     val parsedMessage: ParsedBankMessage? = null,
     val availableCategories: List<Category> = emptyList(),
     val selectedCategoryId: String = "cat_other",
@@ -50,10 +56,10 @@ data class ClassificationViewState(
     val aiProgressCurrent: Int = 0,
     val aiProgressTotal: Int = 0,
 
-    // Duplicate detection
-    val potentialDuplicate: Pair<Transaction, Float>? = null,
-    val showDuplicateDialog: Boolean = false,
-    val confidenceScore: Float = 0f,
+    /**
+     * Merchant-keyword confidence for the parsed merchant, used to explain a
+     * category suggestion.
+     */
     val merchantConfidence: Float = 0f
 )
 
@@ -63,6 +69,20 @@ data class SmsInfo(
     val body: String,
     val timestamp: Long
 )
+
+/**
+ * A triage "swipe right to save" that actually wrote a transaction.
+ *
+ * Deliberately an event rather than screen state, and deliberately emitted only on
+ * success. The swipe used to fire the save intent and show a green "Saved" with an
+ * undo action in the same breath, without ever looking at the outcome: a message
+ * the classifier could not resolve, or a write that failed, still produced the
+ * success surface while the row stayed (or vanished) with nothing behind it. As a
+ * one-shot event it cannot be re-shown by a recomposition, and as a
+ * success-only event it cannot claim something that did not happen — failures are
+ * reported through `ClassificationViewState.error` and rendered as a banner.
+ */
+data class SmsTriageSaved(val smsId: String)
 
 sealed class ClassificationViewIntent {
     data class MessageChanged(val message: String) : ClassificationViewIntent()
@@ -108,10 +128,4 @@ sealed class ClassificationViewIntent {
     object StartModelDownload : ClassificationViewIntent()
     object CancelModelDownload : ClassificationViewIntent()
     object RefreshAiModelState : ClassificationViewIntent()
-
-    // Duplicate detection
-    object CheckForDuplicates : ClassificationViewIntent()
-    data class DuplicateDetected(val duplicate: Pair<Transaction, Float>) : ClassificationViewIntent()
-    object IgnoreDuplicate : ClassificationViewIntent()
-    object MarkAsDuplicate : ClassificationViewIntent()
 }

@@ -47,6 +47,9 @@ class SmsPipelineProcessorTest {
 
         override suspend fun getMaxReceivedAt(): Long = rows.values.maxOfOrNull { it.receivedAt } ?: 0L
 
+        override suspend fun countByStatus(status: String): Int =
+            rows.values.count { it.status == status }
+
         // Added for the atomic Drive restore path; unused by these tests.
         override suspend fun clear() = rows.clear()
 
@@ -64,9 +67,8 @@ class SmsPipelineProcessorTest {
         )
 
         override fun getAllTransactions(): Flow<List<Transaction>> = MutableStateFlow(saved)
+        override suspend fun getTransactionById(id: String): Transaction? = saved.firstOrNull { it.id == id }
         override fun getTransactionsInRange(start: Long, end: Long): Flow<List<Transaction>> =
-            MutableStateFlow(saved)
-        override fun searchTransactions(query: String): Flow<List<Transaction>> =
             MutableStateFlow(saved)
         override fun getTransactionsByCategory(categoryId: String): Flow<List<Transaction>> =
             MutableStateFlow(saved)
@@ -170,19 +172,24 @@ class SmsPipelineProcessorTest {
     }
 
     @Test
-    fun `duplicate sourceSmsId is a terminal skip not a double save`() = runBlocking {
+    fun `a constraint error follows the ordinary retry path`() = runBlocking {
+        // The branch that used to swallow `UNIQUE constraint failed` as a terminal
+        // SKIPPED is gone. A duplicate `sourceSmsId` is resolved inside the DAO by
+        // `OnConflictStrategy.IGNORE`, so a constraint error that actually reaches
+        // the pipeline is a real failure. The old branch existed to paper over
+        // `REPLACE` — and it hid every other constraint error behind a "done".
         val dao = FakeSmsMessageDao()
         val repo = FakeTransactionRepository().apply {
             failWith = Exception("android.database.sqlite.SQLiteConstraintException: UNIQUE constraint failed: transactions.sourceSmsId")
         }
         dao.insertAll(listOf(message("s1", body(250.0, TransactionType.EXPENSE))))
 
-        val result = SmsPipelineProcessor(dao, repo).processPending(maxMessages = 10)
+        val result = SmsPipelineProcessor(dao, repo, maxAttempts = 3).processPending(maxMessages = 10)
 
         assertEquals(0, result.saved)
-        assertEquals(1, result.skipped)
-        assertEquals(0, result.failed)
-        assertEquals(SmsMessageStatus.SKIPPED.name, status(dao, "s1"))
+        assertEquals(0, result.skipped)
+        assertEquals(1, result.failed)
+        assertEquals(SmsMessageStatus.FAILED.name, status(dao, "s1"))
     }
 
     @Test

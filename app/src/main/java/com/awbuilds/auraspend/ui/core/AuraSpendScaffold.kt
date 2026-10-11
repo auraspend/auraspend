@@ -32,22 +32,34 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.annotation.StringRes
+import com.awbuilds.auraspend.R
 import com.awbuilds.auraspend.ui.designsystem.AuraGradients
 import com.awbuilds.auraspend.ui.designsystem.AuraMotion
 import com.awbuilds.auraspend.ui.designsystem.AuraSpacing
 import com.awbuilds.auraspend.ui.designsystem.softShadow
 
-/** Top-level destinations shown in the app chrome. */
+/**
+ * Top-level destinations shown in the app chrome.
+ *
+ * The label is a string resource id, not a literal: it is the persistent bottom
+ * bar's visible text *and* its accessibility label on every screen, so a
+ * hardcoded English name left the whole app chrome untranslated.
+ */
 enum class TopLevelDestination(
     val route: String,
-    val label: String,
+    // `@param:` is explicit: the annotation is meant for the constructor
+    // parameter only, and Kotlin warns that its default target will grow to
+    // include the backing field. It is what makes lint verify each `R.string` id.
+    @param:StringRes val labelRes: Int,
     val icon: ImageVector
 ) {
-    HOME("home", "Home", Icons.Filled.Home),
-    ACTIVITY("activity", "Activity", Icons.AutoMirrored.Filled.ListAlt),
-    PLAN("plan", "Plan", Icons.Filled.Savings),
-    INSIGHTS("insights", "Insights", Icons.Filled.BarChart)
+    HOME("home", R.string.home_title, Icons.Filled.Home),
+    ACTIVITY("activity", R.string.activity_title, Icons.AutoMirrored.Filled.ListAlt),
+    PLAN("plan", R.string.plan_title, Icons.Filled.Savings),
+    INSIGHTS("insights", R.string.insights_title, Icons.Filled.BarChart)
 }
 
 /**
@@ -86,11 +98,12 @@ fun AuraAppChrome(
                 ) {
                     Spacer(modifier = Modifier.weight(1f))
                     TopLevelDestination.entries.forEach { destination ->
+                        val label = stringResource(destination.labelRes)
                         NavigationRailItem(
                             selected = currentRoute == destination.route,
                             onClick = { onNavigate(destination.route) },
-                            icon = { Icon(destination.icon, contentDescription = destination.label) },
-                            label = { Text(destination.label) },
+                            icon = { Icon(destination.icon, contentDescription = label) },
+                            label = { Text(label) },
                             alwaysShowLabel = true
                         )
                     }
@@ -204,7 +217,7 @@ private fun AddButton(
         ) {
             Icon(
                 Icons.Default.Add,
-                contentDescription = "Add transaction",
+                contentDescription = stringResource(R.string.action_add_transaction),
                 tint = MaterialTheme.colorScheme.onPrimary,
                 modifier = Modifier.size(30.dp)
             )
@@ -231,6 +244,7 @@ private fun NavItem(
         animationSpec = AuraMotion.standard(),
         label = "navPill"
     )
+    val label = stringResource(destination.labelRes)
 
     Column(
         modifier = modifier
@@ -255,11 +269,11 @@ private fun NavItem(
                 .padding(horizontal = 14.dp, vertical = 4.dp),
             contentAlignment = Alignment.Center
         ) {
-            Icon(destination.icon, contentDescription = destination.label, tint = tint, modifier = Modifier.size(22.dp))
+            Icon(destination.icon, contentDescription = label, tint = tint, modifier = Modifier.size(22.dp))
         }
         Spacer(modifier = Modifier.height(AuraSpacing.xs))
         Text(
-            destination.label,
+            label,
             style = MaterialTheme.typography.labelSmall,
             color = tint,
             maxLines = 1

@@ -26,7 +26,7 @@ import org.junit.runner.RunWith
  *
  * Run with:
  * ```
- * ./gradlew :app:connectedFreeDebugAndroidTest
+ * ./gradlew :app:connectedDevDebugAndroidTest
  * ```
  *
  * ## What this does and does not cover
@@ -35,12 +35,12 @@ import org.junit.runner.RunWith
  * real encoder inference, and Room's generated code on a real device — none of
  * which Robolectric can do.
  *
- * It deliberately does **not** claim to cover R8. Targeting the minified
- * `benchmark` build type needs `testBuildType`, and that flag renames the
- * *unit* test task too: `testFreeDebugUnitTest` disappears and is replaced by
- * `testFreeBenchmarkUnitTest`, which would run all 253 unit tests — screenshot
- * baselines included — against a shrunk build. That trades the documented gate
- * and CI for nothing, so it was reverted.
+ * It deliberately does **not** claim to cover R8. Targeting a minified build
+ * type needs `testBuildType`, and that flag renames the *unit* test task too:
+ * `testDevDebugUnitTest` disappears and is replaced by
+ * `testDevBenchmarkUnitTest`, which would run the whole unit-test suite against
+ * a shrunk build. That trades the documented gate and CI for nothing, so it was
+ * reverted.
  *
  * The R8 question is therefore answered statically instead, by
  * `tools/verify_r8_release.sh`, which checks the release `mapping.txt` for the

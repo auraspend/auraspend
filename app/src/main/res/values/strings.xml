@@ -101,9 +101,6 @@
     <string name="activity_retry">Retry</string>
     <string name="activity_group_today">Today</string>
     <string name="activity_group_yesterday">Yesterday</string>
-    <string name="activity_group_this_week">This Week</string>
-    <string name="activity_group_this_month">This Month</string>
-    <string name="activity_group_older">Older</string>
 
     <!-- Transaction detail -->
     <string name="txn_detail_title">Transaction</string>
@@ -177,6 +174,10 @@
     <string name="settings_drive_restore_confirm_message">This replaces all transactions, budgets, subscriptions, goals and categories on this device with the backup in your Google Drive. This cannot be undone.</string>
     <string name="action_restore">Restore</string>
     <string name="settings_finance">Finance</string>
+    <string name="settings_currency">Currency</string>
+    <string name="settings_currency_device_default">Matching your device</string>
+    <string name="currency_picker_device_default">Match my device</string>
+    <string name="currency_picker_note">Amounts are not converted — this changes how money is displayed.</string>
     <string name="settings_categories">Categories</string>
     <string name="settings_categories_subtitle">Add, edit, or organize categories</string>
     <string name="settings_subscriptions">Subscriptions</string>
@@ -203,7 +204,7 @@
     <string name="settings_ai_delete_title">Delete the categoriser?</string>
     <string name="settings_ai_delete_message">This removes the on-device categoriser (~22 MB). You can re-download it anytime; your transactions are never affected.</string>
     <string name="settings_ai_ready">Smart categories on</string>
-    <string name="settings_ai_ready_subtitle">Messages are categorised on-device. Nothing leaves your phone.</string>
+    <string name="settings_ai_ready_subtitle">Messages are categorised on-device. The only upload is the Drive backup you start yourself.</string>
     <string name="settings_ai_downloading">Downloading categoriser</string>
     <string name="settings_ai_downloading_progress">%1$d%% complete…</string>
     <string name="settings_ai_failed">Download failed</string>
@@ -281,6 +282,8 @@
     <string name="savings_edit_goal">Edit goal</string>
     <string name="savings_delete_goal">Delete goal</string>
     <string name="savings_delete_title">Delete “%1$s”?</string>
+    <string name="recurring_delete_title">Remove “%1$s”?</string>
+    <string name="recurring_delete_message">The subscription will be removed from your list. This cannot be undone.</string>
     <string name="savings_delete_message">The goal and its progress will be removed. This cannot be undone.</string>
     <string name="savings_new_goal_title">New goal</string>
     <string name="savings_goal_name">Goal name</string>
@@ -292,12 +295,14 @@
     <string name="savings_amount">Amount</string>
 
     <!-- Onboarding -->
-    <string name="onboarding_page1_title">Track every rupee</string>
+    <string name="onboarding_page1_title">Track your money</string>
     <string name="onboarding_page1_description">Income, expenses and balance — always up to date, always on your device.</string>
     <string name="onboarding_page2_title">Smart by default</string>
-    <string name="onboarding_page2_description">Bank SMS is categorised automatically, on-device, by a local AI that never uploads your data.</string>
+    <string name="onboarding_page2_description">Bank SMS is categorised automatically, on-device, by a local AI. Nothing is uploaded unless you start a Drive backup yourself.</string>
     <string name="onboarding_page3_title">Plan ahead</string>
     <string name="onboarding_page3_description">Budgets, subscriptions and goals in one place, with insights that actually help.</string>
+    <string name="onboarding_page4_title">Pick your currency</string>
+    <string name="onboarding_page4_description">Amounts are shown in this currency. You can change it any time in Settings.</string>
     <string name="onboarding_restore_title">Restore from Google Drive</string>
     <string name="onboarding_restore_subtitle">Bring back a previous backup</string>
     <string name="onboarding_restoring">Restoring your backup…</string>
@@ -326,6 +331,8 @@
         <item quantity="other">%1$d days left this month</item>
     </plurals>
     <string name="budget_unknown_category">Unknown</string>
+    <string name="budget_delete_title">Delete the “%1$s” budget?</string>
+    <string name="budget_delete_message">The budget and its progress will be removed. This cannot be undone.</string>
     <string name="budget_spent">%1$s spent</string>
     <string name="budget_over_by">Over by %1$s</string>
     <string name="budget_limit">%1$s limit</string>
@@ -456,15 +463,6 @@
     <!-- Category selector + duplicate detection -->
     <string name="category_selector_title">Select Category</string>
     <string name="category_selector_ai_suggestion">AI suggests: %1$s (%2$d%% confident)</string>
-    <string name="duplicate_title">Possible Duplicate Found</string>
-    <string name="duplicate_message">We found a similar transaction from %1$s</string>
-    <string name="duplicate_merchant">Merchant</string>
-    <string name="duplicate_amount">Amount</string>
-    <string name="duplicate_similarity">Similarity</string>
-    <string name="duplicate_unknown_merchant">Unknown</string>
-    <string name="duplicate_question">Is this a duplicate transaction?</string>
-    <string name="duplicate_mark">Mark as Duplicate</string>
-    <string name="duplicate_save_anyway">Save Anyway</string>
 
     <!-- Accessibility labels -->
     <string name="a11y_show_amounts">Show amounts</string>
@@ -480,4 +478,120 @@
     <string name="error_model_unavailable">The on-device model isn\'t available right now</string>
     <string name="error_permission_denied">Auraspend needs permission to do that</string>
     <string name="error_unknown">Something went wrong</string>
+
+    <!-- ── 2026-10 review fixes: chrome, relative dates, enum names, splash and
+         taxonomy (findings #17, #18, #21). Grouped here rather than scattered so
+         the Hindi block in values-hi/strings.xml can mirror it key for key. -->
+
+    <!-- Chrome: nav bar labels and the two icon-only actions (#17). -->
+    <string name="home_title">Home</string>
+    <string name="insights_title">Insights</string>
+    <string name="action_add_transaction">Add transaction</string>
+    <string name="action_settings">Settings</string>
+
+    <!-- Relative dates in transaction rows (#18): "Today" / "Yesterday" reuse
+         activity_group_*, and this covers the 2–6 day window that used to be a
+         hardcoded "3d ago" inside the design system. -->
+    <plurals name="activity_days_ago">
+        <item quantity="one">%1$dd ago</item>
+        <item quantity="other">%1$dd ago</item>
+    </plurals>
+
+    <!-- Enum names must never reach the screen (#21). -->
+    <string name="txn_type_expense">Expense</string>
+    <string name="txn_type_income">Income</string>
+    <string name="budget_period_weekly">Weekly</string>
+    <string name="budget_period_monthly">Monthly</string>
+    <string name="budget_period_yearly">Yearly</string>
+    <string name="recurring_cycle_daily">Daily</string>
+    <string name="recurring_cycle_weekly">Weekly</string>
+    <string name="recurring_cycle_monthly">Monthly</string>
+    <string name="recurring_cycle_yearly">Yearly</string>
+
+    <!-- Splash tagline (#21). The wordmark itself uses app_name. -->
+    <string name="splash_tagline">Beautiful expense management</string>
+
+    <!-- Hierarchical taxonomy (#21). These names are the canonical keys of
+         `hierarchicalCategoryMap`, and each branch's local category id is frozen
+         in `mapHierarchicalToLocalId` — the labels below are display-only, so
+         they are safe to translate. A name missing from that map falls back to
+         the canonical English string rather than showing a blank row. -->
+    <string name="category_group_food_dining">Food &amp; Dining</string>
+    <string name="category_group_transport">Transport</string>
+    <string name="category_group_shopping">Shopping</string>
+    <string name="category_group_bills_utilities">Bills &amp; Utilities</string>
+    <string name="category_group_entertainment">Entertainment</string>
+    <string name="category_group_healthcare">Healthcare</string>
+    <string name="category_group_education">Education</string>
+    <string name="category_group_subscriptions">Subscriptions</string>
+    <string name="category_group_travel_accommodation">Travel &amp; Accommodation</string>
+    <string name="category_group_personal_care">Personal Care</string>
+    <string name="category_group_transfers">Transfers</string>
+    <string name="category_group_salary_income">Salary &amp; Income</string>
+    <string name="category_leaf_food_delivery">Food Delivery</string>
+    <string name="category_leaf_restaurants">Restaurants</string>
+    <string name="category_leaf_groceries">Groceries</string>
+    <string name="category_leaf_cafes_bakery">Cafes &amp; Bakery</string>
+    <string name="category_leaf_fast_food">Fast Food</string>
+    <string name="category_leaf_meal_subscriptions">Meal Subscriptions</string>
+    <string name="category_leaf_auto_fuel">Auto Fuel</string>
+    <string name="category_leaf_cab_services">Cab Services</string>
+    <string name="category_leaf_public_transit">Public Transit</string>
+    <string name="category_leaf_auto_rickshaw">Auto Rickshaw</string>
+    <string name="category_leaf_parking">Parking</string>
+    <string name="category_leaf_tolls">Tolls</string>
+    <string name="category_leaf_flights">Flights</string>
+    <string name="category_leaf_trains">Trains</string>
+    <string name="category_leaf_buses">Buses</string>
+    <string name="category_leaf_e_commerce">E-commerce</string>
+    <string name="category_leaf_fashion_retail">Fashion Retail</string>
+    <string name="category_leaf_beauty_cosmetics">Beauty &amp; Cosmetics</string>
+    <string name="category_leaf_electronics">Electronics</string>
+    <string name="category_leaf_home_furniture">Home &amp; Furniture</string>
+    <string name="category_leaf_sports_outdoors">Sports &amp; Outdoors</string>
+    <string name="category_leaf_jewelry">Jewelry</string>
+    <string name="category_leaf_books">Books</string>
+    <string name="category_leaf_electricity_bill">Electricity Bill</string>
+    <string name="category_leaf_water_bill">Water Bill</string>
+    <string name="category_leaf_gas_bill">Gas Bill</string>
+    <string name="category_leaf_internet_bill">Internet Bill</string>
+    <string name="category_leaf_mobile_recharge">Mobile Recharge</string>
+    <string name="category_leaf_dth_tv">DTH/TV</string>
+    <string name="category_leaf_rent">Rent</string>
+    <string name="category_leaf_streaming_video">Streaming Video</string>
+    <string name="category_leaf_streaming_audio_music">Streaming Audio/Music</string>
+    <string name="category_leaf_gaming">Gaming</string>
+    <string name="category_leaf_movies_events">Movies &amp; Events</string>
+    <string name="category_leaf_sports">Sports</string>
+    <string name="category_leaf_medical_consultations">Medical Consultations</string>
+    <string name="category_leaf_pharmacy">Pharmacy</string>
+    <string name="category_leaf_gym_fitness">Gym &amp; Fitness</string>
+    <string name="category_leaf_dental">Dental</string>
+    <string name="category_leaf_diagnostics">Diagnostics</string>
+    <string name="category_leaf_mental_health">Mental Health</string>
+    <string name="category_leaf_online_courses">Online Courses</string>
+    <string name="category_leaf_tuitions">Tuitions</string>
+    <string name="category_leaf_books_materials">Books &amp; Materials</string>
+    <string name="category_leaf_college_school_fees">College/School Fees</string>
+    <string name="category_leaf_professional_certifications">Professional Certifications</string>
+    <string name="category_leaf_saas_software">SaaS &amp; Software</string>
+    <string name="category_leaf_cloud_services">Cloud Services</string>
+    <string name="category_leaf_memberships">Memberships</string>
+    <string name="category_leaf_premium_services">Premium Services</string>
+    <string name="category_leaf_hotels_stays">Hotels &amp; Stays</string>
+    <string name="category_leaf_flight_bookings">Flight Bookings</string>
+    <string name="category_leaf_train_tickets">Train Tickets</string>
+    <string name="category_leaf_bus_tickets">Bus Tickets</string>
+    <string name="category_leaf_tour_packages">Tour Packages</string>
+    <string name="category_leaf_haircut_salon">Haircut &amp; Salon</string>
+    <string name="category_leaf_skincare">Skincare</string>
+    <string name="category_leaf_personal_grooming">Personal Grooming</string>
+    <string name="category_leaf_bank_transfers">Bank Transfers</string>
+    <string name="category_leaf_upi_transfers">UPI Transfers</string>
+    <string name="category_leaf_peer_to_peer">Peer-to-Peer</string>
+    <string name="category_leaf_loan_repayment">Loan Repayment</string>
+    <string name="category_leaf_monthly_salary">Monthly Salary</string>
+    <string name="category_leaf_bonus">Bonus</string>
+    <string name="category_leaf_freelance_income">Freelance Income</string>
+    <string name="category_leaf_investment_returns">Investment Returns</string>
 </resources>

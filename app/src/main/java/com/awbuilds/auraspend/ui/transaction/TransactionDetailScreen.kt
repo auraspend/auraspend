@@ -7,6 +7,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.CloudOff
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
@@ -22,13 +23,18 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.awbuilds.auraspend.R
+import com.awbuilds.auraspend.core.boundary
+import com.awbuilds.auraspend.core.boundaryOrNull
 import com.awbuilds.auraspend.domain.model.Category
 import com.awbuilds.auraspend.domain.model.Transaction
 import com.awbuilds.auraspend.domain.model.TransactionType
 import com.awbuilds.auraspend.domain.repository.TransactionRepository
+import com.awbuilds.auraspend.ui.core.UiError
 import com.awbuilds.auraspend.ui.designsystem.AuraCard
 import com.awbuilds.auraspend.ui.designsystem.AuraCardStyle
 import com.awbuilds.auraspend.ui.designsystem.AuraEmptyState
+import com.awbuilds.auraspend.ui.designsystem.AuraErrorBanner
+import com.awbuilds.auraspend.ui.designsystem.AuraErrorState
 import com.awbuilds.auraspend.ui.designsystem.AuraSpacing
 import com.awbuilds.auraspend.ui.designsystem.AuraType
 import com.awbuilds.auraspend.ui.designsystem.AnimatedMoney
@@ -58,6 +64,10 @@ fun TransactionDetailScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val transactionUpdatedMessage = stringResource(R.string.txn_detail_updated)
     val duplicatedMessage = stringResource(R.string.txn_detail_duplicated)
+    // Typed failure copy, resolved from resources: a raw exception message must
+    // never reach the screen (AGENTS.md rule 1).
+    val saveFailedMessage = stringResource(UiError.SAVE_FAILED.messageRes)
+    val deleteFailedMessage = stringResource(UiError.DELETE_FAILED.messageRes)
 
     var transaction by remember { mutableStateOf<Transaction?>(null) }
     var loaded by remember { mutableStateOf(false) }
@@ -65,13 +75,23 @@ fun TransactionDetailScreen(
     var confirmDelete by remember { mutableStateOf(false) }
     var categories by remember { mutableStateOf<List<Category>>(emptyList()) }
 
-    LaunchedEffect(transactionId) {
-        val all = repository.getAllTransactions().first()
-        transaction = all.find { it.id == transactionId }
+    // A read that failed. With no row to show this is the whole screen
+    // (AuraErrorState); once a row is loaded it degrades to an inline banner, since
+    // the transaction is still worth looking at.
+    var error by remember { mutableStateOf<UiError?>(null) }
+    var reload by remember { mutableIntStateOf(0) }
+    val errorMessage = error?.let { stringResource(it.messageRes) }
+
+    LaunchedEffect(transactionId, reload) {
+        // Both reads are IO boundaries. The row is an indexed primary-key lookup
+        // now: this used to read the whole table and filter it in memory to find
+        // one transaction. A SQLite failure renders AuraErrorState, not a crash.
+        val row = boundaryOrNull(TAG) { repository.getTransactionById(transactionId) }
+        val allCategories = boundaryOrNull(TAG) { repository.getAllCategories().first() }
+        transaction = row
+        categories = allCategories.orEmpty()
+        error = if (row == null || allCategories == null) UiError.LOAD_FAILED else null
         loaded = true
-    }
-    LaunchedEffect(Unit) {
-        categories = repository.getAllCategories().first()
     }
 
     val snackbarMessage = { message: String ->
@@ -108,6 +128,22 @@ fun TransactionDetailScreen(
         val current = transaction
         when {
             !loaded -> Box(Modifier.fillMaxSize().padding(padding))
+            error != null && current == null -> Box(
+                modifier = Modifier.fillMaxSize().padding(padding),
+                contentAlignment = Alignment.Center
+            ) {
+                // Nothing loaded, so the reason plus a retry *is* the screen.
+                AuraErrorState(
+                    icon = Icons.Default.CloudOff,
+                    title = stringResource(R.string.error_load_failed),
+                    message = stringResource(R.string.error_load_failed_detail),
+                    actionLabel = stringResource(R.string.action_retry),
+                    onAction = {
+                        error = null
+                        reload++
+                    }
+                )
+            }
             current == null -> Box(
                 modifier = Modifier.fillMaxSize().padding(padding),
                 contentAlignment = Alignment.Center
@@ -120,38 +156,80 @@ fun TransactionDetailScreen(
                     onAction = onBack
                 )
             }
-            editing -> TransactionEditor(
-                transaction = current,
-                categories = categories,
-                isNew = false,
-                onCancel = { editing = false },
-                onSave = { updated ->
-                    scope.launch {
-                        repository.saveTransaction(updated)
-                        transaction = updated
-                        editing = false
-                        snackbarMessage(transactionUpdatedMessage)
-                    }
-                },
-                modifier = Modifier.padding(padding)
-            )
-            else -> TransactionDetails(
-                transaction = current,
-                category = categories.find { it.id == current.categoryId },
-                modifier = Modifier.padding(padding),
-                onDuplicate = {
-                    val copy = current.copy(
-                        id = UUID.randomUUID().toString(),
-                        date = LocalDateTime.now(),
-                        sourceSmsId = null
+            editing -> Column(modifier = Modifier.fillMaxSize().padding(padding)) {
+                errorMessage?.let { message ->
+                    AuraErrorBanner(
+                        message = message,
+                        modifier = Modifier.padding(
+                            horizontal = AuraSpacing.gutter,
+                            vertical = AuraSpacing.sm
+                        ),
+                        onDismiss = { error = null }
                     )
-                    scope.launch {
-                        repository.saveTransaction(copy)
-                        snackbarMessage(duplicatedMessage)
-                        onOpenTransaction(copy.id)
-                    }
                 }
-            )
+                TransactionEditor(
+                    transaction = current,
+                    categories = categories,
+                    isNew = false,
+                    onCancel = { editing = false },
+                    onSave = { updated ->
+                        scope.launch {
+                            val saved = boundary(TAG, false) {
+                                repository.saveTransaction(updated)
+                                true
+                            }
+                            if (saved) {
+                                transaction = updated
+                                editing = false
+                                snackbarMessage(transactionUpdatedMessage)
+                            } else {
+                                // The editor stays open with the user's edits, and the
+                                // snackbar says the save did not happen.
+                                snackbarMessage(saveFailedMessage)
+                            }
+                        }
+                    },
+                    modifier = Modifier.weight(1f)
+                )
+            }
+            else -> Column(modifier = Modifier.fillMaxSize().padding(padding)) {
+                errorMessage?.let { message ->
+                    AuraErrorBanner(
+                        message = message,
+                        modifier = Modifier.padding(
+                            horizontal = AuraSpacing.gutter,
+                            vertical = AuraSpacing.sm
+                        ),
+                        onDismiss = { error = null }
+                    )
+                }
+                TransactionDetails(
+                    transaction = current,
+                    category = categories.find { it.id == current.categoryId },
+                    modifier = Modifier.weight(1f),
+                    onDuplicate = {
+                        val copy = current.copy(
+                            id = UUID.randomUUID().toString(),
+                            date = LocalDateTime.now(),
+                            sourceSmsId = null
+                        )
+                        scope.launch {
+                            val saved = boundary(TAG, false) {
+                                repository.saveTransaction(copy)
+                                true
+                            }
+                            if (saved) {
+                                snackbarMessage(duplicatedMessage)
+                                onOpenTransaction(copy.id)
+                            } else {
+                                // No navigation: a failed duplicate must not look like
+                                // it opened a new row that does not exist.
+                                snackbarMessage(saveFailedMessage)
+                            }
+                        }
+                    }
+                )
+            }
         }
     }
 
@@ -174,10 +252,19 @@ fun TransactionDetailScreen(
             confirmButton = {
                 TextButton(
                     onClick = {
-                        confirmDelete = false
                         scope.launch {
-                            current?.let { repository.deleteTransaction(it.id) }
-                            onBack()
+                            val deleted = boundary(TAG, false) {
+                                current?.let { repository.deleteTransaction(it.id) }
+                                true
+                            }
+                            if (deleted) {
+                                confirmDelete = false
+                                onBack()
+                            } else {
+                                // The dialog stays open so the user can retry, instead
+                                // of dismissing as if the row were gone.
+                                snackbarMessage(deleteFailedMessage)
+                            }
                         }
                     },
                     colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
@@ -189,6 +276,9 @@ fun TransactionDetailScreen(
         )
     }
 }
+
+/** Log tag for this screen's IO boundaries. */
+private const val TAG = "TransactionDetail"
 
 @Composable
 private fun TransactionDetails(

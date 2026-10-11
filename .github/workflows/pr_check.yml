@@ -1,20 +1,44 @@
 name: PR Check
 
+# The pull-request gate — the only workflow that runs on a PR. `ci.yml` used to
+# run the same unit tests and the same dev/prod assembles on every PR as well,
+# so a Kotlin PR paid for two full pipelines and got no extra signal from the
+# second one (review finding 27).
+#
+# `paths` is the union of everything a PR has to be checked for:
+#   * code and build inputs, which the pipeline below compiles, tests and lints;
+#   * the licence-bearing files `tools/check_license.sh` guards. Those are
+#     docs/legal/licence edits that build nothing — dropping them from the filter
+#     would let exactly the PRs that check exists for merge unchecked.
 on:
   pull_request:
     branches: [main, dev]
     paths:
+      # Code, resources and build inputs.
       - '**.kt'
       - '**.kts'
       - '**.xml'
+      - '**.pro'
       - 'build.gradle.kts'
       - 'app/build.gradle.kts'
       - 'settings.gradle.kts'
       - 'gradle/**'
       - 'gradle.properties'
-      - '.github/workflows/pr_check.yml'
-      - 'app/src/test/**'
-      - 'app/src/main/**'
+      - 'app/src/**'
+      - 'benchmark/**'
+      - 'tools/**'
+      # Licence-bearing files (see tools/check_license.sh).
+      - 'LICENSE'
+      - 'README.md'
+      - 'CHANGELOG.md'
+      - 'docs/**'
+      - '.github/**'
+
+permissions:
+  contents: read
+  # Read-only, and used for exactly one thing: listing the PR's changed files so
+  # the release gate below can skip PRs that cannot move its answer.
+  pull-requests: read
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -36,6 +60,13 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v6
 
+      # Three caches with different lifecycles:
+      #  * setup-gradle: Gradle User Home (dependencies + build cache), keyed
+      #    per commit with a prefix fallback to the most recent entry.
+      #  * the wrapper cache: the Gradle distribution itself — setup-gradle
+      #    does not include ~/.gradle/wrapper/dists.
+      #  * the Robolectric cache: the android-all runtime jars Robolectric
+      #    downloads (hundreds of MB into ~/.m2) on the first test run.
       - name: Cache Gradle distributions
         uses: actions/cache@v4
         with:
@@ -53,6 +84,28 @@ jobs:
           key: ${{ runner.os }}-robolectric-${{ hashFiles('gradle/libs.versions.toml') }}
           restore-keys: |
             ${{ runner.os }}-robolectric-
+
+      # Explicit rather than inherited from the runner image: the assembles need
+      # platform 37 and the release gate below needs `zipalign` from build-tools.
+      - name: Accept SDK licenses & install platform 37
+        run: |
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-37.0" "build-tools;36.0.0" > /dev/null
+
+      # Moved here from ci.yml, which no longer sees pull requests. Cheap, and it
+      # is the only thing standing between a relicensing mistake and a shipped
+      # APK that misstates its own licence. It has already caught one: the
+      # licence had silently drifted across eleven files.
+      - name: Verify licence metadata and third-party attributions
+        run: ./tools/check_license.sh
+
+      # The same class of check for the app's privacy copy. "Nothing leaves your
+      # phone" was written before Drive backup existed and was still on screen
+      # two features later, while a backup uploads the message queue (masked,
+      # but message text) as plain JSON. A promise that drifts by omission needs
+      # a tripwire, not another review comment.
+      - name: Verify privacy claims state their exception
+        run: ./tools/check_privacy_claims.sh
 
       # Previously this workflow only ran two assemble tasks. It never ran the
       # unit tests, never ran lint, and never built :benchmark — so the
@@ -79,6 +132,73 @@ jobs:
       # this, profile drift is invisible until someone runs it by hand.
       - name: Build benchmark variant + module
         run: ./gradlew :app:assembleProdRelease :benchmark:assemble
+
+      # ── Release gates ───────────────────────────────────────────────────────
+      # tools/verify_r8_release.sh is documented as mandatory after touching
+      # dependencies, keep rules or the native runtime (AGENTS.md), but nothing
+      # ran it: CI built the release variant green while the answers to "will
+      # Play reject this bundle" and "did R8 keep the classes JNI_OnLoad
+      # resolves" depended on memory (review finding 26). Gated on the PR
+      # touching a build, dependency or keep-rule file, because the gate needs
+      # its own bundle + config-analyzer build and a Kotlin-only PR cannot move
+      # any of its answers. The case that matters most — Dependabot's weekly
+      # Gradle bumps — always touches gradle/libs.versions.toml, so it always
+      # runs.
+      - name: Detect build/dependency changes
+        id: gates
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          # `gh` is preinstalled on the runner and reads the file list from the
+          # API, so no fetch-depth: 0 checkout is needed. Fail open: if the list
+          # cannot be read, run the gate rather than skip it, because a skipped
+          # gate must never look like a passing one.
+          files="$(gh pr view "${{ github.event.pull_request.number }}" \
+                     --json files --jq '.files[].path' 2>/dev/null || true)"
+          if [ -z "$files" ]; then
+            echo "::warning::could not read the PR file list — running the release gate"
+            echo "run=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if printf '%s\n' "$files" | grep -qE \
+              '(\.gradle\.kts|\.pro)$|^gradle/|^gradle\.properties$|^tools/(verify_r8_release|audit_native_runtime)\.sh$|^tools/r8_scores\.py$|^\.github/workflows/pr_check\.yml$'; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "run=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Release gate — R8 and Play technical requirements
+        if: steps.gates.outputs.run == 'true'
+        run: ./tools/verify_r8_release.sh prod
+
+      # The native audit answers "can this prebuilt runtime phone home?" on the
+      # bytes the build actually resolves: the version comes from the catalog, the
+      # AAR from the Gradle cache this job has just populated. It fails the build
+      # on a real finding — a network import, a non-documentation URL, an
+      # unexpected loader symbol, telemetry vendor strings, or a scan that read
+      # nothing at all. Re-run it on every version bump: a pass is only valid for
+      # the digest it was run against.
+      - name: Release gate — native runtime privacy audit (ONNX Runtime, arm64)
+        if: steps.gates.outputs.run == 'true'
+        run: |
+          set -euo pipefail
+          version="$(grep -oE '^onnxruntime = "[^"]+"' gradle/libs.versions.toml | sed 's/.*"\(.*\)"/\1/')"
+          test -n "$version" || { echo "::error::no onnxruntime version in gradle/libs.versions.toml"; exit 1; }
+          aar="$(find "$HOME/.gradle/caches/modules-2/files-2.1/com.microsoft.onnxruntime/onnxruntime-android/$version" \
+                   -name '*.aar' 2>/dev/null | head -1 || true)"
+          test -n "$aar" || { echo "::error::onnxruntime-android $version AAR is not in the Gradle cache"; exit 1; }
+          rm -rf /tmp/native-audit && mkdir -p /tmp/native-audit
+          unzip -o -q "$aar" 'jni/arm64-v8a/*.so' -d /tmp/native-audit
+          for lib in libonnxruntime.so libonnxruntime4j_jni.so; do
+            test -f "/tmp/native-audit/jni/arm64-v8a/$lib" \
+              || { echo "::error::$lib is missing from the onnxruntime-android $version AAR"; exit 1; }
+          done
+          # EXPECT is what proves the symbol scan is reading the artifact: `nm`
+          # returns nothing on a stripped release .so, and a scan that reads
+          # nothing reports a clean result for every library it is given.
+          ./tools/audit_native_runtime.sh /tmp/native-audit/jni/arm64-v8a/libonnxruntime.so 'Ort(GetApiBase|Session|Env)'
+          ./tools/audit_native_runtime.sh /tmp/native-audit/jni/arm64-v8a/libonnxruntime4j_jni.so 'Java_ai_onnxruntime'
 
       - name: Upload lint reports
         if: always()

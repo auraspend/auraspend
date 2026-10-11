@@ -21,7 +21,12 @@ import com.awbuilds.auraspend.data.local.entities.*
         UnrecognizedSmsEntity::class
     ],
     version = 8,
-    exportSchema = false
+    // Exported so a migration can be tested against a real previous schema
+    // (androidx.room:room-testing's MigrationTestHelper) and so a schema change
+    // is visible in review. The KSP `room.schemaLocation` argument that says
+    // *where* to write is a build-file setting; without it Room logs
+    // "Schema export directory was not provided…" and exports nothing.
+    exportSchema = true
 )
 abstract class AppDatabase : RoomDatabase() {
     abstract fun transactionDao(): TransactionDao
@@ -36,6 +41,38 @@ abstract class AppDatabase : RoomDatabase() {
     companion object {
         @Volatile
         private var INSTANCE: AppDatabase? = null
+
+        /**
+         * v2 -> v3: add the `savings_goals` table. This is the only schema
+         * difference between the two versions — `fe6615c` added the table and
+         * bumped `version = 2` to `version = 3` in the same commit — and it is the
+         * one migration the chain was missing.
+         *
+         * Why v2 matters: the first shipped release was 0.1.0 (`6f2202f`,
+         * "Initial open-source release — AuraSpend v0.1.0", versionCode 1,
+         * `version = 2`; the CHANGELOG records it as the first alpha). The chain
+         * only starts at 3 because the first migration was written later, at
+         * `277cb48` (version 5, which needed a 3 -> 4 -> 5 path);
+         * `git log -S "version = 4"` over this file is empty, so v4 was never a
+         * shipped schema either. No `Migration(1, …)` or `Migration(2, …)` ever
+         * existed, so an install that only ever ran 0.1.0 had no path forward.
+         */
+        private val MIGRATION_2_3 = object : Migration(2, 3) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS `savings_goals` (
+                        `id` TEXT NOT NULL,
+                        `name` TEXT NOT NULL,
+                        `targetAmount` REAL NOT NULL,
+                        `currentAmount` REAL NOT NULL,
+                        `deadline` INTEGER,
+                        PRIMARY KEY(`id`)
+                    )
+                    """.trimIndent()
+                )
+            }
+        }
 
         /**
          * v3 -> v4: add the unique source SMS id column used to prevent a message being saved
@@ -167,10 +204,27 @@ abstract class AppDatabase : RoomDatabase() {
                     "auraspend_db"
                 )
                     .addMigrations(
-                        MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6,
+                        MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6,
                         MIGRATION_6_7, MIGRATION_7_8
                     )
-                    .fallbackToDestructiveMigration(false)
+                    // Deliberate, and deliberately narrow: a destructive recreate is
+                    // allowed *only* from version 1, whose schema never shipped (see
+                    // MIGRATION_2_3) and so cannot be migrated faithfully.
+                    //
+                    // This replaces `fallbackToDestructiveMigration(false)`, which
+                    // reads as "off" but is not: in Room that call sets
+                    // `requireMigration = false` (the deprecated no-argument form is
+                    // literally `ReplaceWith("fallbackToDestructiveMigration(false)")`),
+                    // so *any* missing path silently recreated the database instead of
+                    // failing. Only v1 keeps that behaviour now; every shipped version
+                    // has a real path, and a future gap fails loudly instead of
+                    // deleting the user's rows.
+                    .fallbackToDestructiveMigrationFrom(dropAllTables = false, 1)
+                    // Downgrades keep the old, friendlier behaviour: a beta user
+                    // installing the stable build again gets a working (recreated)
+                    // database rather than a crash loop. Room would otherwise throw
+                    // because no 8 -> 7 path exists.
+                    .fallbackToDestructiveMigrationOnDowngrade(dropAllTables = false)
                     // Write-ahead logging lets dashboard reads proceed while the
                     // SMS pipeline writes transactions — no lock contention.
                     .setJournalMode(RoomDatabase.JournalMode.WRITE_AHEAD_LOGGING)

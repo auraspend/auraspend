@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    The shipping variant is not profileable.
+
+    `profileable android:shell="true"` (declared in the main manifest, where
+    macrobenchmark and baseline-profile generation need it) lets the shell user
+    attach a profiler and take a **heap dump of a live process**. On any device
+    with USB debugging enabled that reads the decrypted finance database and the
+    plaintext backup JSON straight out of memory, so the artifact that ships to
+    Play and to GitHub Releases must not carry it.
+
+    Scoped to `prodRelease` — the only distributed variant — rather than to the
+    whole `prod` flavor, so the unit-test manifest merge has nothing to remove
+    (a `remove` with no declaration to remove is a merger warning) and `dev`
+    builds keep the tag for baseline-profile runs. `dev`Release has the same
+    code, the same R8 configuration and a different application id, which is all
+    a baseline profile depends on: see README's baseline-profile command.
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <application>
+        <profileable
+            android:shell="true"
+            tools:node="remove" />
+    </application>
+
+</manifest>

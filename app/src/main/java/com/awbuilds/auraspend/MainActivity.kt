@@ -8,6 +8,8 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.*
 import androidx.compose.ui.platform.LocalContext
+import com.awbuilds.auraspend.ui.designsystem.readStoredCurrencyCode
+import com.awbuilds.auraspend.ui.designsystem.writeStoredCurrencyCode
 import com.awbuilds.auraspend.ui.navigation.AuraSpendNavHost
 import com.awbuilds.auraspend.ui.theme.AppThemeMode
 import com.awbuilds.auraspend.ui.theme.AuraSpendTheme
@@ -37,8 +39,15 @@ class MainActivity : ComponentActivity() {
                     prefs.getBoolean("dynamic_color", false)
                 )
             }
+            // Null means "follow the device locale", which is what an install that
+            // never opened the picker should do.
+            var currencyCode by remember { mutableStateOf(readStoredCurrencyCode(prefs)) }
 
-            AuraSpendTheme(themeMode = themeMode, dynamicColor = dynamicColor) {
+            AuraSpendTheme(
+                themeMode = themeMode,
+                dynamicColor = dynamicColor,
+                currencyCode = currencyCode
+            ) {
                 AuraSpendNavHost(
                     repository = app.transactionRepository,
                     themeMode = themeMode,
@@ -50,6 +59,11 @@ class MainActivity : ComponentActivity() {
                     onDynamicColorChanged = { enabled ->
                         dynamicColor = enabled
                         prefs.edit().putBoolean("dynamic_color", enabled).apply()
+                    },
+                    currencyCode = currencyCode,
+                    onCurrencyChanged = { code ->
+                        currencyCode = code
+                        writeStoredCurrencyCode(prefs, code)
                     }
                 )
             }

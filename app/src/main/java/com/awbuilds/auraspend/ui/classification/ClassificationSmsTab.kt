@@ -51,6 +51,7 @@ import com.awbuilds.auraspend.ui.designsystem.AuraSkeleton
 import com.awbuilds.auraspend.ui.designsystem.AuraSpacing
 import com.awbuilds.auraspend.ui.designsystem.AuraType
 import com.awbuilds.auraspend.ui.designsystem.CategoryAvatar
+import com.awbuilds.auraspend.ui.designsystem.formatMoney
 import com.awbuilds.auraspend.ui.theme.extendedColors
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -82,6 +83,7 @@ internal fun SmsListTab(
         }
     } else {
         Column(modifier = Modifier.fillMaxSize()) {
+            SmsTabError(state, viewModel)
             if (state.isAiEnriching && state.aiProgressTotal > 0) {
                 LinearProgressIndicator(
                     progress = { state.aiProgressCurrent.toFloat() / state.aiProgressTotal.toFloat() },
@@ -166,6 +168,41 @@ private fun formatTimestamp(timestamp: Long): String {
     return sdf.format(Date(timestamp))
 }
 
+/**
+ * This tab's own error surface.
+ *
+ * The triage tab never read `state.error`, so a save that failed (no amount found,
+ * or a database failure) looked exactly like one that succeeded — and because
+ * `ClassificationReviewTab` does read it, `ErrorStateWiringTest` was satisfied for
+ * the whole feature. Dismissing clears it through the existing `ClearError` intent.
+ */
+@Composable
+private fun SmsTabError(
+    state: ClassificationViewState,
+    viewModel: ClassificationViewModel
+) {
+    state.error?.let { error ->
+        AuraErrorBanner(
+            message = stringResource(error.messageRes),
+            modifier = Modifier.padding(horizontal = AuraSpacing.gutter, vertical = AuraSpacing.sm),
+            onDismiss = { viewModel.handleIntent(ClassificationViewIntent.ClearError) }
+        )
+    }
+}
+
+/**
+ * The parsed transaction type as copy, shared by both classification tabs.
+ *
+ * `TransactionType` is a domain enum, so `parsed.type.name.lowercase()` rendered an
+ * identifier rather than a label. Deliberately exhaustive: an `else` arm would
+ * silence the compiler when a value is added, and the new value would reach the
+ * screen as a raw identifier. Without it, adding one is a compile error here.
+ */
+internal fun TransactionType.transactionTypeLabelRes(): Int = when (this) {
+    TransactionType.EXPENSE -> R.string.txn_type_expense
+    TransactionType.INCOME -> R.string.txn_type_income
+}
+
 @Composable
 internal fun AutoDetectTab(
     state: ClassificationViewState,
@@ -248,6 +285,9 @@ internal fun AutoDetectTab(
         }
     } else {
         Column(modifier = Modifier.fillMaxSize()) {
+            // The triage errors surface here: a save that found no transaction, a
+            // failed dismiss, or a failed "Save All" all land in `state.error`.
+            SmsTabError(state, viewModel)
             if (state.isAiEnriching && state.aiProgressTotal > 0) {
                 LinearProgressIndicator(
                     progress = { state.aiProgressCurrent.toFloat() / state.aiProgressTotal.toFloat() },
@@ -455,13 +495,17 @@ private fun ClassifiedSmsItem(
                             animate = false
                         )
                     } ?: Text(
-                        text = "₹0.00",
+                        // The theme currency, not a hardcoded ₹, and the currency's
+                        // own fraction convention rather than a fixed "0.00".
+                        text = formatMoney(0.0),
                         style = AuraType.moneySmall,
                         color = MaterialTheme.colorScheme.onSurface
                     )
-                    if (parsed.type != null) {
+                    parsed.type?.let { type ->
+                        // Localized label, never `type.name`.
+                        val typeLabel = stringResource(type.transactionTypeLabelRes())
                         Text(
-                            text = "• ${parsed.type.name.lowercase().replaceFirstChar { it.uppercase() }}",
+                            text = "• $typeLabel",
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -489,7 +533,9 @@ private fun ClassifiedSmsItem(
                 ) {
                     FilledTonalButton(
                         onClick = onSave,
-                        modifier = Modifier.size(40.dp),
+                        // 48dp, the AGENTS.md touch-target floor: these two buttons
+                        // are the tap alternative to the triage swipe.
+                        modifier = Modifier.size(48.dp),
                         contentPadding = PaddingValues(0.dp),
                         shape = RoundedCornerShape(12.dp)
                     ) {
@@ -502,7 +548,7 @@ private fun ClassifiedSmsItem(
                     TextButton(
                         onClick = onDismiss,
                         contentPadding = PaddingValues(0.dp),
-                        modifier = Modifier.size(40.dp)
+                        modifier = Modifier.size(48.dp)
                     ) {
                         Icon(
                             imageVector = Icons.Default.Close,

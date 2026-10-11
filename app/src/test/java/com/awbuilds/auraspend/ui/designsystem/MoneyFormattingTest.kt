@@ -20,7 +20,7 @@ class MoneyFormattingTest {
 
     @Test
     fun `Indian locale uses Indian digit grouping`() {
-        val formatted = formatMoney(123456.78, inr, Locale("en", "IN"))
+        val formatted = formatMoney(123456.78, inr, Locale.forLanguageTag("en-IN"))
         // en-IN groups as 1,23,456.78 — the whole reason this was broken before.
         assertTrue(
             "expected Indian grouping (1,23,456.78) but got: $formatted",
@@ -39,7 +39,7 @@ class MoneyFormattingTest {
 
     @Test
     fun `the same amount renders differently per locale`() {
-        val india = formatMoney(123456.0, inr, Locale("en", "IN"))
+        val india = formatMoney(123456.0, inr, Locale.forLanguageTag("en-IN"))
         val us = formatMoney(123456.0, inr, Locale.US)
         assertTrue("grouping must follow the locale, not a hardcoded US pattern", india != us)
     }
@@ -47,8 +47,8 @@ class MoneyFormattingTest {
     @Test
     fun `currency symbol follows the currency code, not the locale`() {
         assertTrue(
-            "USD in en-IN should still show the dollar sign: " + formatMoney(10.0, usd, Locale("en", "IN")),
-            formatMoney(10.0, usd, Locale("en", "IN")).contains("$")
+            "USD in en-IN should still show the dollar sign: " + formatMoney(10.0, usd, Locale.forLanguageTag("en-IN")),
+            formatMoney(10.0, usd, Locale.forLanguageTag("en-IN")).contains("$")
         )
         assertTrue(
             "INR should show a rupee sign",
@@ -96,23 +96,23 @@ class MoneyFormattingTest {
 
     @Test
     fun `compact form uses lakh and crore in the Indian market`() {
-        val lakh = formatMoneyCompact(2_50_000.0, inr, Locale("en", "IN"))
+        val lakh = formatMoneyCompact(2_50_000.0, inr, Locale.forLanguageTag("en-IN"))
         assertTrue("expected a lakh suffix in $lakh", lakh.contains("L"))
-        val crore = formatMoneyCompact(2_50_00_000.0, inr, Locale("en", "IN"))
+        val crore = formatMoneyCompact(2_50_00_000.0, inr, Locale.forLanguageTag("en-IN"))
         assertTrue("expected a crore suffix in $crore", crore.contains("Cr"))
     }
 
     @Test
     fun `compact form falls back to plain money below a thousand`() {
-        val small = formatMoneyCompact(999.0, inr, Locale("en", "IN"))
+        val small = formatMoneyCompact(999.0, inr, Locale.forLanguageTag("en-IN"))
         assertTrue("999 should not be abbreviated, got: $small", !small.contains("K"))
     }
 
     @Test
     fun `compact form keeps the currency symbol`() {
         assertTrue(
-            "expected a currency symbol in " + formatMoneyCompact(5_000.0, inr, Locale("en", "IN")),
-            formatMoneyCompact(5_000.0, inr, Locale("en", "IN")).contains("₹")
+            "expected a currency symbol in " + formatMoneyCompact(5_000.0, inr, Locale.forLanguageTag("en-IN")),
+            formatMoneyCompact(5_000.0, inr, Locale.forLanguageTag("en-IN")).contains("₹")
         )
     }
 

@@ -11,6 +11,7 @@ import androidx.compose.material.icons.automirrored.filled.ReceiptLong
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.heading
@@ -23,22 +24,33 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.awbuilds.auraspend.R
 import com.awbuilds.auraspend.domain.model.Category
+import com.awbuilds.auraspend.ui.core.UiError
 import com.awbuilds.auraspend.ui.designsystem.AuraCard
 import com.awbuilds.auraspend.ui.designsystem.AuraCardStyle
 import com.awbuilds.auraspend.ui.designsystem.AuraEmptyState
+import com.awbuilds.auraspend.ui.designsystem.AuraErrorBanner
 import com.awbuilds.auraspend.ui.designsystem.AuraSpacing
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CategoryManagementScreen(
     categories: List<Category>,
-    onSaveCategory: (Category) -> Unit,
-    onDeleteCategory: (String) -> Unit,
-    onBack: () -> Unit
+    onSaveCategory: suspend (Category) -> Boolean,
+    onDeleteCategory: suspend (String) -> Boolean,
+    onBack: () -> Unit,
+    /**
+     * A failed category write, reported inline while the list stays visible.
+     * The save/delete callbacks return whether the write landed, so a dialog
+     * closes only on success — a failed save used to close as if it had worked
+     * (edit) or never close at all (add), and the edit was lost either way.
+     */
+    error: UiError? = null,
+    onErrorDismissed: () -> Unit = {}
 ) {
     var showAddDialog by remember { mutableStateOf(false) }
     var editCategory by remember { mutableStateOf<Category?>(null) }
     var deleteConfirmId by remember { mutableStateOf<String?>(null) }
+    val scope = rememberCoroutineScope()
 
     Scaffold(
         topBar = {
@@ -57,32 +69,44 @@ fun CategoryManagementScreen(
             )
         }
     ) { padding ->
-        if (categories.isEmpty()) {
-            Box(
-                modifier = Modifier.fillMaxSize().padding(padding),
-                contentAlignment = Alignment.Center
-            ) {
-                AuraEmptyState(
-                    icon = Icons.Default.Category,
-                    title = stringResource(R.string.categories_empty_title),
-                    message = stringResource(R.string.categories_empty_message)
+        Column(modifier = Modifier.fillMaxSize().padding(padding)) {
+            error?.let { failure ->
+                AuraErrorBanner(
+                    message = stringResource(failure.messageRes),
+                    modifier = Modifier.padding(
+                        horizontal = AuraSpacing.gutter,
+                        vertical = AuraSpacing.sm
+                    ),
+                    onDismiss = onErrorDismissed
                 )
             }
-        } else {
-            LazyColumn(
-                modifier = Modifier.fillMaxSize().padding(padding),
-                contentPadding = PaddingValues(
-                    horizontal = AuraSpacing.gutter,
-                    vertical = AuraSpacing.lg
-                ),
-                verticalArrangement = Arrangement.spacedBy(AuraSpacing.sm)
-            ) {
-                items(categories, key = { it.id }) { category ->
-                    CategoryCard(
-                        category = category,
-                        onEdit = { editCategory = category },
-                        onDelete = { deleteConfirmId = category.id }
+            if (categories.isEmpty()) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    AuraEmptyState(
+                        icon = Icons.Default.Category,
+                        title = stringResource(R.string.categories_empty_title),
+                        message = stringResource(R.string.categories_empty_message)
                     )
+                }
+            } else {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(
+                        horizontal = AuraSpacing.gutter,
+                        vertical = AuraSpacing.lg
+                    ),
+                    verticalArrangement = Arrangement.spacedBy(AuraSpacing.sm)
+                ) {
+                    items(categories, key = { it.id }) { category ->
+                        CategoryCard(
+                            category = category,
+                            onEdit = { editCategory = category },
+                            onDelete = { deleteConfirmId = category.id }
+                        )
+                    }
                 }
             }
         }
@@ -93,14 +117,17 @@ fun CategoryManagementScreen(
             title = stringResource(R.string.categories_add),
             initialName = "",
             onSave = { name ->
-                onSaveCategory(
-                    Category(
-                        name = name,
-                        icon = "category",
-                        color = 0xFF757575.toInt(),
-                        isDefault = false
+                scope.launch {
+                    val saved = onSaveCategory(
+                        Category(
+                            name = name,
+                            icon = "category",
+                            color = 0xFF757575.toInt(),
+                            isDefault = false
+                        )
                     )
-                )
+                    if (saved) showAddDialog = false
+                }
             },
             onDismiss = { showAddDialog = false }
         )
@@ -111,8 +138,10 @@ fun CategoryManagementScreen(
             title = stringResource(R.string.categories_edit),
             initialName = cat.name,
             onSave = { name ->
-                onSaveCategory(cat.copy(name = name))
-                editCategory = null
+                scope.launch {
+                    val saved = onSaveCategory(cat.copy(name = name))
+                    if (saved) editCategory = null
+                }
             },
             onDismiss = { editCategory = null }
         )
@@ -137,8 +166,10 @@ fun CategoryManagementScreen(
                     }
                 } else {
                     TextButton(onClick = {
-                        onDeleteCategory(id)
-                        deleteConfirmId = null
+                        scope.launch {
+                            val deleted = onDeleteCategory(id)
+                            if (deleted) deleteConfirmId = null
+                        }
                     }) {
                         Text(stringResource(R.string.action_delete), color = MaterialTheme.colorScheme.error)
                     }

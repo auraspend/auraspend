@@ -30,13 +30,15 @@ android {
         applicationId = "com.awbuilds.auraspend"
         minSdk = 30
         targetSdk = 37
-        // 0.1.1 — the AGPL-3.0 relicensing release. versionCode must strictly
+        // 0.1.2 — the reliability release (the 32-finding code review is fixed
+        // end to end, and the currency picker ships). versionCode must strictly
         // increase for every store upload; Play rejects an update that reuses
         // one, so it is not optional the way the name is.
-        versionCode = 2
-        versionName = "0.1.1"
+        versionCode = 3
+        versionName = "0.1.2"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
 
         // Native ABI filter. ONNX Runtime's prebuilt .so is ~95% of the app's
         // footprint, so the ABI list is the single biggest size lever there is.
@@ -185,6 +187,14 @@ android {
     }
 }
 
+// Room schema JSON. `exportSchema = true` on AppDatabase exports nothing without
+// this: Room writes app/schemas/<version>.json, which is what makes a schema
+// change reviewable in a diff and what MigrationTestHelper reads. The files are
+// meant to be committed — they are the migration-test fixtures.
+ksp {
+    arg("room.schemaLocation", "$projectDir/schemas")
+}
+
 dependencies {
     // Compose — versions are aligned by the BOM (Material 3 1.4.0, Compose UI 1.12.1).
     implementation(platform(libs.androidx.compose.bom))
@@ -212,7 +222,11 @@ dependencies {
     implementation(libs.google.api.client)
     implementation(libs.google.api.client.android)
     implementation(libs.google.http.client.gson)
-    implementation(libs.guava)
+    // Guava arrives transitively through google-api-client / google-http-client
+    // and is attributed on that basis (LicenseScreen, docs/licenses). It was
+    // declared directly here with no com.google.common import anywhere in
+    // app/src; the declaration did not even control the version that shipped,
+    // because the client libraries' requirement wins version resolution.
 
     // WorkManager
     implementation(libs.androidx.work.runtime.ktx)
@@ -235,9 +249,17 @@ dependencies {
     ksp(libs.androidx.room.compiler)
 
     testImplementation(libs.junit)
+    // `runTest` + `Dispatchers.setMain` for ViewModel tests. The suite had no
+    // ViewModel coverage at all, not because the logic is untestable but because
+    // there was no way to own the main dispatcher.
+    testImplementation(libs.kotlinx.coroutines.test)
     testImplementation("org.json:json:20240303")
     androidTestImplementation(libs.androidx.test.ext.junit)
-    androidTestImplementation(libs.androidx.espresso.core)
+    // The instrumentation runner, declared because nothing else provides it any
+    // more. testInstrumentationRunner above names AndroidJUnitRunner, which used
+    // to arrive transitively through espresso-core — a dependency neither
+    // androidTest file imports a single class from.
+    androidTestImplementation(libs.androidx.test.runner)
 
     // JVM tests (Robolectric + Compose UI test): swipe gestures, design-system guard.
     testImplementation(platform(libs.androidx.compose.bom))

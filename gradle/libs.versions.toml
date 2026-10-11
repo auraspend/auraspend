@@ -5,6 +5,9 @@
 [versions]
 agp = "9.3.1"
 kotlin = "2.2.10"
+# Coroutines: pinned to the version the AndroidX/Compose stack already resolves
+# (1.9.0) so the test artefact cannot drag a second one onto the classpath.
+kotlinxCoroutines = "1.9.0"
 ksp = "2.2.10-2.0.2"
 
 composeBom = "2026.09.00"
@@ -22,15 +25,13 @@ playServicesAuth = "21.6.0"
 googleApiClient = "2.9.0"
 googleApiServicesDrive = "v3-rev20230822-2.0.0"
 googleHttpClientGson = "1.44.2"
-guava = "33.0.0-android"
 
-# Not yet on the classpath — added when the phase that needs them lands.
-lottie = "6.7.1"
+# Wired: Room's PagingSource integration plus collectAsLazyPagingItems back the
+# Activity list.
 paging = "3.5.1"
 
 junit = "4.13.2"
 testExtJunit = "1.3.0"
-espresso = "3.5.1"
 robolectric = "4.17"
 testCore = "1.7.0"
 benchmarkMacro = "1.5.0"
@@ -87,14 +88,15 @@ google-api-services-drive = { group = "com.google.apis", name = "google-api-serv
 google-api-client = { group = "com.google.api-client", name = "google-api-client", version.ref = "googleApiClient" }
 google-api-client-android = { group = "com.google.api-client", name = "google-api-client-android", version.ref = "googleApiClient" }
 google-http-client-gson = { group = "com.google.http-client", name = "google-http-client-gson", version.ref = "googleHttpClientGson" }
-guava = { group = "com.google.guava", name = "guava", version.ref = "guava" }
+# Guava is on the classpath transitively (google-api-client / google-http-client
+# require it) and is attributed on that basis — no direct declaration, because
+# nothing in app/src imports com.google.common.
 
-lottie-compose = { group = "com.airbnb.android", name = "lottie-compose", version.ref = "lottie" }
 androidx-paging-compose = { group = "androidx.paging", name = "paging-compose", version.ref = "paging" }
 
 junit = { group = "junit", name = "junit", version.ref = "junit" }
+kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "kotlinxCoroutines" }
 androidx-test-ext-junit = { group = "androidx.test.ext", name = "junit", version.ref = "testExtJunit" }
-androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espresso" }
 androidx-test-core = { group = "androidx.test", name = "core", version.ref = "testCore" }
 androidx-test-runner = { group = "androidx.test", name = "runner", version.ref = "testRunner" }
 androidx-benchmark-macro-junit4 = { group = "androidx.benchmark", name = "benchmark-macro-junit4", version.ref = "benchmarkMacro" }

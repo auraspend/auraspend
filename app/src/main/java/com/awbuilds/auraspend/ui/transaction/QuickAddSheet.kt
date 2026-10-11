@@ -42,8 +42,10 @@ import androidx.compose.ui.unit.sp
 import com.awbuilds.auraspend.R
 import com.awbuilds.auraspend.domain.model.Category
 import com.awbuilds.auraspend.domain.model.TransactionType
+import com.awbuilds.auraspend.ui.core.UiError
 import com.awbuilds.auraspend.ui.designsystem.AuraCard
 import com.awbuilds.auraspend.ui.designsystem.AuraCardStyle
+import com.awbuilds.auraspend.ui.designsystem.AuraErrorBanner
 import com.awbuilds.auraspend.ui.designsystem.AuraSegmentedControl
 import com.awbuilds.auraspend.ui.designsystem.AuraSpacing
 import com.awbuilds.auraspend.ui.designsystem.AuraType
@@ -66,7 +68,14 @@ fun QuickAddSheet(
     onSave: (amount: Double, categoryId: String, type: TransactionType, merchant: String?, note: String) -> Unit,
     onSmartAdd: () -> Unit,
     onManualAdd: () -> Unit,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    /**
+     * A write that failed while this sheet was open. The sheet is *not* dismissed
+     * on failure, so the typed amount and merchant survive and the banner shows
+     * the user why nothing was saved.
+     */
+    error: UiError? = null,
+    onErrorDismissed: () -> Unit = {}
 ) {
     var input by remember { mutableStateOf("") }
     var type by remember { mutableStateOf(initialType) }
@@ -97,6 +106,16 @@ fun QuickAddSheet(
                 .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            // A failed save is reported inside the sheet — where the user is
+            // looking — instead of dismissing it as if the write had succeeded.
+            error?.let { failure ->
+                AuraErrorBanner(
+                    message = stringResource(failure.messageRes),
+                    onDismiss = onErrorDismissed
+                )
+                Spacer(modifier = Modifier.height(AuraSpacing.md))
+            }
+
             AuraSegmentedControl(
                 options = listOf(
                     stringResource(R.string.quick_add_type_expense),
@@ -112,7 +131,9 @@ fun QuickAddSheet(
 
             // ── Amount display
             Text(
-                text = if (input.isEmpty()) "₹0" else formatMoney(amount),
+                // formatMoney, not a literal "₹0": the placeholder is money on
+                // screen and must follow the currency picked in Settings.
+                text = if (input.isEmpty()) formatMoney(0.0) else formatMoney(amount),
                 style = AuraType.moneyHero,
                 color = if (type == TransactionType.EXPENSE) MaterialTheme.extendedColors.expenseAmount
                 else MaterialTheme.extendedColors.incomeAmount,

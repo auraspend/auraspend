@@ -1,9 +1,14 @@
 name: CI
 
+# Push-only. Every PR used to run this workflow *and* pr_check.yml — the same
+# unit tests and the same dev/prod assembles, twice, for no added signal
+# (review finding 27). PRs are now gated by pr_check.yml alone, which also
+# carries the licence check this workflow used to own.
+#
+# Pushes to main/dev still run the whole pipeline on purpose: this is the cache
+# seeder. Caches are written on main and read everywhere (handoff 0023).
 on:
   push:
-    branches: [main, dev]
-  pull_request:
     branches: [main, dev]
 
 concurrency:

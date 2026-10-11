@@ -137,10 +137,15 @@ object AiSignalFusion {
      * likely to be wrong, and where discarding destroys real data. Confidence
      * alone is not sufficient.
      *
-     * A runtime with no calibrated head reports null, and keeps the
-     * previous unconditional behaviour — so this change is behaviour-preserving
-     * for the shipped model, and only a runtime that can actually express doubt
-     * is constrained by it.
+     * A runtime with no calibrated head reports null, and keeps the previous
+     * unconditional behaviour. The shipped encoder *does* have a calibrated
+     * head and fills this field via `SmsExtraction.verdictConfidence` — the
+     * confidence in the verdict it actually emitted, not the raw probability of
+     * the transaction class. Reporting that raw probability instead made this
+     * gate unreachable on a negative verdict (it is below 0.5 there by
+     * construction), so the recorded "0 destroyed" measurement was produced by
+     * dead code; `FusedAiEvalTest` now fails if the gate becomes unreachable
+     * again.
      */
     private fun mayDiscard(ai: SmsExtraction, base: ParsedBankMessage): Boolean {
         val probability = ai.isTransactionProbability ?: return true

@@ -7,13 +7,13 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ReceiptLong
 import androidx.compose.material.icons.filled.AccountBalance
 import androidx.compose.material.icons.filled.Category
 import androidx.compose.material.icons.filled.DirectionsCar
 import androidx.compose.material.icons.filled.LocalGroceryStore
 import androidx.compose.material.icons.filled.LocalHospital
 import androidx.compose.material.icons.filled.Movie
-import androidx.compose.material.icons.filled.ReceiptLong
 import androidx.compose.material.icons.filled.Restaurant
 import androidx.compose.material.icons.filled.School
 import androidx.compose.material.icons.filled.ShoppingBag
@@ -41,7 +41,7 @@ private val knownCategoryIcons: Map<String, ImageVector> = mapOf(
     "restaurant" to Icons.Default.Restaurant,
     "directions_car" to Icons.Default.DirectionsCar,
     "shopping_bag" to Icons.Default.ShoppingBag,
-    "receipt_long" to Icons.Default.ReceiptLong,
+    "receipt_long" to Icons.AutoMirrored.Filled.ReceiptLong,
     "movie" to Icons.Default.Movie,
     "local_hospital" to Icons.Default.LocalHospital,
     "school" to Icons.Default.School,

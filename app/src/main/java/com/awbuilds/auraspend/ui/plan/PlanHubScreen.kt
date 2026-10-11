@@ -26,6 +26,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.awbuilds.auraspend.R
+import com.awbuilds.auraspend.domain.model.BudgetPeriod
 import com.awbuilds.auraspend.domain.model.BudgetSpending
 import com.awbuilds.auraspend.domain.model.RecurrenceFrequency
 import com.awbuilds.auraspend.domain.model.RecurringCost
@@ -38,6 +39,7 @@ import com.awbuilds.auraspend.ui.designsystem.AuraType
 import com.awbuilds.auraspend.ui.designsystem.SettingsAvatarButton
 import com.awbuilds.auraspend.ui.designsystem.formatMoney
 import com.awbuilds.auraspend.ui.theme.extendedColors
+import java.time.LocalDateTime
 
 /**
  * Plan hub — the home for everything forward-looking: budgets, subscriptions
@@ -60,11 +62,44 @@ fun PlanHubScreen(
     // Budget row stores 0.0 at creation and only BudgetViewModel recomputes it in
     // memory. Reading the stored column here made this hub report "₹0 of ₹26,000,
     // 0% used" while the Dashboard, using the same budgets, showed real spend.
-    // Recompute from transactions through the same helper the Budgets screen uses,
-    // so the two screens cannot disagree.
-    val transactions by repository.getAllTransactions().collectAsState(initial = emptyList())
-    val budgets = remember(storedBudgets, transactions) {
-        BudgetSpending.withFreshSpent(storedBudgets, transactions)
+    //
+    // Spend now comes from the indexed per-category SQL aggregate — the same one
+    // the Dashboard reads — instead of loading every transaction row and scanning
+    // it here (ADR 0003). Budget, Plan and the Dashboard derive the number from
+    // `observeExpenseByCategory` over the same `BudgetSpending.periodEpochRange`,
+    // so the three screens cannot disagree about it.
+    val now = remember { LocalDateTime.now() }
+    val weeklyRange = remember(now) { BudgetSpending.periodEpochRange(BudgetPeriod.WEEKLY, now) }
+    val monthlyRange = remember(now) { BudgetSpending.periodEpochRange(BudgetPeriod.MONTHLY, now) }
+    val yearlyRange = remember(now) { BudgetSpending.periodEpochRange(BudgetPeriod.YEARLY, now) }
+    // The flows are remembered so `collectAsState` keys its effect on a stable
+    // instance: the repository hands back a fresh cold flow per call, and a new one
+    // on every recomposition would re-run each aggregate query each time.
+    val weeklyFlow = remember(weeklyRange) {
+        repository.observeExpenseByCategory(weeklyRange.first, weeklyRange.second)
+    }
+    val monthlyFlow = remember(monthlyRange) {
+        repository.observeExpenseByCategory(monthlyRange.first, monthlyRange.second)
+    }
+    val yearlyFlow = remember(yearlyRange) {
+        repository.observeExpenseByCategory(yearlyRange.first, yearlyRange.second)
+    }
+    val weeklyTotals by weeklyFlow.collectAsState(initial = emptyList())
+    val monthlyTotals by monthlyFlow.collectAsState(initial = emptyList())
+    val yearlyTotals by yearlyFlow.collectAsState(initial = emptyList())
+
+    val budgets = remember(storedBudgets, weeklyTotals, monthlyTotals, yearlyTotals) {
+        val weekly = weeklyTotals.associate { it.categoryId to it.amount }
+        val monthly = monthlyTotals.associate { it.categoryId to it.amount }
+        val yearly = yearlyTotals.associate { it.categoryId to it.amount }
+        storedBudgets.map { budget ->
+            val totals = when (budget.period) {
+                BudgetPeriod.WEEKLY -> weekly
+                BudgetPeriod.MONTHLY -> monthly
+                BudgetPeriod.YEARLY -> yearly
+            }
+            budget.copy(spentAmount = totals[budget.categoryId] ?: 0.0)
+        }
     }
 
     val totalLimit = remember(budgets) { budgets.sumOf { it.limitAmount } }

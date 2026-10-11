@@ -23,15 +23,18 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.awbuilds.auraspend.R
+import com.awbuilds.auraspend.domain.model.Budget
 import com.awbuilds.auraspend.domain.model.BudgetPeriod
 import com.awbuilds.auraspend.ui.designsystem.AuraCard
 import com.awbuilds.auraspend.ui.designsystem.AuraCardStyle
 import com.awbuilds.auraspend.ui.designsystem.AuraEmptyState
 import com.awbuilds.auraspend.ui.designsystem.AuraErrorBanner
+import com.awbuilds.auraspend.ui.designsystem.AuraErrorState
 import com.awbuilds.auraspend.ui.designsystem.AuraProgressRing
 import com.awbuilds.auraspend.ui.designsystem.AuraSpacing
 import com.awbuilds.auraspend.ui.designsystem.AuraStatTile
 import com.awbuilds.auraspend.ui.designsystem.AuraType
+import com.awbuilds.auraspend.ui.designsystem.LocalCurrencyStyle
 import com.awbuilds.auraspend.ui.designsystem.formatMoney
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -42,6 +45,12 @@ fun BudgetScreen(
 ) {
     val state by viewModel.state.collectAsState()
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+
+    // Deleting a budget is irreversible and used to be one tap on a trash icon with
+    // no confirmation — the same defect the review found on the Recurring screen,
+    // where the fix was a dialog. Held here so the row's action only *asks*.
+    var confirmRemove by remember { mutableStateOf<Budget?>(null) }
+    val errorMessage = state.error?.let { stringResource(it.messageRes) }
 
     LaunchedEffect(Unit) {
         viewModel.handleIntent(BudgetViewIntent.LoadBudgets)
@@ -67,12 +76,17 @@ fun BudgetScreen(
         // A failed save was set in the ViewModel and then never rendered, so the
         // sheet simply stopped responding. Surface it inline, keeping the list visible.
         Column(modifier = Modifier.fillMaxSize().padding(padding)) {
-            state.error?.let { error ->
-                AuraErrorBanner(
-                    message = stringResource(error.messageRes),
-                    onDismiss = { viewModel.handleIntent(BudgetViewIntent.ClearError) }
-                )
-                Spacer(modifier = Modifier.height(AuraSpacing.sm))
+            // The banner is for a failure with data still on screen. A load that
+            // failed with nothing to show renders AuraErrorState below instead, so
+            // the reason and a retry replace the whole screen (see State.kt).
+            if (state.budgets.isNotEmpty()) {
+                state.error?.let { error ->
+                    AuraErrorBanner(
+                        message = stringResource(error.messageRes),
+                        onDismiss = { viewModel.handleIntent(BudgetViewIntent.ClearError) }
+                    )
+                    Spacer(modifier = Modifier.height(AuraSpacing.sm))
+                }
             }
             if (state.budgets.isEmpty()) {
             Box(
@@ -81,13 +95,23 @@ fun BudgetScreen(
                     .padding(padding),
                 contentAlignment = Alignment.Center
             ) {
-                AuraEmptyState(
-                    icon = Icons.Default.AccountBalance,
-                    title = stringResource(R.string.budget_empty_title),
-                    message = stringResource(R.string.budget_empty_message),
-                    actionLabel = stringResource(R.string.budget_add),
-                    onAction = { viewModel.handleIntent(BudgetViewIntent.StartAdd) }
-                )
+                if (state.error != null) {
+                    AuraErrorState(
+                        icon = Icons.Default.CloudOff,
+                        title = stringResource(R.string.error_load_failed),
+                        message = stringResource(R.string.error_load_failed_detail),
+                        actionLabel = stringResource(R.string.action_retry),
+                        onAction = { viewModel.handleIntent(BudgetViewIntent.LoadBudgets) }
+                    )
+                } else {
+                    AuraEmptyState(
+                        icon = Icons.Default.AccountBalance,
+                        title = stringResource(R.string.budget_empty_title),
+                        message = stringResource(R.string.budget_empty_message),
+                        actionLabel = stringResource(R.string.budget_add),
+                        onAction = { viewModel.handleIntent(BudgetViewIntent.StartAdd) }
+                    )
+                }
             }
         } else {
             LazyColumn(
@@ -185,7 +209,7 @@ fun BudgetScreen(
                                 fontWeight = FontWeight.SemiBold,
                                 color = MaterialTheme.colorScheme.onSurface
                             )
-                            IconButton(onClick = { viewModel.handleIntent(BudgetViewIntent.DeleteBudget(budget.id)) }) {
+                            IconButton(onClick = { confirmRemove = budget }) {
                                 Icon(
                                     Icons.Default.Delete,
                                     contentDescription = stringResource(R.string.action_delete),
@@ -244,7 +268,7 @@ fun BudgetScreen(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
-                                budget.period.name.lowercase().replaceFirstChar { it.uppercase() },
+                                stringResource(budget.period.labelRes()),
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -384,15 +408,12 @@ fun BudgetScreen(
                     label = { Text(stringResource(R.string.budget_monthly_limit)) },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
-                    prefix = { Text("₹") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                    leadingIcon = {
-                        Icon(
-                            Icons.Default.CurrencyRupee,
-                            contentDescription = null,
-                            modifier = Modifier.size(18.dp)
-                        )
-                    }
+                    // Theme currency, not a hardcoded ₹; the field holds raw digits,
+                    // so the prefix cannot double a symbol. The decorative
+                    // `Icons.Default.CurrencyRupee` that used to sit next to it said
+                    // "rupees" in every locale and is gone with it.
+                    prefix = { Text(LocalCurrencyStyle.current.symbol) },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
                 )
 
                 Column(verticalArrangement = Arrangement.spacedBy(AuraSpacing.sm)) {
@@ -411,7 +432,7 @@ fun BudgetScreen(
                                 onClick = { viewModel.handleIntent(BudgetViewIntent.PeriodChanged(period)) },
                                 label = {
                                     Text(
-                                        period.name.lowercase().replaceFirstChar { it.uppercase() },
+                                        stringResource(period.labelRes()),
                                         style = MaterialTheme.typography.labelSmall
                                     )
                                 },
@@ -441,5 +462,57 @@ fun BudgetScreen(
                 }
             }
         }
+
+    confirmRemove?.let { budget ->
+        val category = state.categories.firstOrNull { it.id == budget.categoryId }
+        AlertDialog(
+            onDismissRequest = { confirmRemove = null },
+            title = {
+                Text(
+                    stringResource(
+                        R.string.budget_delete_title,
+                        category?.name ?: stringResource(R.string.budget_unknown_category)
+                    ),
+                    modifier = Modifier.semantics { heading() }
+                )
+            },
+            text = {
+                Column {
+                    Text(stringResource(R.string.budget_delete_message))
+                    // A failed delete keeps the dialog open so the user can retry,
+                    // and says so instead of vanishing as if the row were removed.
+                    errorMessage?.let { message ->
+                        Spacer(modifier = Modifier.height(AuraSpacing.md))
+                        AuraErrorBanner(message = message)
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        viewModel.handleIntent(BudgetViewIntent.DeleteBudget(budget.id))
+                        confirmRemove = null
+                    },
+                    colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
+                ) { Text(stringResource(R.string.action_remove)) }
+            },
+            dismissButton = {
+                TextButton(onClick = { confirmRemove = null }) { Text(stringResource(R.string.action_cancel)) }
+            }
+        )
     }
+    }
+}
+
+/**
+ * A budget period as copy.
+ *
+ * `BudgetPeriod` is a domain enum, so `period.name.lowercase()` put the identifier
+ * on screen in every locale. Deliberately exhaustive — an `else` arm would let a
+ * period added later render a raw identifier instead of failing the build here.
+ */
+private fun BudgetPeriod.labelRes(): Int = when (this) {
+    BudgetPeriod.WEEKLY -> R.string.budget_period_weekly
+    BudgetPeriod.MONTHLY -> R.string.budget_period_monthly
+    BudgetPeriod.YEARLY -> R.string.budget_period_yearly
 }

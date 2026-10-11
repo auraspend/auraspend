@@ -93,6 +93,27 @@ object BankMessageParser {
     private val drSuffix = Regex("""\bDr\.?(?=\s|$|\d)""", RegexOption.IGNORE_CASE)
     private val crSuffix = Regex("""\bCr\.?(?=\s|$|\d)""", RegexOption.IGNORE_CASE)
 
+    /**
+     * True when [message] names money *actually* moving — a completed debit or
+     * credit — in the same vocabulary the parser uses to decide the type.
+     *
+     * Shared on purpose. `SmsAutoClassifier` uses it to rescue a real transaction
+     * from its OTP/alert filter, and `SmsPipelineProcessor` uses it to decide
+     * whether an unreadable message should be recorded for the user. Both carried
+     * their own six-word copy (`debited|credited|spent|paid|transferred|withdrawn`),
+     * which disagreed with the parser exactly where it mattered: a deposit or a
+     * refund with a balance tail ("Rs 10,000 has been deposited to A/c XX123.
+     * Available balance is Rs 45,200") matched a balance-alert pattern, contained
+     * no word from the six, and was dropped *before* the parser that reads
+     * "deposited" correctly ever ran. That is the "loses the user's money
+     * silently" case the OTP/alert invariant exists to prevent — and the invariant
+     * as written (no amount **and** no movement verb) was being violated, because
+     * that message has both.
+     */
+    fun hasMovementVerb(message: String): Boolean =
+        debitRegexes.any { it.containsMatchIn(message) } ||
+            creditRegexes.any { it.containsMatchIn(message) }
+
     /** A completed debit/credit must not be a failure / decline notice. */
     private val failureRegex = Regex(
         """\b(failed|failure|declined|decline|denied|unsuccessful|could not be processed|not (?:been )?completed|timed? ?out)\b""",

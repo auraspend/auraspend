@@ -51,6 +51,7 @@ import com.awbuilds.auraspend.ui.designsystem.AuraSkeleton
 import com.awbuilds.auraspend.ui.designsystem.AuraSpacing
 import com.awbuilds.auraspend.ui.designsystem.AuraType
 import com.awbuilds.auraspend.ui.designsystem.CategoryAvatar
+import com.awbuilds.auraspend.ui.designsystem.LocalCurrencyStyle
 import com.awbuilds.auraspend.ui.theme.extendedColors
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -311,9 +312,13 @@ internal fun ClassificationResultCard(
 
             AmountDetailRow(amount = parsed.amount)
 
+            // Localized copy, not `type.name`: the enum's identifier is not a label,
+            // and the mapping's `else` arm keeps a future value from becoming one.
+            val typeLabel = parsed.type?.let { stringResource(it.transactionTypeLabelRes()) }
+                ?: stringResource(R.string.classification_not_detected)
             DetailRow(
                 label = stringResource(R.string.classification_type),
-                value = parsed.type?.name?.lowercase()?.replaceFirstChar { it.uppercase() } ?: stringResource(R.string.classification_not_detected)
+                value = typeLabel
             )
 
             DetailRow(
@@ -531,7 +536,9 @@ internal fun ManualEntryFields(
             modifier = Modifier.fillMaxWidth(),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
             singleLine = true,
-            prefix = { Text("₹") },
+            // The theme currency, not a hardcoded ₹: the field holds raw digits, so
+            // the prefix is the only symbol here and cannot double one.
+            prefix = { Text(LocalCurrencyStyle.current.symbol) },
             shape = RoundedCornerShape(14.dp)
         )
 

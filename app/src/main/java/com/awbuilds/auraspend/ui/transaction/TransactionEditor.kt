@@ -23,6 +23,7 @@ import com.awbuilds.auraspend.domain.model.TransactionType
 import com.awbuilds.auraspend.ui.designsystem.AuraSegmentedControl
 import com.awbuilds.auraspend.ui.designsystem.AuraSpacing
 import com.awbuilds.auraspend.ui.designsystem.CategoryAvatar
+import com.awbuilds.auraspend.ui.designsystem.LocalCurrencyStyle
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneId
@@ -80,7 +81,9 @@ fun TransactionEditor(
             value = amount,
             onValueChange = { amount = it },
             label = { Text(stringResource(R.string.txn_editor_amount)) },
-            prefix = { Text("₹") },
+            // Theme currency, not a hardcoded ₹: the field holds raw digits, so the
+            // prefix cannot double a symbol on already-formatted output.
+            prefix = { Text(LocalCurrencyStyle.current.symbol) },
             singleLine = true,
             isError = amount.isNotBlank() && parsedAmount == null,
             supportingText = if (amount.isNotBlank() && parsedAmount == null) {

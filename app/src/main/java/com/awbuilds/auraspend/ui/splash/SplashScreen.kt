@@ -104,15 +104,19 @@ fun SplashScreen(onAnimationFinished: () -> Unit) {
                         slideInVertically(animationSpec = tween(400)) { it / 3 }
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    // The wordmark is the app name resource (so a flavour that
+                    // renames the app keeps the splash consistent) and the tagline
+                    // is translated, not a literal — the literal was invisible to
+                    // the EN/hi parity check, which only compares two XML files.
                     Text(
-                        "AuraSpend",
+                        stringResource(R.string.app_name),
                         style = MaterialTheme.typography.displaySmall,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onBackground
                     )
                     Spacer(modifier = Modifier.height(AuraSpacing.xs))
                     Text(
-                        "Beautiful expense management",
+                        stringResource(R.string.splash_tagline),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
