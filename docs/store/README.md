@@ -1,8 +1,9 @@
 # Play Store assets — AuraSpend
 
 Everything here is what is uploaded to Google Play for the default (en-US) store
-listing. The live listing lives in the Play Console; this directory is the
-versioned source so assets can be changed and re-uploaded later.
+listing. The authoritative listing is the one saved in the Play Console — staged
+but not published, as of 2026-10-11; this directory is the versioned source so
+assets can be changed and re-uploaded later.
 
 | File | Used for | Play requirements |
 |---|---|---|

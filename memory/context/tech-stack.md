@@ -22,8 +22,9 @@
 
 ## Dependency management
 `gradle/libs.versions.toml` is the single source of truth. Do not add versions
-inline in build files. Unused catalog entries (`lottie`, `paging`) are staged
-for the phase that introduces them.
+inline in build files. Every catalog entry is referenced by a build file — the
+"staged for the phase that needs them" entries are gone (paging was already
+wired; lottie was never used and was removed).
 
 ## Key source locations
 | Path | Contents |
@@ -39,7 +40,7 @@ for the phase that introduces them.
 ## Workflows
 | Task | Command / location |
 |------|--------------------|
-| Cold-start benchmark | `./gradlew :benchmark:connectedProdBenchmarkAndroidTest` (needs the release keystore) |
-| Baseline profile | `:benchmark:connectedProdBenchmarkAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=…BaselineProfileGenerator` → copy to `app/src/main/baseline-prof.txt` |
+| Cold-start benchmark | `./gradlew :benchmark:connectedDevBenchmarkAndroidTest` (dev flavor keeps `profileable`; same code and R8 output as prod) |
+| Baseline profile | `:benchmark:connectedDevBenchmarkAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=…BaselineProfileGenerator` → copy to `app/src/main/baseline-prof.txt` |
 | Localization | `values/strings.xml` + `values-hi/strings.xml`; no literals in screens |
-| Decisions | `docs/adr/` (0001–0007) |
+| Decisions | `docs/adr/` (0001–0011) |

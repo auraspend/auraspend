@@ -13,7 +13,6 @@ as a table in the [`README`](../README.md).
 |---|---|---|
 | `OFL-PlusJakartaSans.txt` | Plus Jakarta Sans (bundled font, `app/src/main/res/font/`) | SIL Open Font License 1.1 |
 | `MIT-ONNX-Runtime.txt` | ONNX Runtime for Android (native inference, Maven AAR) | MIT |
-| `Apache-2.0-Lottie.txt` | Lottie (bundled onboarding/splash animations) | Apache-2.0 |
 | `Apache-2.0.txt` | AndroidX (Room, Compose, Lifecycle, Work, Navigation, Paging, ProfileInstaller), Google API Client, Google Drive API, play-services-auth, OkHttp, Guava, google-http-client-gson | Apache-2.0 |
 
 ## Downloaded at runtime, not redistributed

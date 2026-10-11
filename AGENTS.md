@@ -3,7 +3,43 @@
 > Read this file and the latest file in `docs/handoffs/` before touching anything.
 > Update both (plus `CLAUDE.md` / `memory/` when you learn something durable) before ending a session.
 >
-> Latest: `docs/handoffs/0025-drive-backup-and-site-redesign.md` — Drive backup
+> Latest: `docs/handoffs/0027-currency-picker.md` — the currency list is now real:
+> the 30 currencies from `api.frankfurter.dev/v1/currencies` are captured in
+> `ui/designsystem/CurrencyCatalog.kt` and picked from a shared list
+> (`CurrencyPickerList`) on a new 4th onboarding page and a Settings → Finance
+> row. The plumbing already worked (pref → theme → `LocalCurrencyStyle`); nothing
+> could *set* it, and `CurrencyStyle.supported` was a 10-entry list with zero call
+> sites. Names come from the platform's localized `Currency.displayName`, so 30
+> currencies did not become 60 translated strings; no network at runtime; **no FX
+> conversion, and the picker says so out loud**. 350 tests green (7 new), lint
+> green, EN/HI 489/489. **A second session was editing this tree at the same
+> time** — it added the `upsertTransactions` batch (all-or-nothing CSV import) and
+> 19 tests, included in that green run; see 0027's "Concurrent changes" section.
+> Landed in the 0.1.2 release commit (2026-10-11).
+> Before: `docs/handoffs/0026-review-fixes.md` — the 32-finding code review
+> (`docs/reviews/2026-10-10-code-review.md`) is fixed end to end. The headline
+> three: the on-device encoder was **inert in production** (the centroid asset is
+> little-endian, the reader parsed big-endian, and the failure was swallowed into
+> `model = null` while readiness said "ready"); the transaction DAO wrote with
+> `REPLACE`, so a duplicate `sourceSmsId` **deleted the user's edited row**; and
+> the SMS ingest cursor advanced past everything older than the newest 500, so a
+> fresh install never ingested its history. Also: the discard gate's probability
+> polarity was unreachable (dead safety code), deposits/refunds with a balance
+> tail were dropped before parsing, restore re-introduced unmasked SMS bodies,
+> the 30-day purge was never called, sender-first routing had zero production
+> callers, the R8 and native-audit gates were manual (and the audit's `nm` probes
+> ignored their arguments, so it could not fail), a "bundled Lottie" was
+> attributed but not in the build, and the privacy copy claimed nothing leaves
+> the phone while the Drive backup uploads message text. **324 tests green** (was
+> 256), lint clean on a regenerated baseline, both shell checks green, measured
+> classification numbers unchanged (regex floor 13.8 %, fused 0 destroyed).
+> **Landed in the 0.1.2 release commit (2026-10-11).** Three review
+> findings had a wrong premise and are documented as such: #30's "destructive
+> fallback disabled" was inverted (it was silent data loss), #4's suggested fix
+> stalls, and #24's map divergence is overridden by the fusion layer. Pending
+> owner calls: branch protection must require `PR Check` now that `ci.yml` is
+> push-only; the terms §4.2 wording; nothing visual was verified on a device.
+> Before: `docs/handoffs/0025-drive-backup-and-site-redesign.md` — Drive backup
 > now exists in the app: Settings → Data has "Back up to Google Drive" and
 > "Restore from Google Drive" (restore was onboarding-only before, and no
 > screen ever triggered a backup). A new `BackupCreateManager` snapshots every
@@ -149,7 +185,7 @@ Kotlin source root: `app/src/main/java/com/awbuilds/auraspend/`
 ```bash
 ./gradlew :app:compileProdDebugKotlin     # fast compile check
 ./gradlew testProdDebugUnitTest           # unit tests (required before handoff)
-./gradlew :app:lintProdDebug               # new issues fail; 78 pre-existing baselined
+./gradlew :app:lintProdDebug               # new issues fail; 64 pre-existing baselined
 ./gradlew assembleDevDebug                # dev APK (fast inner loop)
 ./gradlew assembleProdDebug               # prod APK (what ships; native build)
 ```
@@ -163,9 +199,17 @@ The Play paywall was removed in Phase 0 — do not reintroduce premium gating.
 still succeeds but produces `app-prod-release-unsigned.apk` and logs a warning —
 check the filename before calling a release build shippable.
 
-**Lint:** `app/lint-baseline.xml` pins the 78 pre-existing issues so only *new*
-ones fail CI. Run `./gradlew updateLintBaseline` deliberately (and review the
-diff) when you intentionally fix or add lint suppressions.
+**Lint:** `app/lint-baseline.xml` pins the pre-existing issues (64 rows after the
+0026 regeneration) so only *new* ones fail CI. Run `./gradlew updateLintBaseline`
+deliberately (and review the diff) when you intentionally fix or add lint
+suppressions.
+
+**Baseline profiles:** the shipping variant **removes** the `profileable`
+manifest tag (`app/src/prodRelease/AndroidManifest.xml`), because a profileable
+release build lets adb take a heap dump of the live process — which holds the
+decrypted finance database. Macrobenchmark needs the tag, so run baseline-profile
+generation against the `dev` flavor (same code, same R8 output, different
+application id): `:benchmark:connectedDevBenchmarkAndroidTest` — see README.
 
 ## Hard requirements (non-negotiable)
 
@@ -238,9 +282,15 @@ diff) when you intentionally fix or add lint suppressions.
    across eleven files before that check existed, so it is worth trusting it over
    your memory of where the licence is mentioned. **A mention of "Apache-2.0"
    about a dependency is correct and must not be "fixed"** — the bundled font is
-   OFL, ONNX Runtime is MIT, Lottie and AndroidX and the Google libraries are
+   OFL, ONNX Runtime is MIT, AndroidX and the Google libraries are
    Apache-2.0, and the runtime-downloaded model is Apache-2.0. A global
    find-and-replace makes false licensing claims about third parties.
+   `./tools/check_privacy_claims.sh` is the sibling check for the app's *copy*:
+   it fails when an absolute claim ("nothing leaves your phone") appears without
+   its exception on the same line. The in-app subtitle said exactly that, two
+   features after Drive backup made it false — a promise that drifts by omission
+   needs a tripwire, not another review comment. Add the exception, do not
+   delete the claim.
 
 ## Design system quick reference
 
@@ -260,10 +310,6 @@ diff) when you intentionally fix or add lint suppressions.
 | Spacing | `AuraSpacing.*` (4dp grid, `gutter = 20dp`) |
 | Motion | `AuraMotion.*` (never invent durations) |
 | Brand gradient | `AuraGradients.aurora` |
-
-Legacy `ui/core/CashewComponents.kt` is a Phase 0 compatibility shim. Do not
-add new usage; migrate call sites to the design system as each screen is
-rebuilt (P1–P3), then delete the shim.
 
 ## Money, theme and i18n invariants
 
@@ -288,7 +334,10 @@ rebuilt (P1–P3), then delete the shim.
 
 - **Never write to public/external storage.** `minSdk = 30` forbids it without
   `MANAGE_EXTERNAL_STORAGE`; use the Storage Access Framework uri directly
-  (see `CsvManager.exportToCsv`).
+  (see `CsvManager.exportToCsv`). **Also never sweep the SMS queue:**
+  `unrecognized_sms` has a 30-day retention (`purgeOlderThan`, called on the
+  periodic worker tick), while `sms_messages` deliberately has none — it is the
+  visible history the SMS tab and Smart Add show the user.
 - **Drive restore is a replace, not a merge**, and it runs inside one
   `BackupRestoreManager` Room transaction. Do not "restore" by calling repository
   save methods directly from a composable.
@@ -301,6 +350,22 @@ rebuilt (P1–P3), then delete the shim.
   directory; keep them that way — the app promises data stays on-device.
 - **Every write path goes through `TransactionRepositoryImpl.sanitized()`**, the
   single `SensitiveDataMasker` choke-point. New write paths must not bypass it.
+  Drive restore masks the SMS queue and the unrecognized-message list on the way
+  in too (`BackupRestoreManager`), because a v1–v3 backup predates the masker.
+- **A transaction write is update-if-present, else insert-if-absent.** The DAO
+  inserts with `OnConflictStrategy.IGNORE`, never `REPLACE`: SQLite implements
+  REPLACE as delete-then-insert, and `sourceSmsId` is unique, so a second save of
+  the same SMS-linked transaction (worker/triage race, CSV re-import, re-processed
+  queue row) used to *delete the row the user had edited* and rebuild it from the
+  pipeline's parse. An edit arrives with the row's existing id, so `saveTransaction`
+  updates first and only inserts when no row matched.
+- **The inbox scan has three cursor values, not one.** `newestIngested` (a
+  high-water mark), `historyBefore` (the downwards walk) and `historyWalkDone`.
+  A single watermark advanced to `newest - 1` permanently stranded every message
+  older than the newest 500 — a fresh install never ingested its history, and
+  "advance only on a short batch" stalls instead, because the provider query can
+  only return the newest page. The walk pulls one page per pass and only when the
+  live queue is empty, so a backfill never outruns the classifier.
 
 ## On-device AI invariants
 
@@ -313,6 +378,22 @@ rebuilt (P1–P3), then delete the shim.
   degradation path.
 - **`SmsExtraction.confidence` is nullable and must stay honest.** null means
   the runtime has no calibrated head. Never fabricate a score.
+- **`SmsExtraction.isTransactionProbability` is confidence in the verdict the
+  runtime *emitted*, not the probability of the transaction class.** On a "not a
+  transaction" verdict the two differ, and reporting the raw class probability
+  makes `AiSignalFusion.mayDiscard` arithmetically unreachable — it is below 0.5
+  whenever the verdict is negative, so the 0.9 gate can never fire, and the
+  measured "0 transactions destroyed" then comes from dead code rather than from
+  a trustworthy runtime. Convert with `SmsExtraction.verdictConfidence(...)`, and
+  keep the eval report's `probabilitySemantics` field honest: `FusedAiEval`
+  converts `p_transaction` reports on load for exactly this reason.
+- **The bundled centroid asset is little-endian and SHA-256 pinned.** The writer
+  (`tools/build_embedding_asset.py`) and the reader (`EmbeddingCentroidCodec`)
+  must agree on byte order; they did not, and the flagship encoder silently
+  returned null for every message while the readiness UI said "ready".
+  `EmbeddingClassifierAssetTest` decodes the real asset and fails on a digest or
+  layout change, and `OnDeviceClassifier.isOperational` keeps readiness honest —
+  a runtime whose session, vocabulary or centroids failed to load is *not* ready.
 - **Any new runtime must beat the measured floor, *fused*.** Baseline with the
   model switched off: **13.8 % exact match**, type 95.4 %, category 36.9 %
   (`RegexBaselineEval`, `./gradlew :app:classificationBaseline`).
@@ -362,4 +443,8 @@ rebuilt (P1–P3), then delete the shim.
   validates that it found symbols *before* reporting a clean result, and filters
   documentation URLs (arXiv, scipy, NVIDIA docs) and mangled C++ names containing
   "Telemetry" — a real library embeds both, and flagging them would train people
-  to ignore the check. ONNX Runtime arm64 passes with zero network imports.
+  to ignore the check. ONNX Runtime arm64 passes with zero network imports; the
+  single loader exception is its execution-provider plugin loader (`dlopen`/
+  `dlsym` on the `libonnxruntime_providers_*.so` shipped in the same APK),
+  permitted by name and only when those plugin names are embedded in the
+  artifact — any other loader symbol still fails.
