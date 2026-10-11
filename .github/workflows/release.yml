@@ -1,7 +1,8 @@
 name: Release
 
-# Tag-driven release build. Produces the two shippable artifacts and attaches
-# them to a GitHub Release — it does NOT upload anything to Google Play.
+# Release build. Tags publish a GitHub Release with the two shippable
+# artifacts; PRs targeting main run the same signed build as a pre-merge check
+# (workflow artifacts only). It does NOT upload anything to Google Play.
 #
 #   git tag v0.1.2 && git push origin v0.1.2
 #
@@ -13,23 +14,32 @@ name: Release
 #   for review; CI never submits.
 #
 # Signing: the build signs with the *upload key* (auraspend.jks, alias key0)
-# from secrets.properties, which this workflow materialises from four
-# repository secrets. The keystore must be the existing upload key — a newly
-# generated keystore is a different key and Play rejects the upload. Secrets:
+# from secrets.properties, which this workflow materialises from four secrets
+# on the `release` GitHub environment. The keystore must be the existing
+# upload key — a newly generated keystore is a different key and Play rejects
+# the upload. Secrets:
 #
 #   KEYSTORE_BASE64    base64 of auraspend.jks
 #   KEYSTORE_PASSWORD  keystore (store) password
 #   KEY_ALIAS          key0
 #   KEY_PASSWORD       key password
 #
-# Anyone can read this workflow; nobody can read the values. GitHub never
-# exposes repository secrets to fork pull requests, and this workflow runs only
-# on tags and manual dispatch.
+# The environment is the gate: it requires a reviewer (the maintainer approves
+# every run that uses it) and only `main`, `v*` tags and main-targeting PRs may
+# reach it — a dispatch from any other branch cannot. PRs targeting main run
+# this workflow as a pre-merge signed build (approval-gated; workflow
+# artifacts only, never a Release — Releases are published by tags). Anyone
+# can read this workflow; nobody can read the values, and GitHub never exposes
+# them to forks or fork pull requests (the build job skips fork PRs entirely).
 
 on:
   push:
     tags: ["v*"]
   workflow_dispatch:
+  # A PR targeting main gets the same signed build before merge. It is
+  # approval-gated like a release but only uploads workflow artifacts.
+  pull_request:
+    branches: [main]
 
 permissions:
   contents: write # publish the Release Drafter draft and attach assets
@@ -37,6 +47,12 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
+    # Gates the signing secrets: a required reviewer approves every run, and
+    # only `main`, `v*` tags and main-targeting PRs may use the environment.
+    environment: release
+    # Fork PRs can never receive environment secrets; skip the job cleanly
+    # instead of failing the missing-secret guard.
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -67,7 +83,7 @@ jobs:
           missing=0
           for name in KEYSTORE_BASE64 KEYSTORE_PASSWORD KEY_ALIAS KEY_PASSWORD; do
             if [ -z "${!name:-}" ]; then
-              echo "::error::Missing repository secret $name — see the header of this workflow."
+              echo "::error::Missing signing secret $name — see the header of this workflow."
               missing=1
             fi
           done
