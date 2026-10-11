@@ -373,11 +373,12 @@ PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
 You should have received a copy of the GNU Affero General Public License along
 with this program. If not, see <https://www.gnu.org/licenses/>.
 
-AuraSpend is **not on Google Play yet**, and no public release has been
-published: the 0.1.1 listing and its closed-testing track are staged in the Play
-Console but have not been sent for review, so
-[GitHub Releases](https://github.com/auraspend/auraspend/releases) is still
-empty. Until a release ships, [build the app from source](#building-a-release).
+AuraSpend is **not on Google Play yet**: the 0.1.1 listing and its
+closed-testing track are staged in the Play Console but have not been sent for
+review. Signed APKs are published on
+[GitHub Releases](https://github.com/auraspend/auraspend/releases) — the first
+is v0.1.2 — and you can always
+[build the app from source](#building-a-release).
 The full license text is in [`LICENSE`](LICENSE) and is readable in the app
 under **Settings → About → Open-source licenses**.
 
