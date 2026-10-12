@@ -19,7 +19,7 @@ profileinstaller = "1.4.1"
 
 okhttp = "4.12.0"
 playServicesAuth = "21.6.0"
-googleApiClient = "2.9.0"
+googleApiClient = "2.9.1"
 googleApiServicesDrive = "v3-rev20230822-2.0.0"
 googleHttpClientGson = "1.44.2"
 guava = "33.0.0-android"
