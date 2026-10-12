@@ -17,7 +17,7 @@ room = "2.8.5"
 work = "2.10.0"
 profileinstaller = "1.4.1"
 
-okhttp = "4.12.0"
+okhttp = "5.5.0"
 playServicesAuth = "21.6.0"
 googleApiClient = "2.9.0"
 googleApiServicesDrive = "v3-rev20230822-2.0.0"
