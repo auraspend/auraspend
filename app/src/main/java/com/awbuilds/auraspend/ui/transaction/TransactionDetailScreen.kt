@@ -27,6 +27,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.awbuilds.auraspend.R
+import com.awbuilds.auraspend.core.AuraLog
 import com.awbuilds.auraspend.core.boundary
 import com.awbuilds.auraspend.core.boundaryOrNull
 import com.awbuilds.auraspend.data.classification.BankMessageParser
@@ -479,7 +480,23 @@ private fun OriginalMessageCard(message: SmsMessageEntity, onCopied: () -> Unit)
                             )
                             true
                         }
-                        if (copied) onCopied()
+                        if (copied) {
+                            // Read our own write back: some OEM clipboards accept a
+                            // write and go on serving something else. Lengths only in
+                            // the log, never the message.
+                            val readBackLength = boundaryOrNull(TAG) {
+                                clipboard.getClipEntry()?.clipData?.getItemAt(0)?.text?.length
+                            }
+                            // `i`, not `d`: vivo/OriginOS drops debug-level app
+                            // logs, and this line is the only evidence a copy
+                            // actually reached the clipboard.
+                            AuraLog.i(
+                                TAG,
+                                "message copy: ${message.body.length} chars, " +
+                                    "clipboard readback=$readBackLength"
+                            )
+                            onCopied()
+                        }
                     }
                 }
             ) {
