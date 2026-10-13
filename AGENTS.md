@@ -3,7 +3,21 @@
 > Read this file and the latest file in `docs/handoffs/` before touching anything.
 > Update both (plus `CLAUDE.md` / `memory/` when you learn something durable) before ending a session.
 >
-> Latest: `docs/handoffs/0037-txn-detail-original-message.md` — the transaction
+> Latest: `docs/handoffs/0038-smart-add-lag-and-clean-slate-audit.md` — the Smart
+> Add lag is root-caused and fixed (the triage observer re-parsed every
+> skipped/pending row **on the main thread** on every queue write): the parse is
+> memoized (`ParseMemo`) and the derivation runs on `Dispatchers.Default` with
+> conflation. Clean-slate A/B on-device: late frames **15.5 % → 3.3 %**, p95
+> frame interval **435 ms → 17.7 ms** at an identical workload. The
+> duplicate guard's ±₹1 window for small amounts was swallowing real payments
+> (a card swipe 52 min after a similar one at the same merchant) — the gate is
+> paise-flat now and the fresh re-ingest rescued two payments automatically.
+> Owner-directed clean-slate run (wipe → fresh full re-ingest under the fixed
+> build) **reproduced the books exactly**; the skipped set has zero unmatched
+> rows. PR #57, **509/509 tests.** Device notes: `gfxinfo` shows 0 frames for
+> this app on vivo — use SurfaceFlinger `--latency` sampling; fresh installs
+> must seed `currency_code=INR` or the locale renders `$`.
+> Before: `docs/handoffs/0037-txn-detail-original-message.md` — the transaction
 > detail page now shows the **original SMS**: sender, received time, the full
 > body (selectable, no truncation) and a Copy action, read back and verified on
 > device (`message copy: 112 chars, clipboard readback=112`). The Note row hides
