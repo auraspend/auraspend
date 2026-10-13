@@ -10,6 +10,55 @@ internal APIs.
 
 ## [Unreleased]
 
+## [0.1.3] — 2026-10-13
+
+A categorisation fix release, measured by draining a real 1,952-message inbox
+on a device: the triage surface became visible, and four defects that had
+silently dropped or mis-filed real money are fixed.
+
+### Added
+
+- **Visible categorisation status.** The triage tab shows a determinate progress
+  header, an "N messages waiting" line and a "Categorizing…" chip on the
+  message being processed. A message being worked on is claimed before the
+  expensive work, and a pass that dies mid-message is swept back into the
+  queue on the next pass — instead of leaving a row stuck forever.
+- **One honest notification per drain** — a single ongoing determinate
+  notification while messages are categorised, and one summary at the end; the
+  per-run "N transactions saved" posts are gone. Draining also continues in
+  the background after the app is swiped away.
+- OTPs, alerts and promos are dropped when messages are ingested, so the
+  queue, its progress count and the pick-list hold only real candidates.
+
+### Fixed
+
+- **Genuine ICICI card spends were silently deleted.** ICICI appends
+  "If not you, call 1800 2662/SMS BLOCK …" to every card alert, and the hard
+  anti-fraud veto treated that tail as a phishing lure — three real spends
+  appeared nowhere, not even in the unrecognised list. The veto now has one
+  narrow exception for the bank's own alarm shape; phishing framings
+  ("if not done by you", "not authorised by you") stay vetoed.
+- **The triage screen no longer hides behind the optional 22 MB model.** The
+  queue, its progress and its swipe actions render whether or not the model is
+  downloaded; the model prompt now appears only when the queue is empty.
+- **Credits phrased around their reversal were skipped as typeless.**
+  "…is credited … as a reversal of debit transaction" and "…received …
+  through Bharat Bill Payment System" made the debit and credit lexicons both
+  fire; these now record as income, as do the card-payment acknowledgements
+  they carry.
+- **Dashed month-name dates ("21-JUL-26") never parsed**, so those
+  transactions were saved with the time they were processed and one payment
+  was false-skipped as a duplicate of an unrelated credit hours earlier. The
+  date pattern, month-name matching and the duplicate check's amount gate are
+  all fixed; saved transactions carry their real dates again.
+- **"Payment attempt … unsuccessful" and "refund … has been initiated"
+  notices** are treated as alerts instead of piling into the unrecognised
+  list — money has not moved in either case.
+
+**Verified on a device:** the full inbox drains to exactly the predicted
+candidate set (706 rows, 0 failures, no duplicates), notifications match the
+new model, and the test suite grew 382 → 396.
+
 ## [0.1.2] — 2026-10-11
 
 The reliability release. A 32-finding code review is fixed end to end — the
@@ -204,7 +253,8 @@ First alpha. Feature-complete for its scope: Material 3 UI, bank SMS
 classification, budgets, subscriptions, savings goals, and Google Drive backup.
 Licensed under Apache-2.0.
 
-[Unreleased]: https://github.com/auraspend/auraspend/compare/v0.1.2...HEAD
+[Unreleased]: https://github.com/auraspend/auraspend/compare/v0.1.3...HEAD
+[0.1.3]: https://github.com/auraspend/auraspend/compare/v0.1.2...v0.1.3
 [0.1.2]: https://github.com/auraspend/auraspend/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/auraspend/auraspend/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/auraspend/auraspend/releases/tag/v0.1.0

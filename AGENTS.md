@@ -3,7 +3,38 @@
 > Read this file and the latest file in `docs/handoffs/` before touching anything.
 > Update both (plus `CLAUDE.md` / `memory/` when you learn something durable) before ending a session.
 >
-> Latest: `docs/handoffs/0027-currency-picker.md` — the currency list is now real:
+> Latest: `docs/handoffs/0029-sms-categorisation-fix-verification.md` — the device
+> pass on the owner's real inbox found and fixed four issues: genuine ICICI card
+> spends were deleted by the hard fraud veto (the bank's own alarm tail was the
+> trigger — now a narrow exception); the triage UI was hidden behind the optional
+> 22 MB model (the queue now always wins); credits like "reversal of debit" and
+> "Bharat Bill Payment System" came back typeless (phrases are neutralised before
+> scoring); and dashed month-name dates ("21-JUL-26") never parsed — the year
+> separator class `[ -,]` was a character range, and month text parsing is
+> case-sensitive — so those transactions got the save-time date and one was
+> false-skipped as a duplicate (the dedup amount gate is tightened too).
+> 396/396 tests green. **Everything is uncommitted — commit only on request.**
+> The owner's phone still runs `0.1.1-play`; the Dev build used for the pass is
+> installed alongside it. The corpus re-baseline for these shapes is deliberately
+> left as a separate step.
+> Before: `docs/handoffs/0028-sms-categorisation-flow.md` — the categorisation flow now
+> matches what the owner expects to see. The queue pipeline was already sound; what was
+> broken was the status surface and the notification model. New `CLASSIFYING` queue status
+> is the in-flight marker (a pass claims a row before the expensive work, and a pass killed
+> mid-row is swept back to NEW on the next pass); `PROCESSED` is *parked by the user* and is
+> **never** swept or re-processed. OTP/alerts/promos are dropped **at ingest** with the same
+> `isOtpOrAlertMessage` predicate the processor uses, so the queue, the progress denominator
+> and the pick-list hold only real candidates. Live status is derived from the observed queue
+> (`queueProgress`), not reported by a worker: the triage tab shows a determinate header, a
+> "N messages waiting" line and a "Categorizing…" chip on the in-flight row. The
+> per-run "N transactions saved" notification is replaced by ONE ongoing determinate
+> notification during a drain and ONE summary at the end; work now also runs while the app
+> is in the foreground (pacing unchanged) and the WorkManager pass chains itself so a
+> two-month backlog keeps draining after the app is swiped away. Dead code removed:
+> "Save All" filtered a status no row can have. **382 tests green** (32 new), lint clean with
+> the permission guard written to be lint-visible, EN/HI green. **On-device verification is
+> still outstanding.**
+> Before: `docs/handoffs/0027-currency-picker.md` — the currency list is now real:
 > the 30 currencies from `api.frankfurter.dev/v1/currencies` are captured in
 > `ui/designsystem/CurrencyCatalog.kt` and picked from a shared list
 > (`CurrencyPickerList`) on a new 4th onboarding page and a Settings → Finance
@@ -338,6 +369,12 @@ application id): `:benchmark:connectedDevBenchmarkAndroidTest` — see README.
   `unrecognized_sms` has a 30-day retention (`purgeOlderThan`, called on the
   periodic worker tick), while `sms_messages` deliberately has none — it is the
   visible history the SMS tab and Smart Add show the user.
+- **`sms_messages` row statuses are a status channel, not flags.** `NEW` is
+  work to do, `CLASSIFYING` is the in-flight marker (swept back to `NEW` by the
+  next pass if a pass died mid-row), and the terminal states are
+  `SAVED`/`SKIPPED`/`FAILED`. `PROCESSED` is where the undo paths **park** a row;
+  it must never be swept or auto-processed, because re-processing it would
+  resurrect the decision the user reversed (0028 pinned that by test).
 - **Drive restore is a replace, not a merge**, and it runs inside one
   `BackupRestoreManager` Room transaction. Do not "restore" by calling repository
   save methods directly from a composable.

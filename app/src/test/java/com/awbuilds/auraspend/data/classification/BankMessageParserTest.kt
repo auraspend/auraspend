@@ -129,6 +129,40 @@ class BankMessageParserTest {
         assertNull(parsed.type)
     }
 
+    @Test
+    fun `reversal of debit is income, not ambiguous`() {
+        // Real shape (Kotak UPI reversal, 2026-10-13): "credited ... as a reversal
+        // of debit" scored both lexicons — the literal word "debit" — so the
+        // ambiguity rule returned no type and the row was skipped.
+        val parsed = BankMessageParser.parse(
+            "Rs.20.00 is credited to Kotak Bank a/c no. 8584 on 20-08-26 as a reversal of debit transaction (UPI Ref no 713508246195)"
+        )
+        assertEquals(TransactionType.INCOME, parsed.type)
+    }
+
+    @Test
+    fun `bharat bill payment system is a brand, not a bill-payment debit`() {
+        // Real shape (ICICI card-payment acknowledgment, 2026-10-13): the brand
+        // "Bharat Bill Payment System" contains the debit phrase "bill payment",
+        // which made the type ambiguous and the row untyped.
+        val parsed = BankMessageParser.parse(
+            "Payment of Rs 838.61 has been received on your ICICI Bank Credit Card XX8001 through Bharat Bill Payment System on 04-AUG-26"
+        )
+        assertEquals(TransactionType.INCOME, parsed.type)
+    }
+
+    @Test
+    fun `dashed month-name dates are parsed, not lost to the save time`() {
+        // "04-AUG-26" had no matching date format, so the transaction fell back to
+        // `LocalDateTime.now()`: wrong dates in the UI and a collapsed duplicate
+        // window (owner's device, 2026-10-13 — two card payments were skipped as
+        // duplicates of an unrelated credit saved minutes earlier).
+        val parsed = BankMessageParser.parse(
+            "Payment of Rs 838.61 has been received on your ICICI Bank Credit Card XX8001 through Bharat Bill Payment System on 04-AUG-26"
+        )
+        assertEquals(LocalDate.of(2026, 8, 4), parsed.date?.toLocalDate())
+    }
+
     // ─── Merchants ───────────────────────────────────────────────────────────
 
     @Test

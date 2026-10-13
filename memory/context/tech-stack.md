@@ -37,7 +37,26 @@ wired; lottie was never used and was removed).
 | `docs/design/aurora.md` | Design language spec |
 | `docs/handoffs/` | Session handoffs |
 
-## Workflows
+## Testing notes
+
+- **Any Robolectric test that needs the real `AuraSpendApp`** must point `@Config` at
+  `RobolectricWorkManagerApp` (`app/src/test/java/com/awbuilds/auraspend/`), which implements
+  `Configuration.Provider`. Without it, `AuraSpendApp.onCreate`'s
+  `AutoClassificationWorker.schedule` → `WorkManager.getInstance` throws
+  `IllegalStateException` on a background thread inside the sandbox, and kotlinx-coroutines
+  reports it two tests later as `UncaughtExceptionsBeforeTest`. This is also why
+  `AuraSpendApp` is `open`.
+- Tests that observe Room `Flow`s need a **real** `Dispatchers.Main`
+  (`RealMainDispatcherRule`): a test dispatcher only advances when somebody advances the
+  scheduler, so assertions race the emission. Wait on the state instead
+  (`awaitState { … }` + a real timeout).
+- The application (and its database) is a process-wide **singleton across tests in a
+  class**, so rows seeded by an earlier test are still present — clear the queue in
+  `@Before` (`dao().clear()`).
+- `POST_NOTIFICATIONS` must be checked **inline** at the `notify(...)` call site: lint's
+  MissingPermission detector cannot see the guard through a helper function
+  (`canNotify`), so the model-download notifications cost three baseline entries.
+
 | Task | Command / location |
 |------|--------------------|
 | Cold-start benchmark | `./gradlew :benchmark:connectedDevBenchmarkAndroidTest` (dev flavor keeps `profileable`; same code and R8 output as prod) |

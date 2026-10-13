@@ -38,6 +38,7 @@ import androidx.compose.ui.unit.sp
 import com.awbuilds.auraspend.R
 import com.awbuilds.auraspend.data.ai.AiModelState
 import com.awbuilds.auraspend.data.classification.ClassifiedSms
+import com.awbuilds.auraspend.data.classification.SmsStatus
 import com.awbuilds.auraspend.domain.model.TransactionType
 import com.awbuilds.auraspend.ui.core.isNotificationPermissionNeeded
 import com.awbuilds.auraspend.ui.core.rememberNotificationPermissionLauncher
@@ -84,24 +85,10 @@ internal fun SmsListTab(
     } else {
         Column(modifier = Modifier.fillMaxSize()) {
             SmsTabError(state, viewModel)
-            if (state.isAiEnriching && state.aiProgressTotal > 0) {
-                LinearProgressIndicator(
-                    progress = { state.aiProgressCurrent.toFloat() / state.aiProgressTotal.toFloat() },
-                    modifier = Modifier.fillMaxWidth().height(4.dp),
-                    color = MaterialTheme.colorScheme.primary,
-                    trackColor = MaterialTheme.colorScheme.surfaceVariant
-                )
-                Text(
-                    stringResource(
-                        R.string.classification_ai_progress,
-                        state.aiProgressCurrent,
-                        state.aiProgressTotal
-                    ),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.padding(horizontal = AuraSpacing.gutter, vertical = AuraSpacing.xs)
-                )
-            }
+
+            // No progress bar here on purpose. This tab is for picking a message to
+            // classify by hand; the live drain status belongs to the triage tab below,
+            // which renders the same queue rows as they are categorized.
 
             LazyColumn(
                 modifier = Modifier.weight(1f),
@@ -169,6 +156,83 @@ private fun formatTimestamp(timestamp: Long): String {
 }
 
 /**
+ * Live drain status for the triage tab.
+ *
+ * The numbers are derived from the observed queue, not reported by a worker, so this and the
+ * background notification are the same numbers by construction. The previous pair of fields
+ * behind this UI (`aiProgressCurrent` / `aiProgressTotal`) was never assigned, so the bar it
+ * rendered was unreachable code.
+ */
+@Composable
+private fun CategorisationProgress(state: ClassificationViewState) {
+    when {
+        state.isCategorising && state.progressTotal > 0 -> {
+            Column {
+                LinearProgressIndicator(
+                    progress = {
+                        state.progressCurrent.toFloat() / state.progressTotal.toFloat()
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(4.dp),
+                    color = MaterialTheme.colorScheme.primary,
+                    trackColor = MaterialTheme.colorScheme.surfaceVariant
+                )
+                Text(
+                    stringResource(
+                        R.string.classification_ai_progress,
+                        state.progressCurrent,
+                        state.progressTotal
+                    ),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.padding(
+                        horizontal = AuraSpacing.gutter,
+                        vertical = AuraSpacing.xs
+                    )
+                )
+            }
+        }
+
+        // Queued but not currently in flight: the loop is between passes (or the
+        // toggle is off, in which case these rows will wait for the user).
+        state.queuedCount > 0 -> {
+            Text(
+                pluralStringResource(
+                    R.plurals.sms_categorizing_waiting,
+                    state.queuedCount,
+                    state.queuedCount
+                ),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(
+                    horizontal = AuraSpacing.gutter,
+                    vertical = AuraSpacing.xs
+                )
+            )
+        }
+    }
+
+    // The same "saved · skipped" line the notification's summary uses, so the two surfaces
+    // describe a drain in the same words.
+    if (state.progressTotal > 0 && state.savedCount + state.skippedCount > 0) {
+        Text(
+            stringResource(
+                R.string.sms_categorizing_summary,
+                state.savedCount,
+                state.skippedCount
+            ),
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(
+                horizontal = AuraSpacing.gutter,
+                vertical = AuraSpacing.xs
+            )
+        )
+    }
+}
+
+/**
  * This tab's own error surface.
  *
  * The triage tab never read `state.error`, so a save that failed (no amount found,
@@ -212,9 +276,23 @@ internal fun AutoDetectTab(
 ) {
     val isModelDownloaded = state.aiModelState is AiModelState.Ready
 
-    if (!state.smsPermissionGranted) {
+    // Which body renders is decided by [autoDetectTabMode] — a pure function, so
+    // the precedence rules are unit-tested rather than read off this file. The
+    // load-bearing one: a non-empty queue renders even when the optional model
+    // was never downloaded (the queue used to hide behind the model prompt).
+    when (
+        autoDetectTabMode(
+            smsPermissionGranted = state.smsPermissionGranted,
+            isScanningQueue = state.isScanningQueue,
+            isAiEnriching = state.isAiEnriching,
+            queueIsEmpty = state.pendingSmsList.isEmpty(),
+            isModelDownloaded = isModelDownloaded
+        )
+    ) {
+        AutoDetectTabMode.PERMISSION -> {
         SmsPermissionRequired { permissionLauncher.launch(Manifest.permission.READ_SMS) }
-    } else if (!isModelDownloaded) {
+        }
+        AutoDetectTabMode.MODEL_PROMPT -> {
         Box(
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center
@@ -249,7 +327,8 @@ internal fun AutoDetectTab(
                 }
             }
         }
-    } else if (state.isBatchClassifying || (state.isAiEnriching && state.pendingSmsList.isEmpty())) {
+        }
+        AutoDetectTabMode.SCANNING -> {
         Box(
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center
@@ -268,7 +347,8 @@ internal fun AutoDetectTab(
                 )
             }
         }
-    } else if (state.pendingSmsList.isEmpty()) {
+        }
+        AutoDetectTabMode.EMPTY -> {
         Box(
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center
@@ -283,29 +363,13 @@ internal fun AutoDetectTab(
                 }
             )
         }
-    } else {
+        }
+        AutoDetectTabMode.QUEUE -> {
         Column(modifier = Modifier.fillMaxSize()) {
             // The triage errors surface here: a save that found no transaction, a
             // failed dismiss, or a failed "Save All" all land in `state.error`.
             SmsTabError(state, viewModel)
-            if (state.isAiEnriching && state.aiProgressTotal > 0) {
-                LinearProgressIndicator(
-                    progress = { state.aiProgressCurrent.toFloat() / state.aiProgressTotal.toFloat() },
-                    modifier = Modifier.fillMaxWidth().height(4.dp),
-                    color = MaterialTheme.colorScheme.primary,
-                    trackColor = MaterialTheme.colorScheme.surfaceVariant
-                )
-                Text(
-                    stringResource(
-                        R.string.classification_ai_progress,
-                        state.aiProgressCurrent,
-                        state.aiProgressTotal
-                    ),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.padding(horizontal = AuraSpacing.gutter, vertical = AuraSpacing.xs)
-                )
-            }
+            CategorisationProgress(state)
 
             LazyColumn(
                 modifier = Modifier.weight(1f),
@@ -411,6 +475,7 @@ internal fun AutoDetectTab(
                 }
             }
         }
+    }
     }
 }
 
@@ -524,6 +589,15 @@ private fun ClassifiedSmsItem(
                     maxLines = 2,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                 )
+                // In-flight marker for this exact message: the queue row is CLASSIFYING
+                // while a background pass is working through it. The user asked to watch
+                // the categorisation happen one-by-one, and this is that row.
+                if (classified.status == SmsStatus.CLASSIFYING) {
+                    TintBadge(
+                        text = stringResource(R.string.sms_categorizing_row),
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                }
             }
             if (!classified.isSaved) {
                 Column(

@@ -1,25 +1,21 @@
 package com.awbuilds.auraspend.data.classification
 
 import android.Manifest
-import android.app.NotificationChannel
-import android.app.NotificationManager
 import android.content.Context
 import android.content.pm.PackageManager
-import android.os.Build
 import android.os.Process
-import androidx.core.app.NotificationCompat
-import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import androidx.work.Constraints
 import androidx.work.CoroutineWorker
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.ExistingWorkPolicy
+import androidx.work.OneTimeWorkRequest
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import com.awbuilds.auraspend.AuraSpendApp
-import kotlinx.coroutines.flow.first
+import com.awbuilds.auraspend.data.local.entities.SmsMessageStatus
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
@@ -32,10 +28,16 @@ import java.util.concurrent.TimeUnit
  *
  *  1. [SmsIngestor] snapshots new device messages (keyed on the provider `_id`, `OR IGNORE`).
  *  2. [SmsPipelineProcessor] advances every `NEW` row to SAVED / SKIPPED / FAILED, one at a time.
- *  3. A notification summarises how many transactions were auto-saved.
+ *  3. [SmsProgressNotifier] reports the pass as one ongoing progress notification, replaced by a
+ *     single summary when the drain finishes.
  *
  * Because the queue is the source of truth, a message saved here can never collide with a manual
  * Smart Add save (unique `sourceSmsId` index), and no inbox cursor / prefs dedup sets are needed.
+ *
+ * When a pass finishes with work left over it enqueues its own continuation, so a large backlog
+ * keeps draining pass-by-pass even after the user swipes the app away (the in-process
+ * [BackgroundClassificationCoordinator] has died by then, and the 6-hourly schedule alone would
+ * need weeks). Each pass stays short on purpose: WorkManager stops a job that runs too long.
  */
 class AutoClassificationWorker(
     context: Context,
@@ -95,49 +97,48 @@ class AutoClassificationWorker(
         )
         val result = processor.processPending(maxMessages = MAX_BATCH)
 
-        if (result.saved > 0) {
-            showNotification(result.saved)
-        }
+        reportPass(app, result)
 
         // RETRY rows still exist (transient failures) but a successful pass is not a job failure;
         // the periodic schedule will pick them up again.
         return true
     }
 
-    private fun showNotification(saved: Int) {
-        val channelId = "auto_classification"
-        val notificationManager =
-            applicationContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+    /**
+     * Publishes the pass result to the notification shade and, when work is left, hands the
+     * drain to the next pass.
+     *
+     * Both drivers call this same method so the notification rules exist exactly once.
+     */
+    private suspend fun reportPass(app: AuraSpendApp, result: SmsProcessResult) {
+        val dao = app.database.smsMessageDao()
+        val pendingNew = dao.countByStatus(SmsMessageStatus.NEW.name)
+        val queueTotal = dao.countAll()
+        val moreHistoryMayCome = SmsIngestor.hasMoreHistory(applicationContext)
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(
-                channelId,
-                "Transaction Detection",
-                NotificationManager.IMPORTANCE_DEFAULT
-            ).apply {
-                description = "Notifications for auto-detected bank transactions"
-            }
-            notificationManager.createNotificationChannel(channel)
+        if (shouldContinueDraining(pendingNew = pendingNew, moreHistoryMayCome = moreHistoryMayCome)) {
+            // Same unique name as runNow's one-shot, REPLACE: exactly one continuation is ever
+            // queued, so a backlog cannot stack duplicates of itself.
+            WorkManager.getInstance(applicationContext).enqueueUniqueWork(
+                WORK_NAME_ONESHOT,
+                ExistingWorkPolicy.REPLACE,
+                continuationRequest()
+            )
         }
-
-        val notification = NotificationCompat.Builder(applicationContext, channelId)
-            .setSmallIcon(android.R.drawable.ic_dialog_info)
-            .setContentTitle("$saved new transaction${if (saved > 1) "s" else ""} saved")
-            .setContentText("Detected from your bank messages. Open AuraSpend to review.")
-            .setAutoCancel(true)
-            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
-            .build()
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            if (ContextCompat.checkSelfPermission(applicationContext, Manifest.permission.POST_NOTIFICATIONS)
-                == PackageManager.PERMISSION_GRANTED
-            ) {
-                NotificationManagerCompat.from(applicationContext).notify(1001, notification)
-            }
-        } else {
-            NotificationManagerCompat.from(applicationContext).notify(1001, notification)
-        }
+        app.smsProgressNotifier.onPassFinished(
+            result = result,
+            pendingNew = pendingNew,
+            queueTotal = queueTotal,
+            moreHistoryMayCome = moreHistoryMayCome
+        )
     }
+
+    private fun continuationRequest(): OneTimeWorkRequest =
+        OneTimeWorkRequestBuilder<AutoClassificationWorker>()
+            .setConstraints(
+                Constraints.Builder().setRequiresBatteryNotLow(true).build()
+            )
+            .build()
 
     companion object {
         private const val WORK_NAME = "auto_classification"
@@ -174,15 +175,14 @@ class AutoClassificationWorker(
          * never queue duplicates). Used right after consent / SMS permission / turning the toggle on.
          */
         fun runNow(context: Context) {
-            val request = OneTimeWorkRequestBuilder<AutoClassificationWorker>()
-                .setConstraints(
-                    Constraints.Builder().setRequiresBatteryNotLow(true).build()
-                )
-                .build()
             WorkManager.getInstance(context).enqueueUniqueWork(
                 WORK_NAME_ONESHOT,
                 ExistingWorkPolicy.REPLACE,
-                request
+                OneTimeWorkRequestBuilder<AutoClassificationWorker>()
+                    .setConstraints(
+                        Constraints.Builder().setRequiresBatteryNotLow(true).build()
+                    )
+                    .build()
             )
         }
 
@@ -194,3 +194,15 @@ class AutoClassificationWorker(
         private const val WORK_NAME_ONESHOT = "auto_classification_now"
     }
 }
+
+/**
+ * Whether the worker should enqueue another pass right now.
+ *
+ * `pendingNew > 0` is the obvious case. [moreHistoryMayCome] is the subtle one: when the live
+ * queue just drained but the history walk has not finished, the next pass would pull and
+ * classify a whole new page — so stopping here would end the drain with the message backlog
+ * still half-read, and the user would wait six hours for the rest. Pure so the rule is testable
+ * without WorkManager.
+ */
+internal fun shouldContinueDraining(pendingNew: Int, moreHistoryMayCome: Boolean): Boolean =
+    pendingNew > 0 || moreHistoryMayCome

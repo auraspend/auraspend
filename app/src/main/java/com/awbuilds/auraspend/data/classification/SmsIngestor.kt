@@ -30,6 +30,13 @@ import com.awbuilds.auraspend.ui.classification.SmsInfo
  *
  * PRIVACY: bodies are passed through [SensitiveDataMasker] BEFORE storage, so phone numbers,
  * reference ids and account fragments never touch the database (or anything derived from it).
+ *
+ * NOISE: OTP / alert / promo messages are dropped at [isIngestable] rather than at the
+ * processor. They were never saveable, but queueing them cost three things: they inflated the
+ * progress denominator ("categorising 34 of 900" when two thirds were OTPs), they occupied the
+ * SMS tab's message list, and each one burned a pipeline slot. The processor keeps the same
+ * check as defence in depth — one predicate, shared with [SmsAutoClassifier], so the ingest
+ * filter and the classifier can never disagree about what money moving looks like.
  */
 object SmsIngestor {
 
@@ -86,6 +93,18 @@ object SmsIngestor {
         return enqueued
     }
 
+    /**
+     * True while the inbox history walk still has pages left to pull.
+     *
+     * Read by both background drivers so the progress notification can tell "nothing to do
+     * right now, more coming" (an indeterminate bar) apart from "the backlog is finished"
+     * (a summary). Absent pref means done — a fresh install has not walked anything yet, and
+     * its first pass discovers that within seconds.
+     */
+    fun hasMoreHistory(context: Context): Boolean =
+        !context.getSharedPreferences(PREF_FILE, Context.MODE_PRIVATE)
+            .getBoolean(PREF_HISTORY_WALK_DONE, true)
+
     private fun scan(context: Context, scan: InboxScan, maxMessages: Int): List<SmsInfo> =
         SmsAutoClassifier.queryBankSms(
             context = context,
@@ -96,8 +115,9 @@ object SmsIngestor {
         )
 
     private suspend fun enqueue(dao: SmsMessageDao, messages: List<SmsInfo>): Int {
-        if (messages.isEmpty()) return 0
-        dao.insertAll(messages.map { message ->
+        val ingestable = messages.filter { isIngestable(it) }
+        if (ingestable.isEmpty()) return 0
+        dao.insertAll(ingestable.map { message ->
             SmsMessageEntity(
                 id = message.id,
                 address = message.address,
@@ -106,6 +126,17 @@ object SmsIngestor {
                 status = SmsMessageStatus.NEW.name
             )
         })
-        return messages.size
+        return ingestable.size
     }
 }
+
+/**
+ * True when a scanned message is worth queueing.
+ *
+ * The negation of [SmsAutoClassifier.isOtpOrAlertMessage] — the same predicate the
+ * processor applies, including its amount+movement-verb rescue, so a genuine debit that
+ * happens to end in an OTP is still ingested. It is a pure function on purpose: the
+ * filter is a rule worth pinning in a unit test without a ContentResolver.
+ */
+internal fun isIngestable(sms: SmsInfo): Boolean =
+    !SmsAutoClassifier.isOtpOrAlertMessage(sms.body)

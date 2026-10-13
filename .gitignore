@@ -44,3 +44,6 @@ tools/__pycache__/
 
 # OpenChamber tool state (local screenshots / session data).
 /.openchamber/
+
+# Kilo tool state (local session data).
+/.kilo/

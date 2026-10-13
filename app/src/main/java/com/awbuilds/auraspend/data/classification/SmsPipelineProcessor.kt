@@ -33,6 +33,10 @@ data class SmsProcessResult(
  *
  * The message body is never modified; every row is kept in the queue so the UI can show live
  * status and the user can re-save skipped messages manually from Smart Add.
+ *
+ * Live status is the queue itself: a row being classified right now is
+ * [SmsMessageStatus.CLASSIFYING], which the UI renders per-message and which is swept back to
+ * [SmsMessageStatus.NEW] at the start of the next pass if a pass was killed mid-row.
  */
 class SmsPipelineProcessor(
     private val dao: SmsMessageDao,
@@ -121,7 +125,21 @@ class SmsPipelineProcessor(
         }
         if (fingerprintDuplicate) return true
 
-        val sameTypeRecent = recent.filter { it.type == transaction.type }
+        val sameTypeRecent = recent
+            .filter { it.type == transaction.type }
+            // Near-identical means the SAME payment re-delivered, and SMS amounts are
+            // deterministic: a few-percent gap is a different payment. Without this
+            // gate the similarity score's merchantless case (40% free when both
+            // merchants are null) + a same-hour date could push a 6%-apart pair over
+            // the 0.96 threshold. Measured on the owner's device (2026-10-13): an
+            // ₹840.76 card payment was skipped as a "duplicate" of an unrelated ₹892
+            // credit 37 minutes earlier, because its date had failed to parse and
+            // collapsed onto the save hour. The date-parse fix removes that trigger;
+            // this gate makes the class impossible.
+            .filter {
+                kotlin.math.abs(it.amount - transaction.amount) <=
+                    maxOf(1.0, 0.002 * transaction.amount)
+            }
         return DuplicateDetector.findMostLikelyDuplicate(
             transaction,
             sameTypeRecent,
@@ -147,6 +165,12 @@ class SmsPipelineProcessor(
         var skipped = 0
         var failed = 0
         var attempted = 0
+
+        // Crash recovery: a row left CLASSIFYING by a killed pass is invisible to
+        // `getPending(NEW, …)`, so without this sweep the message would be stranded
+        // forever. PROCESSED rows are untouched — they are parked by the user.
+        dao.sweepInFlight(System.currentTimeMillis())
+
         val categories = transactionRepository.getAllCategories().first()
             .associate { it.id to it.name }
 
@@ -179,6 +203,14 @@ class SmsPipelineProcessor(
             ))
             return Outcome.SKIPPED
         }
+
+        // Claim the row before the expensive work so the UI can show "categorising…" on
+        // exactly this message while it is being classified, and so a pass killed mid-row
+        // leaves a marker the next pass sweeps (rather than a silent NEW row nobody owns).
+        dao.update(message.copy(
+            status = SmsMessageStatus.CLASSIFYING.name,
+            updatedAt = now
+        ))
 
         val classified = ClassifiedSms(
             sms = SmsInfo(

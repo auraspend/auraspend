@@ -50,6 +50,19 @@ class SmsPipelineProcessorTest {
         override suspend fun countByStatus(status: String): Int =
             rows.values.count { it.status == status }
 
+        override suspend fun countAll(): Int = rows.size
+
+        // Crash recovery: rows a killed pass left mid-flight become processable again.
+        override suspend fun sweepInFlight(now: Long) {
+            rows.replaceAll { _, row ->
+                if (row.status == SmsMessageStatus.CLASSIFYING.name) {
+                    row.copy(status = SmsMessageStatus.NEW.name, updatedAt = now)
+                } else {
+                    row
+                }
+            }
+        }
+
         // Added for the atomic Drive restore path; unused by these tests.
         override suspend fun clear() = rows.clear()
 
@@ -227,5 +240,100 @@ class SmsPipelineProcessorTest {
         // A second run has nothing left to do.
         val second = SmsPipelineProcessor(dao, repo).processPending(maxMessages = 10)
         assertEquals(0, second.attempted)
+    }
+
+    @Test
+    fun `a row is marked CLASSIFYING while it is being classified`() = runBlocking {
+        // Live status is the queue itself: the user watches each message move
+        // NEW -> CLASSIFYING -> SAVED/SKIPPED/FAILED, which is only possible if the in-flight
+        // state is written before the expensive work rather than invented afterwards.
+        val dao = FakeSmsMessageDao()
+        val repo = FakeTransactionRepository()
+        dao.insertAll(listOf(message("s1", body(250.0, TransactionType.EXPENSE, "swiggy"))))
+
+        var statusMidFlight: String? = null
+        val processor = SmsPipelineProcessor(
+            dao = dao,
+            transactionRepository = repo,
+            enrich = { classified, _ ->
+                statusMidFlight = dao.getById("s1")?.status
+                classified
+            }
+        )
+
+        processor.processPending(maxMessages = 10)
+
+        assertEquals(SmsMessageStatus.CLASSIFYING.name, statusMidFlight)
+        assertEquals(SmsMessageStatus.SAVED.name, status(dao, "s1"))
+    }
+
+    @Test
+    fun `a row a killed pass left CLASSIFYING is swept back to NEW and retried`() = runBlocking {
+        // Without the sweep, `getPending(NEW, 1)` never returns that row again and the message
+        // is stranded forever: invisible to the classifier, invisible to the user.
+        val dao = FakeSmsMessageDao()
+        val repo = FakeTransactionRepository()
+        dao.insertAll(
+            listOf(
+                message("stale", body(250.0, TransactionType.EXPENSE)).copy(
+                    status = SmsMessageStatus.CLASSIFYING.name,
+                    updatedAt = 1L
+                )
+            )
+        )
+
+        val result = SmsPipelineProcessor(dao, repo).processPending(maxMessages = 10)
+
+        assertEquals(1, result.saved)
+        assertEquals(SmsMessageStatus.SAVED.name, status(dao, "stale"))
+        // swept (updatedAt = now), then re-claimed for the retry (updatedAt = now again).
+        assertTrue(
+            "the sweep must have refreshed the row",
+            dao.getById("stale")!!.updatedAt > 1L
+        )
+    }
+
+    @Test
+    fun `an undo-parked PROCESSED row is neither swept nor re-saved`() = runBlocking {
+        // The dangerous one. Both undo paths park a row in PROCESSED: the user just dismissed
+        // it, or just un-saved the transaction it created. Sweeping or re-processing it would
+        // silently resurrect the decision they reversed, so the sweep must leave it alone.
+        val dao = FakeSmsMessageDao()
+        val repo = FakeTransactionRepository()
+        dao.insertAll(
+            listOf(
+                message("parked", body(250.0, TransactionType.EXPENSE)).copy(
+                    status = SmsMessageStatus.PROCESSED.name,
+                    updatedAt = 7L
+                )
+            )
+        )
+
+        val result = SmsPipelineProcessor(dao, repo).processPending(maxMessages = 10)
+
+        assertEquals(0, result.attempted)
+        assertTrue("the undo must not be undone", repo.saved.isEmpty())
+        assertEquals(SmsMessageStatus.PROCESSED.name, status(dao, "parked"))
+        assertEquals("the sweep must not touch a parked row", 7L, dao.getById("parked")!!.updatedAt)
+    }
+
+    @Test
+    fun `a new pass starts by sweeping whatever the previous pass left in flight`() = runBlocking {
+        val dao = FakeSmsMessageDao()
+        val repo = FakeTransactionRepository()
+        dao.insertAll(
+            listOf(
+                message("a", body(10.0, TransactionType.EXPENSE)).copy(
+                    status = SmsMessageStatus.CLASSIFYING.name
+                ),
+                message("b", body(20.0, TransactionType.EXPENSE))
+            )
+        )
+
+        val result = SmsPipelineProcessor(dao, repo).processPending(maxMessages = 10)
+
+        assertEquals(2, result.saved)
+        assertEquals(SmsMessageStatus.SAVED.name, status(dao, "a"))
+        assertEquals(SmsMessageStatus.SAVED.name, status(dao, "b"))
     }
 }

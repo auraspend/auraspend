@@ -23,6 +23,7 @@ import com.awbuilds.auraspend.data.classification.SmsAutoClassifier
 import com.awbuilds.auraspend.data.classification.SmsIngestor
 import com.awbuilds.auraspend.data.classification.SmsStatus
 import com.awbuilds.auraspend.data.classification.pendingInbox
+import com.awbuilds.auraspend.data.classification.queueProgress
 import com.awbuilds.auraspend.data.classification.TransactionClassifier
 import com.awbuilds.auraspend.data.classification.toClassifiedSms
 import com.awbuilds.auraspend.data.local.entities.SmsMessageEntity
@@ -295,18 +296,23 @@ class ClassificationViewModel(
         // lifetime of the screen.
         smsQueueJob?.cancel()
         smsQueueJob = viewModelScope.launch {
-            _state.update { it.copy(isBatchClassifying = true, error = null) }
+            _state.update { it.copy(isScanningQueue = true, error = null) }
 
             // Snapshot new device messages into the persistent queue (idempotent on the provider
             // `_id`). Everything below reads the queue, so the list is stable across background
             // runs instead of being a fresh inbox scan each time.
+            //
+            // No `AutoClassificationWorker.runNow` here: that used to fire on every screen and
+            // tab entry, enqueueing a whole extra pass each time. The always-running
+            // `BackgroundClassificationCoordinator` is already draining this same queue.
             withContext(Dispatchers.IO) {
                 boundaryOrNull(TAG) { SmsIngestor.ingest(context = context, dao = dao) }
             }
-            AutoClassificationWorker.runNow(context)
 
-            // Observe the queue live: rows advance to SAVED/SKIPPED/FAILED as the worker processes
-            // them, and the UI reflects real status instead of a one-shot snapshot.
+            // Observe the queue live: rows advance to CLASSIFYING / SAVED / SKIPPED / FAILED as the
+            // background loop works through them, and the UI reflects real status instead of a
+            // one-shot snapshot. The progress numbers come from the same rows, so the screen and
+            // the notification can never disagree.
             dao.observeAll()
                 .map { rows -> rows.map { it.toClassifiedSms() } }
                 // A read failure must not leave the tab spinning with a stale list
@@ -315,10 +321,11 @@ class ClassificationViewModel(
                 .catch { e ->
                     AuraLog.e(TAG, "Observing the SMS queue failed", e)
                     _state.update {
-                        it.copy(isBatchClassifying = false, error = UiError.LOAD_FAILED)
+                        it.copy(isScanningQueue = false, error = UiError.LOAD_FAILED)
                     }
                 }
                 .collectLatest { classified ->
+                    val progress = queueProgress(classified)
                     _state.update {
                         it.copy(
                             classifiedSmsList = classified,
@@ -326,8 +333,20 @@ class ClassificationViewModel(
                             // stored status, the observer re-emits, and the message
                             // reappears here.
                             pendingSmsList = pendingInbox(classified),
-                            smsMessages = classified.map { c -> c.sms },
-                            isBatchClassifying = false
+                            // The "pick a message to classify by hand" list is for
+                            // candidates. Skipped rows are OTP/alerts, duplicates the
+                            // pipeline rejected, or messages the user dismissed —
+                            // offering them again as candidates would undo those decisions.
+                            smsMessages = classified
+                                .filter { c -> c.status != SmsStatus.SKIPPED }
+                                .map { c -> c.sms },
+                            progressCurrent = progress.processed,
+                            progressTotal = progress.total,
+                            isCategorising = progress.inFlight > 0,
+                            queuedCount = progress.pending,
+                            savedCount = progress.saved,
+                            skippedCount = progress.skipped,
+                            isScanningQueue = false
                         )
                     }
                 }
@@ -409,10 +428,16 @@ class ClassificationViewModel(
                 val app = context.applicationContext as? AuraSpendApp ?: return@launch
                 val dao = app.database.smsMessageDao()
                 val categories = _state.value.availableCategories
-                // Only persist messages the classifier actually resolved; pending rows are
-                // still being processed and skipped rows were rejected as OTP/promos.
+                // Only persist messages the classifier actually resolved, and only ones still
+                // awaiting a decision.
+                //
+                // This used to filter `status == SmsStatus.CLASSIFIED`, which no row can ever
+                // have: the queue mapper maps NEW → PENDING, CLASSIFYING → CLASSIFYING and the
+                // terminal states to themselves, so "Save All" silently saved nothing.
+                // A handled row (SAVED/SKIPPED) must not be re-saved here — that is what the
+                // undo paths exist for.
                 val toSave = _state.value.classifiedSmsList.filter {
-                    it.status == SmsStatus.CLASSIFIED &&
+                    (it.status == SmsStatus.PENDING || it.status == SmsStatus.CLASSIFYING) &&
                         it.parsed.amount != null &&
                         it.parsed.type != null
                 }

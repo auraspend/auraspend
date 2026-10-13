@@ -79,8 +79,13 @@ internal fun SmsMessageEntity.toClassifiedSms(): ClassifiedSms {
         isDismissed = storedStatus == SmsMessageStatus.SKIPPED,
         isSubscription = isSubscription,
         status = when (storedStatus) {
+            // A pass is classifying this row right now.
+            SmsMessageStatus.CLASSIFYING -> SmsStatus.CLASSIFYING
+            // Parked by the user: both undo paths park a row here, and it is awaiting their
+            // decision rather than being in flight. It used to map to CLASSIFYING, which made
+            // an un-dismissed message look like it was being processed.
+            SmsMessageStatus.PROCESSED -> SmsStatus.PENDING
             SmsMessageStatus.NEW, null -> SmsStatus.PENDING
-            SmsMessageStatus.PROCESSED -> SmsStatus.CLASSIFYING
             SmsMessageStatus.SAVED -> SmsStatus.SAVED
             SmsMessageStatus.SKIPPED -> SmsStatus.SKIPPED
             SmsMessageStatus.FAILED -> SmsStatus.FAILED

@@ -35,6 +35,13 @@ durable lives elsewhere. Keep it a pointer; promote findings to `memory/` or
   the hard fraud veto has no rescue at all.
 - `SmsIngestPlanner` (`data/classification/SmsIngestCursor.kt`) — three cursors:
   high-water mark, history-walk cursor, walk-done flag. Read D16 before touching.
+- **SMS queue statuses** (`data/local/entities/Entities.kt`) — `CLASSIFYING` is the
+  *in-flight* marker (a pass claims a row before the expensive work); `PROCESSED` is
+  *parked by the user* (both undo paths put it there) and must **never** be swept or
+  auto-processed, or an undo is silently reverted. See 0028.
+- **Categorisation progress is derived, not reported** — `queueProgress(rows)` over the
+  observed queue feeds the screen, and `SmsProgressNotifier` reads the same counts from the
+  database. Notification rules live in `copyForSnapshot` (pure, tested).
 - `SmsExtraction.isTransactionProbability` — confidence in the *verdict given*
   (`SmsExtraction.verdictConfidence`), not P(transaction). The whole
   delete-a-transaction gate depends on the polarity (D15).

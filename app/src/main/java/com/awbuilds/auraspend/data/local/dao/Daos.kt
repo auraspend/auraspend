@@ -371,6 +371,27 @@ interface SmsMessageDao {
     @Query("SELECT COALESCE(COUNT(*), 0) FROM sms_messages WHERE status = :status")
     suspend fun countByStatus(status: String): Int
 
+    /** Total queue depth — the denominator of the "X of Y" progress readout. */
+    @Query("SELECT COALESCE(COUNT(*), 0) FROM sms_messages")
+    suspend fun countAll(): Int
+
+    /**
+     * Crash recovery for the in-flight marker.
+     *
+     * A pass that is killed mid-row leaves the row [SmsMessageStatus.CLASSIFYING], and
+     * `getPending(NEW, …)` never returns it again — the message would be stranded forever.
+     * Every pass sweeps those rows back to [SmsMessageStatus.NEW] before claiming the next one.
+     *
+     * [SmsMessageStatus.PROCESSED] is deliberately excluded: it is where the undo paths park a
+     * row the user just dismissed or un-saved, and re-processing it would silently resurrect a
+     * decision the user reversed.
+     */
+    @Query(
+        "UPDATE sms_messages SET status = 'NEW', updatedAt = :now " +
+            "WHERE status = 'CLASSIFYING'"
+    )
+    suspend fun sweepInFlight(now: Long)
+
     @Query("SELECT * FROM sms_messages WHERE id = :id")
     suspend fun getById(id: String): SmsMessageEntity?
 
