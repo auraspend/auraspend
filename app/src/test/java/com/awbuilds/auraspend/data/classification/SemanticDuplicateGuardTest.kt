@@ -10,6 +10,7 @@ import com.awbuilds.auraspend.domain.model.Subscription
 import com.awbuilds.auraspend.domain.model.Transaction
 import com.awbuilds.auraspend.domain.repository.TransactionRepository
 import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.runBlocking
@@ -163,6 +164,44 @@ class SemanticDuplicateGuardTest {
         val result = SmsPipelineProcessor(dao, repo).processPending(10)
 
         assertEquals("same-day repeat purchase must NOT be dropped", 1, result.saved)
+        assertEquals(0, result.skipped)
+    }
+
+    @Test
+    fun `same merchant within the hour is not a duplicate when the amounts differ`() = runBlocking {
+        // Measured on the owner's device (2026-10-13): a card swipe 52 minutes
+        // after a similar one at the same merchant was auto-skipped as a
+        // "duplicate" of it — the old amount gate allowed a ±₹1 gap for small
+        // amounts, so two DIFFERENT payments of nearly the same size at the
+        // same shop collapsed into one and the second one vanished from the
+        // totals. SMS amounts are deterministic: a re-delivered copy states
+        // the same amount to the paisa.
+        val dao = FakeSmsMessageDao()
+        val repo = FakeTransactionRepository()
+        repo.existing.add(
+            Transaction(
+                amount = 78.5,
+                categoryId = "cat_other",
+                note = "CORNER STORE",
+                merchant = "CORNER STORE",
+                date = LocalDateTime.now().minusMinutes(52),
+                type = com.awbuilds.auraspend.domain.model.TransactionType.EXPENSE
+            )
+        )
+        val bodyDate = LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd-MM-yy HH:mm:ss"))
+        dao.insertAll(
+            listOf(
+                message(
+                    "swipe2",
+                    "Spent INR 79\nAxis Bank Card no. XX4821\n$bodyDate IST\nCORNER STORE\n" +
+                        "Avl Limit: INR 5000.00\nNot you? SMS BLOCK 5003"
+                )
+            )
+        )
+
+        val result = SmsPipelineProcessor(dao, repo).processPending(10)
+
+        assertEquals("a different amount is a different payment, not a duplicate", 1, result.saved)
         assertEquals(0, result.skipped)
     }
 

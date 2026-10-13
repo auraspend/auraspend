@@ -6,6 +6,7 @@ import com.awbuilds.auraspend.domain.model.TransactionType
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -122,6 +123,20 @@ class SmsQueueRowMapperTest {
 
         assertEquals(250.0, classified.parsed.amount!!, 0.001)
         assertEquals(TransactionType.EXPENSE, classified.parsed.type)
+    }
+
+    @Test
+    fun `a row without a stored parse re-derives from the memo, not a fresh classify`() {
+        // The triage screen re-derives the whole list on every queue write, and a
+        // drain writes several times a second. Without the memo, every skipped and
+        // pending row was re-classified (full regex parse) on every derivation,
+        // on the main thread — the Smart Add jank. Instance identity proves the
+        // memo is wired in; value equality proves it still classifies correctly.
+        val once = row(id = "memo-wiring", amount = null, type = null).toClassifiedSms()
+        val twice = row(id = "memo-wiring", amount = null, type = null).toClassifiedSms()
+
+        assertEquals(250.0, once.parsed.amount!!, 0.001)
+        assertSame(once.parsed, twice.parsed)
     }
 
     @Test

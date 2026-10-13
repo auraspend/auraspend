@@ -35,6 +35,49 @@ internal inline fun <reified T : Enum<T>> String?.storedEnumOrNull(): T? {
  * rules above are unit-testable without a ViewModel, a Room database or a
  * dispatcher.
  */
+/**
+ * Bounded memo for the body re-parse in [toClassifiedSms].
+ *
+ * Deriving the triage list re-classifies every row that has no stored parse —
+ * every skipped row and every pending one — and the queue observer re-derives
+ * the whole list on each database write, which a drain produces several times a
+ * second. That was hundreds of full regex parses per write, on the main thread:
+ * the "Smart Add" tab janked while messages were being categorised.
+ *
+ * A queue row is immutable once inserted (a provider id maps to one body and
+ * sender for the life of the row), so an id-keyed entry is exact; the body and
+ * sender are re-checked on a hit anyway, so even a hypothetical id reuse
+ * re-classifies instead of serving a stale parse. Access-ordered LRU — an
+ * eviction only costs one re-parse.
+ */
+internal class ParseMemo(private val maxEntries: Int = 512) {
+
+    private class Entry(val body: String, val sender: String?, val parsed: ParsedBankMessage)
+
+    private val lock = Any()
+    private val entries = object : LinkedHashMap<String, Entry>(64, 0.75f, true) {
+        override fun removeEldestEntry(
+            eldest: MutableMap.MutableEntry<String, Entry>?
+        ): Boolean = size > maxEntries
+    }
+
+    fun parse(id: String, body: String, sender: String?): ParsedBankMessage = synchronized(lock) {
+        val hit = entries[id]
+        if (hit != null && hit.body == body && hit.sender == sender) {
+            hit.parsed
+        } else {
+            TransactionClassifier.classify(body, sender).also { entries[id] = Entry(body, sender, it) }
+        }
+    }
+}
+
+/**
+ * One shared memo for the process. Entries are keyed by immutable row data, so
+ * sharing cannot go stale; it only keeps a screen re-open from paying the
+ * parses again.
+ */
+private val parseMemo = ParseMemo()
+
 internal fun SmsMessageEntity.toClassifiedSms(): ClassifiedSms {
     val storedType = type.storedEnumOrNull<TransactionType>()
     val parsed = if (amount != null && storedType != null) {
@@ -56,8 +99,9 @@ internal fun SmsMessageEntity.toClassifiedSms(): ClassifiedSms {
         }
         // No stored parse, or a corrupt one: derive it from the body. A re-parse
         // can come back empty, and an empty parse keeps the row in the triage
-        // inbox rather than hiding it.
-        TransactionClassifier.classify(body, address)
+        // inbox rather than hiding it. Memoized: this path runs for every
+        // skipped and pending row on every queue write (see [ParseMemo]).
+        parseMemo.parse(id = id, body = body, sender = address)
     }
 
     val storedStatus = status.storedEnumOrNull<SmsMessageStatus>()
