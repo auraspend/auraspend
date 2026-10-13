@@ -32,6 +32,8 @@ object BankMessageParser {
     // ─────────────────────────────────────────────────────────────────────────
 
     private val bankPatterns: List<Pair<Regex, String>> = listOf(
+        Regex("HDFC\\s*Mutual\\s*Fund|HDFCMF") to "HDFC Mutual Fund",
+        Regex("Navi\\s*Mutual\\s*Fund|NAVAMC") to "Navi Mutual Fund",
         Regex("HDFC\\s*Bank|HDFCB|\\bHDFC\\b") to "HDFC Bank",
         Regex("ICICI\\s*Bank|ICICIB|\\bICICI\\b") to "ICICI Bank",
         Regex("State\\s*Bank\\s*of\\s*India|\\bSBI\\b|SBIC|\\bSBIN\\b") to "SBI",
@@ -84,7 +86,12 @@ object BankMessageParser {
         Regex("Pluxee|PLUXEE") to "Pluxee",
         Regex("Jio\\s*Payments\\s*Bank|JIOPBS") to "Jio Payments Bank",
         Regex("NSDL\\s*Payments|NSDLPB") to "NSDL Payments Bank",
-        Regex("Cashfree|CSHFRE") to "Cashfree"
+        Regex("Cashfree|CSHFRE") to "Cashfree",
+        Regex("Kerala\\s*Gramin\\s*Bank|KGBANK") to "Kerala Gramin Bank",
+        Regex("Kerala\\s*Bank|KELBNK") to "Kerala Bank",
+        Regex("India\\s*Post\\s*Payments|IPBMSG") to "India Post Payments Bank",
+        Regex("DBS\\s*Bank|DBSBNK") to "DBS Bank",
+        Regex("Jana\\s*Small\\s*Finance|JANABK") to "Jana Small Finance Bank"
     )
 
     // ─────────────────────────────────────────────────────────────────────────
