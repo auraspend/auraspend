@@ -44,7 +44,32 @@ data class ClassificationViewState(
      * `saveClassifiedSms`).
      */
     val pendingSmsList: List<ClassifiedSms> = emptyList(),
-    val isBatchClassifying: Boolean = false,
+    /**
+     * True while the screen's first inbox snapshot is being taken.
+     *
+     * Not a progress bar: this covers the moment between opening the tab and the queue
+     * observer's first emission, which for a cold start includes a large provider query.
+     */
+    val isScanningQueue: Boolean = false,
+    /**
+     * Live categorisation progress, derived from the queue itself rather than
+     * reported by a worker.
+     *
+     * The queue row statuses ARE the status channel: a row moves NEW →
+     * CLASSIFYING (in flight, rendered as a chip on that message) → SAVED /
+     * SKIPPED / FAILED, and the UI observes the same table the pipeline writes.
+     * A worker-reported progress number would be a second source of truth that
+     * drifts the moment the app is backgrounded.
+     */
+    val progressCurrent: Int = 0,
+    val progressTotal: Int = 0,
+    /** True while at least one message is being classified right now. */
+    val isCategorising: Boolean = false,
+    /** Rows waiting to be classified but not currently in flight. */
+    val queuedCount: Int = 0,
+    /** Counts for this drain, shown next to the inbox header. */
+    val savedCount: Int = 0,
+    val skippedCount: Int = 0,
     val isSavingAll: Boolean = false,
 
     // On-device AI model
@@ -53,14 +78,7 @@ data class ClassificationViewState(
     val isAiEnriching: Boolean = false,
     /** True once the async LLM/memory pass has refined the current classification. */
     val aiRefined: Boolean = false,
-    val aiProgressCurrent: Int = 0,
-    val aiProgressTotal: Int = 0,
-
-    /**
-     * Merchant-keyword confidence for the parsed merchant, used to explain a
-     * category suggestion.
-     */
-    val merchantConfidence: Float = 0f
+    val merchantConfidence: Float = 0f,
 )
 
 data class SmsInfo(

@@ -41,7 +41,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/com/awbuilds/auraspend/ui/classification/ClassificationViewModel.kt"
-            line="511"
+            line="536"
             column="13"/>
     </issue>
 
@@ -151,7 +151,7 @@
         errorLine2="                       ~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="build.gradle.kts"
-            line="255"
+            line="256"
             column="24"/>
     </issue>
 
@@ -250,7 +250,7 @@
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="272"
+            line="276"
             column="5"/>
     </issue>
 
@@ -261,7 +261,7 @@
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="275"
+            line="279"
             column="5"/>
     </issue>
 
@@ -272,7 +272,7 @@
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="305"
+            line="311"
             column="5"/>
     </issue>
 
@@ -283,7 +283,7 @@
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="309"
+            line="315"
             column="5"/>
     </issue>
 
@@ -294,7 +294,7 @@
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="311"
+            line="317"
             column="5"/>
     </issue>
 
@@ -305,7 +305,7 @@
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="312"
+            line="318"
             column="5"/>
     </issue>
 
@@ -340,17 +340,6 @@
         errorLine1="        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {"
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/java/com/awbuilds/auraspend/data/classification/AutoClassificationWorker.kt"
-            line="112"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="ObsoleteSdkInt"
-        message="Unnecessary; `SDK_INT` is always >= 30"
-        errorLine1="        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
             file="src/main/java/com/awbuilds/auraspend/data/ai/ModelDownloadManager.kt"
             line="308"
             column="13"/>
@@ -370,7 +359,7 @@
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/com/awbuilds/auraspend/ui/classification/ClassificationViewModel.kt"
-            line="55"
+            line="56"
             column="5"/>
     </issue>
 
@@ -381,7 +370,7 @@
         errorLine2="                                                                 ~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/com/awbuilds/auraspend/ui/onboarding/OnboardingScreen.kt"
-            line="113"
+            line="143"
             column="66"/>
     </issue>
 
@@ -491,7 +480,7 @@
         errorLine2="                                       ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values-hi/strings.xml"
-            line="346"
+            line="352"
             column="40"/>
     </issue>
 
@@ -502,7 +491,7 @@
         errorLine2="                                       ~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="361"
+            line="367"
             column="40"/>
     </issue>
 
@@ -513,7 +502,7 @@
         errorLine2="                                             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values-hi/strings.xml"
-            line="371"
+            line="377"
             column="46"/>
     </issue>
 
@@ -524,7 +513,7 @@
         errorLine2="                                             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="386"
+            line="392"
             column="46"/>
     </issue>
 
@@ -535,7 +524,7 @@
         errorLine2="                                                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values-hi/strings.xml"
-            line="405"
+            line="411"
             column="51"/>
     </issue>
 
@@ -546,7 +535,7 @@
         errorLine2="                                              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values-hi/strings.xml"
-            line="406"
+            line="412"
             column="47"/>
     </issue>
 
@@ -557,7 +546,7 @@
         errorLine2="                                                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="420"
+            line="426"
             column="51"/>
     </issue>
 
@@ -568,7 +557,7 @@
         errorLine2="                                              ~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="421"
+            line="427"
             column="47"/>
     </issue>
 
@@ -597,7 +586,7 @@
         errorLine2="                        ~~~~~~~~~~~~">
         <location
             file="src/main/java/com/awbuilds/auraspend/MainActivity.kt"
-            line="47"
+            line="56"
             column="25"/>
     </issue>
 
@@ -608,7 +597,7 @@
         errorLine2="                        ~~~~~~~~~~~~">
         <location
             file="src/main/java/com/awbuilds/auraspend/MainActivity.kt"
-            line="52"
+            line="61"
             column="25"/>
     </issue>
 
@@ -630,7 +619,7 @@
         errorLine2="                        ~~~~~~~~~~~~">
         <location
             file="src/main/java/com/awbuilds/auraspend/ui/navigation/NavGraph.kt"
-            line="194"
+            line="200"
             column="25"/>
     </issue>
 
@@ -641,7 +630,7 @@
         errorLine2="                                ~~~~~~~~~~~~">
         <location
             file="src/main/java/com/awbuilds/auraspend/ui/navigation/NavGraph.kt"
-            line="562"
+            line="572"
             column="33"/>
     </issue>
 
@@ -663,7 +652,7 @@
         errorLine2="                                                       ~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/com/awbuilds/auraspend/ui/settings/SettingsScreen.kt"
-            line="328"
+            line="402"
             column="56"/>
     </issue>
 
@@ -674,7 +663,7 @@
         errorLine2="        ~~~~~~~~~~~~">
         <location
             file="src/main/java/com/awbuilds/auraspend/data/classification/SmsIngestor.kt"
-            line="80"
+            line="87"
             column="9"/>
     </issue>
 
@@ -685,7 +674,7 @@
         errorLine2="                       ~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="build.gradle.kts"
-            line="255"
+            line="256"
             column="24"/>
     </issue>
 

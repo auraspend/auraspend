@@ -80,10 +80,29 @@ class SmsQueueRowMapperTest {
     @Test
     fun `every stored status maps to its UI status`() {
         assertEquals(SmsStatus.PENDING, row(status = "NEW").toClassifiedSms().status)
-        assertEquals(SmsStatus.CLASSIFYING, row(status = "PROCESSED").toClassifiedSms().status)
+        // In-flight: a background pass is classifying this row right now.
+        assertEquals(SmsStatus.CLASSIFYING, row(status = "CLASSIFYING").toClassifiedSms().status)
+        // Parked by the user (both undo paths). It used to map to CLASSIFYING, which made an
+        // un-dismissed message look like it was being processed.
+        assertEquals(SmsStatus.PENDING, row(status = "PROCESSED").toClassifiedSms().status)
         assertEquals(SmsStatus.SAVED, row(status = "SAVED").toClassifiedSms().status)
         assertEquals(SmsStatus.SKIPPED, row(status = "SKIPPED").toClassifiedSms().status)
         assertEquals(SmsStatus.FAILED, row(status = "FAILED").toClassifiedSms().status)
+    }
+
+    @Test
+    fun `an in-flight row stays in the inbox while it is being classified`() {
+        // The user asked to watch the categorisation happen one-by-one, so a row that is
+        // currently being classified must remain visible rather than disappearing from the
+        // triage list until it lands somewhere.
+        val inFlight = row(id = "f", status = "CLASSIFYING").toClassifiedSms()
+
+        assertFalse("not saved yet", inFlight.isSaved)
+        assertFalse("and not dismissed either", inFlight.isDismissed)
+        assertEquals(
+            listOf("f"),
+            pendingInbox(listOf(inFlight)).map { it.sms.id }
+        )
     }
 
     @Test

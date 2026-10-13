@@ -34,6 +34,7 @@ import com.awbuilds.auraspend.R
 import com.awbuilds.auraspend.data.ai.ModelDownloadManager
 import com.awbuilds.auraspend.data.classification.AutoClassificationWorker
 import com.awbuilds.auraspend.data.classification.AutoDetect
+import com.awbuilds.auraspend.data.classification.BackgroundClassificationCoordinator
 import com.awbuilds.auraspend.data.classification.DuplicateDetector
 import com.awbuilds.auraspend.core.boundary
 import com.awbuilds.auraspend.core.boundaryOrNull
@@ -834,8 +835,16 @@ private fun SettingsDestination(
                 if (isNotificationPermissionNeeded(context)) {
                     notificationPermissionLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
                 }
+                // Start draining now rather than at the next lifecycle transition: the user
+                // just asked for categorisation, and the loop is what does it in the
+                // foreground as well as the background.
+                BackgroundClassificationCoordinator.start(context)
                 scope.launch(Dispatchers.IO) { AutoClassificationWorker.runNow(context) }
             } else {
+                // Stop everything this feature had running, and clear its notification: a
+                // dismissed progress notification the user cannot explain is worse than none.
+                BackgroundClassificationCoordinator.stop()
+                (context.applicationContext as? AuraSpendApp)?.smsProgressNotifier?.cancel()
                 scope.launch(Dispatchers.IO) { AutoClassificationWorker.cancelPendingWork(context) }
             }
         }

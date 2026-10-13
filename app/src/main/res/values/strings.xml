@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
     <string name="app_name">AuraSpend</string>
 
     <!-- Shared actions -->
@@ -425,6 +425,30 @@
     <string name="classification_download_model_short">Add (~22 MB)</string>
     <string name="classification_ai_categorizing">AI is categorizing messages...</string>
     <string name="classification_reading_sms">Reading bank messages...</string>
+
+    <!-- SMS categorisation progress. The ongoing notification uses the same numbers as the
+         in-app header so the two surfaces can never disagree about what is happening. -->
+    <string name="sms_categorizing_title">Categorizing messages…</string>
+    <string name="sms_categorizing_count">%1$d of %2$d</string>
+    <string name="sms_categorizing_row">Categorizing…</string>
+    <plurals name="sms_categorizing_reviewed">
+        <item quantity="one">%1$d message reviewed</item>
+        <item quantity="other">%1$d messages reviewed</item>
+    </plurals>
+    <!-- Two independent counts in one line, which is why this is not a plural: an Android
+         plural carries exactly one quantity, and "148 saved · 62 skipped" needs two. The
+         counts themselves are plurals above. -->
+    <string name="sms_categorizing_summary" tools:ignore="PluralsCandidate">%1$d saved · %2$d skipped</string>
+    <plurals name="sms_categorizing_saved">
+        <item quantity="one">%1$d new transaction saved</item>
+        <item quantity="other">%1$d new transactions saved</item>
+    </plurals>
+    <plurals name="sms_categorizing_waiting">
+        <item quantity="one">%1$d message waiting</item>
+        <item quantity="other">%1$d messages waiting</item>
+    </plurals>
+    <string name="sms_channel_name">Message categorizing</string>
+    <string name="sms_channel_description">Progress and results of categorizing your bank messages</string>
     <string name="classification_scan_message">Scan your inbox to detect and categorize bank messages.</string>
     <string name="classification_scan_sms">Scan SMS</string>
     <plurals name="classification_messages_found">

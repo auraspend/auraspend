@@ -410,6 +410,27 @@
     <string name="classification_download_model_short">(~22 MB) जोड़ें</string>
     <string name="classification_ai_categorizing">AI संदेशों को वर्गीकृत कर रहा है...</string>
     <string name="classification_reading_sms">बैंक संदेश पढ़े जा रहे हैं...</string>
+
+    <!-- SMS categorisation progress. The ongoing notification uses the same numbers as the
+         in-app header so the two surfaces can never disagree about what is happening. -->
+    <string name="sms_categorizing_title">संदेश वर्गीकृत हो रहे हैं…</string>
+    <string name="sms_categorizing_count">%1$d / %2$d</string>
+    <string name="sms_categorizing_row">वर्गीकृत हो रहा है…</string>
+    <plurals name="sms_categorizing_reviewed">
+        <item quantity="one">%1$d संदेश देखा गया</item>
+        <item quantity="other">%1$d संदेश देखे गए</item>
+    </plurals>
+    <string name="sms_categorizing_summary">%1$d सहेजे गए · %2$d छोड़े गए</string>
+    <plurals name="sms_categorizing_saved">
+        <item quantity="one">%1$d नया लेन-देन सहेजा गया</item>
+        <item quantity="other">%1$d नए लेन-देन सहेजे गए</item>
+    </plurals>
+    <plurals name="sms_categorizing_waiting">
+        <item quantity="one">%1$d संदेश प्रतीक्षा में</item>
+        <item quantity="other">%1$d संदेश प्रतीक्षा में</item>
+    </plurals>
+    <string name="sms_channel_name">संदेश वर्गीकरण</string>
+    <string name="sms_channel_description">आपके बैंक संदेशों के वर्गीकरण की प्रगति और परिणाम</string>
     <string name="classification_scan_message">बैंक संदेशों को पहचानने और वर्गीकृत करने के लिए अपना इनबॉक्स स्कैन करें।</string>
     <string name="classification_scan_sms">SMS स्कैन करें</string>
     <plurals name="classification_messages_found">

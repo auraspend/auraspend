@@ -6,6 +6,7 @@ import android.content.pm.PackageManager
 import android.os.Process
 import androidx.core.content.ContextCompat
 import com.awbuilds.auraspend.AuraSpendApp
+import com.awbuilds.auraspend.data.local.entities.SmsMessageStatus
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -17,14 +18,21 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 
 /**
- * Keeps draining the persistent SMS queue whenever the app sits in the BACKGROUND but its
- * process is still alive (not swiped from recents).
+ * Keeps draining the persistent SMS queue whenever the app's process is alive — in the
+ * BACKGROUND and in the FOREGROUND alike.
  *
- * Wired to ProcessLifecycleOwner by [AuraSpendApp]:
- *  - `onStop`  (app went to background) -> [start]: loop of ingest -> classify-one-by-one
- *    until the queue is empty, then a slow idle poll picks up messages that arrive later.
- *  - `onStart` (app came back)          -> [stop]: the user's device belongs to them again;
- *    zero LLM/CPU work while any activity is visible.
+ * Wired to ProcessLifecycleOwner by [AuraSpendApp]: both `onStart` (app came to the front) and
+ * `onStop` (app went back) call [start], which is idempotent, so the loop runs continuously
+ * while the process lives. It used to stop on `onStart` ("zero LLM work while any activity is
+ * visible"), which meant a user who opened the Classification screen watched a frozen message
+ * list: the queue only drained once they put the app away. The owner asked to watch the
+ * categorisation happen one-by-one, and that requires the work to keep going — at the same
+ * polite pacing (background thread priority, a pause between messages), which is what keeps a
+ * long batch from stealing frames.
+ *
+ * While an activity is visible the loop runs WITHOUT posting notifications: [SmsProgressNotifier]
+ * gates on that, because the Classification screen already shows the same queue live. The shade
+ * takes over the moment the app leaves the screen.
  *
  * All passes share [AutoClassificationWorker] `pipelineMutex`, so this coordinator and the
  * periodic WorkManager job can never run simultaneously.
@@ -94,11 +102,20 @@ object BackgroundClassificationCoordinator {
                     )
                     val result = processor.processPending(maxMessages = MESSAGES_PER_PASS)
                     attempted = result.attempted
+
+                    // 3. Same reporting the worker does, so the notification (and its
+                    //    foreground gate) behaves identically whichever driver ran the pass.
+                    app.smsProgressNotifier.onPassFinished(
+                        result = result,
+                        pendingNew = dao.countByStatus(SmsMessageStatus.NEW.name),
+                        queueTotal = dao.countAll(),
+                        moreHistoryMayCome = SmsIngestor.hasMoreHistory(appContext)
+                    )
                 }
             }
 
-            // Queue drained: idle-poll slowly for newly arrived messages while still in the
-            // background. Otherwise hand control back to the system between batches.
+            // Queue drained: idle-poll slowly for newly arrived messages. Otherwise hand
+            // control back to the system between batches.
             delay(if (attempted > 0) BATCH_GAP_MS else IDLE_POLL_MS)
         }
     }

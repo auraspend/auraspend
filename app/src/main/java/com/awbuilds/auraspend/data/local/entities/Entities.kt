@@ -65,8 +65,14 @@ data class SubscriptionEntity(
  * Lifecycle of a bank SMS in the persistent classification queue. The id is the SMS provider's
  * `_id`, so ingestion is idempotent (`INSERT OR IGNORE`) and the pipeline can resume per-message
  * instead of re-scanning the inbox with a timestamp cursor.
+ *
+ * [CLASSIFYING] is the in-flight marker: the row is claimed by a pass right now, so the UI can
+ * show "categorising…" for that exact message. [PROCESSED] is deliberately NOT in-flight — it is
+ * where both undo paths park a row, and the pipeline must never claim or re-save it (re-processing
+ * an undo-dismissed row would resurrect the decision the user just reversed). A pass killed
+ * mid-row leaves a stale [CLASSIFYING] row, which the next pass sweeps back to [NEW].
  */
-enum class SmsMessageStatus { NEW, PROCESSED, SAVED, SKIPPED, FAILED }
+enum class SmsMessageStatus { NEW, CLASSIFYING, PROCESSED, SAVED, SKIPPED, FAILED }
 
 @Entity(tableName = "sms_messages")
 data class SmsMessageEntity(
