@@ -406,6 +406,7 @@ their own terms — the AGPL covers AuraSpend's own source, not theirs:
 | OkHttp, google-http-client-gson | Apache-2.0 | Declared directly |
 | Guava | Apache-2.0 | Transitive, via google-api-client / google-http-client |
 | [`all-MiniLM-L6-v2`](https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2) | Apache-2.0 | **Downloaded at runtime**, not bundled |
+| [PennyWise AI](https://github.com/sarim2000/pennywiseai-tracker) (adapted parsing patterns) | AGPL-3.0 | SMS amount/limit/merchant patterns, ingest guards and UPI-handle intelligence, adapted 2026-10-13 |
 
 The full texts are in [`docs/licenses/`](docs/licenses/) and in the app under
 **Settings → About → Open-source licenses**.
