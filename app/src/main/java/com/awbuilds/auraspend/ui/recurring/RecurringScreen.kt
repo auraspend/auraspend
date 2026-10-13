@@ -46,6 +46,13 @@ fun RecurringScreen(
     onBack: () -> Unit
 ) {
     val subscriptions by repository.getActiveSubscriptions().collectAsState(initial = emptyList())
+    // Payments the classifier flagged recurring at ingest. Suggestions, not
+    // tracked entries: the section below turns one into a tracked subscription
+    // on the user's tap.
+    val recurringPayments by repository.getRecurringTransactions().collectAsState(initial = emptyList())
+    val detected = remember(recurringPayments, subscriptions) {
+        detectedSubscriptions(recurringPayments, subscriptions.map { it.name })
+    }
     val categories by repository.getAllCategories().collectAsState(initial = emptyList())
     val scope = rememberCoroutineScope()
 
@@ -85,7 +92,7 @@ fun RecurringScreen(
             )
         }
     ) { padding ->
-        if (subscriptions.isEmpty()) {
+        if (subscriptions.isEmpty() && detected.isEmpty()) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -109,141 +116,231 @@ fun RecurringScreen(
                 ),
                 verticalArrangement = Arrangement.spacedBy(AuraSpacing.md)
             ) {
-                item {
-                    // Monthly-normalised: weekly ×52/12, yearly ÷12, daily ×30 —
-                    // the old card summed raw amounts and mislabeled them "/mo".
-                    val monthlyEquivalent = subscriptions.sumOf { sub ->
-                        sub.amount * when (sub.billingCycle) {
-                            RecurrenceFrequency.DAILY -> 30.0
-                            RecurrenceFrequency.WEEKLY -> 52.0 / 12.0
-                            RecurrenceFrequency.MONTHLY -> 1.0
-                            RecurrenceFrequency.YEARLY -> 1.0 / 12.0
+                if (subscriptions.isNotEmpty()) {
+                    item {
+                        // Monthly-normalised: weekly ×52/12, yearly ÷12, daily ×30 —
+                        // the old card summed raw amounts and mislabeled them "/mo".
+                        val monthlyEquivalent = subscriptions.sumOf { sub ->
+                            sub.amount * when (sub.billingCycle) {
+                                RecurrenceFrequency.DAILY -> 30.0
+                                RecurrenceFrequency.WEEKLY -> 52.0 / 12.0
+                                RecurrenceFrequency.MONTHLY -> 1.0
+                                RecurrenceFrequency.YEARLY -> 1.0 / 12.0
+                            }
                         }
-                    }
-                    AuraCard(
-                        modifier = Modifier.fillMaxWidth(),
-                        style = AuraCardStyle.Tonal
-                    ) {
-                        Row(
+                        AuraCard(
                             modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
+                            style = AuraCardStyle.Tonal
                         ) {
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    stringResource(R.string.recurring_monthly),
-                                    style = AuraType.metricLabel,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                                Spacer(modifier = Modifier.height(AuraSpacing.xs))
-                                Text(
-                                    stringResource(R.string.recurring_monthly_amount, formatMoney(monthlyEquivalent)),
-                                    style = AuraType.moneyLarge,
-                                    color = MaterialTheme.colorScheme.onSurface
-                                )
-                                if (subscriptions.any { it.billingCycle != RecurrenceFrequency.MONTHLY }) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        stringResource(R.string.recurring_monthly),
+                                        style = AuraType.metricLabel,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
                                     Spacer(modifier = Modifier.height(AuraSpacing.xs))
                                     Text(
-                                        stringResource(R.string.recurring_normalised),
+                                        stringResource(R.string.recurring_monthly_amount, formatMoney(monthlyEquivalent)),
+                                        style = AuraType.moneyLarge,
+                                        color = MaterialTheme.colorScheme.onSurface
+                                    )
+                                    if (subscriptions.any { it.billingCycle != RecurrenceFrequency.MONTHLY }) {
+                                        Spacer(modifier = Modifier.height(AuraSpacing.xs))
+                                        Text(
+                                            stringResource(R.string.recurring_normalised),
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                }
+                                Icon(
+                                    Icons.Default.Subscriptions,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.size(32.dp)
+                                )
+                            }
+                        }
+                    }
+
+                    items(subscriptions) { sub ->
+                        val category = categories.find { it.id == sub.categoryId }
+                        val categoryColor = category?.let { Color(it.color.toLong()) }
+                            ?: MaterialTheme.colorScheme.onSurfaceVariant
+                        AuraCard(
+                            modifier = Modifier.fillMaxWidth(),
+                            style = AuraCardStyle.Outlined
+                        ) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(44.dp)
+                                        .clip(CircleShape)
+                                        .background(categoryColor.copy(alpha = 0.14f)),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        Icons.Default.Subscriptions,
+                                        contentDescription = null,
+                                        tint = categoryColor,
+                                        modifier = Modifier.size(22.dp)
+                                    )
+                                }
+                                Spacer(modifier = Modifier.width(AuraSpacing.md))
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        sub.name,
+                                        style = MaterialTheme.typography.titleSmall,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = MaterialTheme.colorScheme.onSurface
+                                    )
+                                    Spacer(modifier = Modifier.height(AuraSpacing.xxs))
+                                    Text(
+                                        stringResource(
+                                            R.string.recurring_category_cycle,
+                                            category?.name ?: stringResource(R.string.recurring_other_category),
+                                            stringResource(sub.billingCycle.labelRes())
+                                        ),
                                         style = MaterialTheme.typography.labelSmall,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
                                 }
+                                Column(horizontalAlignment = Alignment.End) {
+                                    Text(
+                                        formatMoney(sub.amount),
+                                        style = AuraType.moneySmall,
+                                        color = MaterialTheme.colorScheme.onSurface
+                                    )
+                                    val daysUntil = java.time.temporal.ChronoUnit.DAYS.between(
+                                        LocalDateTime.now().toLocalDate(),
+                                        sub.nextBillingDate.toLocalDate()
+                                    )
+                                    val dueLabel = when {
+                                        daysUntil < 0L -> stringResource(R.string.recurring_overdue)
+                                        daysUntil == 0L -> stringResource(R.string.recurring_due_today)
+                                        daysUntil == 1L -> stringResource(R.string.recurring_tomorrow)
+                                        else -> stringResource(
+                                            R.string.recurring_next,
+                                            sub.nextBillingDate.format(DateTimeFormatter.ofPattern("dd MMM"))
+                                        )
+                                    }
+                                    val urgent = daysUntil <= 3L
+                                    Spacer(modifier = Modifier.height(AuraSpacing.xxs))
+                                    Text(
+                                        dueLabel,
+                                        style = MaterialTheme.typography.labelSmall,
+                                        fontWeight = if (urgent) FontWeight.Bold else FontWeight.Normal,
+                                        color = if (daysUntil < 0L) MaterialTheme.colorScheme.error
+                                        else if (urgent) MaterialTheme.colorScheme.tertiary
+                                        else MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                                IconButton(onClick = {
+                                    error = null
+                                    confirmRemove = sub
+                                }) {
+                                    Icon(
+                                        Icons.Default.Close,
+                                        contentDescription = stringResource(R.string.action_remove),
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                }
                             }
-                            Icon(
-                                Icons.Default.Subscriptions,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.size(32.dp)
-                            )
                         }
                     }
                 }
-
-                items(subscriptions) { sub ->
-                    val category = categories.find { it.id == sub.categoryId }
-                    val categoryColor = category?.let { Color(it.color.toLong()) }
-                        ?: MaterialTheme.colorScheme.onSurfaceVariant
-                    AuraCard(
-                        modifier = Modifier.fillMaxWidth(),
-                        style = AuraCardStyle.Outlined
-                    ) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .size(44.dp)
-                                    .clip(CircleShape)
-                                    .background(categoryColor.copy(alpha = 0.14f)),
-                                contentAlignment = Alignment.Center
+                if (detected.isNotEmpty()) {
+                    item {
+                        Column(modifier = Modifier.fillMaxWidth()) {
+                            Text(
+                                stringResource(R.string.recurring_detected_title),
+                                style = MaterialTheme.typography.titleSmall,
+                                color = MaterialTheme.colorScheme.onSurface,
+                                modifier = Modifier.semantics { heading() }
+                            )
+                            Spacer(modifier = Modifier.height(AuraSpacing.xxs))
+                            Text(
+                                stringResource(R.string.recurring_detected_subtitle),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                    items(detected, key = { it.name.lowercase() }) { det ->
+                        val detCategory = categories.find { it.id == det.categoryId }
+                        val detColor = detCategory?.let { Color(it.color.toLong()) }
+                            ?: MaterialTheme.colorScheme.onSurfaceVariant
+                        AuraCard(modifier = Modifier.fillMaxWidth(), style = AuraCardStyle.Outlined) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Icon(
-                                    Icons.Default.Subscriptions,
-                                    contentDescription = null,
-                                    tint = categoryColor,
-                                    modifier = Modifier.size(22.dp)
-                                )
-                            }
-                            Spacer(modifier = Modifier.width(AuraSpacing.md))
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    sub.name,
-                                    style = MaterialTheme.typography.titleSmall,
-                                    fontWeight = FontWeight.SemiBold,
-                                    color = MaterialTheme.colorScheme.onSurface
-                                )
-                                Spacer(modifier = Modifier.height(AuraSpacing.xxs))
-                                Text(
-                                    stringResource(
-                                        R.string.recurring_category_cycle,
-                                        category?.name ?: stringResource(R.string.recurring_other_category),
-                                        stringResource(sub.billingCycle.labelRes())
-                                    ),
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
-                            Column(horizontalAlignment = Alignment.End) {
-                                Text(
-                                    formatMoney(sub.amount),
-                                    style = AuraType.moneySmall,
-                                    color = MaterialTheme.colorScheme.onSurface
-                                )
-                                val daysUntil = java.time.temporal.ChronoUnit.DAYS.between(
-                                    LocalDateTime.now().toLocalDate(),
-                                    sub.nextBillingDate.toLocalDate()
-                                )
-                                val dueLabel = when {
-                                    daysUntil < 0L -> stringResource(R.string.recurring_overdue)
-                                    daysUntil == 0L -> stringResource(R.string.recurring_due_today)
-                                    daysUntil == 1L -> stringResource(R.string.recurring_tomorrow)
-                                    else -> stringResource(
-                                        R.string.recurring_next,
-                                        sub.nextBillingDate.format(DateTimeFormatter.ofPattern("dd MMM"))
+                                Box(
+                                    modifier = Modifier
+                                        .size(44.dp)
+                                        .clip(CircleShape)
+                                        .background(detColor.copy(alpha = 0.14f)),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        Icons.Default.Subscriptions,
+                                        contentDescription = null,
+                                        tint = detColor,
+                                        modifier = Modifier.size(22.dp)
                                     )
                                 }
-                                val urgent = daysUntil <= 3L
-                                Spacer(modifier = Modifier.height(AuraSpacing.xxs))
-                                Text(
-                                    dueLabel,
-                                    style = MaterialTheme.typography.labelSmall,
-                                    fontWeight = if (urgent) FontWeight.Bold else FontWeight.Normal,
-                                    color = if (daysUntil < 0L) MaterialTheme.colorScheme.error
-                                    else if (urgent) MaterialTheme.colorScheme.tertiary
-                                    else MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
-                            IconButton(onClick = {
-                                error = null
-                                confirmRemove = sub
-                            }) {
-                                Icon(
-                                    Icons.Default.Close,
-                                    contentDescription = stringResource(R.string.action_remove),
-                                    modifier = Modifier.size(18.dp)
-                                )
+                                Spacer(modifier = Modifier.width(AuraSpacing.md))
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        det.name,
+                                        style = MaterialTheme.typography.titleSmall,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = MaterialTheme.colorScheme.onSurface
+                                    )
+                                    Spacer(modifier = Modifier.height(AuraSpacing.xxs))
+                                    Text(
+                                        stringResource(
+                                            R.string.recurring_detected_last_paid,
+                                            det.lastPaid.format(DateTimeFormatter.ofPattern("d MMM yyyy"))
+                                        ),
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                                Column(horizontalAlignment = Alignment.End) {
+                                    Text(
+                                        formatMoney(det.amount),
+                                        style = AuraType.moneySmall,
+                                        color = MaterialTheme.colorScheme.onSurface
+                                    )
+                                }
+                                Spacer(modifier = Modifier.width(AuraSpacing.xs))
+                                TextButton(
+                                    onClick = {
+                                        error = null
+                                        subscriptionName = det.name
+                                        subscriptionAmount =
+                                            if (det.amount % 1.0 == 0.0) det.amount.toLong().toString()
+                                            else det.amount.toString()
+                                        subscriptionCategory =
+                                            det.categoryId?.takeIf { id -> categories.any { it.id == id } }
+                                                ?: categories.firstOrNull()?.id
+                                                ?: ""
+                                        subscriptionCycle = RecurrenceFrequency.MONTHLY
+                                        showAddSheet = true
+                                    },
+                                    modifier = Modifier.heightIn(min = 48.dp)
+                                ) {
+                                    Text(stringResource(R.string.recurring_track))
+                                }
                             }
                         }
                     }
