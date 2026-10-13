@@ -92,7 +92,12 @@ empty → audit the settled database.
   model files disappearing became moot; the model can be added any time from
   Settings.
 
-## Still open
+## Closed during the same session
 
-- One unlocked dashboard read to finish the month-expense comparison.
-- The owner's call on the EPF row (income vs not).
+- The unlocked dashboard read finished the comparison: **all three displayed
+  figures MATCH the database** (all-time net, month income, month expense).
+  The one earlier "mismatch" was a comparator bug on our side — the UI renders
+  outflows as `−₹X` (`common_amount_minus`) and the check compared the signed
+  display against the positive SQL sum. No app defect; noted here so the next
+  audit script is sign-aware.
+- The owner's call on the EPF row (income vs not) is the only open question.
