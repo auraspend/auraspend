@@ -46,7 +46,8 @@ object BankMessageParser {
         Regex("IDFC\\s*FIRST|IDFCB|\\bIDFC\\b") to "IDFC First",
         Regex("IndusInd\\s*Bank|INDUSB|\\bINDUSIND\\b") to "IndusInd Bank",
         Regex("Union\\s*Bank\\s*of\\s*India|UNIONBNK|\\bUBOI\\b") to "Union Bank",
-        Regex("Indian\\s*Bank|INDBNK|\\bIOB\\b") to "Indian Bank",
+        Regex("Indian\\s*Overseas|IOBCHN|\\bIOB\\b") to "Indian Overseas Bank",
+        Regex("Indian\\s*Bank|INDBNK") to "Indian Bank",
         Regex("IDBI\\s*Bank|\\bIDBI\\b") to "IDBI Bank",
         Regex("Federal\\s*Bank|FEDERAL|\\bFBIL\\b") to "Federal Bank",
         Regex("RBL\\s*Bank|\\bRBL\\b") to "RBL Bank",
@@ -67,7 +68,23 @@ object BankMessageParser {
         Regex("Karur\\s*Vysya") to "Karur Vysya Bank",
         Regex("South\\s*Indian\\s*Bank") to "South Indian Bank",
         Regex("DCB\\s*Bank") to "DCB Bank",
-        Regex("Saraswat\\s*Bank") to "Saraswat Bank"
+        Regex("Saraswat\\s*Bank") to "Saraswat Bank",
+        Regex("UCO\\s*Bank|UCOBNK") to "UCO Bank",
+        Regex("City\\s*Union\\s*Bank|CUBANK|CUBLTD") to "City Union Bank",
+        Regex("Dhanlaxmi|DHANBK") to "Dhanlaxmi Bank",
+        Regex("Equitas") to "Equitas Small Finance Bank",
+        Regex("Punjab\\s*&\\s*Sind|PSBANK") to "Punjab & Sind Bank",
+        Regex("Utkarsh|UTKSFB") to "Utkarsh Small Finance Bank",
+        Regex("JKBANK|JK\\s*Bank") to "JK Bank",
+        Regex("Department\\s+of\\s+Post|DOPBNK") to "Department of Post",
+        Regex("American\\s*Express|AMEX") to "American Express",
+        Regex("OneCard|ONECRD") to "OneCard",
+        Regex("SLICEIT|SLCEIT|SLCBNK") to "Slice",
+        Regex("\\bCRED\\b|CREDIN") to "CRED",
+        Regex("Pluxee|PLUXEE") to "Pluxee",
+        Regex("Jio\\s*Payments\\s*Bank|JIOPBS") to "Jio Payments Bank",
+        Regex("NSDL\\s*Payments|NSDLPB") to "NSDL Payments Bank",
+        Regex("Cashfree|CSHFRE") to "Cashfree"
     )
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -180,7 +197,7 @@ object BankMessageParser {
     private val ifNotReceivedPhrase = Regex("""(?i)\bif\s+not\s+received\b""")
 
     /**
-     * A biller confirming a payment the user made: "Payment of Rs 706.82 for
+     * A biller confirming a payment the user made: "Payment of Rs 749.50 for
      * your JioHome connection … has been received on 01-Aug-26." The literal
      * "received" made the user's own payment read as INCOME (measured on the
      * owner's inbox, 2026-10-13 — nine utility payments booked as money in).
@@ -284,7 +301,7 @@ object BankMessageParser {
         Regex("""\bfrom\s+([A-Za-z][A-Za-z0-9&.'\- ]{1,38}?)\s+refunded\b""", RegexOption.IGNORE_CASE),
         // UPI debits name the payee before "; <PAYEE> credited" — the counterparty
         // of the money, which is the merchant the user recognises:
-        // "Acct XX051 debited for Rs 180.00 on 10-Nov-25; DINDUGAL ORIGIN credited."
+        // "Acct XX051 debited for Rs 180.00 on 10-Nov-25; MADURAI STORES credited."
         Regex(""";\s*([A-Za-z][A-Za-z0-9&.'\- ]{1,38}?)\s+credited\b""", RegexOption.IGNORE_CASE),
         // "... to AMAZON PAY ... " / "sent to X"
         Regex("""\bto\s+([A-Za-z][A-Za-z0-9&.'\- ]{1,38}?)(?=\s+(?:on|via|using|thru|through|dated|ref|no|avail|has|is|for|towards)\b|[/.,]|$)""", RegexOption.IGNORE_CASE),
@@ -405,7 +422,7 @@ object BankMessageParser {
             // "…Rs 22050 has been credited to the beneficiary account" is money
             // LEAVING (an outgoing NEFT); the literal "credited" made it income.
             .replace(creditedToBeneficiaryPhrase, "sent")
-            // "…debited for Rs 180 …; DINDUGAL ORIGIN credited." — the credited
+            // "…debited for Rs 180 …; MADURAI STORES credited." — the credited
             // party is the counterparty, not this account.
             .replace(counterpartyCreditedPhrase, " ")
             // "Aval Bal Rs.27000.00 CR." — the CR/DR annotates the balance.

@@ -135,7 +135,7 @@ class BankMessageParserTest {
         // of debit" scored both lexicons — the literal word "debit" — so the
         // ambiguity rule returned no type and the row was skipped.
         val parsed = BankMessageParser.parse(
-            "Rs.20.00 is credited to Kotak Bank a/c no. 8584 on 20-08-26 as a reversal of debit transaction (UPI Ref no 713508246195)"
+            "Rs.20.00 is credited to Kotak Bank a/c no. 8584 on 20-08-26 as a reversal of debit transaction (UPI Ref no 600000000001)"
         )
         assertEquals(TransactionType.INCOME, parsed.type)
     }
@@ -146,7 +146,7 @@ class BankMessageParserTest {
         // "Bharat Bill Payment System" contains the debit phrase "bill payment",
         // which made the type ambiguous and the row untyped.
         val parsed = BankMessageParser.parse(
-            "Payment of Rs 838.61 has been received on your ICICI Bank Credit Card XX8001 through Bharat Bill Payment System on 04-AUG-26"
+            "Payment of Rs 735.50 has been received on your ICICI Bank Credit Card XX8001 through Bharat Bill Payment System on 04-AUG-26"
         )
         assertEquals(TransactionType.INCOME, parsed.type)
     }
@@ -158,7 +158,7 @@ class BankMessageParserTest {
         // window (owner's device, 2026-10-13 — two card payments were skipped as
         // duplicates of an unrelated credit saved minutes earlier).
         val parsed = BankMessageParser.parse(
-            "Payment of Rs 838.61 has been received on your ICICI Bank Credit Card XX8001 through Bharat Bill Payment System on 04-AUG-26"
+            "Payment of Rs 735.50 has been received on your ICICI Bank Credit Card XX8001 through Bharat Bill Payment System on 04-AUG-26"
         )
         assertEquals(LocalDate.of(2026, 8, 4), parsed.date?.toLocalDate())
     }
@@ -244,9 +244,9 @@ class BankMessageParserTest {
     @Test
     fun `the payee before a counterparty credited is the merchant`() {
         val parsed = BankMessageParser.parse(
-            "ICICI Bank Acct XX051 debited for Rs 180.00 on 10-Nov-25; DINDUGAL ORIGIN credited. UPI:568069174081."
+            "ICICI Bank Acct XX051 debited for Rs 180.00 on 10-Nov-25; MADURAI STORES credited. UPI:568069174081."
         )
-        assertEquals("DINDUGAL ORIGIN", parsed.merchant)
+        assertEquals("MADURAI STORES", parsed.merchant)
         assertEquals(TransactionType.EXPENSE, parsed.type)
     }
 
@@ -271,7 +271,7 @@ class BankMessageParserTest {
     @Test
     fun `passive sent-to mail phrasing is not a transfer verb`() {
         val parsed = BankMessageParser.parse(
-            "ICICI Bank Credit Card XX8000 Statement is sent to a*****h@gmail.com. Total of Rs 838.61 or minimum of Rs 83.86 is due by 20-AUG-26."
+            "ICICI Bank Credit Card XX8000 Statement is sent to a*****h@gmail.com. Total of Rs 735.50 or minimum of Rs 73.55 is due by 20-AUG-26."
         )
         assertNull(parsed.type)
     }
@@ -289,10 +289,10 @@ class BankMessageParserTest {
         // Card-side "received ON YOUR credit card" stays income (tested above);
         // a biller receipting the user's payment is a debit.
         val parsed = BankMessageParser.parse(
-            "Payment of Rs. 706.82 for your JioHome connection with JioFixedVoice Number +919000000000 through UPI Payments has been received on 01-Aug-26. Thank You!"
+            "Payment of Rs. 749.50 for your JioHome connection with JioFixedVoice Number +919000000000 through UPI Payments has been received on 01-Aug-26. Thank You!"
         )
         assertEquals(TransactionType.EXPENSE, parsed.type)
-        assertEquals(706.82, parsed.amount ?: Double.NaN, 0.001)
+        assertEquals(749.50, parsed.amount ?: Double.NaN, 0.001)
     }
 
     @Test

@@ -132,7 +132,7 @@ class SmsPipelineProcessor(
             // gate the similarity score's merchantless case (40% free when both
             // merchants are null) + a same-hour date could push a 6%-apart pair over
             // the 0.96 threshold. Measured on the owner's device (2026-10-13): an
-            // ₹840.76 card payment was skipped as a "duplicate" of an unrelated ₹892
+            // ₹735.50 payment was skipped as a "duplicate" of an unrelated ₹815.75
             // credit 37 minutes earlier, because its date had failed to parse and
             // collapsed onto the save hour. The date-parse fix removes that trigger;
             // this gate makes the class impossible.

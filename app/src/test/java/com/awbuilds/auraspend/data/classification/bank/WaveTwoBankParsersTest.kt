@@ -75,7 +75,7 @@ class WaveTwoBankParsersTest {
     @Test
     fun `a machine-generated upi handle stays raw`() {
         val parsed = TransactionClassifier.classify(
-            "PNB Credit Card 1234 debited with Rs.270 [CODE:VG9918] at ombk.aaeh000000abcd@mbk on 04-10-2026 20:44 through UPI: 627768901810 Avl limit Rs. 48882.5. -PNB",
+            "PNB Credit Card 1234 debited with Rs.270 [CODE:VG9918] at ombk.aaeh000000abcd@mbk on 04-10-2026 20:44 through UPI: 627000000001 Avl limit Rs. 48882.5. -PNB",
             "VA-PNBCCD-S"
         )
         assertEquals(270.0, parsed.amount ?: Double.NaN, 0.001)

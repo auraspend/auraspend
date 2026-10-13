@@ -29,8 +29,8 @@ class SensitiveDataMaskerTest {
 
     @Test
     fun `upi reference number is masked`() {
-        val out = SensitiveDataMasker.mask("Sent Rs.299 UPI Ref no 713508246195 -HDFC")
-        assertFalse(out.contains("713508246195"))
+        val out = SensitiveDataMasker.mask("Sent Rs.299 UPI Ref no 600000000001 -HDFC")
+        assertFalse(out.contains("600000000001"))
         assertTrue(out.contains("Ref"))
     }
 
@@ -97,7 +97,7 @@ class SensitiveDataMaskerTest {
 
     @Test
     fun `masking is idempotent`() {
-        val input = "UPI Ref no 713508246195 call 9000000042 folio 30917265"
+        val input = "UPI Ref no 600000000001 call 9000000042 folio 30917265"
         val once = SensitiveDataMasker.mask(input)
         val twice = SensitiveDataMasker.mask(once)
         assertEquals(once, twice)

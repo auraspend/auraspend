@@ -139,7 +139,22 @@ object SmsAutoClassifier {
         // wrongly-saved instance (measured 2026-10-13: three Jio e-bills were
         // resurrected by exactly that loop) — and the memory runs after the
         // ingest guards, never before them.
-        Regex("(?i)\\bpayment\\s+due\\s+date\\b|\\btotal\\s+amount\\s+payable\\b")
+        Regex("(?i)\\bpayment\\s+due\\s+date\\b|\\btotal\\s+amount\\s+payable\\b"),
+        // ── Credit-card bill settlements are the user's own money moving
+        // between their own pockets, and both announcements look like
+        // transactions alone:
+        //  - card side — "Payment of Rs X has been received on your ICICI
+        //    Bank Credit Card", "…payment … credited to your SBI Credit
+        //    Card", "received as payment towards your PNB credit card";
+        //  - bank side — "Rs X debited … towards PNB credit card payment",
+        //    "… for credit card bill payment".
+        // Spending is already counted when the card is swiped, so booking
+        // either side double-counts it (and the card side used to inflate
+        // income). Refunds, reversals and cashbacks ON the card are money
+        // coming back and stay ingestable; so do card spends ("spent
+        // using/at") — the lookaheads carve both out.
+        Regex("(?i)^(?![\\s\\S]*\\b(?:refund|reversal|reversed|cashback|cash\\s+back)\\b)(?=[\\s\\S]*\\bcredit\\s+card\\b)[\\s\\S]*(?:\\bpayment\\b[\\s\\S]{0,80}?\\b(?:received|credited)\\b|\\breceived\\s+as\\s+payment\\b)"),
+        Regex("(?i)^(?![\\s\\S]*\\b(?:spent|used|purchased?|charged|refund|reversal|cashback)\\b)(?=[\\s\\S]*\\bcredit\\s+card\\b)[\\s\\S]*\\b(?:towards|for|to)\\b[\\s\\S]{0,40}?\\b(?:bill|payment|dues?|outstanding)\\b")
     )
 
     /**

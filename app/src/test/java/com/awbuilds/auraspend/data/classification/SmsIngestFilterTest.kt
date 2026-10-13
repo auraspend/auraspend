@@ -172,7 +172,7 @@ class SmsIngestFilterTest {
         // debits — the same alibi-tail failure the ICICI exception covers.
         assertTrue(
             isIngestable(
-                sms("Your a/c no XX1234 is debited for Rs 1000 on 01-01-25 12:00:00 and a/c XX456 credited (IMPS Ref no 123456789012). If not done by you, pl. forward this SMS from registered mobile to 9264092640 to report unauthorized txn & block IBS/MBS.")
+                sms("Your a/c no XX1234 is debited for Rs 1000 on 01-01-25 12:00:00 and a/c XX456 credited (IMPS Ref no 123456789012). If not done by you, pl. forward this SMS from registered mobile to 1800123456 to report unauthorized txn & block IBS/MBS.")
             )
         )
     }
@@ -201,7 +201,7 @@ class SmsIngestFilterTest {
         // booked as an EXPENSE — the amount owed is not a payment.
         assertFalse(
             isIngestable(
-                sms("Dear Customer, Bill dated 01-Aug-26 for your JioHome connection with JioFixedVoice Number +919000000000 is due for payment today. Total amount payable is Rs. 706.82. Please pay immediately. Kindly ignore, if already paid.")
+                sms("Dear Customer, Bill dated 01-Aug-26 for your JioHome connection with JioFixedVoice Number +919000000000 is due for payment today. Total amount payable is Rs. 749.50. Please pay immediately. Kindly ignore, if already paid.")
             )
         )
     }
@@ -210,7 +210,7 @@ class SmsIngestFilterTest {
     fun `a card statement notice is not ingestable`() {
         assertFalse(
             isIngestable(
-                sms("ICICI Bank Credit Card XX8000 Statement is sent to a*****h@gmail.com. Total of Rs 838.61 or minimum of Rs 83.86 is due by 20-AUG-26.")
+                sms("ICICI Bank Credit Card XX8000 Statement is sent to a*****h@example.com. Total of Rs 735.50 or minimum of Rs 73.55 is due by 20-AUG-26.")
             )
         )
     }
@@ -228,7 +228,7 @@ class SmsIngestFilterTest {
     @Test
     fun `a future refund notice is not ingestable`() {
         assertFalse(
-            isIngestable(sms("PNR 4123456789 ticket cancelled. Amt 870.72 will be refunded within 3-4 days. Please check your account/instrument from which this tkt was booked.-IRCTC"))
+            isIngestable(sms("PNR 4123456789 ticket cancelled. Amt 645.00 will be refunded within 3-4 days. Please check your account/instrument from which this tkt was booked.-IRCTC"))
         )
     }
 
@@ -239,7 +239,7 @@ class SmsIngestFilterTest {
         // instance — so this veto must sit upstream of the memory.
         assertFalse(
             isIngestable(
-                sms("Dear Customer, The 01-Feb-2026 ebill for your JioHome connection with JioFixedVoice Number +919000000000 has been sent to a@gmail.com. Bill Summary: Bill period: 01-Jan-2026 to 01-Feb-2026 Total Amount payable : Rs. 706.82 Payment due date: 15-FEB-2026 To view and download your bill, click http://jio.com/my_bills Team JioHome")
+                sms("Dear Customer, The 01-Feb-2026 ebill for your JioHome connection with JioFixedVoice Number +919000000000 has been sent to a*****h@example.com. Bill Summary: Bill period: 01-Jan-2026 to 01-Feb-2026 Total Amount payable : Rs. 749.50 Payment due date: 15-FEB-2026 To view and download your bill, click http://jio.com/my_bills Team JioHome")
             )
         )
     }
@@ -250,7 +250,94 @@ class SmsIngestFilterTest {
         // bill NOTICES are dropped.
         assertTrue(
             isIngestable(
-                sms("Payment of Rs. 706.82 for your JioHome connection with JioFixedVoice Number +919000000000 through UPI Payments has been received on 01-Aug-26. Thank You!")
+                sms("Payment of Rs. 749.50 for your JioHome connection with JioFixedVoice Number +919000000000 through UPI Payments has been received on 01-Aug-26. Thank You!")
+            )
+        )
+    }
+
+    // ── Credit-card bill settlements: both sides excluded ────────────────────
+
+    @Test
+    fun `a card-side bill-payment receipt is not ingestable`() {
+        // The spending was already counted when the card was swiped; the
+        // payment itself is a settlement between the user's own pockets.
+        assertFalse(
+            isIngestable(
+                sms("Payment of Rs 735.50 has been received on your ICICI Bank Credit Card XX8001 through Bharat Bill Payment System on 04-AUG-26.")
+            )
+        )
+    }
+
+    @Test
+    fun `an SBI-style credited payment on the card is not ingestable`() {
+        assertFalse(
+            isIngestable(
+                sms("We have received payment of Rs.815.75 via BBPS & the same has been credited to your SBI Credit Card. Your available limit is Rs. 42,981.46")
+            )
+        )
+    }
+
+    @Test
+    fun `a kotak-style credited payment on the card is not ingestable`() {
+        assertFalse(
+            isIngestable(
+                sms("Payment of INR 735.50 is credited to your Kotak Bank Credit Card x8848 on 17-Sep-26. Available Credit limit is INR 20,000.00.")
+            )
+        )
+    }
+
+    @Test
+    fun `a received-as-payment card notice is not ingestable`() {
+        assertFalse(
+            isIngestable(
+                sms("Thank you Rs.668.79/- has been received as payment towards your PNB credit card XX1234 via Online Payment.")
+            )
+        )
+    }
+
+    @Test
+    fun `a bank-side debit towards the card is not ingestable`() {
+        assertFalse(
+            isIngestable(
+                sms("Rs.270.00 debited from A/c XX1111 on 05-10-2026 towards PNB credit card payment. Avl Bal Rs.5,000.00")
+            )
+        )
+    }
+
+    @Test
+    fun `a bank-side debit for the card bill is not ingestable`() {
+        assertFalse(
+            isIngestable(
+                sms("Rs 10,000.00 debited from A/c XX0011 for credit card bill payment. Avl Bal Rs. 25,000.00")
+            )
+        )
+    }
+
+    @Test
+    fun `a card spend is still ingestable`() {
+        // Swipes are the actual spending; only the settlement is excluded.
+        assertTrue(
+            isIngestable(
+                sms("INR 500.00 spent using ICICI Bank Card XX8001 on 06-Sep-25 on Swiggy. Avl Limit: INR 1,50,000.00.")
+            )
+        )
+    }
+
+    @Test
+    fun `a refund to the card is still ingestable`() {
+        // Money coming BACK to the card is not a settlement.
+        assertTrue(
+            isIngestable(
+                sms("Dear Customer, refund of INR 250 from Swiggy Limited has been credited to your IndusInd Bank Credit Card XX1234 on 11-Jun-26.")
+            )
+        )
+    }
+
+    @Test
+    fun `a cashback on the card is still ingestable`() {
+        assertTrue(
+            isIngestable(
+                sms("Cashback of Rs.100.00 has been credited to your Kotak Bank Credit Card x8848 on 17-Jul-2026.")
             )
         )
     }
