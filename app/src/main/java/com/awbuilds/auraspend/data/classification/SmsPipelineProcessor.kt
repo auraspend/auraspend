@@ -137,8 +137,15 @@ class SmsPipelineProcessor(
             // collapsed onto the save hour. The date-parse fix removes that trigger;
             // this gate makes the class impossible.
             .filter {
-                kotlin.math.abs(it.amount - transaction.amount) <=
-                    maxOf(1.0, 0.002 * transaction.amount)
+                // SMS amounts are deterministic: a re-delivered copy states the
+                // SAME amount to the paisa, and anything wider is a different
+                // payment. The old `maxOf(1.0, 0.2 %)` floor allowed a ±₹1
+                // gap for small amounts, and on the owner's device
+                // (2026-10-13) a card swipe 52 minutes after a similar one at
+                // the same merchant was auto-skipped as a "duplicate" of it —
+                // a real second payment deleted by the guard that exists to
+                // protect payments.
+                kotlin.math.abs(it.amount - transaction.amount) <= 0.01
             }
         return DuplicateDetector.findMostLikelyDuplicate(
             transaction,

@@ -41,6 +41,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.conflate
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.Dispatchers
@@ -315,6 +317,13 @@ class ClassificationViewModel(
             // the notification can never disagree.
             dao.observeAll()
                 .map { rows -> rows.map { it.toClassifiedSms() } }
+                // Deriving the list re-derives the parse for every row without a
+                // stored one (skipped + pending), so it is real work. Run it off
+                // the main thread, and consume only the newest list: a drain
+                // writes several times a second and every intermediate list
+                // queued behind the UI was jank on the Smart Add tab.
+                .flowOn(Dispatchers.Default)
+                .conflate()
                 // A read failure must not leave the tab spinning with a stale list
                 // and no explanation: report it like every other failed load, and
                 // let the retryable error state offer the way out.
