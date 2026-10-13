@@ -22,6 +22,7 @@
     <string name="action_remove">Remove</string>
     <string name="action_dismiss">Dismiss</string>
     <string name="action_duplicate">Duplicate</string>
+    <string name="action_copy_message">Copy message</string>
     <string name="action_not_now">Not now</string>
 
     <!-- Shared formats -->
@@ -125,6 +126,9 @@
     <string name="txn_detail_source">Source</string>
     <string name="txn_detail_source_sms">Auto-detected from SMS</string>
     <string name="txn_detail_dash">—</string>
+    <string name="txn_detail_message_title">Original message</string>
+    <string name="txn_detail_message_meta">From %1$s · Received %2$s</string>
+    <string name="txn_detail_message_copied">Message copied</string>
 
     <!-- Quick add sheet -->
     <string name="quick_add_type_expense">Expense</string>
