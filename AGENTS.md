@@ -3,7 +3,20 @@
 > Read this file and the latest file in `docs/handoffs/` before touching anything.
 > Update both (plus `CLAUDE.md` / `memory/` when you learn something durable) before ending a session.
 >
-> Latest: `docs/handoffs/0035-device-pass-and-wave-5.md` — the targeted device
+> Latest: `docs/handoffs/0036-encoder-live-and-reported-fixes.md` — the owner's
+> on-device report peeled **four defects, two stacked under one another**: the
+> on-device encoder had *never run* — the vocab reader looked for
+> `tokenizer.json` while the downloader writes `minilm-tokenizer.json`, and
+> behind that the model required a `token_type_ids` input `encode()` never fed.
+> Both fixed; first real inference ever on the owner's device (`on-device
+> classifier ready: minilm-centroid`), zero inference errors. Month-first
+> dates now parse ("Jul 22 2026 6:19AM") and undated messages fall back to the
+> provider `receivedAt` instead of the save clock — 17 re-staged rows
+> re-booked their true July–September dates, far-date audit back to zero. The
+> search crash was `LazyPagingItems.peek` throwing on a composition-captured
+> `itemCount` vs a layout-time snapshot — the count is read inside the builder
+> now. PR #55, **490/490 tests.** Branch `fix/on-device-defects`.
+> Before: `docs/handoffs/0035-device-pass-and-wave-5.md` — the targeted device
 > pass removed the last 14 phantom card-payment "incomes" (all 22
 > credit-card rows re-verified as SKIPPED on-device; device now 467 saved /
 > 233 skipped / 467 txns), and wave 5 added the last institutions (HDFC
@@ -482,6 +495,11 @@ application id): `:benchmark:connectedDevBenchmarkAndroidTest` — see README.
   `EmbeddingClassifierAssetTest` decodes the real asset and fails on a digest or
   layout change, and `OnDeviceClassifier.isOperational` keeps readiness honest —
   a runtime whose session, vocabulary or centroids failed to load is *not* ready.
+  **Readiness is not proof this path runs**: the vocabulary file name and a
+  missing `token_type_ids` input each kept the encoder inert behind caught
+  exceptions while everything "loaded" (0036), and nothing in JVM tests can
+  catch that (the ONNX session never runs there) — only an on-device inference
+  smoke proves it, and a model swap must re-run that smoke.
 - **Any new runtime must beat the measured floor, *fused*.** Baseline with the
   model switched off: **13.9 % exact match**, type 95.8 %, category 34.7 %
   (72-case corpus, re-measured 2026-10-13; `RegexBaselineEval`,
