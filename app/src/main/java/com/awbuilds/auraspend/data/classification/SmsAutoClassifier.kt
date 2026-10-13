@@ -66,7 +66,9 @@ object SmsAutoClassifier {
         Regex("(?i)\\b(data\\s+usage|data\\s+plan|gb\\s+data|internet\\s+usage)\\b"),
         Regex("(?i)\\b(maintenance|system\\s+update|upgrade|server)\\b"),
         Regex("(?i)\\b(avail(?:able)?\\s+balance|bal(ance)?\\s+(?:amount|is|of)|current\\s+balance)\\b"),
-        Regex("(?i)\\b(due|deadline|maturity|interest\\s+(?:charged|posted)|annual\\s+fee)\\b"),
+        Regex("(?i)\\b(due|overdue|in\\s+arrears|deadline|maturity|interest\\s+(?:charged|posted)|annual\\s+fee)\\b"),
+        // Payment asks are not payments: "Pls pay your bill of Rs X by <date>".
+        Regex("(?i)\\b(?:please|pls)\\s+pay\\b"),
         Regex("(?i)\\b(congratulations|welcome|thank\\s+you)\\b"),
         Regex("(?i)\\b(limit\\s+(?:exceed|reached)|threshold|invalid|failed|declined|unsuccessful)\\b"),
         Regex("(?i)\\b(application|document|status|pending|submitted)\\b"),
@@ -91,10 +93,21 @@ object SmsAutoClassifier {
         Regex("(?i)\\bupcoming\\s+mandate\\b"),
         Regex("(?i)\\be-?mandate\\b[\\s\\S]{0,120}?(?:has\\s+been\\s+registered|set\\s+at|limit\\s+amount)"),
         // Payment reminders: "Ignore if paid" proves this SMS is not the payment itself.
-        Regex("(?i)\\bignore\\s+if\\s+paid\\b"),
+        Regex("(?i)\\bignore\\s+if\\s+(?:already\\s+)?paid\\b"),
         Regex("(?i)\\b(?:installment|emi|bill)\\b[\\s\\S]{0,60}?\\bis\\s+due\\b"),
         // A refund only "initiated" has not happened yet; the credit message follows.
-        Regex("(?i)\\brefund\\b[\\s\\S]{0,80}?\\binitiated\\b")
+        Regex("(?i)\\brefund\\b[\\s\\S]{0,80}?\\binitiated\\b"),
+        // Advance debit intimations — "Rs.500 will be debited from your A/c on
+        // <date>". The completed debit arrives as its own SMS ("has been
+        // debited"); booking the announcement doubles the spend. Covers the
+        // auto-debit and EMI-deduction variants the mandate patterns miss.
+        Regex("(?i)\\bwill\\s+be\\s+(?:auto[-\\s]?)?debit(?:ed|ing)?\\b"),
+        // Payment requests: money is being ASKED for, not moved.
+        Regex("(?i)\\b(?:has|have)\\s+requested\\b|\\b(?:payment|collect)\\s+request\\b|\\brequesting\\s+payment\\b|\\brequests\\s+rs\\b"),
+        // "Convert your bill to EMI" invitations — a completed conversion
+        // ("Rs.3282 debited … towards SmartEMI") still parses: the leading
+        // lookahead keeps the veto only when no debit verb appears anywhere.
+        Regex("(?i)^(?![\\s\\S]*\\b(?:debited|deducted|spent|charged|withdrawn)\\b)[\\s\\S]*\\bconvert(?:ed|s|ing)?\\b[\\s\\S]{0,80}?\\b(?:smartemi|into\\s+emi)\\b")
     )
 
     /**

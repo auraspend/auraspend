@@ -163,6 +163,111 @@ class BankMessageParserTest {
         assertEquals(LocalDate.of(2026, 8, 4), parsed.date?.toLocalDate())
     }
 
+    @Test
+    fun `an amount with no leading digit is still read`() {
+        // "Rs..6 Credited" — banks do print these; skipping them let a later
+        // balance figure win the amount pick.
+        val parsed = BankMessageParser.parse("Rs..6 Credited to your A/c XX1234 on 23-08-26")
+        assertEquals(0.6, parsed.amount ?: Double.NaN, 0.0001)
+        assertEquals(TransactionType.INCOME, parsed.type)
+    }
+
+    @Test
+    fun `a statement whose only figure is the available limit has no amount`() {
+        val parsed = BankMessageParser.parse(
+            "Your available credit limit is INR 42,731.09. Statement is ready."
+        )
+        assertNull(parsed.amount)
+    }
+
+    @Test
+    fun `deducted is an expense`() {
+        val parsed = BankMessageParser.parse(
+            "Rs. 250.00 deducted from your account towards insurance premium."
+        )
+        assertEquals(TransactionType.EXPENSE, parsed.type)
+        assertEquals(250.0, parsed.amount ?: Double.NaN, 0.0001)
+    }
+
+    @Test
+    fun `an updated balance tail is not the amount`() {
+        val parsed = BankMessageParser.parse(
+            "Rs 500 debited from A/c XX1234. Updated Balance: Rs 12,345.00."
+        )
+        assertEquals(500.0, parsed.amount ?: Double.NaN, 0.0001)
+    }
+
+    @Test
+    fun `a trailing PVT LTD is stripped from the merchant`() {
+        val parsed = BankMessageParser.parse(
+            "Sent Rs.500 towards ACME TECHNOLOGIES PVT LTD on 23-08-26"
+        )
+        assertEquals("ACME TECHNOLOGIES", parsed.merchant)
+    }
+
+    @Test
+    fun `a payment app QR handle reads as the app, not the raw id`() {
+        val parsed = BankMessageParser.parse(
+            "Sent Rs.15.00 from Kotak Bank AC X1234 to paytmqr288005050101t74afkchmxjd@paytm on 14-10-25.UPI Ref 1234567890"
+        )
+        assertEquals("Paytm", parsed.merchant)
+        assertEquals(TransactionType.EXPENSE, parsed.type)
+    }
+
+    @Test
+    fun `a phone-number UPI handle stays the number`() {
+        val parsed = BankMessageParser.parse(
+            "Sent Rs.500.00 from Kotak Bank AC X9999 to 9876543210@paytm on 15-10-25. UPI Ref 1111111111"
+        )
+        assertEquals("9876543210", parsed.merchant)
+    }
+
+    @Test
+    fun `a card spend's merchant follows the second on`() {
+        val parsed = BankMessageParser.parse(
+            "INR 500.00 spent using ICICI Bank Card XX5678 on 06-Sep-25 on Swiggy. Avl Limit: INR 1,50,000.00."
+        )
+        assertEquals(500.0, parsed.amount ?: Double.NaN, 0.0001)
+        assertEquals("Swiggy", parsed.merchant)
+        assertEquals(TransactionType.EXPENSE, parsed.type)
+    }
+
+    @Test
+    fun `a refund's merchant is the party before refunded`() {
+        val parsed = BankMessageParser.parse(
+            "INR 2 from Airport Lounge refunded to your Kotak Credit Card x8848 on 17-Jul-2026"
+        )
+        assertEquals("Airport Lounge", parsed.merchant)
+        assertEquals(TransactionType.INCOME, parsed.type)
+    }
+
+    @Test
+    fun `the payee before a counterparty credited is the merchant`() {
+        val parsed = BankMessageParser.parse(
+            "ICICI Bank Acct XX051 debited for Rs 180.00 on 10-Nov-25; DINDUGAL ORIGIN credited. UPI:568069174081."
+        )
+        assertEquals("DINDUGAL ORIGIN", parsed.merchant)
+        assertEquals(TransactionType.EXPENSE, parsed.type)
+    }
+
+    @Test
+    fun `credited to the beneficiary is money out, not income`() {
+        val parsed = BankMessageParser.parse(
+            "ICICI BANK NEFT Transaction with reference number IN12603221231681 for Rs. 22050.00 has been credited to the beneficiary account on 01-02-2026 at 10:32:51"
+        )
+        assertEquals(TransactionType.EXPENSE, parsed.type)
+        assertEquals(22050.0, parsed.amount ?: Double.NaN, 0.01)
+    }
+
+    @Test
+    fun `an Info SAL clause reads as Salary`() {
+        val parsed = BankMessageParser.parse(
+            "ICICI Bank Account XX566 credited:Rs. 18,832.00 on 28-Feb-25. Info INF*000169831922*IQBO SAL FE. Available Balance is Rs. 28,076.14."
+        )
+        assertEquals("Salary", parsed.merchant)
+        assertEquals(TransactionType.INCOME, parsed.type)
+    }
+
     // ─── Merchants ───────────────────────────────────────────────────────────
 
     @Test
