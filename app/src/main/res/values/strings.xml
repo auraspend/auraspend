@@ -366,6 +366,10 @@
     <string name="recurring_due_today">Due today</string>
     <string name="recurring_tomorrow">Tomorrow</string>
     <string name="recurring_next">Next: %1$s</string>
+    <string name="recurring_detected_title">Detected from your messages</string>
+    <string name="recurring_detected_subtitle">Recurring payments we spotted — track the ones you want.</string>
+    <string name="recurring_detected_last_paid">Last paid %1$s</string>
+    <string name="recurring_track">Track</string>
     <string name="recurring_add_subtitle">Track a recurring payment</string>
     <string name="recurring_name">Name</string>
     <string name="recurring_name_hint">Netflix, Spotify, Rent...</string>
