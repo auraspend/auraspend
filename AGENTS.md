@@ -3,7 +3,15 @@
 > Read this file and the latest file in `docs/handoffs/` before touching anything.
 > Update both (plus `CLAUDE.md` / `memory/` when you learn something durable) before ending a session.
 >
-> Latest: `docs/handoffs/0029-sms-categorisation-fix-verification.md` — the device
+> Latest: `docs/handoffs/0030-parsing-coverage.md` — the SMS engine absorbed the
+> real-world amount/merchant/guard handling of the PennyWise AI parser knowledge
+> base (AGPL-3.0, attributed in the licences index): no-leading-digit amounts,
+> credit-limit clause masking, payment-app QR / payee / refund / salary merchant
+> intelligence, the beneficiary-direction type fix, and five new ingest guards.
+> **413/413 tests.** On branch `feat/bank-parser-coverage`, deliberately not
+> merged (dev is the 0.1.3 release-PR head). The per-bank registry wave and the
+> corpus re-baseline are staged next.
+> Before: `docs/handoffs/0029-sms-categorisation-fix-verification.md` — the device
 > pass on the owner's real inbox found and fixed four issues: genuine ICICI card
 > spends were deleted by the hard fraud veto (the bank's own alarm tail was the
 > trigger — now a narrow exception); the triage UI was hidden behind the optional
