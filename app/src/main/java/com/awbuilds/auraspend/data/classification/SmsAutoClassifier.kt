@@ -93,7 +93,7 @@ object SmsAutoClassifier {
         Regex("(?i)\\bupcoming\\s+mandate\\b"),
         Regex("(?i)\\b(?:e|upi)[- ]?mandate\\b[\\s\\S]{0,120}?(?:has\\s+been\\s+registered|successfully\\s+created|set\\s+at|limit\\s+amount)"),
         // Payment reminders: "Ignore if paid" proves this SMS is not the payment itself.
-        Regex("(?i)\\bignore\\s+if\\s+(?:already\\s+)?paid\\b"),
+        Regex("(?i)\\bignore\\s*,?\\s*if\\s+(?:already\\s+)?paid\\b"),
         Regex("(?i)\\b(?:installment|emi|bill)\\b[\\s\\S]{0,60}?\\bis\\s+due\\b"),
         // A refund only "initiated" has not happened yet; the credit message follows.
         Regex("(?i)\\brefund\\b[\\s\\S]{0,80}?\\binitiated\\b"),
@@ -117,7 +117,29 @@ object SmsAutoClassifier {
         // Deposit No …" — an intimation where "paid" read as an expense and
         // booked a phantom. A real credit ("net interest … credited") is
         // untouched: the veto needs "paid on".
-        Regex("(?i)\\bnet\\s+interest\\b[\\s\\S]{0,80}?\\bpaid\\s+on\\b")
+        Regex("(?i)\\bnet\\s+interest\\b[\\s\\S]{0,80}?\\bpaid\\s+on\\b"),
+        // Bill notices, not bills: "is due for payment", "…is due by
+        // <date>". Measured on the owner's inbox (2026-10-13): every Jio
+        // monthly bill and every card statement booked as an EXPENSE — the
+        // amount is the amount owed, and no money has moved.
+        Regex("(?i)\\b(?:is|are)\\s+due\\s+(?:for\\s+payment|by)\\b"),
+        // Statement-mail notices: "E-statement … has been mailed. If not
+        // received, SMS ENRS. Total Amt Due …" — "received" read as a credit
+        // verb and booked phantom INCOME. No completed movement says "has
+        // been mailed".
+        Regex("(?i)\\bhas\\s+been\\s+mailed\\b"),
+        // Future refunds: "Amt will be refunded within 3-4 days" — money has
+        // not arrived yet; the credited message follows (same family as the
+        // "refund … initiated" veto).
+        Regex("(?i)\\bwill\\s+be\\s+refunded\\b"),
+        // E-bill bodies that carry no "due for payment" phrase still announce
+        // themselves: "Payment due date: …" / "Total amount payable : …".
+        // The veto must live HERE rather than in type scoring, because the
+        // classification memory can reinstate a type it once learned from a
+        // wrongly-saved instance (measured 2026-10-13: three Jio e-bills were
+        // resurrected by exactly that loop) — and the memory runs after the
+        // ingest guards, never before them.
+        Regex("(?i)\\bpayment\\s+due\\s+date\\b|\\btotal\\s+amount\\s+payable\\b")
     )
 
     /**

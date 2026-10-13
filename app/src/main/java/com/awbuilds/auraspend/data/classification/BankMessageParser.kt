@@ -165,6 +165,36 @@ object BankMessageParser {
         """(?i);\s*[A-Za-z][A-Za-z0-9&.'\- ]{1,38}?\s+credited\b"""
     )
 
+    /**
+     * Passive mail phrasing: "Statement is sent to <email>", "ebill has been
+     * sent to <email>". The literal "sent" is a debit word, and it booked
+     * statements and e-bills as expenses (owner's inbox, 2026-10-13).
+     * Active transfers ("Sent Rs.51 … to X", "Rs 500 sent to JOHN") have no
+     * is/was/has-been before "sent" and are untouched.
+     */
+    private val passiveSentToPhrase = Regex(
+        """(?i)\b(?:is|are|was|were|has\s+been|have\s+been|had\s+been)\s+sent\s+to\b"""
+    )
+
+    /** "If not received, SMS ENRS" — mail boilerplate, not a credit. */
+    private val ifNotReceivedPhrase = Regex("""(?i)\bif\s+not\s+received\b""")
+
+    /**
+     * A biller confirming a payment the user made: "Payment of Rs 706.82 for
+     * your JioHome connection … has been received on 01-Aug-26." The literal
+     * "received" made the user's own payment read as INCOME (measured on the
+     * owner's inbox, 2026-10-13 — nine utility payments booked as money in).
+     * Rewritten to a debit verb so the direction is right; the bank-side debit
+     * announced twice is then caught by the duplicate fingerprint, which
+     * exists for exactly this bank+biller pairing. The credit-card form
+     * ("… has been received ON YOUR ICICI Bank Credit Card") is deliberately
+     * excluded — there the received payment reduces the card, which this app
+     * records as income.
+     */
+    private val billerReceiptPhrase = Regex(
+        """(?i)\bpayment\s+of\b[\s\S]{0,120}?\bhas\s+been\s+received\b(?!\s+on\s+your\b)"""
+    )
+
     // ─────────────────────────────────────────────────────────────────────────
     // Amount detection
     // ─────────────────────────────────────────────────────────────────────────
@@ -380,6 +410,12 @@ object BankMessageParser {
             .replace(counterpartyCreditedPhrase, " ")
             // "Aval Bal Rs.27000.00 CR." — the CR/DR annotates the balance.
             .replace(balanceCrDrAnnotation, " ")
+            // "Statement is sent to <email>", "ebill … has been sent to" —
+            // passive mail phrasing is not a transfer.
+            .replace(passiveSentToPhrase, " ")
+            .replace(ifNotReceivedPhrase, " ")
+            // Biller receipts are the user's own payments, not income.
+            .replace(billerReceiptPhrase, "paid")
 
         val debitScore = debitRegexes.count { it.containsMatchIn(scored) } +
             (if (drSuffix.containsMatchIn(scored)) 1 else 0)
