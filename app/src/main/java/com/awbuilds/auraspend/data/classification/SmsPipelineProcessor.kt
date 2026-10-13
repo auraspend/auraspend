@@ -253,7 +253,11 @@ class SmsPipelineProcessor(
 
         val categoryId = enriched.parsed.categoryId
             ?: categoryResolver(enriched.parsed.merchant)
-        val transaction = SmsAutoClassifier.toTransaction(enriched, categoryId)
+        val transaction = SmsAutoClassifier.toTransaction(
+            enriched,
+            categoryId,
+            receivedAt = message.receivedAt
+        )
 
         // Semantic-duplicate guard: banks/wallets often deliver the SAME payment as several
         // distinct SMS (provider retries, app + bank notifications). The sourceSmsId unique

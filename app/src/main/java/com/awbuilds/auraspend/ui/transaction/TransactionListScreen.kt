@@ -308,7 +308,16 @@ fun TransactionListScreen(
                         bottom = AuraSpacing.xxl
                     )
                 ) {
-                    repeat(itemCount) { index ->
+                    // `peek` is `itemSnapshotList[index]` and throws past the end
+                    // — it is not a null-returning read. `itemCount` above is read
+                    // during composition, but this builder runs later, during a
+                    // layout pass, against a newer paging snapshot, and a search
+                    // keystroke shrinks the list in between. That exact race
+                    // crashed the app while typing in Activity search ("Illegal
+                    // attempt to access index 14 in ItemSnapshotList of size 14",
+                    // on-device 2026-10-13). Read the count here so it and the
+                    // peeks below are the same snapshot.
+                    repeat(transactions.itemCount) { index ->
                         val transaction = transactions.peek(index) ?: return@repeat
                         val day = transaction.date.toLocalDate()
                         if (index == 0 ||
@@ -402,6 +411,9 @@ fun TransactionListScreen(
  * (peek returns null) simply contribute once their page loads.
  */
 private fun loadedDayNet(transactions: LazyPagingItems<Transaction>, startIndex: Int): Double {
+    // `startIndex` was captured when the header was built and the list may have
+    // shrunk since; same throwing-peek hazard as the builder above.
+    if (startIndex >= transactions.itemCount) return 0.0
     val day = transactions.peek(startIndex)?.date?.toLocalDate() ?: return 0.0
     var net = 0.0
     var index = startIndex

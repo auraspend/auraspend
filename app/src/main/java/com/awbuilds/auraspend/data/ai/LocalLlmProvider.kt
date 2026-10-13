@@ -70,7 +70,8 @@ object LocalLlmProvider {
             Log.w(
                 TAG,
                 "On-device runtime loaded but is not operational " +
-                    "(session=${classifier.hasSession}, centroids=${classifier.hasCentroids}); " +
+                    "(session=${classifier.hasSession}, tokenizer=${classifier.hasTokenizer}, " +
+                    "centroids=${classifier.hasCentroids}); " +
                     "falling back to regex-only classification"
             )
         }

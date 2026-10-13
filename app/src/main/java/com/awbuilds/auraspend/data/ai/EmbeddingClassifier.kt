@@ -91,6 +91,9 @@ class EmbeddingClassifier(
     /** Diagnostics only: whether the bundled centroid asset decoded. */
     val hasCentroids: Boolean get() = model != null
 
+    /** Diagnostics only: whether the vocabulary parsed into a tokenizer. */
+    val hasTokenizer: Boolean get() = tokenizer != null
+
     override suspend fun extract(
         smsBody: String,
         categoryIdByName: Map<String, String>
@@ -161,8 +164,25 @@ class EmbeddingClassifier(
             LongBuffer.wrap(LongArray(ids.size) { 1L }),
             shape
         )
+        // MiniLM's exported graph carries the full BERT input set, and ONNX
+        // Runtime fails the *run* — not the session — when one is missing:
+        // "Missing Input: token_type_ids". All zeros is the standard
+        // single-segment encoding. This surfaced on the first inference ever
+        // run on a device (2026-10-13, behind the tokenizer fix that finally
+        // reached `encode`); a model swap must re-run the on-device smoke.
+        val typeIds = OnnxTensor.createTensor(
+            env,
+            LongBuffer.wrap(LongArray(ids.size) { 0L }),
+            shape
+        )
         try {
-            val results = session.run(mapOf("input_ids" to inputIds, "attention_mask" to maskIds))
+            val results = session.run(
+                mapOf(
+                    "input_ids" to inputIds,
+                    "attention_mask" to maskIds,
+                    "token_type_ids" to typeIds
+                )
+            )
             // results[0] is OnnxValue; cast rather than assume, so a graph whose
             // first output is not a float tensor fails as a logged boundary
             // error instead of a ClassCastException on the caller's thread.
@@ -192,7 +212,7 @@ class EmbeddingClassifier(
             for (i in pooled.indices) pooled[i] /= norm
             pooled
         } finally {
-            inputIds.close(); maskIds.close()
+            inputIds.close(); maskIds.close(); typeIds.close()
         }
     }
 
@@ -228,21 +248,7 @@ class EmbeddingClassifier(
         }
     }
 
-    /** Reads a `tokenizer.json` vocab into a wordpiece -> id map. */
-    private fun readVocab(): Map<String, Int> {
-        val file = File(tokenizerDir, "tokenizer.json")
-        require(file.exists()) { "tokenizer.json missing at ${file.absolutePath}" }
-        val root = JSONObject(file.readText())
-        val model = root.getJSONObject("model")
-        val vocabNode = model.getJSONObject("vocab")
-        val map = HashMap<String, Int>(vocabNode.length() * 2)
-        val keys = vocabNode.keys()
-        while (keys.hasNext()) {
-            val k = keys.next()
-            map[k] = vocabNode.getInt(k)
-        }
-        return map
-    }
+    private fun readVocab(): Map<String, Int> = readWordPieceVocab(tokenizerDir)
 
     override fun close() {
         boundary(TAG, Unit) { session?.close() }
@@ -292,4 +298,34 @@ private fun FloatArray.argmax(): Int {
     var best = 0
     for (i in 1 until size) if (this[i] > this[best]) best = i
     return best
+}
+
+/**
+ * Reads the WordPiece vocabulary of the downloaded `tokenizer.json` into a
+ * wordpiece -> id map.
+ *
+ * Takes the directory the model lives in and reads
+ * [ModelConstants.TOKENIZER_FILE_NAME] — the exact file
+ * `ModelDownloadManager` writes. The two names were once different
+ * ("tokenizer.json" here, `minilm-tokenizer.json` there), so on every device
+ * the vocabulary failed the `require` below, the boundary caught it as
+ * "Boundary failed, using fallback", and the encoder stayed inert behind a
+ * caught exception (found in a production build's logs, 2026-10-13 — the
+ * same inert-in-production class as the centroid byte-order bug, one layer
+ * down). Single-sourced through the constant so they cannot drift again;
+ * `EmbeddingClassifierTokenizerTest` pins the contract.
+ */
+internal fun readWordPieceVocab(dir: File): Map<String, Int> {
+    val file = File(dir, ModelConstants.TOKENIZER_FILE_NAME)
+    require(file.exists()) { "tokenizer vocabulary missing at ${file.absolutePath}" }
+    val root = JSONObject(file.readText())
+    val model = root.getJSONObject("model")
+    val vocabNode = model.getJSONObject("vocab")
+    val map = HashMap<String, Int>(vocabNode.length() * 2)
+    val keys = vocabNode.keys()
+    while (keys.hasNext()) {
+        val k = keys.next()
+        map[k] = vocabNode.getInt(k)
+    }
+    return map
 }

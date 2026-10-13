@@ -361,7 +361,12 @@ object BankMessageParser {
         // those messages silently fell back to `LocalDateTime.now()` at save
         // time. Measured on the owner's device, 2026-10-13; never write a dash
         // between two characters in a class.
-        Regex("""\b(\d{1,2}[ -][A-Za-z]{3,9}[ ,-]\d{2,4})(?:\s+(\d{1,2}:\d{2}(?::\d{2})?)\s*([AaPp][Mm])?)?\b""")
+        Regex("""\b(\d{1,2}[ -][A-Za-z]{3,9}[ ,-]\d{2,4})(?:\s+(\d{1,2}:\d{2}(?::\d{2})?)\s*([AaPp][Mm])?)?\b"""),
+        // Month-first English dates ("Jul 22 2026", "JUL 22, 2026 6:19AM") match
+        // none of the day-first patterns above, so a "debited ... on Jul 22 2026
+        // 6:19AM" message parsed no date and was booked as the day the scan ran
+        // (owner's device, 2026-10-13).
+        Regex("""\b([A-Za-z]{3,9}\s+\d{1,2},?\s+\d{2,4})(?:\s+(\d{1,2}:\d{2}(?::\d{2})?)\s*([AaPp][Mm])?)?\b""")
     )
 
     private val dateFormats = listOf(
@@ -375,6 +380,9 @@ object BankMessageParser {
         // of an unrelated credit saved minutes earlier).
         "dd-MMM-yy", "d-MMM-yy",
         "d MMM yyyy", "d MMM yy", "d MMMM yyyy", "dd-MMM-yyyy",
+        // Month-first ordering ("Jul 22 2026"). parseDate strips commas before
+        // matching, so "JUL 22, 2026" lands here too.
+        "MMM d yyyy", "MMM d yy", "MMMM d yyyy",
         "yyyy-MM-dd"
     )
 
