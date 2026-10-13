@@ -3,7 +3,14 @@
 > Read this file and the latest file in `docs/handoffs/` before touching anything.
 > Update both (plus `CLAUDE.md` / `memory/` when you learn something durable) before ending a session.
 >
-> Latest: `docs/handoffs/0034-wave-4-corrections.md` — wave 4 ported the six
+> Latest: `docs/handoffs/0035-device-pass-and-wave-5.md` — the targeted device
+> pass removed the last 14 phantom card-payment "incomes" (all 22
+> credit-card rows re-verified as SKIPPED on-device; device now 467 saved /
+> 233 skipped / 467 txns), and wave 5 added the last institutions (HDFC
+> Mutual Fund + Navi Mutual Fund with their in-clause payees, Kerala Gramin
+> Bank, Kerala Bank, DBS, IPPB, Jana — **53 parsers** in the registry).
+> **484/484 tests.**
+> Before: `docs/handoffs/0034-wave-4-corrections.md` — wave 4 ported the six
 > corrections the wave-3 cohort's fixtures demanded ("used at" joins the debit
 > lexicon; Indian Bank ATM labels; Saraswat ACH-payee + rail labels; Standard
 > Chartered rail credits; Dhanlaxmi's quoted "Payment from X" payee; Amazon Pay
