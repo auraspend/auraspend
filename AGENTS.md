@@ -3,7 +3,16 @@
 > Read this file and the latest file in `docs/handoffs/` before touching anything.
 > Update both (plus `CLAUDE.md` / `memory/` when you learn something durable) before ending a session.
 >
-> Latest: `docs/handoffs/0036-encoder-live-and-reported-fixes.md` — the owner's
+> Latest: `docs/handoffs/0037-txn-detail-original-message.md` — the transaction
+> detail page now shows the **original SMS**: sender, received time, the full
+> body (selectable, no truncation) and a Copy action, read back and verified on
+> device (`message copy: 112 chars, clipboard readback=112`). The Note row hides
+> only when it is pipeline filler (merchant repeated / first 120 chars of the
+> body — single-sourced from `BankMessageParser.truncateMessage`), never for an
+> edited note. A read-only `SmsMessageLookup` degrades to "no card" on any
+> failure. PR #56, **501/501 tests.** Device gotcha: vivo/OriginOS drops
+> `Log.d` app lines — use `i`/`w`/`e` for field diagnostics.
+> Before: `docs/handoffs/0036-encoder-live-and-reported-fixes.md` — the owner's
 > on-device report peeled **four defects, two stacked under one another**: the
 > on-device encoder had *never run* — the vocab reader looked for
 > `tokenizer.json` while the downloader writes `minilm-tokenizer.json`, and
