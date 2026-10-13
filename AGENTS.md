@@ -3,7 +3,14 @@
 > Read this file and the latest file in `docs/handoffs/` before touching anything.
 > Update both (plus `CLAUDE.md` / `memory/` when you learn something durable) before ending a session.
 >
-> Latest: `docs/handoffs/0032-wave-2-and-device-audit.md` — wave 2 (12 more
+> Latest: `docs/handoffs/0033-wave-3-and-card-payments.md` — wave 3 (28 more
+> sender-routed parsers: national banks + cards/wallets; 46 total), credit-card
+> bill payments excluded on **both** sides at ingest (spending is counted at
+> swipe time; refunds/cashbacks stay income), synthetic-only fixtures with a new
+> `FixturePrivacyTest` tripwire, and the golden corpus grown to 72 cases with the
+> floor re-measured (13.9 % exact / type 95.8 % / category 34.7 %).
+> **465/465 tests.**
+> Before: `docs/handoffs/0032-wave-2-and-device-audit.md` — wave 2 (12 more
 > sender-routed parsers; 18 total) went through a **fresh full re-ingest of the
 > owner's real inbox**, diffed per message. The phone found six classes the
 > fixtures had not: balance "CR." annotations making PNB debits typeless;
@@ -462,8 +469,9 @@ application id): `:benchmark:connectedDevBenchmarkAndroidTest` — see README.
   layout change, and `OnDeviceClassifier.isOperational` keeps readiness honest —
   a runtime whose session, vocabulary or centroids failed to load is *not* ready.
 - **Any new runtime must beat the measured floor, *fused*.** Baseline with the
-  model switched off: **13.8 % exact match**, type 95.4 %, category 36.9 %
-  (`RegexBaselineEval`, `./gradlew :app:classificationBaseline`).
+  model switched off: **13.9 % exact match**, type 95.8 %, category 34.7 %
+  (72-case corpus, re-measured 2026-10-13; `RegexBaselineEval`,
+  `./gradlew :app:classificationBaseline`).
   `RegexBaselineEvalTest` fails if the regex layer regresses. A model that beats
   that floor *standalone* may still be worse in the pipeline — Qwen and
   SmolLM2 both score 29.2 % standalone and reached opposite conclusions. Judge
