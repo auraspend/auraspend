@@ -13,10 +13,11 @@
 > separator class `[ -,]` was a character range, and month text parsing is
 > case-sensitive — so those transactions got the save-time date and one was
 > false-skipped as a duplicate (the dedup amount gate is tightened too).
-> 396/396 tests green. **Everything is uncommitted — commit only on request.**
-> The owner's phone still runs `0.1.1-play`; the Dev build used for the pass is
-> installed alongside it. The corpus re-baseline for these shapes is deliberately
-> left as a separate step.
+> 396/396 tests green. Landed on `dev` (PR #46) and cut as **0.1.3** —
+> versionCode 4, tag `v0.1.3` + GitHub Release with signed artifacts; the
+> dev→main PR is #47. The owner's phone still runs `0.1.1-play`; the Dev build
+> used for the pass is installed alongside it. The corpus re-baseline for these
+> shapes is deliberately left as a separate step.
 > Before: `docs/handoffs/0028-sms-categorisation-flow.md` — the categorisation flow now
 > matches what the owner expects to see. The queue pipeline was already sound; what was
 > broken was the status surface and the notification model. New `CLASSIFYING` queue status

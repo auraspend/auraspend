@@ -1,7 +1,8 @@
 # 0029 — SMS categorisation: on-device findings and four fixes
 
-**Status:** done 2026-10-13 — **everything is uncommitted** (branch convention: commit
-only on request). Work sits on `feat/sms-categorisation-flow`, on top of session 0028.
+**Status:** done 2026-10-13 — committed (`dba7783`, `d77612b`, `6ba4e78`), merged to
+`dev` (PR #46), released as **0.1.3** (versionCode 4, tag `v0.1.3`); the dev→main PR
+is #47.
 
 ## How the device was used (privacy)
 
@@ -85,4 +86,5 @@ and tests carry synthetic twins only (`XX####`, `9000000042`).
   exact "If not you, call …/SMS BLOCK …" shape *and* reading as a completed
   movement. The narrow pattern keeps this far below the alternative (losing every
   ICICI card spend), and the broader framings stay vetoed.
-- Next: the corpus re-baseline (above), then commit this branch on the owner's word.
+- Next: the corpus re-baseline (above); merge PR #47 to `main` so the release
+  reaches the default branch.
