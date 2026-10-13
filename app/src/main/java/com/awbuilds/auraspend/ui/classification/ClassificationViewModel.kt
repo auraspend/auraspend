@@ -392,7 +392,11 @@ class ClassificationViewModel(
                 val categoryId = classified.parsed.categoryId
                 val effectiveCategory = if (categories.any { it.id == categoryId }) categoryId else "cat_other"
 
-                val transaction = SmsAutoClassifier.toTransaction(classified, effectiveCategory)
+                val transaction = SmsAutoClassifier.toTransaction(
+                    classified,
+                    effectiveCategory,
+                    receivedAt = classified.sms.timestamp
+                )
                 saveTransactionUseCase(transaction)
                 rememberClassification(transaction)
 
@@ -445,7 +449,11 @@ class ClassificationViewModel(
                 for (classified in toSave) {
                     val categoryId = classified.parsed.categoryId
                     val effectiveCategory = if (categories.any { it.id == categoryId }) categoryId else "cat_other"
-                    val transaction = SmsAutoClassifier.toTransaction(classified, effectiveCategory)
+                    val transaction = SmsAutoClassifier.toTransaction(
+                        classified,
+                        effectiveCategory,
+                        receivedAt = classified.sms.timestamp
+                    )
                     saveTransactionUseCase(transaction)
                     rememberClassification(transaction)
                     dao.getById(classified.sms.id)?.let { row ->

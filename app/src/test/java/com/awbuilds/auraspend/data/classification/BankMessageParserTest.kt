@@ -391,6 +391,20 @@ class BankMessageParserTest {
         assertEquals(LocalDateTime.of(2026, 7, 4, 18, 2), parsed.date)
     }
 
+    @Test
+    fun `month-first English dates are parsed with their time`() {
+        // "on Jul 22 2026 6:19AM" matches neither the day-first patterns nor
+        // `dateFormats`: month-first ordering has no "d MMM" shape. The message
+        // silently took the save-time date, so a July debit appeared as the
+        // October day the scan ran (owner's device, 2026-10-13). Amounts are
+        // synthetic; only the shape is real.
+        val parsed = BankMessageParser.parse(
+            "Rs.315.00 debited from your RWallet Account on Jul 22 2026 6:19AM. " +
+                "Available Balance Rs.412.05. Indian Railway"
+        )
+        assertEquals(LocalDateTime.of(2026, 7, 22, 6, 19), parsed.date)
+    }
+
     // ─── Banks ───────────────────────────────────────────────────────────────
 
     @Test

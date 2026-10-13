@@ -11,7 +11,9 @@ import com.awbuilds.auraspend.domain.model.Subscription
 import com.awbuilds.auraspend.domain.model.Transaction
 import com.awbuilds.auraspend.domain.model.TransactionType
 import com.awbuilds.auraspend.domain.repository.TransactionRepository
+import java.time.Instant
 import java.time.LocalDateTime
+import java.time.ZoneId
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.runBlocking
@@ -148,6 +150,46 @@ class SmsPipelineProcessorTest {
         assertEquals(1, result.saved)
         assertEquals(SmsMessageStatus.SAVED.name, status(dao, "s1"))
         assertEquals("s1", repo.saved.single().sourceSmsId)
+    }
+
+    @Test
+    fun `an undated message is booked at its arrival time, not the scan time`() = runBlocking {
+        val dao = FakeSmsMessageDao()
+        val repo = FakeTransactionRepository()
+        // 2026-07-22 00:49 UTC — a July message drained in October. The old
+        // save-clock fallback booked it as the drain day (owner's device,
+        // 2026-10-13); the provider timestamp is the honest fallback.
+        val receivedAt = 1784681340000L
+        dao.insertAll(
+            listOf(
+                message("july", "INR 315.00 debited from your RWallet Account", receivedAt)
+            )
+        )
+
+        val result = SmsPipelineProcessor(dao, repo).processPending(maxMessages = 10)
+
+        assertEquals(1, result.saved)
+        val expected = LocalDateTime.ofInstant(
+            Instant.ofEpochMilli(receivedAt),
+            ZoneId.systemDefault()
+        )
+        assertEquals(expected, repo.saved.single().date)
+    }
+
+    @Test
+    fun `a date in the body outranks the arrival time`() = runBlocking {
+        val dao = FakeSmsMessageDao()
+        val repo = FakeTransactionRepository()
+        dao.insertAll(
+            listOf(
+                message("dated", "INR 20 credited to A/c XX4321 on 15/03/2026", 1784681340000L)
+            )
+        )
+
+        val result = SmsPipelineProcessor(dao, repo).processPending(maxMessages = 10)
+
+        assertEquals(1, result.saved)
+        assertEquals(LocalDateTime.of(2026, 3, 15, 12, 0), repo.saved.single().date)
     }
 
     @Test

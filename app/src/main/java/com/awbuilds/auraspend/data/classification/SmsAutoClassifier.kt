@@ -6,7 +6,9 @@ import com.awbuilds.auraspend.domain.model.ParsedBankMessage
 import com.awbuilds.auraspend.domain.model.Transaction
 import com.awbuilds.auraspend.domain.model.TransactionType
 import com.awbuilds.auraspend.ui.classification.SmsInfo
+import java.time.Instant
 import java.time.LocalDateTime
+import java.time.ZoneId
 
 /** Live status of a message while it is being categorized, shown in the UI. */
 enum class SmsStatus { PENDING, CLASSIFYING, CLASSIFIED, SAVED, FAILED, SKIPPED }
@@ -196,8 +198,16 @@ object SmsAutoClassifier {
      * Converts a parsed message into a savable transaction. All ingestion flows through the
      * persistent Room queue (SmsIngestor -> sms_messages -> SmsPipelineProcessor), which takes
      * messages one at a time — never parse the inbox directly.
+     *
+     * [receivedAt] is the SMS provider's arrival timestamp (epoch millis). It dates the
+     * transaction when the body carries no parseable date; zero means "unknown" and keeps the
+     * old save-clock behaviour for callers that have no message (tests, manual inserts).
      */
-    fun toTransaction(classified: ClassifiedSms, categoryId: String? = null): Transaction {
+    fun toTransaction(
+        classified: ClassifiedSms,
+        categoryId: String? = null,
+        receivedAt: Long = 0L
+    ): Transaction {
         val parsed = classified.parsed
         val subscriptionCategory = if (classified.isSubscription) "cat_subscription" else null
         val effectiveCategory = subscriptionCategory ?: categoryId ?: parsed.categoryId ?: "cat_other"
@@ -207,7 +217,16 @@ object SmsAutoClassifier {
             note = parsed.note ?: parsed.rawMessage.take(100),
             merchant = parsed.merchant,
             bankName = parsed.bankName,
-            date = parsed.date ?: LocalDateTime.now(),
+            // A body with no parseable date used to fall back to the save clock,
+            // which booked a July message as the October day the drain reached it
+            // (owner's device, 2026-10-13). The provider's arrival timestamp is
+            // the honest fallback.
+            date = parsed.date
+                ?: if (receivedAt > 0L) {
+                    LocalDateTime.ofInstant(Instant.ofEpochMilli(receivedAt), ZoneId.systemDefault())
+                } else {
+                    LocalDateTime.now()
+                },
             type = parsed.type ?: TransactionType.EXPENSE,
             isRecurring = classified.isSubscription,
             sourceSmsId = classified.sms.id.takeIf { it.isNotBlank() }
