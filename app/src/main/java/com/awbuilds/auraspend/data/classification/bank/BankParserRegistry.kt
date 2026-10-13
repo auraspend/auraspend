@@ -18,6 +18,8 @@ object BankParserRegistry {
         AxisBankParser(),
         CanaraBankParser(),
         SbiBankParser(),
+        HdfcMutualFundParser(),
+        NaviMutualFundParser(),
         HdfcBankParser(),
         IciciBankParser(),
         KotakBankParser(),
@@ -60,7 +62,12 @@ object BankParserRegistry {
         PluxeeBankParser(),
         JuspayParser(),
         CashfreeParser(),
-        SaraswatBankParser()
+        SaraswatBankParser(),
+        KeralaGraminBankParser(),
+        KeralaBankParser(),
+        DbsBankParser(),
+        IppbParser(),
+        JanaSmallFinanceBankParser()
     )
 
     /**

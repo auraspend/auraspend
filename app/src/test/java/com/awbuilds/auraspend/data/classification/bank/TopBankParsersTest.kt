@@ -3,7 +3,6 @@ package com.awbuilds.auraspend.data.classification.bank
 import com.awbuilds.auraspend.data.classification.TransactionClassifier
 import com.awbuilds.auraspend.domain.model.TransactionType
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNull
 import org.junit.Test
 
 /**
@@ -33,11 +32,11 @@ class TopBankParsersTest {
     }
 
     @Test
-    fun `an HDFC mutual-fund sender is not routed to the bank parser`() {
+    fun `an HDFC mutual-fund sender routes to the mutual-fund parser`() {
         // MF messages are unit allotments; the bank parser's assumptions do
-        // not hold for them, and the reference project orders its MF parser
-        // first for the same reason.
-        assertNull(BankParserRegistry.parserFor("AD-HDFCMF-S"))
+        // not hold for them — the dedicated parser claims the MF senders.
+        assertEquals("HDFC Mutual Fund", BankParserRegistry.parserFor("AD-HDFCMF-S")?.bankName)
+        assertEquals("HDFC Bank", BankParserRegistry.parserFor("VM-HDFCBK-S")?.bankName)
     }
 
     // ── HDFC ───────────────────────────────────────────────────────────────────
