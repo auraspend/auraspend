@@ -17,7 +17,10 @@ object BankParserRegistry {
     val all: List<BankParser> = listOf(
         AxisBankParser(),
         CanaraBankParser(),
-        SbiBankParser()
+        SbiBankParser(),
+        HdfcBankParser(),
+        IciciBankParser(),
+        KotakBankParser()
     )
 
     /**

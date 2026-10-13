@@ -268,6 +268,25 @@ class BankMessageParserTest {
         assertEquals(TransactionType.INCOME, parsed.type)
     }
 
+    @Test
+    fun `an HDFC-style NEFT credit names the remitting organisation`() {
+        val parsed = BankMessageParser.parse(
+            "Update! INR 1.00 deposited in HDFC Bank A/c XX9999 on 30-MAR-26 for NEFT Cr-CITI0100000-ACME TECHNOLOGIES-PERSON NAME-CITIN99999999999.Avl bal INR 8.00."
+        )
+        assertEquals("ACME TECHNOLOGIES", parsed.merchant)
+        assertEquals(TransactionType.INCOME, parsed.type)
+        assertEquals(1.0, parsed.amount ?: Double.NaN, 0.001)
+    }
+
+    @Test
+    fun `an ICICI-style NEFT credit names the payer`() {
+        val parsed = BankMessageParser.parse(
+            "ICICI Bank Account XX378 credited:Rs. 6,000.00 on 24-Jun-26. Info NEFT-FDRLM4175907234-JOHN JOSE. Available Balance is Rs. 16,079.44."
+        )
+        assertEquals("JOHN JOSE", parsed.merchant)
+        assertEquals(TransactionType.INCOME, parsed.type)
+    }
+
     // ─── Merchants ───────────────────────────────────────────────────────────
 
     @Test

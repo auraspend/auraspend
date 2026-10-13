@@ -107,7 +107,12 @@ object SmsAutoClassifier {
         // "Convert your bill to EMI" invitations — a completed conversion
         // ("Rs.3282 debited … towards SmartEMI") still parses: the leading
         // lookahead keeps the veto only when no debit verb appears anywhere.
-        Regex("(?i)^(?![\\s\\S]*\\b(?:debited|deducted|spent|charged|withdrawn)\\b)[\\s\\S]*\\bconvert(?:ed|s|ing)?\\b[\\s\\S]{0,80}?\\b(?:smartemi|into\\s+emi)\\b")
+        Regex("(?i)^(?![\\s\\S]*\\b(?:debited|deducted|spent|charged|withdrawn)\\b)[\\s\\S]*\\bconvert(?:ed|s|ing)?\\b[\\s\\S]{0,80}?\\b(?:smartemi|into\\s+emi)\\b"),
+        // "received … for processing" (NACH / cheque notices) — acknowledged,
+        // not moved. Without this, "NACH Mandate … received today for
+        // processing" read "received" as a credit verb and booked phantom
+        // income of the full mandate amount.
+        Regex("(?i)\\bfor\\s+processing\\b")
     )
 
     /**
