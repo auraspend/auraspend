@@ -3,7 +3,14 @@
 > Read this file and the latest file in `docs/handoffs/` before touching anything.
 > Update both (plus `CLAUDE.md` / `memory/` when you learn something durable) before ending a session.
 >
-> Latest: `docs/handoffs/0033-wave-3-and-card-payments.md` — wave 3 (28 more
+> Latest: `docs/handoffs/0034-wave-4-corrections.md` — wave 4 ported the six
+> corrections the wave-3 cohort's fixtures demanded ("used at" joins the debit
+> lexicon; Indian Bank ATM labels; Saraswat ACH-payee + rail labels; Standard
+> Chartered rail credits; Dhanlaxmi's quoted "Payment from X" payee; Amazon Pay
+> wallet direction + label). Deliberately not ported: merchants containing
+> masked accounts, foreign-currency messages, and self-transfer shapes.
+> **478/478 tests.**
+> Before: `docs/handoffs/0033-wave-3-and-card-payments.md` — wave 3 (28 more
 > sender-routed parsers: national banks + cards/wallets; 46 total), credit-card
 > bill payments excluded on **both** sides at ingest (spending is counted at
 > swipe time; refunds/cashbacks stay income), synthetic-only fixtures with a new

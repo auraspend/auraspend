@@ -94,7 +94,7 @@ object BankMessageParser {
     /** Words that mark money leaving the account. */
     private val debitWords = listOf(
         "debited", "debit", "withdrawn", "withdrawal", "atm withdrawal",
-        "spent", "spent using", "paid", "payment made", "purchased", "purchase",
+        "spent", "spent using", "used at", "paid", "payment made", "purchased", "purchase",
         "sent", "transferred to", "transfer to", "auto pay", "autopay", "auto debit",
         "autodebit", "nach debit", "charged", "deducted", "bill payment", "recharge of"
     )
