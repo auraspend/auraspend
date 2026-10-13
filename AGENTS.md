@@ -3,7 +3,20 @@
 > Read this file and the latest file in `docs/handoffs/` before touching anything.
 > Update both (plus `CLAUDE.md` / `memory/` when you learn something durable) before ending a session.
 >
-> Latest: `docs/handoffs/0031-per-bank-parsers-wave-1.md` — sender-routed parsers
+> Latest: `docs/handoffs/0032-wave-2-and-device-audit.md` — wave 2 (12 more
+> sender-routed parsers; 18 total) went through a **fresh full re-ingest of the
+> owner's real inbox**, diffed per message. The phone found six classes the
+> fixtures had not: balance "CR." annotations making PNB debits typeless;
+> passive "sent to"/"if not received" mail phrasing booking statements as
+> expenses/income; bill notices ("due for payment", "Total amount payable")
+> booking as expenses; future-refund notices as income; the user's own utility
+> payments booked as income; and the comma variant "ignore, if already paid"
+> slipping the reminder veto. It also proved the **classification memory can
+> resurrect a wrongly-saved class** — the e-bill veto sits at ingest, upstream
+> of it. Final inbox: **700 candidates, 481 saved / 219 skipped / 0 failed**,
+> 24 phantoms gone, 58 old false-dedup casualties recovered, every save's
+> direction now matches the regex. **451/451 tests.**
+> Before: `docs/handoffs/0031-per-bank-parsers-wave-1.md` — sender-routed parsers
 > for **HDFC, ICICI and Kotak** (corrections layered on the global engine, so the
 > amount/merchant logic cannot drift), plus engine round 3: NEFT remitter names
 > (HDFC "NEFT Cr-…" and ICICI "NEFT-<ref>-<name>"), "towards X for Y" cutoff, and
