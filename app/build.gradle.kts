@@ -30,12 +30,13 @@ android {
         applicationId = "com.awbuilds.auraspend"
         minSdk = 30
         targetSdk = 37
-        // 0.1.2 — the reliability release (the 32-finding code review is fixed
-        // end to end, and the currency picker ships). versionCode must strictly
-        // increase for every store upload; Play rejects an update that reuses
-        // one, so it is not optional the way the name is.
-        versionCode = 3
-        versionName = "0.1.2"
+        // 0.1.3 — categorisation fixes measured against a real inbox (handoff
+        // 0029), on top of the visible queue/notification flow (0028).
+        // versionCode must strictly increase for every store upload; Play
+        // rejects an update that reuses one, so it is not optional the way
+        // the name is.
+        versionCode = 4
+        versionName = "0.1.3"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
