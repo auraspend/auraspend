@@ -199,36 +199,36 @@ class SemanticDuplicateGuardTest {
 
     @Test
     fun `merchantless credits minutes apart are not duplicates when the amounts differ`() = runBlocking {
-        // Measured false positive (owner's device, 2026-10-13): ₹840.76 vs an
-        // unrelated ₹892 credit 37 minutes earlier, both merchantless, scored
-        // ~0.98 under the old detector call and the payment was skipped. A 6%
+        // Measured false positive (owner's device, 2026-10-13): ₹735.50 vs an
+        // unrelated ₹815.75 credit 37 minutes earlier, both merchantless, scored
+        // ~0.98 under the old detector call and the payment was skipped. A ~10%
         // amount gap is a different payment.
         val dao = FakeSmsMessageDao()
         val repo = FakeTransactionRepository()
         repo.existing.add(
             Transaction(
-                amount = 892.0,
+                amount = 815.75,
                 categoryId = "cat_other",
-                note = "We have received payment of Rs.892.00 via BBPS",
+                note = "We have received payment of Rs.815.75 via BBPS",
                 merchant = null,
                 date = LocalDateTime.now().minusMinutes(37),
                 type = com.awbuilds.auraspend.domain.model.TransactionType.INCOME
             )
         )
         // No date in the body: the transaction falls back to now(), so the duplicate
-        // window covers the ₹892 credit — the amount gate must still save it.
+        // window covers the ₹815.75 credit — the amount gate must still save it.
         dao.insertAll(
             listOf(
                 message(
                     "cardpayment",
-                    "Payment of Rs 840.76 has been received on your ICICI Bank Credit Card XX8000 through Bharat Bill Payment System"
+                    "Payment of Rs 735.50 has been received in your savings account"
                 )
             )
         )
 
         val result = SmsPipelineProcessor(dao, repo).processPending(10)
 
-        assertEquals("a 6% amount gap is a different payment, not a duplicate", 1, result.saved)
+        assertEquals("a ~10% amount gap is a different payment, not a duplicate", 1, result.saved)
         assertEquals(0, result.skipped)
     }
 

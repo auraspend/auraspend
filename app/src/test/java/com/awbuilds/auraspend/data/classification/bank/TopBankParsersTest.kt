@@ -115,19 +115,19 @@ class TopBankParsersTest {
     @Test
     fun `kotak short UPI send gets bank and payee without the brand in the body`() {
         val parsed = TransactionClassifier.classify(
-            "Sent Rs.51.00 from XXXXXX9722 to DINESHBHAI RAMJIBHAI on 30/04/2026. UPI ref no. 648604626824. Not you? Tap https://kotk.in/KOTAKD/Eg9Cu0 to report -Kotak",
+            "Sent Rs.51.00 from XXXXXX9722 to RAJESH KUMAR on 30/04/2026. UPI ref no. 651234567890. Not you? Tap https://kotk.in/KOTAKD/XXXXXX to report -Kotak",
             "VM-KOTAKD-S"
         )
         assertEquals(51.0, parsed.amount ?: Double.NaN, 0.001)
         assertEquals(TransactionType.EXPENSE, parsed.type)
-        assertEquals("DINESHBHAI RAMJIBHAI", parsed.merchant)
+        assertEquals("RAJESH KUMAR", parsed.merchant)
         assertEquals("Kotak Mahindra", parsed.bankName)
     }
 
     @Test
     fun `kotak IMPS credit from a masked mobile uses the mask as the counterparty`() {
         val parsed = TransactionClassifier.classify(
-            "Received Rs. 329.00 on 15-04-26 in your Kotak Bank A/C x2451 by an A/C linked to mobile x111. IMPS Ref no 610511412340.",
+            "Received Rs. 329.00 on 15-04-26 in your Kotak Bank A/C x2451 by an A/C linked to mobile x111. IMPS Ref no 620000000034.",
             "JD-KOTAKB-S"
         )
         assertEquals(TransactionType.INCOME, parsed.type)
