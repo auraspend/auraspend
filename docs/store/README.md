@@ -36,6 +36,11 @@ Offline expense tracker: budgets, subscriptions, insights. No ads, no tracking.
 store listing editor. If it is edited there, copy the new text back here in the
 next handoff.
 
+## Release notes ("What's new")
+
+Per-release notes for the Play Console's *What's new* field (500 characters per
+language). Latest: `play-release-notes-0.1.3.md`.
+
 ## Regenerating the feature graphic
 
 ```bash
