@@ -153,4 +153,16 @@ class SmsIngestFilterTest {
             isIngestable(sms("Pls pay your bill of Rs 5,000 by 25-10-26 to avoid charges."))
         )
     }
+
+    @Test
+    fun `a mandate processed-later notice is not ingestable`() {
+        // "received today for processing" is an acknowledgement, not a credit:
+        // without the guard, "received" read as a credit verb and the whole
+        // mandate amount became phantom income.
+        assertFalse(
+            isIngestable(
+                sms("Auto Pay HDFC Bank NACH Mandate : Rs. 100000.00 UMRN:HDFC7031703262015557 To:NationalSecuritiesClearin Freq ADHO received today for processing.")
+            )
+        )
+    }
 }

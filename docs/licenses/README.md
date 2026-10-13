@@ -23,7 +23,7 @@ source.
 
 | Component | Licence | Where |
 |---|---|---|
-| [PennyWise AI](https://github.com/sarim2000/pennywiseai-tracker) — SMS amount/limit patterns, merchant and UPI-handle intelligence, ingest guards | AGPL-3.0 | `data/classification/BankMessageParser.kt`, `data/classification/SmsAutoClassifier.kt` (adapted 2026-10-13) |
+| [PennyWise AI](https://github.com/sarim2000/pennywiseai-tracker) — SMS amount/limit patterns, merchant and UPI-handle intelligence, ingest guards, and the sender IDs behind the sender-routed per-bank parsers | AGPL-3.0 | `data/classification/BankMessageParser.kt`, `data/classification/SmsAutoClassifier.kt`, `data/classification/bank/` (adapted 2026-10-13) |
 
 ## Downloaded at runtime, not redistributed
 

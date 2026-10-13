@@ -246,8 +246,14 @@ object BankMessageParser {
         Regex("""\bfrom\s+([A-Za-z][A-Za-z0-9&.'\- ]{1,38}?)(?=\s+(?:on|ref|no|dated|has|is|avail)\b|[.,]|$)""", RegexOption.IGNORE_CASE),
         // Canara-style NEFT credits: "... by Sender ACME SOLUTIONS LIMITED, IFSC ..."
         Regex("""\bby\s+sender\s+([A-Za-z][A-Za-z0-9&.'\- ]{1,38}?)(?=\s*,|\s+IFSC\b|\s+A/c\b|[.,]|$)""", RegexOption.IGNORE_CASE),
+        // HDFC-style NEFT credits name the remitting organisation as a segment:
+        // "...for NEFT Cr-CITI0100000-ACME TECHNOLOGIES-PERSON NAME-CITIN…".
+        Regex("""\bNEFT\s+Cr-[A-Za-z0-9]+-([^-\n.]{1,40})""", RegexOption.IGNORE_CASE),
+        // ICICI-style NEFT credits name the payer after the reference:
+        // "...Info NEFT-FDRLM4175907234-JOHN JOSE."
+        Regex("""\bNEFT-[A-Za-z0-9]{6,}-([A-Za-z][A-Za-z .]{1,38}?)(?=[.,]|$)""", RegexOption.IGNORE_CASE),
         // "... towards BIG BAZAAR bangalore ..."
-        Regex("""\btowards\s+([A-Za-z][A-Za-z0-9&.'\- ]{1,38}?)(?=\s+(?:on|ref|no|dated|has|is)\b|[.,]|$)""", RegexOption.IGNORE_CASE),
+        Regex("""\btowards\s+([A-Za-z][A-Za-z0-9&.'\- ]{1,38}?)(?=\s+(?:on|ref|no|dated|has|is|for)\b|[.,]|$)""", RegexOption.IGNORE_CASE),
         // explicit labels: "merchant: ZOMATO", "at merchant SWIGGY"
         Regex("""(?:merchant|merchants?)\s*[:\-]?\s+([A-Za-z][A-Za-z0-9&.'\- ]{1,38}?)(?=\s+[A-Z]|\s+ref\b|[.,]|$)""")
     )

@@ -3,7 +3,15 @@
 > Read this file and the latest file in `docs/handoffs/` before touching anything.
 > Update both (plus `CLAUDE.md` / `memory/` when you learn something durable) before ending a session.
 >
-> Latest: `docs/handoffs/0030-parsing-coverage.md` — the SMS engine absorbed the
+> Latest: `docs/handoffs/0031-per-bank-parsers-wave-1.md` — sender-routed parsers
+> for **HDFC, ICICI and Kotak** (corrections layered on the global engine, so the
+> amount/merchant logic cannot drift), plus engine round 3: NEFT remitter names
+> (HDFC "NEFT Cr-…" and ICICI "NEFT-<ref>-<name>"), "towards X for Y" cutoff, and
+> the "received … for processing" veto that stops NACH mandates booking as
+> phantom income. **426/426 tests.** Branch `feat/per-bank-parsers`.
+> Wave 2 (PNB, BoB, IDFC First, IndusInd, Federal, Union, …) and the corpus
+> re-baseline are staged next.
+> Before: `docs/handoffs/0030-parsing-coverage.md` — the SMS engine absorbed the
 > real-world amount/merchant/guard handling of the PennyWise AI parser knowledge
 > base (AGPL-3.0, attributed in the licences index): no-leading-digit amounts,
 > credit-limit clause masking, payment-app QR / payee / refund / salary merchant
