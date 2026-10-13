@@ -127,9 +127,10 @@ shrink to zero results) — process alive throughout, crash buffer empty, zero
   install: fresh DB, the newest 375 queued, `auto_detect_sms` unset — the app
   ingested but never processed). Enabled the pref the way the UI would,
   pushed the SHA-verified model + tokenizer into `files/models/`, and let it
-  drain. Final read: **648 rows ingested, 485 saved / 131 skipped / 32 still
-  queued**, every post-fix save date-correct; the drain keeps running in the
-  background (durable queue, auto-categorize ON).
+  drain, which then **completed**: **648 rows, 493 saved / 155 skipped / 0
+  queued**, every date correct (the far-date audit reads 0). Auto-categorize
+  stays ON with the model in place, so the dev app keeps classifying as new
+  messages arrive.
 - The owner's prod app (`0.1.1-play`) was not touched. Its paste-in crash log
   is fixed only by a build containing `4b6d645` — a 0.1.4 candidate.
 - **Left on the dev app deliberately:** auto-categorize ON, model files in
