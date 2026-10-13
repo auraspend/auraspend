@@ -165,4 +165,33 @@ class SmsIngestFilterTest {
             )
         )
     }
+
+    @Test
+    fun `a genuine debit with PNB's report tail stays ingestable`() {
+        // PNB appends "forward this SMS … to report unauthorized txn" to real
+        // debits — the same alibi-tail failure the ICICI exception covers.
+        assertTrue(
+            isIngestable(
+                sms("Your a/c no XX1234 is debited for Rs 1000 on 01-01-25 12:00:00 and a/c XX456 credited (IMPS Ref no 123456789012). If not done by you, pl. forward this SMS from registered mobile to 9264092640 to report unauthorized txn & block IBS/MBS.")
+            )
+        )
+    }
+
+    @Test
+    fun `a deposit-interest notice is not ingestable`() {
+        assertFalse(
+            isIngestable(
+                sms("Net interest INR 248.07 paid on your IndusInd Deposit No 300***123456 on 17/09/25. Call 18602677777 for assistance - IndusInd Bank")
+            )
+        )
+    }
+
+    @Test
+    fun `a UPI-mandate creation notice is not ingestable`() {
+        assertFalse(
+            isIngestable(
+                sms("Your UPI-Mandate is successfully created towards Google for Rs.1500.00 from A/c No.XXXXXX4356. UMN:1d478c77808c410281f435rer5qwerty6@ybl-PNB")
+            )
+        )
+    }
 }

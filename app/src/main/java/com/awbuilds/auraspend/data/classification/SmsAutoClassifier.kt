@@ -91,7 +91,7 @@ object SmsAutoClassifier {
     private val hardVetoPatterns = listOf(
         // Advance mandate registrations: money has NOT moved yet ("will be debited on <date>").
         Regex("(?i)\\bupcoming\\s+mandate\\b"),
-        Regex("(?i)\\be-?mandate\\b[\\s\\S]{0,120}?(?:has\\s+been\\s+registered|set\\s+at|limit\\s+amount)"),
+        Regex("(?i)\\b(?:e|upi)[- ]?mandate\\b[\\s\\S]{0,120}?(?:has\\s+been\\s+registered|successfully\\s+created|set\\s+at|limit\\s+amount)"),
         // Payment reminders: "Ignore if paid" proves this SMS is not the payment itself.
         Regex("(?i)\\bignore\\s+if\\s+(?:already\\s+)?paid\\b"),
         Regex("(?i)\\b(?:installment|emi|bill)\\b[\\s\\S]{0,60}?\\bis\\s+due\\b"),
@@ -112,7 +112,12 @@ object SmsAutoClassifier {
         // not moved. Without this, "NACH Mandate … received today for
         // processing" read "received" as a credit verb and booked phantom
         // income of the full mandate amount.
-        Regex("(?i)\\bfor\\s+processing\\b")
+        Regex("(?i)\\bfor\\s+processing\\b"),
+        // Deposit-interest notices: "Net interest INR 248.07 paid on your
+        // Deposit No …" — an intimation where "paid" read as an expense and
+        // booked a phantom. A real credit ("net interest … credited") is
+        // untouched: the veto needs "paid on".
+        Regex("(?i)\\bnet\\s+interest\\b[\\s\\S]{0,80}?\\bpaid\\s+on\\b")
     )
 
     /**
@@ -136,6 +141,18 @@ object SmsAutoClassifier {
      */
     private val bankAlarmTailPattern = Regex(
         "(?i)\\bif\\s+not\\s+you\\b[\\s\\S]{0,40}?\\bcall\\b[\\d\\s\\-]{6,}\\s*/\\s*sms\\s*block\\b[\\s\\S]{0,20}?\\d"
+    )
+
+    /**
+     * PNB's alibi tail, which decorates genuine debits too: "If not done by
+     * you, pl. forward this SMS from registered mobile to <number> to report
+     * unauthorized txn & block IBS/MBS." Vetoing it deletes real spends — the
+     * same failure the ICICI alarm tail caused. The shape is distinctly
+     * bank-owned ("forward this SMS … report unauthorized"), so it rescues
+     * while the phishing framings stay vetoed.
+     */
+    private val forwardAndReportTailPattern = Regex(
+        "(?i)\\bif\\s+not\\s+done\\s+by\\s+you\\b[\\s\\S]{0,80}?\\bforward\\s+(?:this\\s+)?sms\\b[\\s\\S]{0,80}?\\breport\\s+unauthor"
     )
 
     /**
@@ -279,7 +296,8 @@ object SmsAutoClassifier {
         // vetoing it deleted real spends. That tail falls through to the alert
         // branch below, which keeps its amount+verb rescue.
         if (conditionalFramingPattern.containsMatchIn(message) &&
-            !bankAlarmTailPattern.containsMatchIn(message)
+            !bankAlarmTailPattern.containsMatchIn(message) &&
+            !forwardAndReportTailPattern.containsMatchIn(message)
         ) {
             return true
         }

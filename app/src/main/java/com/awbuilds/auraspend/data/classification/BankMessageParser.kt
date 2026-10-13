@@ -40,7 +40,9 @@ object BankMessageParser {
         Regex("Yes\\s*Bank|YESB|\\bYESBnk\\b") to "Yes Bank",
         Regex("Punjab\\s*National|\\bPNB\\b|PUNBNB") to "PNB",
         Regex("Canara\\s*Bank|\\bCANARA\\b|CANBNB") to "Canara Bank",
+        Regex("Central\\s*Bank(?:\\s*of\\s*India)?|CENTBK|\\bCBOI\\b") to "Central Bank of India",
         Regex("Bank\\s*of\\s*Baroda|\\bBOB\\b|BARBINB") to "Bank of Baroda",
+        Regex("Bank\\s*of\\s*India|BOIBNK|BOIIND") to "Bank of India",
         Regex("IDFC\\s*FIRST|IDFCB|\\bIDFC\\b") to "IDFC First",
         Regex("IndusInd\\s*Bank|INDUSB|\\bINDUSIND\\b") to "IndusInd Bank",
         Regex("Union\\s*Bank\\s*of\\s*India|UNIONBNK|\\bUBOI\\b") to "Union Bank",
@@ -93,6 +95,17 @@ object BankMessageParser {
     /** "Rs 100 Dr", "INR 250 Cr." ledger-style suffixes. */
     private val drSuffix = Regex("""\bDr\.?(?=\s|$|\d)""", RegexOption.IGNORE_CASE)
     private val crSuffix = Regex("""\bCr\.?(?=\s|$|\d)""", RegexOption.IGNORE_CASE)
+
+    /**
+     * Balance annotations like "Aval Bal Rs.27000.00 CR." — the CR/DR there
+     * describes the BALANCE, not the transaction, but the ledger-suffix scan
+     * counted it as the opposite direction and made the type ambiguous
+     * (measured on PNB's "Debited with Rs.5000.00 … Aval Bal Rs.27000.00 CR.",
+     * which came back typeless). Masked out before scoring.
+     */
+    private val balanceCrDrAnnotation = Regex(
+        """(?i)\b(?:bal|balance)\b[\s\S]{0,30}?\b(?:cr|dr)\.?\b"""
+    )
 
     /**
      * True when [message] names money *actually* moving — a completed debit or
@@ -204,6 +217,9 @@ object BankMessageParser {
     /** UPI virtual payment addresses: swiggy@ybl, john.doe@oksbi, 123456789@paytm. */
     private val vpaPattern = Regex("""([a-zA-Z0-9](?:[a-zA-Z0-9._-]{1,40}))@([a-zA-Z]{2,20})""")
 
+    /** "…towards IMPS/123456" / "via IMPS/…" — the payment rail, as identity. */
+    private val impsRail = Regex("""(?i)\b(?:towards|via)\s+IMPS\b""")
+
     /**
      * Axis/ICICI card style with LITERAL NEWLINES (real device SMS):
      * ```
@@ -241,11 +257,18 @@ object BankMessageParser {
         // "Acct XX051 debited for Rs 180.00 on 10-Nov-25; DINDUGAL ORIGIN credited."
         Regex(""";\s*([A-Za-z][A-Za-z0-9&.'\- ]{1,38}?)\s+credited\b""", RegexOption.IGNORE_CASE),
         // "... to AMAZON PAY ... " / "sent to X"
-        Regex("""\bto\s+([A-Za-z][A-Za-z0-9&.'\- ]{1,38}?)(?=\s+(?:on|via|using|dated|ref|no|avail|has|is|for|towards)\b|[.,]|$)""", RegexOption.IGNORE_CASE),
+        Regex("""\bto\s+([A-Za-z][A-Za-z0-9&.'\- ]{1,38}?)(?=\s+(?:on|via|using|thru|through|dated|ref|no|avail|has|is|for|towards)\b|[/.,]|$)""", RegexOption.IGNORE_CASE),
+        // BoB style with a colon: "Rs.29 transferred from A/c ...5494 to:Loan Recovery Fo."
+        Regex("""\bto:\s*([A-Za-z][A-Za-z0-9&.'\- ]{1,38}?)(?=\s*[/.,]|$)""", RegexOption.IGNORE_CASE),
         // credits: "from JOHN DOE ref..."
-        Regex("""\bfrom\s+([A-Za-z][A-Za-z0-9&.'\- ]{1,38}?)(?=\s+(?:on|ref|no|dated|has|is|avail)\b|[.,]|$)""", RegexOption.IGNORE_CASE),
+        Regex("""\bfrom\s+([A-Za-z][A-Za-z0-9&.'\- ]{1,38}?)(?=\s+(?:on|ref|no|dated|has|is|avail)\b|[/.,]|$)""", RegexOption.IGNORE_CASE),
         // Canara-style NEFT credits: "... by Sender ACME SOLUTIONS LIMITED, IFSC ..."
         Regex("""\bby\s+sender\s+([A-Za-z][A-Za-z0-9&.'\- ]{1,38}?)(?=\s*,|\s+IFSC\b|\s+A/c\b|[.,]|$)""", RegexOption.IGNORE_CASE),
+        // "<currency> credited by <NAME>": "Rs.2500.00 credited to A/c …
+        // via IMPS/518233445566 by JOHN DOE." — the name is the counterparty.
+        // Scoped to a preceding "credited" and blocked on currency words so a
+        // bare "paid by AUTO-DEBIT"-style sentence can never match.
+        Regex("""(?i)\bcredited\b[^.\n]{0,40}?\bby\s+(?!(?:rs|inr)\b|salary\b|[₹])([A-Za-z][A-Za-z0-9&.'\- ]{1,38}?)(?=\s+(?:thru|through|via)\b|\s*[.,]|\s+on\b|$)"""),
         // HDFC-style NEFT credits name the remitting organisation as a segment:
         // "...for NEFT Cr-CITI0100000-ACME TECHNOLOGIES-PERSON NAME-CITIN…".
         Regex("""\bNEFT\s+Cr-[A-Za-z0-9]+-([^-\n.]{1,40})""", RegexOption.IGNORE_CASE),
@@ -253,7 +276,7 @@ object BankMessageParser {
         // "...Info NEFT-FDRLM4175907234-JOHN JOSE."
         Regex("""\bNEFT-[A-Za-z0-9]{6,}-([A-Za-z][A-Za-z .]{1,38}?)(?=[.,]|$)""", RegexOption.IGNORE_CASE),
         // "... towards BIG BAZAAR bangalore ..."
-        Regex("""\btowards\s+([A-Za-z][A-Za-z0-9&.'\- ]{1,38}?)(?=\s+(?:on|ref|no|dated|has|is|for)\b|[.,]|$)""", RegexOption.IGNORE_CASE),
+        Regex("""\btowards\s+([A-Za-z][A-Za-z0-9&.'\- ]{1,38}?)(?=\s+(?:on|ref|no|dated|has|is|for)\b|[/.,]|$)""", RegexOption.IGNORE_CASE),
         // explicit labels: "merchant: ZOMATO", "at merchant SWIGGY"
         Regex("""(?:merchant|merchants?)\s*[:\-]?\s+([A-Za-z][A-Za-z0-9&.'\- ]{1,38}?)(?=\s+[A-Z]|\s+ref\b|[.,]|$)""")
     )
@@ -261,7 +284,7 @@ object BankMessageParser {
     /** Tokens that disqualify an extracted merchant string. */
     private val merchantStopPhrases = listOf(
         "your", "you", "the", "this", "a/c", "account", "acct", "bank", "branch",
-        "customer", "dear", "card", "upi", "ref", "transaction", "txn", "info",
+        "customer", "dear", "card", "debit card", "upi", "ref", "transaction", "txn", "info",
         "avail", "balance", "call", "sms", "block", "otp", "kyc", "imps", "neft",
         "rtgs", "ach", "nach", "valid", "login", "click", "www", "http",
         // Boilerplate fragments observed leaking into production data.
@@ -355,6 +378,8 @@ object BankMessageParser {
             // "…debited for Rs 180 …; DINDUGAL ORIGIN credited." — the credited
             // party is the counterparty, not this account.
             .replace(counterpartyCreditedPhrase, " ")
+            // "Aval Bal Rs.27000.00 CR." — the CR/DR annotates the balance.
+            .replace(balanceCrDrAnnotation, " ")
 
         val debitScore = debitRegexes.count { it.containsMatchIn(scored) } +
             (if (drSuffix.containsMatchIn(scored)) 1 else 0)
@@ -451,6 +476,11 @@ object BankMessageParser {
                 bankDisplayName(bankCode)?.let { return it }
             }
 
+            // A handle carrying digits is machine-ish ("ombk.aaeh000000abcd");
+            // prettifying it invents a name that appears nowhere. Phone-like
+            // handles were returned above; keep the rest raw.
+            if (handle.any { it.isDigit() }) return handle
+
             val cleaned = cleanMerchant(handle) ?: return@let
             // Skip VPAs that are just long account/reference numbers.
             if (!cleaned.any { it.isLetter() }) return@let
@@ -473,6 +503,14 @@ object BankMessageParser {
             val name = cleanMerchant(match.groupValues[1]) ?: continue
             if (name.length in 2..40 && looksLikeMerchant(name)) return name
         }
+
+        // The rail itself is the only identity some messages carry: "…debited
+        // for INR 6440 towards IMPS/12345678901." Rail names are stop-words for
+        // extraction (they are not merchants), but as labels they honestly
+        // describe the movement.
+        if (impsRail.containsMatchIn(message)) return "IMPS Transfer"
+        if (creditedToBeneficiaryPhrase.containsMatchIn(message)) return "NEFT Transfer"
+
         return null
     }
 

@@ -20,7 +20,19 @@ object BankParserRegistry {
         SbiBankParser(),
         HdfcBankParser(),
         IciciBankParser(),
-        KotakBankParser()
+        KotakBankParser(),
+        PnbBankParser(),
+        BankOfBarodaParser(),
+        IdfcFirstBankParser(),
+        IndusIndBankParser(),
+        FederalBankParser(),
+        YesBankParser(),
+        AuBankParser(),
+        BandhanBankParser(),
+        UnionBankParser(),
+        CentralBankOfIndiaParser(),
+        SouthIndianBankParser(),
+        BankOfIndiaParser()
     )
 
     /**
