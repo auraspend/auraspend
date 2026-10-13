@@ -269,6 +269,33 @@ class BankMessageParserTest {
     }
 
     @Test
+    fun `passive sent-to mail phrasing is not a transfer verb`() {
+        val parsed = BankMessageParser.parse(
+            "ICICI Bank Credit Card XX8000 Statement is sent to a*****h@gmail.com. Total of Rs 838.61 or minimum of Rs 83.86 is due by 20-AUG-26."
+        )
+        assertNull(parsed.type)
+    }
+
+    @Test
+    fun `if-not-received boilerplate is not a credit`() {
+        val parsed = BankMessageParser.parse(
+            "E-statement of SBI Credit Card ending XX79 dated 10/02/2026 has been mailed. If not received, SMS ENRS to 5676766. Total Amt Due Rs 2075"
+        )
+        assertNull(parsed.type)
+    }
+
+    @Test
+    fun `a biller receipt is the user's own payment, not income`() {
+        // Card-side "received ON YOUR credit card" stays income (tested above);
+        // a biller receipting the user's payment is a debit.
+        val parsed = BankMessageParser.parse(
+            "Payment of Rs. 706.82 for your JioHome connection with JioFixedVoice Number +919000000000 through UPI Payments has been received on 01-Aug-26. Thank You!"
+        )
+        assertEquals(TransactionType.EXPENSE, parsed.type)
+        assertEquals(706.82, parsed.amount ?: Double.NaN, 0.001)
+    }
+
+    @Test
     fun `an HDFC-style NEFT credit names the remitting organisation`() {
         val parsed = BankMessageParser.parse(
             "Update! INR 1.00 deposited in HDFC Bank A/c XX9999 on 30-MAR-26 for NEFT Cr-CITI0100000-ACME TECHNOLOGIES-PERSON NAME-CITIN99999999999.Avl bal INR 8.00."

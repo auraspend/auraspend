@@ -165,4 +165,93 @@ class SmsIngestFilterTest {
             )
         )
     }
+
+    @Test
+    fun `a genuine debit with PNB's report tail stays ingestable`() {
+        // PNB appends "forward this SMS … to report unauthorized txn" to real
+        // debits — the same alibi-tail failure the ICICI exception covers.
+        assertTrue(
+            isIngestable(
+                sms("Your a/c no XX1234 is debited for Rs 1000 on 01-01-25 12:00:00 and a/c XX456 credited (IMPS Ref no 123456789012). If not done by you, pl. forward this SMS from registered mobile to 9264092640 to report unauthorized txn & block IBS/MBS.")
+            )
+        )
+    }
+
+    @Test
+    fun `a deposit-interest notice is not ingestable`() {
+        assertFalse(
+            isIngestable(
+                sms("Net interest INR 248.07 paid on your IndusInd Deposit No 300***123456 on 17/09/25. Call 18602677777 for assistance - IndusInd Bank")
+            )
+        )
+    }
+
+    @Test
+    fun `a UPI-mandate creation notice is not ingestable`() {
+        assertFalse(
+            isIngestable(
+                sms("Your UPI-Mandate is successfully created towards Google for Rs.1500.00 from A/c No.XXXXXX4356. UMN:1d478c77808c410281f435rer5qwerty6@ybl-PNB")
+            )
+        )
+    }
+
+    @Test
+    fun `a bill due-for-payment notice is not ingestable`() {
+        // Measured on the owner's inbox (2026-10-13): every monthly bill notice
+        // booked as an EXPENSE — the amount owed is not a payment.
+        assertFalse(
+            isIngestable(
+                sms("Dear Customer, Bill dated 01-Aug-26 for your JioHome connection with JioFixedVoice Number +919000000000 is due for payment today. Total amount payable is Rs. 706.82. Please pay immediately. Kindly ignore, if already paid.")
+            )
+        )
+    }
+
+    @Test
+    fun `a card statement notice is not ingestable`() {
+        assertFalse(
+            isIngestable(
+                sms("ICICI Bank Credit Card XX8000 Statement is sent to a*****h@gmail.com. Total of Rs 838.61 or minimum of Rs 83.86 is due by 20-AUG-26.")
+            )
+        )
+    }
+
+    @Test
+    fun `an e-statement mailed notice is not ingestable`() {
+        // "received" in the mail boilerplate booked these as phantom INCOME.
+        assertFalse(
+            isIngestable(
+                sms("E-statement of SBI Credit Card ending XX79 dated 10/02/2026 has been mailed. If not received, SMS ENRS to 5676766. Total Amt Due Rs 2075; Min Amt Due Rs 208; Payable by 25/02/2026")
+            )
+        )
+    }
+
+    @Test
+    fun `a future refund notice is not ingestable`() {
+        assertFalse(
+            isIngestable(sms("PNR 4123456789 ticket cancelled. Amt 870.72 will be refunded within 3-4 days. Please check your account/instrument from which this tkt was booked.-IRCTC"))
+        )
+    }
+
+    @Test
+    fun `an e-bill notice is not ingestable`() {
+        // The e-bill wording carries no "due for payment", and the
+        // classification memory once resurrected the type from a wrongly-saved
+        // instance — so this veto must sit upstream of the memory.
+        assertFalse(
+            isIngestable(
+                sms("Dear Customer, The 01-Feb-2026 ebill for your JioHome connection with JioFixedVoice Number +919000000000 has been sent to a@gmail.com. Bill Summary: Bill period: 01-Jan-2026 to 01-Feb-2026 Total Amount payable : Rs. 706.82 Payment due date: 15-FEB-2026 To view and download your bill, click http://jio.com/my_bills Team JioHome")
+            )
+        )
+    }
+
+    @Test
+    fun `a biller receipt of the user's own payment stays ingestable`() {
+        // It is a real debit (the direction is fixed in the parser); only the
+        // bill NOTICES are dropped.
+        assertTrue(
+            isIngestable(
+                sms("Payment of Rs. 706.82 for your JioHome connection with JioFixedVoice Number +919000000000 through UPI Payments has been received on 01-Aug-26. Thank You!")
+            )
+        )
+    }
 }
