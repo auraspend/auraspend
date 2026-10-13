@@ -32,6 +32,7 @@ import androidx.navigation.navArgument
 import com.awbuilds.auraspend.AuraSpendApp
 import com.awbuilds.auraspend.R
 import com.awbuilds.auraspend.data.ai.ModelDownloadManager
+import com.awbuilds.auraspend.data.local.SmsMessageLookup
 import com.awbuilds.auraspend.data.classification.AutoClassificationWorker
 import com.awbuilds.auraspend.data.classification.AutoDetect
 import com.awbuilds.auraspend.data.classification.BackgroundClassificationCoordinator
@@ -153,6 +154,11 @@ fun AuraSpendNavHost(
 ) {
     val navController = rememberNavController()
     val context = LocalContext.current
+    // The queue row behind an SMS-detected transaction, for the original-message
+    // card on the detail page.
+    val smsMessageLookup = remember {
+        SmsMessageLookup((context.applicationContext as? AuraSpendApp)?.database?.smsMessageDao())
+    }
     val prefs = context.getSharedPreferences("auraspend_prefs", Context.MODE_PRIVATE)
     val startOnboarding = remember { !prefs.getBoolean("onboarding_completed", false) }
 
@@ -422,6 +428,7 @@ fun AuraSpendNavHost(
                 TransactionDetailScreen(
                     transactionId = transactionId,
                     repository = repository,
+                    messageLookup = smsMessageLookup,
                     onBack = { navController.popBackStack() },
                     onOpenTransaction = { id -> navController.navigate(Routes.transactionDetail(id)) }
                 )

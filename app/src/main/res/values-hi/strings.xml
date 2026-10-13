@@ -23,6 +23,7 @@
     <string name="action_remove">हटाएँ</string>
     <string name="action_dismiss">खारिज करें</string>
     <string name="action_duplicate">प्रतिलिपि बनाएँ</string>
+    <string name="action_copy_message">संदेश कॉपी करें</string>
     <string name="action_not_now">अभी नहीं</string>
 
     <!-- Shared formats -->
@@ -123,6 +124,9 @@
     <string name="txn_detail_source">स्रोत</string>
     <string name="txn_detail_source_sms">SMS से स्वतः पहचाना गया</string>
     <string name="txn_detail_dash">—</string>
+    <string name="txn_detail_message_title">मूल संदेश</string>
+    <string name="txn_detail_message_meta">%1$s से · प्राप्त: %2$s</string>
+    <string name="txn_detail_message_copied">संदेश कॉपी हो गया</string>
 
     <!-- Quick add sheet -->
     <string name="quick_add_type_expense">खर्च</string>

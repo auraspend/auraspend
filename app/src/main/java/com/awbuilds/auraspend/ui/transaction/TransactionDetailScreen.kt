@@ -1,9 +1,11 @@
 package com.awbuilds.auraspend.ui.transaction
 
+import android.content.ClipData
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -15,6 +17,8 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.ClipEntry
+import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.res.stringResource
@@ -23,8 +27,12 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.awbuilds.auraspend.R
+import com.awbuilds.auraspend.core.AuraLog
 import com.awbuilds.auraspend.core.boundary
 import com.awbuilds.auraspend.core.boundaryOrNull
+import com.awbuilds.auraspend.data.classification.BankMessageParser
+import com.awbuilds.auraspend.data.local.SmsMessageLookup
+import com.awbuilds.auraspend.data.local.entities.SmsMessageEntity
 import com.awbuilds.auraspend.domain.model.Category
 import com.awbuilds.auraspend.domain.model.Transaction
 import com.awbuilds.auraspend.domain.model.TransactionType
@@ -43,6 +51,7 @@ import com.awbuilds.auraspend.ui.designsystem.formatMoney
 import com.awbuilds.auraspend.ui.theme.extendedColors
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -57,6 +66,7 @@ import java.util.UUID
 fun TransactionDetailScreen(
     transactionId: String,
     repository: TransactionRepository,
+    messageLookup: SmsMessageLookup? = null,
     onBack: () -> Unit,
     onOpenTransaction: (String) -> Unit = {}
 ) {
@@ -64,12 +74,14 @@ fun TransactionDetailScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val transactionUpdatedMessage = stringResource(R.string.txn_detail_updated)
     val duplicatedMessage = stringResource(R.string.txn_detail_duplicated)
+    val messageCopiedMessage = stringResource(R.string.txn_detail_message_copied)
     // Typed failure copy, resolved from resources: a raw exception message must
     // never reach the screen (AGENTS.md rule 1).
     val saveFailedMessage = stringResource(UiError.SAVE_FAILED.messageRes)
     val deleteFailedMessage = stringResource(UiError.DELETE_FAILED.messageRes)
 
     var transaction by remember { mutableStateOf<Transaction?>(null) }
+    var message by remember { mutableStateOf<SmsMessageEntity?>(null) }
     var loaded by remember { mutableStateOf(false) }
     var editing by remember { mutableStateOf(false) }
     var confirmDelete by remember { mutableStateOf(false) }
@@ -88,7 +100,11 @@ fun TransactionDetailScreen(
         // one transaction. A SQLite failure renders AuraErrorState, not a crash.
         val row = boundaryOrNull(TAG) { repository.getTransactionById(transactionId) }
         val allCategories = boundaryOrNull(TAG) { repository.getAllCategories().first() }
+        // The original message is context, not the transaction itself: a missing
+        // row (or lookup) simply means the card is not shown.
+        val smsRow = row?.sourceSmsId?.let { id -> messageLookup?.byId(id) }
         transaction = row
+        message = smsRow
         categories = allCategories.orEmpty()
         error = if (row == null || allCategories == null) UiError.LOAD_FAILED else null
         loaded = true
@@ -206,7 +222,9 @@ fun TransactionDetailScreen(
                 TransactionDetails(
                     transaction = current,
                     category = categories.find { it.id == current.categoryId },
+                    message = message,
                     modifier = Modifier.weight(1f),
+                    onCopied = { snackbarMessage(messageCopiedMessage) },
                     onDuplicate = {
                         val copy = current.copy(
                             id = UUID.randomUUID().toString(),
@@ -284,7 +302,9 @@ private const val TAG = "TransactionDetail"
 private fun TransactionDetails(
     transaction: Transaction,
     category: Category?,
+    message: SmsMessageEntity?,
     modifier: Modifier = Modifier,
+    onCopied: () -> Unit,
     onDuplicate: () -> Unit
 ) {
     val extended = MaterialTheme.extendedColors
@@ -341,7 +361,12 @@ private fun TransactionDetails(
 
         AuraCard(style = AuraCardStyle.Outlined, modifier = Modifier.fillMaxWidth()) {
             DetailRow(stringResource(R.string.txn_detail_merchant), transaction.merchant ?: stringResource(R.string.txn_detail_dash))
-            DetailRow(stringResource(R.string.txn_detail_note), transaction.note.ifBlank { stringResource(R.string.txn_detail_dash) })
+            // The pipeline's note is not user content (it is the merchant repeated,
+            // or the message's first 120 characters) — noise next to the full
+            // message. Hide only that; an edited note always stays.
+            if (!isPipelineNote(transaction.note, transaction.merchant, message?.body)) {
+                DetailRow(stringResource(R.string.txn_detail_note), transaction.note.ifBlank { stringResource(R.string.txn_detail_dash) })
+            }
             DetailRow(stringResource(R.string.txn_detail_bank), transaction.bankName ?: stringResource(R.string.txn_detail_dash))
             if (transaction.isRecurring) {
                 DetailRow(stringResource(R.string.txn_detail_recurring), transaction.subscriptionName ?: stringResource(R.string.txn_detail_yes))
@@ -349,6 +374,11 @@ private fun TransactionDetails(
             if (transaction.sourceSmsId != null) {
                 DetailRow(stringResource(R.string.txn_detail_source), stringResource(R.string.txn_detail_source_sms))
             }
+        }
+
+        if (message != null) {
+            Spacer(modifier = Modifier.height(AuraSpacing.lg))
+            OriginalMessageCard(message = message, onCopied = onCopied)
         }
 
         Spacer(modifier = Modifier.height(AuraSpacing.lg))
@@ -390,5 +420,99 @@ private fun DetailRow(label: String, value: String) {
             color = MaterialTheme.colorScheme.onSurface,
             textAlign = TextAlign.End
         )
+    }
+}
+
+/**
+ * True when [note] is pipeline filler rather than user content: the merchant
+ * repeated, or the message itself as [BankMessageParser] truncates it
+ * (whitespace-collapsed, 120 characters + a trailing ellipsis). Anything else —
+ * an edited note, or one with no message to compare against — stays visible.
+ */
+internal fun isPipelineNote(note: String, merchant: String?, messageBody: String?): Boolean {
+    if (note.isBlank()) return false
+    if (!merchant.isNullOrBlank() && note == merchant) return true
+    return messageBody != null && note == BankMessageParser.truncateMessage(messageBody)
+}
+
+/** Clipboard label shown in the system's clipboard overlay. */
+private const val MESSAGE_CLIP_LABEL = "AuraSpend message"
+
+/**
+ * The complete original SMS, for transactions the app detected from a message.
+ *
+ * The whole body, selectable — the Note row next to it is only ever the first
+ * 120 characters — plus who sent it, when it arrived, and a Copy action.
+ */
+@Composable
+private fun OriginalMessageCard(message: SmsMessageEntity, onCopied: () -> Unit) {
+    val clipboard = LocalClipboard.current
+    val scope = rememberCoroutineScope()
+    val receivedFormatter = remember { DateTimeFormatter.ofPattern("d MMM yyyy · h:mm a") }
+    val receivedText = remember(message.receivedAt) {
+        Instant.ofEpochMilli(message.receivedAt)
+            .atZone(ZoneId.systemDefault())
+            .format(receivedFormatter)
+    }
+
+    AuraCard(style = AuraCardStyle.Outlined, modifier = Modifier.fillMaxWidth()) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    stringResource(R.string.txn_detail_message_title),
+                    style = MaterialTheme.typography.titleSmall,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Text(
+                    stringResource(R.string.txn_detail_message_meta, message.address, receivedText),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            IconButton(
+                onClick = {
+                    scope.launch {
+                        // A failed copy must not claim success: the snackbar only
+                        // fires when the clipboard write went through.
+                        val copied = boundary(TAG, false) {
+                            clipboard.setClipEntry(
+                                ClipEntry(ClipData.newPlainText(MESSAGE_CLIP_LABEL, message.body))
+                            )
+                            true
+                        }
+                        if (copied) {
+                            // Read our own write back: some OEM clipboards accept a
+                            // write and go on serving something else. Lengths only in
+                            // the log, never the message.
+                            val readBackLength = boundaryOrNull(TAG) {
+                                clipboard.getClipEntry()?.clipData?.getItemAt(0)?.text?.length
+                            }
+                            // `i`, not `d`: vivo/OriginOS drops debug-level app
+                            // logs, and this line is the only evidence a copy
+                            // actually reached the clipboard.
+                            AuraLog.i(
+                                TAG,
+                                "message copy: ${message.body.length} chars, " +
+                                    "clipboard readback=$readBackLength"
+                            )
+                            onCopied()
+                        }
+                    }
+                }
+            ) {
+                Icon(
+                    Icons.Default.ContentCopy,
+                    contentDescription = stringResource(R.string.action_copy_message)
+                )
+            }
+        }
+        Spacer(modifier = Modifier.height(AuraSpacing.sm))
+        SelectionContainer {
+            Text(
+                message.body,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+        }
     }
 }
