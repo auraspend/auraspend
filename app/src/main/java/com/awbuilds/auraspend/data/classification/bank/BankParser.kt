@@ -26,8 +26,9 @@ import com.awbuilds.auraspend.domain.model.ParsedBankMessage
  *
  * This is the same idea as `sarim2000/pennywiseai-tracker`'s per-bank parser
  * registry (which routes 200+ banks this way and uses no LLM in its SMS
- * pipeline at all). That project is AGPL-3.0, so nothing here is copied from
- * it — the routing shape is learned, the code is ours.
+ * pipeline at all). That project is AGPL-3.0; this file's routing shape is
+ * learned, and where its patterns informed our engine the adaptation is
+ * recorded in `docs/licenses/README.md`.
  */
 interface BankParser {
 

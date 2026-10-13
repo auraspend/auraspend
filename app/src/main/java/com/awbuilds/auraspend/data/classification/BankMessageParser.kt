@@ -77,7 +77,7 @@ object BankMessageParser {
         "debited", "debit", "withdrawn", "withdrawal", "atm withdrawal",
         "spent", "spent using", "paid", "payment made", "purchased", "purchase",
         "sent", "transferred to", "transfer to", "auto pay", "autopay", "auto debit",
-        "autodebit", "nach debit", "charged", "bill payment", "recharge of"
+        "autodebit", "nach debit", "charged", "deducted", "bill payment", "recharge of"
     )
 
     /** Words that mark money entering the account. */
@@ -142,6 +142,16 @@ object BankMessageParser {
         RegexOption.IGNORE_CASE
     )
 
+    /** "…has been credited to the beneficiary account" — an outgoing transfer. */
+    private val creditedToBeneficiaryPhrase = Regex(
+        """(?i)\bcredited\s+to\s+the\s+beneficiary(?:'s)?\s+account\b"""
+    )
+
+    /** "; <PAYEE> credited" — the counterparty clause of a UPI debit message. */
+    private val counterpartyCreditedPhrase = Regex(
+        """(?i);\s*[A-Za-z][A-Za-z0-9&.'\- ]{1,38}?\s+credited\b"""
+    )
+
     // ─────────────────────────────────────────────────────────────────────────
     // Amount detection
     // ─────────────────────────────────────────────────────────────────────────
@@ -150,9 +160,11 @@ object BankMessageParser {
      * Currency-prefixed amounts: "Rs 1,23,456.78", "Rs.1234/-", "INR 499",
      * "₹ 59", "rs 20". Indian digit grouping (2-digit middle groups) allowed.
      * Lookbehind keeps "XX1234" from ever being read as an amount.
+     * The integer part is optional on purpose — banks do print "Rs..6 Credited"
+     * and "₹ .50", and skipping those let a later balance figure win the pick.
      */
     private val prefixedAmount =
-        Regex("""(?<![A-Za-z0-9])(?:₹|\brs\.?|\binr\b)\s*([0-9][0-9,]*(?:\.[0-9]{1,2})?)""", RegexOption.IGNORE_CASE)
+        Regex("""(?<![A-Za-z0-9])(?:₹|\brs\.?|\binr\b)\s*((?:[0-9][0-9,]*(?:\.[0-9]{1,2})?|\.\d{1,2}))""", RegexOption.IGNORE_CASE)
 
     /** Suffix form: "1,234.56 Rs", "500/- debited". */
     private val suffixedAmount =
@@ -163,8 +175,25 @@ object BankMessageParser {
 
     /** Boilerplate whose numbers must never become the transaction amount. */
     private val balanceContext = Regex(
-        """(?i)\b(?:avl|available|avail|a/c\s*bal|bal|balance|limit|outstanding|total\s*due|min(?:imum)?\s*due|due|credit\s*limit|remaining|utilised|utilized|reward|points|cash\s*limit)[a-z\s.:-]{0,18}$"""
+        """(?i)\b(?:avl|available|avail|a/c\s*bal|bal|balance|updated|limit|outstanding|total\s*due|min(?:imum)?\s*due|due|credit\s*limit|remaining|utilised|utilized|reward|points|cash\s*limit)[a-z\s.:-]{0,18}$"""
     )
+
+    /**
+     * A credit / available-limit clause and its figure ("Avl Limit: INR
+     * 42,731.09", "Available Credit Limit: Rs.3,30,022.99", "Avl Lmt INR
+     * 35182.45"). The limit is never the transaction amount. Blanked out —
+     * same length, so every collected range stays valid — before candidates
+     * are gathered, because the proximity filter falls back to "all
+     * candidates" when every number sits in boilerplate: a statement whose
+     * only number is the available limit would otherwise book it as a spend.
+     */
+    private val creditLimitClause = Regex(
+        """(?i)\b(?:avl|avail(?:able)?)\.?\s+(?:credit\s+)?(?:limit|lmt)\b\s*(?:is)?\s*:?\s*(?:inr|rs\.?|₹)?\s*[0-9,]*\.?\d+"""
+    )
+
+    /** Replaces each match with spaces of equal length so indexes keep working. */
+    private fun maskOut(message: String, pattern: Regex): String =
+        pattern.replace(message) { " ".repeat(it.value.length) }
 
     private const val AMOUNT_PROXIMITY_CHARS = 60
 
@@ -190,11 +219,27 @@ object BankMessageParser {
         """(?im)^[^\n]*\b(?:IST|GMT)[ \t]*$\n[ \t]*([A-Za-z][A-Za-z0-9&.'\- ]{1,38}?)[ \t]*$"""
     )
 
+    /** "...Info INF*…*IQBO SAL FE…" — a payroll credit's Info clause. */
+    private val infoSalaryPattern = Regex("""(?i)\bInfo\b[^.\n]*?\bSAL(?:ARY)?\b""")
+
     private val merchantPatterns: List<Regex> = listOf(
         // "... at STARBUCKS on 23-08 ..." / "purchase at X" / "withdrawal at ATM NAME"
         Regex("""\bat\s+([A-Za-z][A-Za-z0-9&.'\- ]{1,38}?)(?=\s+(?:on|via|using|dated|ref|no|card|avail|has|is|for)\b|[.,]|$)""", RegexOption.IGNORE_CASE),
         // Axis/ICICI card style: "Spent INR 500 ... 05-07-26 10:15:22 IST TULIP MART"
         Regex("""\b(?:IST|GMT)\s+([A-Za-z][A-Za-z0-9&.'\- ]{1,38}?)(?=\s+(?:on|via|using|dated|ref|no|card|avail|has|is|for|not)\b|[.,]|$)""", RegexOption.IGNORE_CASE),
+        // Card spends name the merchant after the SECOND "on" (the first is the
+        // date): "spent using ICICI Bank Card XX5678 on 06-Sep-25 on Swiggy."
+        // Scoped to spend phrasing, and a date-shaped value can never be the
+        // merchant — "credited on Tuesday"-style text is out of reach.
+        Regex("""\b(?:spent|using|purchas(?:e|ed))\b[^.\n]{0,60}?\bon\s+((?!\d{1,2}[-/ ])[A-Za-z0-9][A-Za-z0-9&.'\- ]{1,38}?)(?=\s*[.,]|\s+(?:Avl|Avail|If|Not|Call|SMS)\b|$)""", RegexOption.IGNORE_CASE),
+        // Refunds: "INR 2 from Airport Lounge refunded to your Kotak Credit Card
+        // x8848" — the merchant is the party between "from" and "refunded"; the
+        // generic "from X on" pattern would swallow the card clause instead.
+        Regex("""\bfrom\s+([A-Za-z][A-Za-z0-9&.'\- ]{1,38}?)\s+refunded\b""", RegexOption.IGNORE_CASE),
+        // UPI debits name the payee before "; <PAYEE> credited" — the counterparty
+        // of the money, which is the merchant the user recognises:
+        // "Acct XX051 debited for Rs 180.00 on 10-Nov-25; DINDUGAL ORIGIN credited."
+        Regex(""";\s*([A-Za-z][A-Za-z0-9&.'\- ]{1,38}?)\s+credited\b""", RegexOption.IGNORE_CASE),
         // "... to AMAZON PAY ... " / "sent to X"
         Regex("""\bto\s+([A-Za-z][A-Za-z0-9&.'\- ]{1,38}?)(?=\s+(?:on|via|using|dated|ref|no|avail|has|is|for|towards)\b|[.,]|$)""", RegexOption.IGNORE_CASE),
         // credits: "from JOHN DOE ref..."
@@ -298,6 +343,12 @@ object BankMessageParser {
         val scored = message
             .replace(reversalOfDebitPhrase, "credit")
             .replace(bbpsBrandPhrase, "BBPS")
+            // "…Rs 22050 has been credited to the beneficiary account" is money
+            // LEAVING (an outgoing NEFT); the literal "credited" made it income.
+            .replace(creditedToBeneficiaryPhrase, "sent")
+            // "…debited for Rs 180 …; DINDUGAL ORIGIN credited." — the credited
+            // party is the counterparty, not this account.
+            .replace(counterpartyCreditedPhrase, " ")
 
         val debitScore = debitRegexes.count { it.containsMatchIn(scored) } +
             (if (drSuffix.containsMatchIn(scored)) 1 else 0)
@@ -316,8 +367,11 @@ object BankMessageParser {
 
         val candidates = mutableListOf<Candidate>()
 
+        // Blank out credit/available-limit clauses first — see [creditLimitClause].
+        val searchable = maskOut(message, creditLimitClause)
+
         fun collect(regex: Regex) {
-            for (m in regex.findAll(message)) {
+            for (m in regex.findAll(searchable)) {
                 val value = parseIndianNumber(m.groupValues[1]) ?: continue
                 if (value <= 0.0 || value >= 100_000_000.0) continue
                 candidates.add(Candidate(value, m.range.first, m.range.last))
@@ -372,11 +426,35 @@ object BankMessageParser {
         // 1. UPI VPA wins outright — most precise identity in the message.
         vpaPattern.find(message)?.let { vpa ->
             val handle = vpa.groupValues[1]
+            val bankCode = vpa.groupValues[2].lowercase(Locale.ENGLISH)
+            val lower = handle.lowercase(Locale.ENGLISH)
+
+            // Generated payment-app QR ids ("paytmqr288005050101t74afkchmxjd@paytm")
+            // are neither a person nor a shop; the app behind them is the identity.
+            paymentAppForPrefix(lower)?.let { return it }
+
+            // Pure digit handles are phone-number transfers: the user wants WHO
+            // they paid, not the app the number is registered with.
+            if (handle.count { it.isDigit() } >= 6 && handle.none { it.isLetter() }) {
+                return handle.filter { it.isDigit() }
+            }
+
+            // Long mixed-alphanumeric ids are machine-generated; the bank code is
+            // the most human-meaningful part left.
+            if (lower.length > 24 && lower.any { it.isLetter() } && lower.any { it.isDigit() }) {
+                bankDisplayName(bankCode)?.let { return it }
+            }
+
             val cleaned = cleanMerchant(handle) ?: return@let
             // Skip VPAs that are just long account/reference numbers.
             if (!cleaned.any { it.isLetter() }) return@let
             if (cleaned.length >= 3) return prettifyVpa(cleaned)
         }
+
+        // 1b. Salary credits name the payroll token in an Info clause:
+        // "...Info INF*000169831922*IQBO SAL FE. Available Balance..." — "Salary"
+        // is the honest merchant; the employer's token is unreadable noise.
+        if (infoSalaryPattern.containsMatchIn(message)) return "Salary"
 
         // 2. Multiline card SMS: merchant on its own line after "...IST".
         istLinePattern.find(message)?.let { m ->
@@ -462,10 +540,36 @@ object BankMessageParser {
     private fun parseIndianNumber(raw: String): Double? =
         raw.replace(",", "").toDoubleOrNull()
 
+    /**
+     * Trailing clauses that are never part of a merchant name. The capture
+     * patterns stop before most of them, but provenance varies by bank ("at X
+     * Ref No …", "to X on 23-08-26", "at X UPI …") and a leaked fragment is
+     * user-visible noise. Bare "LTD"/"LIMITED" is deliberately NOT stripped —
+     * it is part of real names (and of a pinned corpus expectation).
+     */
+    private val merchantRefSuffix = Regex("""\s+Ref(?:erence)?\s+No.*$""", RegexOption.IGNORE_CASE)
+    private val merchantDateSuffix = Regex(
+        """\s+on\s+\d{1,2}(?:[/.-]\d{1,2}(?:[/.-]\d{2,4})?|\s+[A-Za-z]{3,9}(?:\s+\d{2,4})?).*$""",
+        RegexOption.IGNORE_CASE
+    )
+    private val merchantUpiSuffix = Regex("""\s+UPI.*$""", RegexOption.IGNORE_CASE)
+    private val merchantTimeSuffix = Regex("""\s+at\s+\d{1,2}:\d{2}.*$""", RegexOption.IGNORE_CASE)
+    /** "UPI-<ref>-CORN" — the merchant is the tail, not the UPI reference. */
+    private val merchantUpiRefPrefix = Regex("""^UPI-\d+-""", RegexOption.IGNORE_CASE)
+    private val merchantTrailingParens = Regex("""\s*\([^()]*\)\s*$""")
+    private val merchantPvtLtd = Regex("""\s+(?:PVT\.?\s+LTD\.?|PRIVATE\s+LIMITED)$""", RegexOption.IGNORE_CASE)
+
     private fun cleanMerchant(raw: String): String? {
         val s = raw.trim()
             .replace(Regex("""[*#|]+"""), " ")
             .replace(Regex("""\s+"""), " ")
+            .replace(merchantRefSuffix, "")
+            .replace(merchantDateSuffix, "")
+            .replace(merchantUpiSuffix, "")
+            .replace(merchantTimeSuffix, "")
+            .replace(merchantUpiRefPrefix, "")
+            .replace(merchantTrailingParens, "")
+            .replace(merchantPvtLtd, "")
             .trim(' ', '.', ',', '-', ':')
             .trim()
         if (s.isEmpty()) return null
@@ -486,6 +590,37 @@ object BankMessageParser {
         // Reject date fragments like "23 08" or "15 Aug".
         if (Regex("""^\d{1,2}[ /.-]\d{1,2}([ /.-]\d{2,4})?$""").containsMatchIn(name)) return false
         return true
+    }
+
+    /** Payment-app QR prefixes → the app a user recognises. */
+    private fun paymentAppForPrefix(handleLower: String): String? = when {
+        handleLower.startsWith("paytmqr") -> "Paytm"
+        handleLower.startsWith("phonepeqr") || handleLower.startsWith("phonepe.qr") -> "PhonePe"
+        handleLower.startsWith("amazonpayqr") -> "Amazon Pay"
+        handleLower.startsWith("bhimqr") -> "BHIM"
+        handleLower.startsWith("bharatpeqr") -> "BharatPe"
+        handleLower.startsWith("freechargeqr") -> "Freecharge"
+        handleLower.startsWith("mobikwikqr") -> "MobiKwik"
+        else -> null
+    }
+
+    /** UPI bank codes → the bank or app the handle belongs to. */
+    private fun bankDisplayName(bankCode: String): String? = when (bankCode) {
+        "ybl" -> "PhonePe"
+        "okaxis", "okbizaxis" -> "Axis Bank"
+        "okhdfcbank" -> "HDFC Bank"
+        "okicici" -> "ICICI Bank"
+        "oksbi" -> "State Bank of India"
+        "paytm" -> "Paytm"
+        "amazonpay" -> "Amazon Pay"
+        "googlepay" -> "Google Pay"
+        "airtel" -> "Airtel Money"
+        "freecharge" -> "Freecharge"
+        "mobikwik" -> "MobiKwik"
+        "jupiteraxis" -> "Jupiter"
+        "razorpay" -> "Razorpay"
+        "bharatpe" -> "BharatPe"
+        else -> null
     }
 
     private fun prettifyVpa(handle: String): String {

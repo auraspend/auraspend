@@ -111,4 +111,46 @@ class SmsIngestFilterTest {
             isIngestable(sms("Your refund for PNR- 4123456789 of Rs. 560.00 has been initiated by Confirmtkt."))
         )
     }
+
+    @Test
+    fun `an advance debit intimation is not ingestable`() {
+        // The completed debit arrives as its own SMS ("has been debited");
+        // booking the announcement doubles the spend.
+        assertFalse(
+            isIngestable(sms("Rs.500 will be debited from your A/c XX1234 on 25-10-26."))
+        )
+    }
+
+    @Test
+    fun `a payment request is not ingestable`() {
+        assertFalse(
+            isIngestable(sms("ZOMATO has requested payment of Rs 450 for your order."))
+        )
+    }
+
+    @Test
+    fun `a convert-to-EMI invitation is not ingestable`() {
+        assertFalse(
+            isIngestable(
+                sms("Your HDFC Bank Credit Card bill of Rs 2,847.92 can be converted into EMI easily. SMS EMI to 5676712.")
+            )
+        )
+    }
+
+    @Test
+    fun `a completed EMI conversion is still ingestable`() {
+        // The invitation is vetoed; the actual debit is not.
+        assertTrue(
+            isIngestable(
+                sms("Your bill was converted into EMI. Rs.3282 debited from your card for the EMI.")
+            )
+        )
+    }
+
+    @Test
+    fun `please pay reminders are not ingestable`() {
+        assertFalse(
+            isIngestable(sms("Pls pay your bill of Rs 5,000 by 25-10-26 to avoid charges."))
+        )
+    }
 }

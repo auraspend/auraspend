@@ -15,6 +15,16 @@ as a table in the [`README`](../README.md).
 | `MIT-ONNX-Runtime.txt` | ONNX Runtime for Android (native inference, Maven AAR) | MIT |
 | `Apache-2.0.txt` | AndroidX (Room, Compose, Lifecycle, Work, Navigation, Paging, ProfileInstaller), Google API Client, Google Drive API, play-services-auth, OkHttp, Guava, google-http-client-gson | Apache-2.0 |
 
+## Adapted code
+
+Parts of the SMS parsing engine are adapted from other open-source projects.
+The adapted files keep their own licence; the AGPL covers AuraSpend's own
+source.
+
+| Component | Licence | Where |
+|---|---|---|
+| [PennyWise AI](https://github.com/sarim2000/pennywiseai-tracker) — SMS amount/limit patterns, merchant and UPI-handle intelligence, ingest guards | AGPL-3.0 | `data/classification/BankMessageParser.kt`, `data/classification/SmsAutoClassifier.kt` (adapted 2026-10-13) |
+
 ## Downloaded at runtime, not redistributed
 
 | Component | Licence | Source |
