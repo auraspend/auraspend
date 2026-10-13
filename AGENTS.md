@@ -3,7 +3,18 @@
 > Read this file and the latest file in `docs/handoffs/` before touching anything.
 > Update both (plus `CLAUDE.md` / `memory/` when you learn something durable) before ending a session.
 >
-> Latest: `docs/handoffs/0038-smart-add-lag-and-clean-slate-audit.md` — the Smart
+> Latest: `docs/handoffs/0039-detected-subscriptions.md` — the Subscriptions
+> screen now shows the payments the classifier had **always** flagged recurring
+> but never displayed (eight real recurring payments on the owner's fresh
+> install; the owner's services and amounts are deliberately unrecorded): a
+> "Detected from your messages" section, one row
+> per service (newest amount/date, junk names filtered, tracked services
+> suppressed), each with a Track action that opens the add sheet prefilled.
+> Suggestions stay out of the monthly total until the user confirms. Also the
+> recorded answer to "do I need the 22 MB model?": **no** — categorisation and
+> recurring detection run offline without it; the model is optional refinement.
+> PR #58, **516/516 tests.**
+> Before: `docs/handoffs/0038-smart-add-lag-and-clean-slate-audit.md` — the Smart
 > Add lag is root-caused and fixed (the triage observer re-parsed every
 > skipped/pending row **on the main thread** on every queue write): the parse is
 > memoized (`ParseMemo`) and the derivation runs on `Dispatchers.Default` with
