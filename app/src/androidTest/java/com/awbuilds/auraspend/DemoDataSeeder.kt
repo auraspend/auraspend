@@ -24,8 +24,8 @@ import org.junit.runner.RunWith
  * and the app can be launched and driven normally:
  *
  * ```
- * ./gradlew :app:connectedFreeDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.awbuilds.auraspend.DemoDataSeeder
- * adb shell am start -n com.awbuilds.auraspend/.MainActivity
+ * ./gradlew :app:connectedDevDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.awbuilds.auraspend.DemoDataSeeder
+ * adb shell am start -n com.awbuilds.auraspend.dev/com.awbuilds.auraspend.MainActivity
  * ```
  *
  * To clear it: `adb shell pm clear com.awbuilds.auraspend`.

@@ -6,6 +6,7 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
+import java.time.format.DateTimeFormatterBuilder
 import java.time.format.DateTimeParseException
 import java.util.Locale
 
@@ -93,9 +94,51 @@ object BankMessageParser {
     private val drSuffix = Regex("""\bDr\.?(?=\s|$|\d)""", RegexOption.IGNORE_CASE)
     private val crSuffix = Regex("""\bCr\.?(?=\s|$|\d)""", RegexOption.IGNORE_CASE)
 
+    /**
+     * True when [message] names money *actually* moving — a completed debit or
+     * credit — in the same vocabulary the parser uses to decide the type.
+     *
+     * Shared on purpose. `SmsAutoClassifier` uses it to rescue a real transaction
+     * from its OTP/alert filter, and `SmsPipelineProcessor` uses it to decide
+     * whether an unreadable message should be recorded for the user. Both carried
+     * their own six-word copy (`debited|credited|spent|paid|transferred|withdrawn`),
+     * which disagreed with the parser exactly where it mattered: a deposit or a
+     * refund with a balance tail ("Rs 10,000 has been deposited to A/c XX123.
+     * Available balance is Rs 45,200") matched a balance-alert pattern, contained
+     * no word from the six, and was dropped *before* the parser that reads
+     * "deposited" correctly ever ran. That is the "loses the user's money
+     * silently" case the OTP/alert invariant exists to prevent — and the invariant
+     * as written (no amount **and** no movement verb) was being violated, because
+     * that message has both.
+     */
+    fun hasMovementVerb(message: String): Boolean =
+        debitRegexes.any { it.containsMatchIn(message) } ||
+            creditRegexes.any { it.containsMatchIn(message) }
+
     /** A completed debit/credit must not be a failure / decline notice. */
     private val failureRegex = Regex(
         """\b(failed|failure|declined|decline|denied|unsuccessful|could not be processed|not (?:been )?completed|timed? ?out)\b""",
+        RegexOption.IGNORE_CASE
+    )
+
+    /**
+     * Phrases whose literal words make both lexicons fire and the ambiguity rule
+     * return no type, so the row is skipped even though it is a clean credit.
+     *
+     * Found on real messages (2026-10-13): a Kotak UPI reversal —
+     * "Rs.20.00 is credited ... as a reversal of debit transaction" — scores
+     * `credited` + `reversal` as credit and the bare word `debit` as debit, and
+     * "Payment of Rs X has been received ... through Bharat Bill Payment System"
+     * hits the `bill payment` debit phrase inside the BBPS brand. Both were
+     * skipped for want of a type. Neutralised before scoring — the reversal
+     * phrase becomes an explicit credit, the brand becomes its abbreviation.
+     */
+    private val reversalOfDebitPhrase = Regex(
+        """\breversal\s+of\s+(?:a\s+|the\s+|your\s+)?(?:debit|txn|transaction|payment|transfer)\b""",
+        RegexOption.IGNORE_CASE
+    )
+    private val bbpsBrandPhrase = Regex(
+        """\bBharat\s+Bill\s+Payment\s+System\b""",
         RegexOption.IGNORE_CASE
     )
 
@@ -184,12 +227,25 @@ object BankMessageParser {
         // ISO first so "2026-08-23T14:35" is never misread by the numeric pattern below.
         Regex("""\b(\d{4}-\d{2}-\d{2})(?:[T ](\d{1,2}:\d{2}(?::\d{2})?)\s*([AaPp][Mm])?)?\b"""),
         Regex("""(?<![0-9/.-])(\d{1,2}[/.-]\d{1,2}[/.-]\d{2,4})(?:\s+(\d{1,2}:\d{2}(?::\d{2})?)\s*([AaPp][Mm])?)?(?![0-9])"""),
-        Regex("""\b(\d{1,2}[ -][A-Za-z]{3,9}[ -,]\d{2,4})(?:\s+(\d{1,2}:\d{2}(?::\d{2})?)\s*([AaPp][Mm])?)?\b""")
+        // NOTE the separator classes: `[ ,-]` (dash LAST) — the original `[ -,]`
+        // was a character RANGE (space through comma), so a literal dash could
+        // never match the year separator, "21-JUL-26" was never extracted, and
+        // those messages silently fell back to `LocalDateTime.now()` at save
+        // time. Measured on the owner's device, 2026-10-13; never write a dash
+        // between two characters in a class.
+        Regex("""\b(\d{1,2}[ -][A-Za-z]{3,9}[ ,-]\d{2,4})(?:\s+(\d{1,2}:\d{2}(?::\d{2})?)\s*([AaPp][Mm])?)?\b""")
     )
 
     private val dateFormats = listOf(
         "dd/MM/yyyy", "dd-MM-yyyy", "dd.MM.yyyy",
         "dd/MM/yy", "dd-MM-yy", "d M yy",
+        // Dashed month-name dates ("21-JUL-26") are extremely common in Indian bank
+        // SMS and had no format here, so those messages silently fell back to
+        // `LocalDateTime.now()` at save time — wrong dates in the UI, and the
+        // duplicate window collapsed onto the save hour (found on the owner's
+        // device, 2026-10-13: two ICICI card payments were skipped as "duplicates"
+        // of an unrelated credit saved minutes earlier).
+        "dd-MMM-yy", "d-MMM-yy",
         "d MMM yyyy", "d MMM yy", "d MMMM yyyy", "dd-MMM-yyyy",
         "yyyy-MM-dd"
     )
@@ -235,10 +291,18 @@ object BankMessageParser {
     internal fun detectType(message: String): TransactionType? {
         if (failureRegex.containsMatchIn(message)) return null
 
-        val debitScore = debitRegexes.count { it.containsMatchIn(message) } +
-            (if (drSuffix.containsMatchIn(message)) 1 else 0)
-        val creditScore = creditRegexes.count { it.containsMatchIn(message) } +
-            (if (crSuffix.containsMatchIn(message)) 1 else 0)
+        // Neutralise self-referential phrases before scoring: "reversal of debit"
+        // is what the credit reverses (credit, not ambiguity), and "Bharat Bill
+        // Payment System" is a brand, not a bill-payment debit. See the regex
+        // comments for the real messages that motivated this.
+        val scored = message
+            .replace(reversalOfDebitPhrase, "credit")
+            .replace(bbpsBrandPhrase, "BBPS")
+
+        val debitScore = debitRegexes.count { it.containsMatchIn(scored) } +
+            (if (drSuffix.containsMatchIn(scored)) 1 else 0)
+        val creditScore = creditRegexes.count { it.containsMatchIn(scored) } +
+            (if (crSuffix.containsMatchIn(scored)) 1 else 0)
 
         return when {
             debitScore > 0 && creditScore == 0 -> TransactionType.EXPENSE
@@ -355,9 +419,15 @@ object BankMessageParser {
         val normalized = raw.replace(',', ' ').replace(Regex("\\s+"), " ").trim()
         for (fmt in dateFormats) {
             try {
+                // parseCaseInsensitive: bank SMS shout their months ("21-JUL-26"),
+                // and plain `ofPattern` text parsing is case-sensitive, so "JUL"
+                // never matched "Jul" — another way these dates were lost.
                 val d = LocalDate.parse(
                     normalized,
-                    DateTimeFormatter.ofPattern(fmt, Locale.ENGLISH)
+                    DateTimeFormatterBuilder()
+                        .parseCaseInsensitive()
+                        .appendPattern(fmt)
+                        .toFormatter(Locale.ENGLISH)
                 )
                 // Two-digit years: treat 00-68 as 2000-2068 (java.time default is fine).
                 if (d.year in 1990..2100) return d

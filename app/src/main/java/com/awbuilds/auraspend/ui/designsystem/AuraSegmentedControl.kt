@@ -9,9 +9,8 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
@@ -52,7 +51,10 @@ fun AuraSegmentedControl(
     BoxWithConstraints(
         modifier = modifier
             .fillMaxWidth()
-            .height(44.dp)
+            // heightIn, not height: these boxes hold the option labels, and a fixed
+            // 44dp clipped them at the largest system font scale on every screen
+            // that uses this control. The 44dp floor keeps 100% identical.
+            .heightIn(min = 44.dp)
             .clip(CircleShape)
             .background(scheme.surfaceContainer)
     ) {
@@ -65,6 +67,12 @@ fun AuraSegmentedControl(
 
         Box(
             modifier = Modifier
+                // matchParentSize, not fillMaxHeight: the indicator then takes the
+                // height the labels resolved (so it grows with them) without
+                // influencing that measurement. A size-determining fillMaxHeight
+                // here would balloon the control to whatever height the parent
+                // offers.
+                .matchParentSize()
                 .offset(x = indicatorX)
                 .padding(AuraSpacing.xs)
                 .width(segmentWidth - AuraSpacing.sm)
@@ -74,7 +82,7 @@ fun AuraSegmentedControl(
                 .border(1.dp, scheme.outlineVariant.copy(alpha = 0.45f), CircleShape)
         )
 
-        Row(modifier = Modifier.fillMaxSize()) {
+        Row(modifier = Modifier.fillMaxWidth()) {
             options.forEachIndexed { index, label ->
                 val selected = index == selectedIndex
                 val textColor by animateColorAsState(
@@ -85,7 +93,9 @@ fun AuraSegmentedControl(
                 Box(
                     modifier = Modifier
                         .weight(1f)
-                        .fillMaxHeight()
+                        // The label decides the height; the floor keeps the touch
+                        // target at the token size.
+                        .heightIn(min = 44.dp)
                         .selectable(
                             selected = selected,
                             role = Role.Tab,

@@ -41,19 +41,8 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/com/awbuilds/auraspend/ui/classification/ClassificationViewModel.kt"
-            line="549"
+            line="536"
             column="13"/>
-    </issue>
-
-    <issue
-        id="DefaultLocale"
-        message="Implicitly using the default locale is a common source of bugs: Use `String.format(Locale, ...)` instead"
-        errorLine1="                            value = &quot;₹${String.format(&quot;%.2f&quot;, transaction.amount)}&quot;"
-        errorLine2="                                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/java/com/awbuilds/auraspend/ui/classification/HierarchicalCategorySelector.kt"
-            line="234"
-            column="41"/>
     </issue>
 
     <issue
@@ -63,19 +52,8 @@
         errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/AndroidManifest.xml"
-            line="14"
+            line="15"
             column="9"/>
-    </issue>
-
-    <issue
-        id="NonObservableLocale"
-        message="Reading locale in a non-observable way in a composable function"
-        errorLine1="                        java.text.SimpleDateFormat(&quot;MMM dd, hh:mm a&quot;, java.util.Locale.getDefault())"
-        errorLine2="                                                                      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/java/com/awbuilds/auraspend/ui/classification/HierarchicalCategorySelector.kt"
-            line="215"
-            column="71"/>
     </issue>
 
     <issue
@@ -118,7 +96,7 @@
         errorLine2="          ~~~~~~~~">
         <location
             file="../gradle/libs.versions.toml"
-            line="11"
+            line="14"
             column="11"/>
     </issue>
 
@@ -129,7 +107,7 @@
         errorLine2="             ~~~~~~~~">
         <location
             file="../gradle/libs.versions.toml"
-            line="14"
+            line="17"
             column="14"/>
     </issue>
 
@@ -140,7 +118,7 @@
         errorLine2="       ~~~~~~~~">
         <location
             file="../gradle/libs.versions.toml"
-            line="17"
+            line="20"
             column="8"/>
     </issue>
 
@@ -151,7 +129,7 @@
         errorLine2="                   ~~~~~~~~">
         <location
             file="../gradle/libs.versions.toml"
-            line="21"
+            line="24"
             column="20"/>
     </issue>
 
@@ -162,19 +140,8 @@
         errorLine2="         ~~~~~~~">
         <location
             file="../gradle/libs.versions.toml"
-            line="29"
+            line="31"
             column="10"/>
-    </issue>
-
-    <issue
-        id="GradleDependency"
-        message="A newer version of androidx.test.espresso:espresso-core than 3.5.1 is available: 3.7.0"
-        errorLine1="espresso = &quot;3.5.1&quot;"
-        errorLine2="           ~~~~~~~">
-        <location
-            file="../gradle/libs.versions.toml"
-            line="33"
-            column="12"/>
     </issue>
 
     <issue
@@ -184,7 +151,7 @@
         errorLine2="                       ~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="build.gradle.kts"
-            line="243"
+            line="256"
             column="24"/>
     </issue>
 
@@ -201,12 +168,23 @@
 
     <issue
         id="NewerVersionAvailable"
+        message="A newer version of org.jetbrains.kotlinx:kotlinx-coroutines-test than 1.9.0 is available: 1.11.0"
+        errorLine1="kotlinxCoroutines = &quot;1.9.0&quot;"
+        errorLine2="                    ~~~~~~~">
+        <location
+            file="../gradle/libs.versions.toml"
+            line="10"
+            column="21"/>
+    </issue>
+
+    <issue
+        id="NewerVersionAvailable"
         message="A newer version of com.squareup.okhttp3:okhttp than 4.12.0 is available: 5.5.0"
         errorLine1="okhttp = &quot;4.12.0&quot;"
         errorLine2="         ~~~~~~~~">
         <location
             file="../gradle/libs.versions.toml"
-            line="20"
+            line="23"
             column="10"/>
     </issue>
 
@@ -217,7 +195,7 @@
         errorLine2="                  ~~~~~~~">
         <location
             file="../gradle/libs.versions.toml"
-            line="22"
+            line="25"
             column="19"/>
     </issue>
 
@@ -228,7 +206,7 @@
         errorLine2="                  ~~~~~~~">
         <location
             file="../gradle/libs.versions.toml"
-            line="22"
+            line="25"
             column="19"/>
     </issue>
 
@@ -239,19 +217,8 @@
         errorLine2="                       ~~~~~~~~">
         <location
             file="../gradle/libs.versions.toml"
-            line="24"
+            line="27"
             column="24"/>
-    </issue>
-
-    <issue
-        id="NewerVersionAvailable"
-        message="A newer version of com.google.guava:guava than 33.0.0-android is available: 33.7.2-android"
-        errorLine1="guava = &quot;33.0.0-android&quot;"
-        errorLine2="        ~~~~~~~~~~~~~~~~">
-        <location
-            file="../gradle/libs.versions.toml"
-            line="25"
-            column="9"/>
     </issue>
 
     <issue
@@ -283,7 +250,7 @@
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="266"
+            line="276"
             column="5"/>
     </issue>
 
@@ -294,7 +261,7 @@
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="269"
+            line="279"
             column="5"/>
     </issue>
 
@@ -305,7 +272,7 @@
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="297"
+            line="311"
             column="5"/>
     </issue>
 
@@ -316,7 +283,7 @@
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="301"
+            line="315"
             column="5"/>
     </issue>
 
@@ -327,7 +294,7 @@
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="303"
+            line="317"
             column="5"/>
     </issue>
 
@@ -338,7 +305,7 @@
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="304"
+            line="318"
             column="5"/>
     </issue>
 
@@ -349,7 +316,7 @@
         errorLine2="     ~~~~~~~~~~~~~~~">
         <location
             file="src/main/AndroidManifest.xml"
-            line="4"
+            line="5"
             column="6"/>
     </issue>
 
@@ -365,17 +332,6 @@
         message="`checkServerTrusted` is empty, which could cause insecure network traffic due to trusting arbitrary TLS/SSL certificates presented by peers">
         <location
             file="../../../.gradle/caches/modules-2/files-2.1/com.google.http-client/google-http-client/2.0.0/bcb2279b29d541ab39439b244feeef2bb9feacd8/google-http-client-2.0.0.jar"/>
-    </issue>
-
-    <issue
-        id="ObsoleteSdkInt"
-        message="Unnecessary; `SDK_INT` is always >= 30"
-        errorLine1="        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/java/com/awbuilds/auraspend/data/classification/AutoClassificationWorker.kt"
-            line="130"
-            column="13"/>
     </issue>
 
     <issue
@@ -403,7 +359,7 @@
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/com/awbuilds/auraspend/ui/classification/ClassificationViewModel.kt"
-            line="48"
+            line="56"
             column="5"/>
     </issue>
 
@@ -414,7 +370,7 @@
         errorLine2="                                                                 ~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/com/awbuilds/auraspend/ui/onboarding/OnboardingScreen.kt"
-            line="113"
+            line="143"
             column="66"/>
     </issue>
 
@@ -475,34 +431,6 @@
 
     <issue
         id="UnusedResources"
-        message="The resource `R.raw.onboarding_1` appears to be unused">
-        <location
-            file="src/main/res/raw/onboarding_1.json"/>
-    </issue>
-
-    <issue
-        id="UnusedResources"
-        message="The resource `R.raw.onboarding_2` appears to be unused">
-        <location
-            file="src/main/res/raw/onboarding_2.json"/>
-    </issue>
-
-    <issue
-        id="UnusedResources"
-        message="The resource `R.raw.onboarding_3` appears to be unused">
-        <location
-            file="src/main/res/raw/onboarding_3.json"/>
-    </issue>
-
-    <issue
-        id="UnusedResources"
-        message="The resource `R.raw.splash_animation` appears to be unused">
-        <location
-            file="src/main/res/raw/splash_animation.json"/>
-    </issue>
-
-    <issue
-        id="UnusedResources"
         message="The resource `R.string.action_close` appears to be unused"
         errorLine1="    &lt;string name=&quot;action_close&quot;>Close&lt;/string>"
         errorLine2="            ~~~~~~~~~~~~~~~~~~~">
@@ -535,24 +463,13 @@
     </issue>
 
     <issue
-        id="UnusedResources"
-        message="The resource `R.string.onboarding_restore_success` appears to be unused"
-        errorLine1="    &lt;string name=&quot;onboarding_restore_success&quot;>Restored %1$d transactions, %2$d categories and %3$d savings goals.&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="297"
-            column="13"/>
-    </issue>
-
-    <issue
         id="UseOfNonLambdaOffsetOverload"
         message="State backed values should use the lambda overload of Modifier.offset"
         errorLine1="                .offset(x = indicatorX)"
         errorLine2="                 ~~~~~~">
         <location
             file="src/main/java/com/awbuilds/auraspend/ui/designsystem/AuraSegmentedControl.kt"
-            line="68"
+            line="76"
             column="18"/>
     </issue>
 
@@ -563,7 +480,7 @@
         errorLine2="                                       ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values-hi/strings.xml"
-            line="336"
+            line="352"
             column="40"/>
     </issue>
 
@@ -574,7 +491,7 @@
         errorLine2="                                       ~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="351"
+            line="367"
             column="40"/>
     </issue>
 
@@ -585,7 +502,7 @@
         errorLine2="                                             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values-hi/strings.xml"
-            line="361"
+            line="377"
             column="46"/>
     </issue>
 
@@ -596,7 +513,7 @@
         errorLine2="                                             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="376"
+            line="392"
             column="46"/>
     </issue>
 
@@ -607,7 +524,7 @@
         errorLine2="                                                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values-hi/strings.xml"
-            line="395"
+            line="411"
             column="51"/>
     </issue>
 
@@ -618,7 +535,7 @@
         errorLine2="                                              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values-hi/strings.xml"
-            line="396"
+            line="412"
             column="47"/>
     </issue>
 
@@ -629,7 +546,7 @@
         errorLine2="                                                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="410"
+            line="426"
             column="51"/>
     </issue>
 
@@ -640,7 +557,7 @@
         errorLine2="                                              ~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="411"
+            line="427"
             column="47"/>
     </issue>
 
@@ -669,7 +586,7 @@
         errorLine2="                        ~~~~~~~~~~~~">
         <location
             file="src/main/java/com/awbuilds/auraspend/MainActivity.kt"
-            line="47"
+            line="56"
             column="25"/>
     </issue>
 
@@ -680,41 +597,8 @@
         errorLine2="                        ~~~~~~~~~~~~">
         <location
             file="src/main/java/com/awbuilds/auraspend/MainActivity.kt"
-            line="52"
+            line="61"
             column="25"/>
-    </issue>
-
-    <issue
-        id="UseKtx"
-        message="Use the KTX extension function `SharedPreferences.edit` instead?"
-        errorLine1="            context.getSharedPreferences(PREF_FILE, Context.MODE_PRIVATE)"
-        errorLine2="            ^">
-        <location
-            file="src/main/java/com/awbuilds/auraspend/data/classification/MessageDedup.kt"
-            line="29"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="UseKtx"
-        message="Use the KTX extension function `SharedPreferences.edit` instead?"
-        errorLine1="            context.getSharedPreferences(PREF_FILE, Context.MODE_PRIVATE)"
-        errorLine2="            ^">
-        <location
-            file="src/main/java/com/awbuilds/auraspend/data/classification/MessageDedup.kt"
-            line="41"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="UseKtx"
-        message="Use the KTX extension function `SharedPreferences.edit` instead?"
-        errorLine1="            context.getSharedPreferences(PREF_FILE, Context.MODE_PRIVATE)"
-        errorLine2="            ^">
-        <location
-            file="src/main/java/com/awbuilds/auraspend/data/classification/MessageDedup.kt"
-            line="56"
-            column="13"/>
     </issue>
 
     <issue
@@ -735,7 +619,7 @@
         errorLine2="                        ~~~~~~~~~~~~">
         <location
             file="src/main/java/com/awbuilds/auraspend/ui/navigation/NavGraph.kt"
-            line="191"
+            line="200"
             column="25"/>
     </issue>
 
@@ -746,7 +630,7 @@
         errorLine2="                                ~~~~~~~~~~~~">
         <location
             file="src/main/java/com/awbuilds/auraspend/ui/navigation/NavGraph.kt"
-            line="522"
+            line="572"
             column="33"/>
     </issue>
 
@@ -768,18 +652,18 @@
         errorLine2="                                                       ~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/com/awbuilds/auraspend/ui/settings/SettingsScreen.kt"
-            line="285"
+            line="402"
             column="56"/>
     </issue>
 
     <issue
         id="UseKtx"
         message="Use the KTX extension function `SharedPreferences.edit` instead?"
-        errorLine1="        prefs.edit().putLong(PREF_INGEST_SINCE, newest - 1).apply()"
+        errorLine1="        prefs.edit()"
         errorLine2="        ~~~~~~~~~~~~">
         <location
             file="src/main/java/com/awbuilds/auraspend/data/classification/SmsIngestor.kt"
-            line="52"
+            line="87"
             column="9"/>
     </issue>
 
@@ -790,7 +674,7 @@
         errorLine2="                       ~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="build.gradle.kts"
-            line="243"
+            line="256"
             column="24"/>
     </issue>
 

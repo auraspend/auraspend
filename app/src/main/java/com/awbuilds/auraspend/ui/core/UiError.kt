@@ -16,7 +16,11 @@ import com.awbuilds.auraspend.R
  * localizable and testable.
  */
 enum class UiError(
-    @StringRes val messageRes: Int,
+    // `@param:` is explicit on purpose. `@StringRes` is applicable to a
+    // constructor parameter *and* to a field, and Kotlin warns that the default
+    // target will grow to include the field; only the parameter is meant here.
+    // It is what makes lint check the `R.string.*` id each entry passes.
+    @param:StringRes val messageRes: Int,
     /** Whether offering a retry makes sense for this failure. */
     val retryable: Boolean = false
 ) {

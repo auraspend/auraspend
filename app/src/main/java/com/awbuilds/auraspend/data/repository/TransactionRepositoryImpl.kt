@@ -32,8 +32,8 @@ class TransactionRepositoryImpl(
     override fun getTransactionsInRange(start: Long, end: Long): Flow<List<Transaction>> =
         transactionDao.getTransactionsInRange(start, end).map { it.map { e -> e.toDomain() } }
 
-    override fun searchTransactions(query: String): Flow<List<Transaction>> =
-        transactionDao.searchTransactions(query).map { it.map { e -> e.toDomain() } }
+    override suspend fun getTransactionById(id: String): Transaction? =
+        transactionDao.getTransactionById(id)?.toDomain()
 
     override fun getTransactionsByCategory(categoryId: String): Flow<List<Transaction>> =
         transactionDao.getTransactionsByCategory(categoryId).map { it.map { e -> e.toDomain() } }
@@ -98,12 +98,35 @@ class TransactionRepositoryImpl(
         merchant = merchant?.let { SensitiveDataMasker.mask(it) }
     )
 
+    /**
+     * Updates an existing row in place, otherwise inserts it.
+     *
+     * A plain insert cannot serve both intents: an edit arrives with the row's
+     * existing id, and a pipeline save arrives with a fresh id but a
+     * `sourceSmsId` another row may already claim. `REPLACE` resolved the second
+     * case by deleting the user's row; `INSERT OR IGNORE` alone would resolve the
+     * first by dropping the edit. So: update first (0 rows changed means the id is
+     * new), then insert-if-absent.
+     */
     override suspend fun saveTransaction(transaction: Transaction) {
-        transactionDao.insertTransaction(transaction.sanitized().toEntity())
+        val entity = transaction.sanitized().toEntity()
+        if (transactionDao.updateTransaction(entity) == 0) {
+            transactionDao.insertTransactionIfAbsent(entity)
+        }
     }
 
+    /**
+     * Batch save (CSV import) with the same update-or-insert semantics as
+     * [saveTransaction], in ONE transaction.
+     *
+     * A per-row loop would make the import non-atomic: a failure halfway
+     * persists the rows already written while the caller reports failure, and
+     * the user cannot tell which of their file's rows landed. [upsertTransactions]
+     * puts the whole batch behind a single Room transaction, so the CSV import
+     * is all-or-nothing like the bulk insert it replaced.
+     */
     override suspend fun saveTransactions(transactions: List<Transaction>) {
-        transactionDao.insertTransactions(transactions.map { it.sanitized().toEntity() })
+        transactionDao.upsertTransactions(transactions.map { it.sanitized().toEntity() })
     }
 
     override suspend fun deleteTransaction(id: String) {

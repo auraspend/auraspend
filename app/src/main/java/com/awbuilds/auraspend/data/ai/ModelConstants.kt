@@ -89,6 +89,26 @@ object ModelConstants {
 
     const val PREF_CONSENT_GIVEN = "ai_model_consent_given"
 
+    /** Bundled centroid asset consumed by [EmbeddingClassifier]. */
+    const val CENTROIDS_ASSET_NAME = "auraspend_embedding.bin"
+
+    /**
+     * SHA-256 of the bundled centroid asset.
+     *
+     * Unlike the model and the tokenizer this file is not downloaded, so the
+     * digest is not a runtime security check — anyone who can replace a file
+     * inside the APK can replace this constant too. It is pinned because the
+     * asset is *generated* (`tools/build_embedding_asset.py`) and consumed by a
+     * hand-written reader, and that pair has already drifted once: the writer
+     * emitted little-endian and the reader parsed big-endian, which silently
+     * disabled the entire on-device model with no build or test failure.
+     * `EmbeddingClassifierAssetTest` enforces this digest, so regenerating the
+     * asset without checking the reader fails the build instead of shipping an
+     * inert model.
+     */
+    const val CENTROIDS_SHA256: String =
+        "eb5f3617bd821517d50406f299dd977a62f241819e89141f0ee70faa1a507897"
+
     fun baseModelsDir(context: android.content.Context): File =
         File(context.filesDir, "models").apply { mkdirs() }
 

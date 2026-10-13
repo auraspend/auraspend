@@ -43,13 +43,35 @@ data class SmsExtraction(
      * that is 0.99 sure still may not, because the regex layer reading the
      * message correctly is the stronger signal.
      *
+     * **This scores the answer the runtime actually gave, not one class.** A
+     * runtime that reports the raw probability of the transaction class here
+     * makes `AiSignalFusion.mayDiscard` unreachable on a negative verdict, since
+     * that probability is below 0.5 by construction whenever the verdict is
+     * "not a transaction" — the 0.9 gate then never fires and the safety
+     * property is measured by dead code. Use [verdictConfidence] to convert.
+     *
      * llama.cpp cannot supply this — a GGUF generation has no calibrated head —
-     * so the shipped model reports null and behaviour is unchanged. A
-     * grammar-constrained runtime that reads probabilities can fill it, and
-     * becomes safe to trust. Until then null is the honest answer.
+     * so a generative runtime reports null and keeps the legacy unconditional
+     * veto. The shipped encoder has a softmax head and fills it honestly.
      */
     val isTransactionProbability: Float? = null
-)
+) {
+    companion object {
+        /**
+         * Confidence in an emitted verdict, from [pTransaction] — a runtime's raw
+         * probability that the message *is* a transaction.
+         *
+         * `pTransaction` above 0.5 means the verdict was "transaction", and the
+         * confidence in that verdict is `pTransaction` itself. Below 0.5 the
+         * verdict was "not a transaction", and the confidence in *that* is
+         * `1 - pTransaction`. Reporting the raw value instead is what made the
+         * discard gate unreachable: inside the `!isTransaction` branch it can
+         * never reach 0.9.
+         */
+        fun verdictConfidence(isTransaction: Boolean, pTransaction: Float): Float =
+            if (isTransaction) pTransaction else 1f - pTransaction
+    }
+}
 
 /**
  * The app's on-device AI contract, described as a *job* rather than a mechanism.
@@ -67,6 +89,20 @@ interface OnDeviceClassifier {
 
     /** Stable identifier used in logs and in eval reports, e.g. `llama.cpp`. */
     val id: String
+
+    /**
+     * True when this runtime can actually classify right now.
+     *
+     * Every runtime's pieces — the native session, the vocabulary, the centroid
+     * asset — load through a boundary that degrades to null instead of throwing,
+     * which is what keeps a broken runtime from crashing the app. That design
+     * left "ready" and "silently inert" indistinguishable: the shipped encoder
+     * returned null for every message while `LocalLlmProvider` logged "on-device
+     * classifier ready", because its centroid asset was being decoded with the
+     * wrong byte order. Readiness UI asks this instead, so a degraded runtime is
+     * reported as degraded.
+     */
+    val isOperational: Boolean
 
     /**
      * Extracts transaction data from one SMS.

@@ -1,10 +1,12 @@
 package com.awbuilds.auraspend.data.classification
 
+import com.awbuilds.auraspend.core.AuraLog
 import com.awbuilds.auraspend.data.local.dao.SmsMessageDao
 import com.awbuilds.auraspend.data.local.entities.SmsMessageEntity
 import com.awbuilds.auraspend.data.local.entities.SmsMessageStatus
 import com.awbuilds.auraspend.domain.repository.TransactionRepository
 import com.awbuilds.auraspend.ui.classification.SmsInfo
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.yield
@@ -31,6 +33,10 @@ data class SmsProcessResult(
  *
  * The message body is never modified; every row is kept in the queue so the UI can show live
  * status and the user can re-save skipped messages manually from Smart Add.
+ *
+ * Live status is the queue itself: a row being classified right now is
+ * [SmsMessageStatus.CLASSIFYING], which the UI renders per-message and which is swept back to
+ * [SmsMessageStatus.NEW] at the start of the next pass if a pass was killed mid-row.
  */
 class SmsPipelineProcessor(
     private val dao: SmsMessageDao,
@@ -58,6 +64,8 @@ class SmsPipelineProcessor(
 ) {
 
     private companion object {
+        const val TAG = "SmsPipeline"
+
         /** Bodies shorter than this are too generic for exact-content matching. */
         const val MIN_BODY_FOR_EXACT_MATCH = 20
 
@@ -74,19 +82,6 @@ class SmsPipelineProcessor(
          */
         const val DUPLICATE_SIMILARITY_THRESHOLD = 0.96f
     }
-
-    /**
-     * True when the message states both an amount and a movement verb — i.e. it
-     * plausibly describes money moving, even if nothing could parse it.
-     *
-     * This is the same test `SmsAutoClassifier` uses to rescue a debit that ends
-     * in an OTP code, and it is deliberately reused rather than reimplemented so
-     * the two cannot disagree about what counts as a transaction.
-     */
-    private fun looksLikeMoneyMovement(body: String): Boolean =
-        Regex("""(?:Rs\.?|INR|₹)\s*\d|₹\s*\d|\d+\s*(?:Rs|INR)""").containsMatchIn(body) &&
-            Regex("(?:debited|credited|spent|paid|transferred|withdrawn)", RegexOption.IGNORE_CASE)
-                .containsMatchIn(body)
 
     /**
      * Layer 1 — identical normalized body already produced a SAVED transaction.
@@ -130,7 +125,21 @@ class SmsPipelineProcessor(
         }
         if (fingerprintDuplicate) return true
 
-        val sameTypeRecent = recent.filter { it.type == transaction.type }
+        val sameTypeRecent = recent
+            .filter { it.type == transaction.type }
+            // Near-identical means the SAME payment re-delivered, and SMS amounts are
+            // deterministic: a few-percent gap is a different payment. Without this
+            // gate the similarity score's merchantless case (40% free when both
+            // merchants are null) + a same-hour date could push a 6%-apart pair over
+            // the 0.96 threshold. Measured on the owner's device (2026-10-13): an
+            // ₹840.76 card payment was skipped as a "duplicate" of an unrelated ₹892
+            // credit 37 minutes earlier, because its date had failed to parse and
+            // collapsed onto the save hour. The date-parse fix removes that trigger;
+            // this gate makes the class impossible.
+            .filter {
+                kotlin.math.abs(it.amount - transaction.amount) <=
+                    maxOf(1.0, 0.002 * transaction.amount)
+            }
         return DuplicateDetector.findMostLikelyDuplicate(
             transaction,
             sameTypeRecent,
@@ -156,6 +165,12 @@ class SmsPipelineProcessor(
         var skipped = 0
         var failed = 0
         var attempted = 0
+
+        // Crash recovery: a row left CLASSIFYING by a killed pass is invisible to
+        // `getPending(NEW, …)`, so without this sweep the message would be stranded
+        // forever. PROCESSED rows are untouched — they are parked by the user.
+        dao.sweepInFlight(System.currentTimeMillis())
+
         val categories = transactionRepository.getAllCategories().first()
             .associate { it.id to it.name }
 
@@ -189,6 +204,14 @@ class SmsPipelineProcessor(
             return Outcome.SKIPPED
         }
 
+        // Claim the row before the expensive work so the UI can show "categorising…" on
+        // exactly this message while it is being classified, and so a pass killed mid-row
+        // leaves a marker the next pass sweeps (rather than a silent NEW row nobody owns).
+        dao.update(message.copy(
+            status = SmsMessageStatus.CLASSIFYING.name,
+            updatedAt = now
+        ))
+
         val classified = ClassifiedSms(
             sms = SmsInfo(
                 id = message.id,
@@ -196,7 +219,9 @@ class SmsPipelineProcessor(
                 body = message.body,
                 timestamp = message.receivedAt
             ),
-            parsed = TransactionClassifier.classify(message.body)
+            // Sender-routed: the address travels with the queued row precisely so
+            // the per-bank parser can be chosen before the body is read.
+            parsed = TransactionClassifier.classify(message.body, message.address)
         )
         val enriched = enrich(classified, categories)
 
@@ -206,7 +231,12 @@ class SmsPipelineProcessor(
             // dropped: a missing transaction with no explanation is the failure
             // mode this table exists to prevent. Messages that merely mention a
             // bank have already been filtered by isOtpOrAlertMessage above.
-            if (looksLikeMoneyMovement(message.body)) {
+            // Shared with the OTP/alert rescue in `SmsAutoClassifier`: one
+            // predicate, so the two can never disagree about what money moving
+            // looks like. The copy that used to live here knew six debit verbs
+            // and no credit verb, which is how a deposit or refund that no parser
+            // claimed got dropped instead of being surfaced to the user.
+            if (SmsAutoClassifier.looksLikeTransaction(message.body)) {
                 recordUnrecognized(
                     message.id,
                     message.address,
@@ -251,16 +281,17 @@ class SmsPipelineProcessor(
                 updatedAt = now
             ))
             Outcome.SAVED
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
-            // The unique sourceSmsId index makes a duplicate write a constraint violation rather
-            // than a double-save; treat it as terminal and done.
-            if (e.message?.contains("UNIQUE constraint failed", ignoreCase = true) == true) {
-                dao.update(message.copy(
-                    status = SmsMessageStatus.SKIPPED.name,
-                    updatedAt = now
-                ))
-                Outcome.SKIPPED
-            } else if (message.attempts + 1 >= maxAttempts) {
+            // A duplicate `sourceSmsId` is no longer an error here: the transaction
+            // DAO inserts with `OnConflictStrategy.IGNORE`, so a second save of the
+            // same SMS-linked row is a no-op that leaves the user's own edits in
+            // place. The constraint-exception branch that used to live here was
+            // unreachable — the old `REPLACE` strategy resolved the conflict by
+            // deleting the existing row instead of throwing.
+            AuraLog.w(TAG, "Failed to save a classified message; will retry", e)
+            if (message.attempts + 1 >= maxAttempts) {
                 dao.update(message.copy(
                     status = SmsMessageStatus.FAILED.name,
                     attempts = message.attempts + 1,

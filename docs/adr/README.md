@@ -15,3 +15,4 @@ the next number. Status values: `Accepted`, `Superseded`, `Proposed`.
 | [0008](0008-distribution-flavors.md) | Distribution flavors carry no features, no analytics, no ads | Accepted |
 | [0009](0009-agpl-3.0-relicensing.md) | Relicensing to AGPL-3.0 | Accepted |
 | [0010](0010-dev-prod-flavors.md) | `dev`/`prod` flavors: two environments, four variants | Accepted |
+| [0011](0011-google-signin-pinned.md) | `play-services-auth` stays pinned until Credential Manager lands | Accepted |

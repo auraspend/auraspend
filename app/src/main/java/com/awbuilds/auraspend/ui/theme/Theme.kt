@@ -233,6 +233,12 @@ private val AmoledColorScheme = darkColorScheme(
 fun AuraSpendTheme(
     themeMode: AppThemeMode = AppThemeMode.SYSTEM,
     dynamicColor: Boolean = false,
+    /**
+     * The currency the user picked, or null to follow the device locale. Hoisted
+     * by `MainActivity` (like [themeMode]) because a preference is not observable
+     * state: reading it here would leave the symbol stale until a cold start.
+     */
+    currencyCode: String? = null,
     content: @Composable () -> Unit
 ) {
     val context = LocalContext.current
@@ -271,7 +277,7 @@ fun AuraSpendTheme(
 
     // Currency is part of the theme so a change in Settings reaches every money
     // text, chart axis and export without threading a parameter through the UI.
-    val currency = rememberCurrencyStyle()
+    val currency = rememberCurrencyStyle(currencyCode)
     MoneyConfig.update(currency)
 
     CompositionLocalProvider(

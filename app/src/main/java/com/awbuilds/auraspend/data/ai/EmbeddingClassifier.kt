@@ -9,7 +9,6 @@ import com.awbuilds.auraspend.core.boundaryOrNull
 import com.awbuilds.auraspend.domain.model.TransactionType
 import java.io.File
 import java.nio.LongBuffer
-import java.nio.charset.StandardCharsets
 import org.json.JSONObject
 
 /**
@@ -63,11 +62,34 @@ class EmbeddingClassifier(
 
     private val vocab: Map<String, Int> = boundaryOrNull(TAG) { readVocab() } ?: emptyMap()
 
-    private val model: Centroids? = boundaryOrNull(TAG) { readCentroids(centroidsAsset) }
+    private val model: EmbeddingCentroids? = boundaryOrNull(TAG) {
+        centroidsAsset.use { EmbeddingCentroidCodec.decode(it.readBytes()) }
+    }
 
     private val tokenizer: BertTokenizer? = boundaryOrNull(TAG) {
         if (vocab.isEmpty()) null else BertTokenizer(vocab)
     }
+
+    /**
+     * True when every piece the encoder needs is actually loaded: the native
+     * session, the tokenizer and the centroid asset.
+     *
+     * Exists because each of those degrades to null on failure — deliberately,
+     * so a broken runtime can never crash the app — which used to be
+     * indistinguishable from "ready". A byte-order mismatch in the centroid
+     * reader made [extract] return null for every message while
+     * `LocalLlmProvider` logged "on-device classifier ready" and the Settings
+     * screen reported the model as available. [LocalLlmProvider.isReady] now
+     * asks this, so the two can no longer disagree.
+     */
+    override val isOperational: Boolean
+        get() = session != null && tokenizer != null && model != null
+
+    /** Diagnostics only: whether the ONNX session loaded. */
+    val hasSession: Boolean get() = session != null
+
+    /** Diagnostics only: whether the bundled centroid asset decoded. */
+    val hasCentroids: Boolean get() = model != null
 
     override suspend fun extract(
         smsBody: String,
@@ -85,6 +107,7 @@ class EmbeddingClassifier(
         // `AiSignalFusion` decides what to do with it.
         val txnSims = vector.cosine(m.transaction)
         val pTransaction = txnSims.softmax(TEMPERATURE)[1]
+        val isTransaction = pTransaction >= TRANSACTION_FLOOR
 
         // Gate 2 — income or expense, only for messages the first gate accepted.
         val typeIdx = vector.cosine(m.type).argmax()
@@ -102,7 +125,7 @@ class EmbeddingClassifier(
         return SmsExtraction(
             // A null is honest here: below the floor, the runtime does not have
             // an opinion, and `AiSignalFusion` then keeps the regex verdict.
-            isTransaction = pTransaction >= TRANSACTION_FLOOR,
+            isTransaction = isTransaction,
             type = type,
             category = category,
             // Deliberately null. A centroid model has no notion of a merchant
@@ -112,7 +135,15 @@ class EmbeddingClassifier(
             isSubscription = category == CATEGORY_SUBSCRIPTION,
             rawModelOutput = null,
             confidence = pTransaction,
-            isTransactionProbability = pTransaction
+            // Confidence in the verdict actually emitted, not in the transaction
+            // class. `AiSignalFusion` reads this as "how sure are you that your
+            // answer is right", so reporting the transaction-class probability on
+            // a *negative* verdict made the 0.9 discard gate arithmetically
+            // unreachable: pTransaction is below 0.5 whenever isTransaction is
+            // false. The gate was dead code, and the measured 0-false-veto result
+            // came from it never firing rather than from the encoder being
+            // trustworthy. See `SmsExtraction.verdictConfidence`.
+            isTransactionProbability = SmsExtraction.verdictConfidence(isTransaction, pTransaction)
         )
     }
 
@@ -197,13 +228,6 @@ class EmbeddingClassifier(
         }
     }
 
-    private class Centroids(
-        val transaction: Array<FloatArray>,
-        val type: Array<FloatArray>,
-        val category: Array<FloatArray>,
-        val categoryIds: List<String>
-    )
-
     /** Reads a `tokenizer.json` vocab into a wordpiece -> id map. */
     private fun readVocab(): Map<String, Int> {
         val file = File(tokenizerDir, "tokenizer.json")
@@ -220,56 +244,12 @@ class EmbeddingClassifier(
         return map
     }
 
-    /** Reads the precomputed centroids written by `tools/build_embedding_asset.py`. */
-    private fun readCentroids(asset: java.io.InputStream): Centroids {
-        val bytes = boundary(TAG, ByteArray(0)) { asset.use { it.readBytes() } }
-        var p = 0
-        fun u32(): Int = ((bytes[p++].toInt() and 0xFF) shl 24) or
-            ((bytes[p++].toInt() and 0xFF) shl 16) or
-            ((bytes[p++].toInt() and 0xFF) shl 8) or
-            (bytes[p++].toInt() and 0xFF)
-        fun u8(): Int = bytes[p++].toInt() and 0xFF
-
-        val magic = String(bytes, 0, MAGIC.length, StandardCharsets.UTF_8)
-        p = MAGIC.length
-        require(magic == MAGIC) { "bad centroids magic: $magic" }
-        val dim = u32()
-        val metaLen = u32()
-        val meta = String(bytes, p, metaLen, StandardCharsets.UTF_8)
-        p += metaLen
-        val json = JSONObject(meta)
-
-        fun group(): Array<FloatArray> {
-            val n = u8()
-            return Array(n) {
-                val f = FloatArray(dim)
-                // big-endian floats: the asset is written by a Python tool and
-                // ByteBuffer defaults differ, so be explicit.
-                for (j in 0 until dim) f[j] = java.nio.ByteBuffer.wrap(bytes, p + j * 4, 4)
-                    .order(java.nio.ByteOrder.BIG_ENDIAN).float
-                p += dim * 4
-                f
-            }
-        }
-
-        val txn = group()
-        val typ = group()
-        val cat = group()
-
-        val catIds = json.getJSONArray("category").let { arr ->
-            List(arr.length()) { arr.getString(it) }
-        }
-        require(cat.size == catIds.size) { "category centroid/id count mismatch" }
-        return Centroids(txn, typ, cat, catIds)
-    }
-
     override fun close() {
         boundary(TAG, Unit) { session?.close() }
     }
 
     private companion object {
         const val TAG = "EmbeddingClassifier"
-        const val MAGIC = "AURAEMB1"
         const val MAX_TOKENS = 256
         const val CATEGORY_SUBSCRIPTION = "cat_subscription"
 
@@ -281,10 +261,12 @@ class EmbeddingClassifier(
         const val TEMPERATURE = 0.05f
 
         /**
-         * Below this, the runtime reports no opinion (`isTransaction` is left to
-         * the regex layer). Set from the measured separation: the distributions
-         * overlap, so the honest reading of a low score is "I do not know"
-         * rather than "not a transaction".
+         * Below this the runtime answers "not a transaction", but reports it with
+         * the confidence of that answer (`SmsExtraction.verdictConfidence`), and
+         * `AiSignalFusion` discards the row only above 0.9 — so a low score here
+         * still leaves the regex verdict in place. Set from the measured
+         * separation: the distributions overlap, so the honest reading of a score
+         * near the middle is "I do not know" rather than a confident denial.
          */
         const val TRANSACTION_FLOOR = 0.5f
     }

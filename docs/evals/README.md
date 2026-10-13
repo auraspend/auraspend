@@ -42,3 +42,26 @@ the llama.cpp runtime, so those reports are now historical rather than
 reproducible without reintroducing the dependency. That is a deliberate
 trade: the tooling measured four candidates, and keeping a 165 MB vendored C++
 tree alive to re-measure a decision that is already made is not worth it.
+
+## `probabilitySemantics` — read this before adding a report
+
+A report may declare how its `isTransactionProbability` field is meant:
+
+- `"p_transaction"` — the runtime's raw probability of the transaction class
+  (what `tools/encoder_eval.py` produces). `FusedAiEval` converts it with
+  `SmsExtraction.verdictConfidence` on load, the same conversion the runtime
+  applies.
+- `"verdict_confidence"` (or absent) — already the value
+  `SmsExtraction.isTransactionProbability` is defined to carry.
+
+The distinction is not cosmetic. `AiSignalFusion.mayDiscard` reads that field as
+confidence in the answer *given*, so replaying raw `p_transaction` on a negative
+verdict puts it below 0.5 and makes the 0.9 discard gate unreachable — the
+encoder's "0 destroyed" is then produced by a gate that never runs. That is
+exactly how the shipped encoder's result was recorded before 2026-10-11, and
+`FusedAiEvalTest` now fails if a report is replayed in the wrong protocol.
+
+`minilm-2026-09-29.json` therefore carries `"probabilitySemantics":
+"p_transaction"` with its measured values untouched; the other reports have no
+probability field at all (a generative runtime has no calibrated head), which
+keeps the legacy veto behaviour.

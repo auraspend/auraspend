@@ -18,11 +18,12 @@ signing. See [ADR 0007](../docs/adr/0007-no-paywall.md) and
 
 ### The invariant to preserve
 
-**No feature may live in `app/src/play/` that is absent from `app/src/main/`.**
-Only services and configuration may differ between flavors. This is what keeps
-the F-Droid build from ever becoming a degraded build, and it is a hard
-requirement for F-Droid, which builds from source and accepts only FOSS
-dependencies.
+**No feature may live in a flavor source set that is absent from
+`app/src/main/`.** `app/src/dev/` and `app/src/prod/` hold configuration only —
+application-id suffix, label, signing (see
+[ADR 0010](../docs/adr/0010-dev-prod-flavors.md)). Both builds are
+feature-identical and neither carries analytics, ads or telemetry: the promise
+that your bank SMS never leaves the phone has to be true of every build.
 
 If you are tempted to add a Play-only capability, it almost certainly belongs
 in `main` behind a runtime check instead.
@@ -44,10 +45,13 @@ in `main` behind a runtime check instead.
 
 ## Pull Request Process
 
-1. Fork the repo and create a branch from `main`
+1. Fork the repo and branch from `dev` — short-lived, named `phase-N-name` or
+   `<type>/<topic>` with `feat|fix|chore|docs|perf|refactor`. `main` is
+   release-ready and protected, and receives `dev` at release time, not feature
+   work ([AGENTS.md](../AGENTS.md) rule 7)
 2. Run `./gradlew assembleProdDebug` — it must build clean
 3. Update docs if needed
-4. Open a PR with a clear title and description
+4. Open a PR against `dev` with a clear title and description
 5. A maintainer will review
 
 ## Reporting Issues

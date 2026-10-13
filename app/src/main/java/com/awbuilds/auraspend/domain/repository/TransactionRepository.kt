@@ -23,8 +23,10 @@ interface TransactionRepository {
             PagingData.from(transactions.filter(filter::matches))
         }
 
+    /** One transaction by id (the detail/edit screen reads one row, not the table). */
+    suspend fun getTransactionById(id: String): Transaction?
+
     fun getTransactionsInRange(start: Long, end: Long): Flow<List<Transaction>>
-    fun searchTransactions(query: String): Flow<List<Transaction>>
     fun getTransactionsByCategory(categoryId: String): Flow<List<Transaction>>
     fun getRecurringTransactions(): Flow<List<Transaction>>
 

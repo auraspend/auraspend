@@ -43,6 +43,7 @@ class ClassificationEvalSanityTest {
     /** A classifier that replays a fixed list of results, in order. */
     private class ScriptedClassifier(private val results: List<SmsExtraction?>) : OnDeviceClassifier {
         override val id = "scripted"
+        override val isOperational: Boolean = true
         var calls = 0
         override suspend fun extract(smsBody: String, categoryIdByName: Map<String, String>): SmsExtraction? {
             val r = results.getOrNull(calls)

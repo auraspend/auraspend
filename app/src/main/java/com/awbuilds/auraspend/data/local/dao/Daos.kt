@@ -41,14 +41,22 @@ interface TransactionDao {
         categoryId: String?
     ): PagingSource<Int, TransactionEntity>
 
+    /**
+     * Rows the classifier flagged as recurring.
+     *
+     * Deliberately kept with **zero production callers**: it is the read that
+     * "derive subscriptions from transaction history" needs (the review's
+     * Direction 2 — `isRecurring` is already populated, the false-positive
+     * guardrails are in the suite, and the Plan hub implicitly promises the
+     * subscriptions it would surface). It is documented rather than deleted so
+     * the next reader can tell a kept hook from forgotten dead code; anything
+     * genuinely superseded was removed in the same pass.
+     */
     @Query("SELECT * FROM transactions WHERE isRecurring = 1")
     fun getRecurringTransactions(): Flow<List<TransactionEntity>>
 
     @Query("SELECT * FROM transactions WHERE dateTimestamp BETWEEN :start AND :end ORDER BY dateTimestamp DESC")
     fun getTransactionsInRange(start: Long, end: Long): Flow<List<TransactionEntity>>
-
-    @Query("SELECT * FROM transactions WHERE note LIKE '%' || :query || '%' OR merchant LIKE '%' || :query || '%' ORDER BY dateTimestamp DESC")
-    fun searchTransactions(query: String): Flow<List<TransactionEntity>>
 
     @Query("SELECT * FROM transactions WHERE categoryId = :categoryId")
     fun getTransactionsByCategory(categoryId: String): Flow<List<TransactionEntity>>
@@ -96,11 +104,54 @@ interface TransactionDao {
     )
     fun observeDailyExpense(start: Long, end: Long): Flow<List<DayTotalRow>>
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertTransaction(transaction: TransactionEntity)
+    /**
+     * Inserts a new transaction, ignoring it when a *different* row already owns
+     * the same unique `sourceSmsId`.
+     *
+     * Deliberately not [OnConflictStrategy.REPLACE]: SQLite implements REPLACE as
+     * "delete the conflicting row, then insert", and `sourceSmsId` is unique — so
+     * a second save of the same SMS-linked transaction (a worker/triage race, a
+     * CSV re-import, a re-processed queue row) deleted the row the user had
+     * already edited and re-created it from the pipeline's parse. A duplicate is
+     * a no-op, not an overwrite.
+     */
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insertTransactionIfAbsent(transaction: TransactionEntity): Long
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    /**
+     * Updates an existing row in place and reports how many rows changed, so a
+     * caller can express "update if present, otherwise insert" without REPLACE's
+     * delete-then-insert behaviour.
+     */
+    @Update
+    suspend fun updateTransaction(transaction: TransactionEntity): Int
+
+    /**
+     * Bulk insert (CSV import, atomic restore). Rows that already exist are left
+     * untouched rather than replaced — restore clears the table first, so it
+     * never relies on the conflict strategy.
+     */
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertTransactions(transactions: List<TransactionEntity>)
+
+    /**
+     * Update-if-present, else insert-if-absent, for a whole batch in ONE
+     * transaction (CSV import).
+     *
+     * The per-row [saveTransaction] path cannot serve a batch: it opens its own
+     * transaction per row, so an import that fails halfway would persist the
+     * rows already written while the user is told the import failed. Room wraps
+     * a `@Transaction` default method in a single transaction, so either the
+     * whole file lands or nothing does.
+     */
+    @Transaction
+    suspend fun upsertTransactions(transactions: List<TransactionEntity>) {
+        transactions.forEach { entity ->
+            if (updateTransaction(entity) == 0) {
+                insertTransactionIfAbsent(entity)
+            }
+        }
+    }
 
     @Delete
     suspend fun deleteTransaction(transaction: TransactionEntity)
@@ -116,6 +167,14 @@ interface TransactionDao {
      */
     @Query("SELECT * FROM transactions WHERE sourceSmsId = :smsId LIMIT 1")
     suspend fun getTransactionBySourceSmsId(smsId: String): TransactionEntity?
+
+    /**
+     * One row by primary key. The detail/edit screen reads a single transaction,
+     * not the whole table: `id` is the primary key, so this is an indexed lookup
+     * rather than the full scan it used to do to find one row.
+     */
+    @Query("SELECT * FROM transactions WHERE id = :id")
+    suspend fun getTransactionById(id: String): TransactionEntity?
 
     /**
      * One-shot snapshot for the Drive backup. The Flow above feeds the UI; a
@@ -301,6 +360,37 @@ interface SmsMessageDao {
 
     @Query("SELECT * FROM sms_messages WHERE status = :status ORDER BY receivedAt DESC LIMIT :limit")
     suspend fun getPending(status: String, limit: Int): List<SmsMessageEntity>
+
+    /**
+     * How many rows are still waiting on the classifier.
+     *
+     * Gates the history backfill in `SmsIngestor`: older messages are pulled in
+     * one page at a time, and only when there is nothing live left to classify,
+     * so a backfill can never grow the queue faster than it drains.
+     */
+    @Query("SELECT COALESCE(COUNT(*), 0) FROM sms_messages WHERE status = :status")
+    suspend fun countByStatus(status: String): Int
+
+    /** Total queue depth — the denominator of the "X of Y" progress readout. */
+    @Query("SELECT COALESCE(COUNT(*), 0) FROM sms_messages")
+    suspend fun countAll(): Int
+
+    /**
+     * Crash recovery for the in-flight marker.
+     *
+     * A pass that is killed mid-row leaves the row [SmsMessageStatus.CLASSIFYING], and
+     * `getPending(NEW, …)` never returns it again — the message would be stranded forever.
+     * Every pass sweeps those rows back to [SmsMessageStatus.NEW] before claiming the next one.
+     *
+     * [SmsMessageStatus.PROCESSED] is deliberately excluded: it is where the undo paths park a
+     * row the user just dismissed or un-saved, and re-processing it would silently resurrect a
+     * decision the user reversed.
+     */
+    @Query(
+        "UPDATE sms_messages SET status = 'NEW', updatedAt = :now " +
+            "WHERE status = 'CLASSIFYING'"
+    )
+    suspend fun sweepInFlight(now: Long)
 
     @Query("SELECT * FROM sms_messages WHERE id = :id")
     suspend fun getById(id: String): SmsMessageEntity?

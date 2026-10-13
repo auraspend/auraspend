@@ -50,18 +50,4 @@ class SmsAutoClassifierDedupTest {
         )
         assertEquals("sms-7", t.toEntity().toDomain().sourceSmsId)
     }
-
-    @Test
-    fun `nextScanCursor advances past unparsed messages`() {
-        val messages = listOf(
-            classified("parsed-old", 1000L, 50.0, TransactionType.EXPENSE),
-            classified("unparsed-new", 2000L, null, null)
-        )
-        assertEquals(2000L, SmsAutoClassifier.nextScanCursor(messages))
-    }
-
-    @Test
-    fun `nextScanCursor is null for an empty batch`() {
-        assertNull(SmsAutoClassifier.nextScanCursor(emptyList()))
-    }
 }

@@ -38,6 +38,14 @@ class SemanticDuplicateGuardTest {
         override suspend fun update(message: SmsMessageEntity) { rows[message.id] = message }
         override suspend fun getMaxReceivedAt(): Long = rows.values.maxOfOrNull { it.receivedAt } ?: 0L
 
+        override suspend fun countByStatus(status: String): Int =
+            rows.values.count { it.status == status }
+
+        override suspend fun countAll(): Int = rows.size
+
+        // Crash recovery for the in-flight marker; unused by these tests.
+        override suspend fun sweepInFlight(now: Long) {}
+
         // Added for the atomic Drive restore path; unused by these tests.
         override suspend fun clear() = rows.clear()
 
@@ -54,12 +62,13 @@ class SemanticDuplicateGuardTest {
         )
         override fun getAllTransactions(): Flow<List<Transaction>> =
             MutableStateFlow(existing + saved)
+        override suspend fun getTransactionById(id: String): Transaction? =
+            (existing + saved).firstOrNull { it.id == id }
         override fun getTransactionsInRange(start: Long, end: Long): Flow<List<Transaction>> =
             MutableStateFlow((existing + saved).filter {
                 val ts = it.date.atZone(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli()
                 ts in start..end
             })
-        override fun searchTransactions(query: String): Flow<List<Transaction>> = getAllTransactions()
         override fun getTransactionsByCategory(categoryId: String): Flow<List<Transaction>> = getAllTransactions()
         override fun getRecurringTransactions(): Flow<List<Transaction>> = MutableStateFlow(emptyList())
         override suspend fun saveTransaction(transaction: Transaction) { saved.add(transaction) }
@@ -186,6 +195,41 @@ class SemanticDuplicateGuardTest {
 
         assertEquals("same amount+type within minutes must not double-save", 0, result.saved)
         assertEquals(SmsMessageStatus.SKIPPED.name, dao.getById("twin")!!.status)
+    }
+
+    @Test
+    fun `merchantless credits minutes apart are not duplicates when the amounts differ`() = runBlocking {
+        // Measured false positive (owner's device, 2026-10-13): ₹840.76 vs an
+        // unrelated ₹892 credit 37 minutes earlier, both merchantless, scored
+        // ~0.98 under the old detector call and the payment was skipped. A 6%
+        // amount gap is a different payment.
+        val dao = FakeSmsMessageDao()
+        val repo = FakeTransactionRepository()
+        repo.existing.add(
+            Transaction(
+                amount = 892.0,
+                categoryId = "cat_other",
+                note = "We have received payment of Rs.892.00 via BBPS",
+                merchant = null,
+                date = LocalDateTime.now().minusMinutes(37),
+                type = com.awbuilds.auraspend.domain.model.TransactionType.INCOME
+            )
+        )
+        // No date in the body: the transaction falls back to now(), so the duplicate
+        // window covers the ₹892 credit — the amount gate must still save it.
+        dao.insertAll(
+            listOf(
+                message(
+                    "cardpayment",
+                    "Payment of Rs 840.76 has been received on your ICICI Bank Credit Card XX8000 through Bharat Bill Payment System"
+                )
+            )
+        )
+
+        val result = SmsPipelineProcessor(dao, repo).processPending(10)
+
+        assertEquals("a 6% amount gap is a different payment, not a duplicate", 1, result.saved)
+        assertEquals(0, result.skipped)
     }
 
     @Test

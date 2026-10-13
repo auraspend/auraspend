@@ -44,7 +44,7 @@ auto-categorization into **subscriptions, categories, income, expense and other*
 - **Consent first**: the first time you open **Smart Add**, the app offers to add
   the categoriser (a 22 MB download, so it is an inline offer rather than a modal
   dialog). Accepting starts a **background download** (resumable, cancellable) to
-  internal storage — nothing leaves the device.
+  internal storage — the download sends nothing about you.
 - **Progress everywhere**: the download progress is shown **in-app** (Smart Add banner + Settings card) **and in a
   system notification** that updates live and clears when the download finishes.
 - **A gap-filler, never a gatekeeper**: amount / merchant / date come from the
@@ -113,9 +113,11 @@ next to the store build on one device; `prod` is what ships.
 | `prod` | `./gradlew assembleProdDebug` | The store build (`com.awbuilds.auraspend`) |
 
 **Every feature is available in both flavors, and neither build carries
-analytics or ads.** AuraSpend has no paywall, no tracking and no ad SDKs — the
-claim that your bank SMS never leaves your phone is true of every build we
-publish.
+analytics or ads.** AuraSpend has no paywall, no tracking and no ad SDKs, so
+nothing about you is sent anywhere by the app itself. Bank messages are read,
+classified and stored on-device; the only way message text leaves the phone is
+the Google Drive backup you start yourself, which is why the in-app copy says
+exactly that.
 
 The flavors change configuration only — application-id suffix, label and
 signing. **No feature may live in a flavor source set that is absent from
@@ -126,7 +128,7 @@ signing. **No feature may live in a flavor source set that is absent from
 ### Building a release
 
 ```bash
-./gradlew assembleProdRelease    # prod APK (self-install / GitHub Releases / website)
+./gradlew assembleProdRelease    # prod APK (self-install / website)
 ./gradlew bundleProdRelease      # prod AAB (Play Store)
 ```
 
@@ -138,7 +140,7 @@ check the filename before uploading.
 Pushing a `v*` tag runs the release workflow, which builds both, verifies the
 signatures, and attaches them to a GitHub Release as
 `AuraSpend-V<version>.Alpha.{aab,apk}` — see
-`.github/workflows/release.yml`. It never uploads to Play.
+`.github/workflows/release.yml`. The workflow does not publish to Play.
 
 ### Google Drive backup
 
@@ -146,9 +148,9 @@ Drive backup is optional and user-owned in every build: the backup lives in
 **your own Google Drive**, and the project operates no servers and never sees
 it.
 
-- **Installed from Google Play** — sign in with your Google account; the
-  Play-signed build is registered for Drive sign-in, so this works out of the
-  box.
+- **Installed from Google Play (closed testing)** — sign in with your Google
+  account; the Play-signed build is registered for Drive sign-in, so this works
+  out of the box.
 - **Self-built** — Google Sign-In authorizes against an OAuth client
   registered for the app's package id **and signing certificate**, so a build
   signed with your own key needs its own OAuth client in a Google Cloud
@@ -271,15 +273,20 @@ AMOLED theme. Screenshots are from the dev debug build.
 ./gradlew testProdDebugUnitTest
 
 # Instrumented tests (requires emulator/device)
-./gradlew connectedAndroidTest
+./gradlew connectedDevDebugAndroidTest
 
-# Cold-start macrobenchmark (release build, requires a device + the release
-# keystore in secrets.properties)
-./gradlew :benchmark:connectedProdBenchmarkAndroidTest
+# Cold-start macrobenchmark (release build, requires a device; runs the **dev**
+# flavor because the shipping prod flavor removes the `profileable` tag —
+# same code, same R8 output, different application id)
+./gradlew :benchmark:connectedDevBenchmarkAndroidTest
 
 # Generate a baseline profile (requires a device; copy the produced
-# baseline-prof.txt to app/src/main/baseline-prof.txt and commit)
-./gradlew :benchmark:connectedProdBenchmarkAndroidTest \
+# baseline-prof.txt to app/src/main/baseline-prof.txt and commit).
+# Note the **dev** flavor: the shipping `prod` flavor removes the
+# `profileable` tag from its manifest, because a profileable release build
+# lets adb take a heap dump of the live process — which holds the decrypted
+# finance database. `dev`Release is the same code and the same R8 output.
+./gradlew :benchmark:connectedDevBenchmarkAndroidTest \
   -Pandroid.testInstrumentationRunnerArguments.class=com.awbuilds.auraspend.benchmark.BaselineProfileGenerator
 ```
 
@@ -347,8 +354,6 @@ shaped the way it is, which is usually more informative than the roadmap.
   under the SIL Open Font License, for the typeface.
 - **[all-MiniLM-L6-v2](https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2)**,
   Apache-2.0, for the sentence encoder that powers on-device categorisation.
-- **[Lottie](https://airbnb.io/lottie/)**, Apache-2.0, for the onboarding and
-  splash animations.
 - Everyone who has filed an issue. The bug list this project grew from was
   largely other people's reports.
 
@@ -368,8 +373,12 @@ PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
 You should have received a copy of the GNU Affero General Public License along
 with this program. If not, see <https://www.gnu.org/licenses/>.
 
-AuraSpend is also distributed on Google Play, and the prod APK for self-install
-is published on [GitHub Releases](https://github.com/auraspend/auraspend/releases).
+AuraSpend is **not on Google Play yet**: the 0.1.1 listing and its
+closed-testing track are staged in the Play Console but have not been sent for
+review. Signed APKs are published on
+[GitHub Releases](https://github.com/auraspend/auraspend/releases) — the first
+is v0.1.2 — and you can always
+[build the app from source](#building-a-release).
 The full license text is in [`LICENSE`](LICENSE) and is readable in the app
 under **Settings → About → Open-source licenses**.
 
@@ -392,10 +401,10 @@ their own terms — the AGPL covers AuraSpend's own source, not theirs:
 |---|---|---|
 | [Plus Jakarta Sans](https://fonts.google.com/specimen/Plus+Jakarta+Sans) | SIL OFL 1.1 | Bundled font, `app/src/main/res/font/` |
 | [ONNX Runtime](https://onnxruntime.ai/) (Android) | MIT | Native inference runtime, Maven AAR |
-| [Lottie](https://airbnb.io/lottie/) | Apache-2.0 | Bundled onboarding/splash animations |
 | AndroidX (Room, Compose, Lifecycle, Work, Navigation) | Apache-2.0 | |
-| Google API Client, Google Drive API, play-services-auth | Apache-2.0 | Drive backup only |
-| OkHttp, Guava | Apache-2.0 | Transitive |
+| Google API Client, Google Drive API, play-services-auth | Apache-2.0 | Drive backup only; sign-in API is pinned by [ADR 0011](docs/adr/0011-google-signin-pinned.md) |
+| OkHttp, google-http-client-gson | Apache-2.0 | Declared directly |
+| Guava | Apache-2.0 | Transitive, via google-api-client / google-http-client |
 | [`all-MiniLM-L6-v2`](https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2) | Apache-2.0 | **Downloaded at runtime**, not bundled |
 
 The full texts are in [`docs/licenses/`](docs/licenses/) and in the app under

@@ -19,7 +19,9 @@ object RegexBaselineEval {
 
     fun run(corpus: List<ClassificationEval.Case> = ClassificationEval.loadCorpus()): ClassificationEval.Report {
         val results = corpus.map { case ->
-            val classified = classify(case.body)
+            // Sender-routed, exactly as production does it: the corpus carries the
+            // sender precisely so routing is measured rather than assumed.
+            val classified = classify(case.body, case.sender)
             val predicted = classified.extraction
             val fields = FIELDS.map { field ->
                 ClassificationEval.FieldOutcome(
@@ -61,7 +63,7 @@ object RegexBaselineEval {
 
     /** Mirrors `SmsPipelineProcessor.processOne` with `ai == null`, and reports
      *  which gate stopped it, exactly as the production pipeline orders them. */
-    fun classify(body: String): Classified = classify(body, ai = null)
+    fun classify(body: String, sender: String? = null): Classified = classify(body, ai = null, sender = sender)
 
     /**
      * The same path with a model's verdict in the loop.
@@ -74,11 +76,15 @@ object RegexBaselineEval {
      * and type inside `fuse`, so a false veto deletes the transaction rather
      * than mis-filing it.
      */
-    fun classify(body: String, ai: com.awbuilds.auraspend.data.ai.SmsExtraction?): Classified {
+    fun classify(
+        body: String,
+        ai: com.awbuilds.auraspend.data.ai.SmsExtraction?,
+        sender: String? = null
+    ): Classified {
         if (SmsAutoClassifier.isOtpOrAlertMessage(body)) {
             return Classified(null, SkipReason.ALERT_FILTER)
         }
-        val parsed = BankMessageParser.parse(body)
+        val parsed = TransactionClassifier.classify(body, sender)
         val fused = AiSignalFusion.fuse(parsed, ai)
         // The pipeline skips a row when amount or type is unresolved; scoring that
         // as "no result" keeps the floor honest about what the app can actually save.

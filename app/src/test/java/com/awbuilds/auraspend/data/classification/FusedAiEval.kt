@@ -46,6 +46,14 @@ object FusedAiEval {
      */
     const val DEFAULT_REPORT = "docs/evals/qwen2.5-0.5b-2026-09-29.json"
 
+    /** Report's probability field is a runtime's raw P(transaction). */
+    const val SEMANTICS_P_TRANSACTION = "p_transaction"
+
+    /** Report's probability field already matches `SmsExtraction.isTransactionProbability`. */
+    const val SEMANTICS_VERDICT_CONFIDENCE = "verdict_confidence"
+
+    private val PROBABILITY_SEMANTICS = setOf(SEMANTICS_P_TRANSACTION, SEMANTICS_VERDICT_CONFIDENCE)
+
     private val FIELDS = listOf("isTransaction", "type", "category", "merchant", "subscription")
 
     data class Outcome(
@@ -95,11 +103,11 @@ object FusedAiEval {
 
         corpus.forEach { case ->
             val ai = aiByCaseId[case.id]
-            val fused = RegexBaselineEval.classify(case.body, ai)
+            val fused = RegexBaselineEval.classify(case.body, ai, case.sender)
 
             // What the pipeline would have produced with no model at all. The
             // difference between the two is the entire effect of the model.
-            val withoutAi = RegexBaselineEval.classify(case.body, null)
+            val withoutAi = RegexBaselineEval.classify(case.body, null, case.sender)
             if (withoutAi.extraction != null && fused.extraction == null) {
                 destroyed += case.id
             }
@@ -131,7 +139,7 @@ object FusedAiEval {
         // Exact match, recomputed per case rather than accumulated per field.
         var exact = 0
         corpus.forEach { case ->
-            val fused = RegexBaselineEval.classify(case.body, aiByCaseId[case.id])
+            val fused = RegexBaselineEval.classify(case.body, aiByCaseId[case.id], case.sender)
             val p = fused.extraction
             if (FIELDS.all { expected(case, it) == (p?.let { s -> actual(s, it) }) }) exact++
         }
@@ -158,31 +166,57 @@ object FusedAiEval {
         val root = JSONObject(file.readText())
         val runtimeId = root.optString("model", "model")
         val rows = root.getJSONArray("rows")
+        // How the report's `isTransactionProbability` is meant. `p_transaction` is
+        // a runtime's raw probability of the transaction class (what a softmax
+        // head emits); `verdict_confidence` is already the value
+        // `SmsExtraction.isTransactionProbability` is defined to carry. Reading a
+        // raw probability as if it were a verdict confidence silently disables
+        // `AiSignalFusion.mayDiscard` for every negative verdict — which is
+        // exactly how the shipped encoder's 0-false-veto result came to be
+        // produced by a gate that could never fire.
+        val semantics = root.optString("probabilitySemantics", SEMANTICS_VERDICT_CONFIDENCE)
+        require(semantics in PROBABILITY_SEMANTICS) {
+            "report declares unknown probabilitySemantics='$semantics'; expected one of " +
+                PROBABILITY_SEMANTICS
+        }
         val out = LinkedHashMap<String, SmsExtraction?>()
         for (i in 0 until rows.length()) {
             val row = rows.getJSONObject(i)
             val id = row.getString("id")
-            out[id] = if (row.isNull("pred")) null else toExtraction(row.getJSONObject("pred"))
+            out[id] = if (row.isNull("pred")) null
+            else toExtraction(row.getJSONObject("pred"), semantics)
         }
         return runtimeId to out
     }
 
-    private fun toExtraction(pred: JSONObject): SmsExtraction = SmsExtraction(
-        isTransaction = pred.optBoolean("isTransaction", false),
-        type = pred.optString("type").takeIf { it.isNotBlank() && it != "null" }
-            ?.let { runCatching { TransactionType.valueOf(it.uppercase()) }.getOrNull() },
-        category = pred.optString("category").takeIf { it.isNotBlank() && it != "null" },
-        merchant = pred.optString("merchant").takeIf { it.isNotBlank() && it != "null" },
-        isSubscription = pred.optBoolean("isSubscription", false),
-        rawModelOutput = pred.optString("raw").takeIf { it.isNotBlank() },
-        // Must be carried through, or `AiSignalFusion.mayDiscard` sees null and
-        // takes the legacy unconditional-veto branch — which would silently
-        // measure a *worse* system than the one that ships, and blame the model
-        // for a fusion path the model is never actually on.
-        isTransactionProbability = if (pred.has("isTransactionProbability") &&
+    private fun toExtraction(pred: JSONObject, semantics: String): SmsExtraction {
+        val isTransaction = pred.optBoolean("isTransaction", false)
+        val rawProbability = if (pred.has("isTransactionProbability") &&
             !pred.isNull("isTransactionProbability")
         ) pred.optDouble("isTransactionProbability").toFloat() else null
-    )
+        return SmsExtraction(
+            isTransaction = isTransaction,
+            type = pred.optString("type").takeIf { it.isNotBlank() && it != "null" }
+                ?.let { runCatching { TransactionType.valueOf(it.uppercase()) }.getOrNull() },
+            category = pred.optString("category").takeIf { it.isNotBlank() && it != "null" },
+            merchant = pred.optString("merchant").takeIf { it.isNotBlank() && it != "null" },
+            isSubscription = pred.optBoolean("isSubscription", false),
+            rawModelOutput = pred.optString("raw").takeIf { it.isNotBlank() },
+            // Must be carried through, or `AiSignalFusion.mayDiscard` sees null and
+            // takes the legacy unconditional-veto branch — which would silently
+            // measure a *worse* system than the one that ships, and blame the model
+            // for a fusion path the model is never actually on. And it must carry
+            // the *same* meaning the runtime produces, or the veto gate is measured
+            // in a protocol the runtime does not speak.
+            isTransactionProbability = rawProbability?.let {
+                if (semantics == SEMANTICS_P_TRANSACTION) {
+                    SmsExtraction.verdictConfidence(isTransaction, it)
+                } else {
+                    it
+                }
+            }
+        )
+    }
 
     private fun expected(case: ClassificationEval.Case, field: String): String? = when (field) {
         "isTransaction" -> case.isTransaction.toString()

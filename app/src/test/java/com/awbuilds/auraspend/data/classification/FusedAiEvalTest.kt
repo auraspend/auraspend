@@ -50,6 +50,34 @@ class FusedAiEvalTest {
     }
 
     @Test
+    fun `the shipped report is replayed in the runtime's probability protocol`() {
+        // The polarity fix's real proof. `isTransactionProbability` means "how sure
+        // are you of the answer you gave". The recorded report stores the model's
+        // raw P(transaction), so the loader converts it — and if it ever stops
+        // doing that, every negative verdict replays below 0.5 and
+        // `AiSignalFusion`'s 0.9 discard gate becomes unreachable again. That was
+        // the state this test exists to end: 0 destroyed, but because the gate
+        // never ran.
+        val (_, ai) = FusedAiEval.loadReport("docs/evals/minilm-2026-09-29.json")
+        val negative = ai.values.filterNotNull().filter { !it.isTransaction }
+
+        assertTrue("the shipped report must contain negative verdicts", negative.isNotEmpty())
+        assertTrue(
+            "negative verdicts are replayed as raw P(transaction) (all < 0.5), so the " +
+                "discard gate can never fire: " +
+                negative.mapNotNull { it.isTransactionProbability },
+            negative.all { (it.isTransactionProbability ?: 0f) >= 0.5f }
+        )
+        assertTrue(
+            "the discard gate is still unreachable for every replayed negative verdict — " +
+                "the encoder's 0-false-veto result would then be produced by dead code",
+            negative.any {
+                (it.isTransactionProbability ?: 0f) >= AiSignalFusion.DISCARD_MIN_CONFIDENCE
+            }
+        )
+    }
+
+    @Test
     fun `a model that vetoes everything destroys exactly the transactions it vetoes`() {
         // The failure mode measured on SmolLM2-135M: 43 of 46 real transactions
         // answered "not a transaction". Pinned here as a property of the fusion

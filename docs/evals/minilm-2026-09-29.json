@@ -1,5 +1,6 @@
 {
   "model": "minilm-l6-v2-q8-arm64",
+  "probabilitySemantics": "p_transaction",
   "elapsed": 0.0,
   "rows": [
     {

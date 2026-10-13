@@ -15,16 +15,18 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material.icons.filled.AccountBalance
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Backup
 import androidx.compose.material.icons.filled.Category
 import androidx.compose.material.icons.filled.CloudDownload
+import androidx.compose.material.icons.filled.Payments
+import androidx.compose.material.icons.filled.PhoneAndroid
 import androidx.compose.material.icons.filled.Gavel
 import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.FileDownload
 import androidx.compose.material.icons.filled.FileUpload
-import androidx.compose.material.icons.filled.OpenInNew
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Sms
 import androidx.compose.material.icons.filled.Subscriptions
@@ -52,18 +54,26 @@ import com.awbuilds.auraspend.ui.theme.AmoledBackground
 import com.awbuilds.auraspend.ui.theme.AppThemeMode
 import com.awbuilds.auraspend.ui.theme.AuroraCream
 import com.awbuilds.auraspend.ui.theme.AuroraInk
+import androidx.compose.ui.platform.LocalConfiguration
+import com.awbuilds.auraspend.ui.designsystem.CurrencyPickerList
+import com.awbuilds.auraspend.ui.designsystem.currencyDisplayName
 import com.awbuilds.auraspend.ui.theme.AuroraLavenderLight
 import com.awbuilds.auraspend.ui.theme.AuroraPurple
 import com.awbuilds.auraspend.ui.theme.extendedColors
+import java.util.Locale
 
 private const val GITHUB_URL = "https://github.com/auraspend/auraspend"
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
     currentTheme: AppThemeMode,
     onThemeChanged: (AppThemeMode) -> Unit,
     dynamicColor: Boolean = false,
     onDynamicColorChanged: (Boolean) -> Unit = {},
+    /** The picked ISO code, or null while the app follows the device locale. */
+    currencyCode: String? = null,
+    onCurrencyChanged: (String?) -> Unit = {},
     onBack: () -> Unit = {},
     onExportCsv: () -> Unit = {},
     onImportCsv: () -> Unit = {},
@@ -85,6 +95,7 @@ fun SettingsScreen(
     val context = LocalContext.current
     var showDeleteDialog by remember { mutableStateOf(false) }
     var showRestoreDialog by remember { mutableStateOf(false) }
+    var showCurrencySheet by remember { mutableStateOf(false) }
 
     // Restore is a replace, not a merge: the confirm step exists because one tap
     // would otherwise overwrite every local table with the Drive snapshot.
@@ -105,6 +116,56 @@ fun SettingsScreen(
                 TextButton(onClick = { showRestoreDialog = false }) { Text(stringResource(R.string.action_cancel)) }
             }
         )
+    }
+
+    if (showCurrencySheet) {
+        val locale = LocalConfiguration.current.locales[0]
+        val deviceCurrencyCode = remember(locale) {
+            runCatching { java.util.Currency.getInstance(locale).currencyCode }.getOrNull()
+        }
+        ModalBottomSheet(
+            onDismissRequest = { showCurrencySheet = false },
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+            tonalElevation = 0.dp
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = AuraSpacing.gutter)
+                    .padding(bottom = AuraSpacing.xxl)
+            ) {
+                Text(
+                    stringResource(R.string.settings_currency),
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier.semantics { heading() }
+                )
+                Spacer(modifier = Modifier.height(AuraSpacing.sm))
+                // The reset lives here rather than in the shared list: onboarding
+                // has nothing to reset, and "follow my device" is what a user
+                // looks for after they have changed their mind.
+                SettingsRow(
+                    icon = Icons.Default.PhoneAndroid,
+                    title = stringResource(R.string.currency_picker_device_default),
+                    subtitle = deviceCurrencyCode
+                        ?.let { "${currencyDisplayName(it, locale)} ($it)" }
+                        .orEmpty(),
+                    onClick = {
+                        onCurrencyChanged(null)
+                        showCurrencySheet = false
+                    }
+                )
+                CurrencyPickerList(
+                    selectedCode = currencyCode,
+                    onSelect = { code ->
+                        onCurrencyChanged(code)
+                        showCurrencySheet = false
+                    },
+                    locale = locale,
+                    modifier = Modifier.weight(1f, fill = false)
+                )
+            }
+        }
     }
 
     if (showDeleteDialog) {
@@ -267,6 +328,19 @@ fun SettingsScreen(
 
         SettingsSectionHeader(stringResource(R.string.settings_finance))
         SettingsCard {
+            // First in the section: it is the setting that changes how every other
+            // screen reads, and until now it could not be changed at all.
+            SettingsRow(
+                icon = Icons.Default.Payments,
+                title = stringResource(R.string.settings_currency),
+                subtitle = if (currencyCode == null) {
+                    stringResource(R.string.settings_currency_device_default)
+                } else {
+                    "${currencyDisplayName(currencyCode)} (${currencyCode.uppercase(Locale.ROOT)})"
+                },
+                onClick = { showCurrencySheet = true }
+            )
+            DividerSpacer()
             SettingsRow(
                 icon = Icons.Default.Category,
                 title = stringResource(R.string.settings_categories),
@@ -330,7 +404,7 @@ fun SettingsScreen(
                     },
                     shape = RoundedCornerShape(14.dp)
                 ) {
-                    Icon(Icons.Default.OpenInNew, contentDescription = null, modifier = Modifier.size(16.dp))
+                    Icon(Icons.AutoMirrored.Filled.OpenInNew, contentDescription = null, modifier = Modifier.size(16.dp))
                     Spacer(modifier = Modifier.width(AuraSpacing.sm))
                     Text(stringResource(R.string.settings_view_github))
                 }

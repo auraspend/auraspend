@@ -2,6 +2,62 @@
 
 Durable decisions with context. Latest first.
 
+## D18 — A privacy claim states its exception, and a script enforces it (2026-10-11)
+The AI subtitle said "Nothing leaves your phone" and onboarding's second page
+said a local AI "never uploads your data". Both were written before Drive backup
+existed and were still on screen afterwards, while a user-initiated backup
+uploads the SMS queue (masked, but message text) as plain JSON. The copy is now
+qualified — "the only upload is the Drive backup you start yourself" — and
+`tools/check_privacy_claims.sh` (wired into the PR gate beside
+`check_license.sh`) fails when an absolute claim appears without its exception on
+the same line. Add the exception; do not delete the claim.
+
+## D17 — A duplicate `sourceSmsId` is a no-op, never a REPLACE (2026-10-11)
+`insertTransaction` used `OnConflictStrategy.REPLACE`, and `sourceSmsId` is
+unique. SQLite implements REPLACE as *delete the conflicting row, then insert*,
+so a second save of the same SMS-linked transaction (worker/triage race, CSV
+re-import, a re-processed queue row) deleted the row the user had edited and
+rebuilt it from the pipeline's parse — losing their merchant, category and note.
+An edit arrives with the row's existing id, so `saveTransaction` now updates
+first and inserts only when no row matched, with `IGNORE` on the unique index.
+The pipeline's `UNIQUE constraint failed` branch was unreachable under REPLACE
+(it deleted instead of throwing) and is gone.
+
+## D16 — The inbox scan keeps three cursors, not one (2026-10-11)
+A single high-water mark advanced to `newest - 1` after a `DESC LIMIT 500` scan
+declared the whole inbox covered after its first 500 bank-like messages: on a
+fresh install every older transaction was never ingested, never classified and
+never surfaced. "Advance only on a short batch" does not fix it either — the next
+scan re-reads the same newest page for ever. `SmsIngestCursor` therefore carries a
+high-water mark, a downwards-walk cursor and a done flag; the walk pulls one page
+per pass and only when the live queue is empty, so a backfill never outruns the
+classifier. `SmsIngestPlannerTest` drives it against a simulated 1,200-message
+inbox.
+
+## D15 — A probability means "confidence in the verdict given" (2026-10-11)
+`EmbeddingClassifier` reported `pTransaction`, the probability of the
+*transaction* class, in `isTransactionProbability`. `AiSignalFusion.mayDiscard`
+reads that field as confidence in the answer actually emitted, and on a "not a
+transaction" verdict `pTransaction` is below 0.5 by construction — so the 0.9
+discard gate could never fire. It was dead code, and the recorded "0 of 46
+destroyed" came from it never being consulted rather than from the encoder being
+trustworthy. The runtime now reports `SmsExtraction.verdictConfidence(...)`, the
+eval report declares its `probabilitySemantics` (`p_transaction`, converted on
+load), and `FusedAiEvalTest` fails if the gate becomes unreachable again.
+
+## D14 — The bundled centroid asset is little-endian, and readiness must be real
+(2026-10-11)
+`tools/build_embedding_asset.py` writes little-endian; `EmbeddingClassifier` read
+big-endian. The dimension decoded as `0x80010000`, the metadata slice ran off the
+end of the 23 KB file, the boundary swallowed it into `model = null`, and the
+flagship 22 MB encoder returned null for *every* message in production while the
+readiness UI and the log both said "ready". Nothing caught it: the build tool
+verified its own writer, the "shipped encoder" eval replays a recorded JSON, and
+no test decoded the asset. The reader is now little-endian and bounds-checked
+(`EmbeddingCentroidCodec`), the digest is pinned in `ModelConstants`,
+`EmbeddingClassifierAssetTest` decodes the real asset, and
+`OnDeviceClassifier.isOperational` makes `LocalLlmProvider.isReady()` honest.
+
 ## D13 — Consent is a tap, never a `LaunchedEffect` (2026-09-29)
 `ClassificationScreen` once ran `LaunchedEffect { ConsentResult(true) }` the instant
 `consentRequired` became true. On a fresh install, opening Smart Add silently
@@ -91,7 +147,9 @@ Question: should the Play build add analytics, ads and premium gating that the
 GitHub/F-Droid build lacks? A standard open-source model, and it was considered
 rather than refused. Three findings decided it. (1) The app's promise is an
 *on-screen* claim, not a policy page: onboarding says a local AI "never uploads
-your data", so an SDK in one flavor makes the Play listing contradict the first
+your data" (wording since qualified to name the user-started Drive backup as the
+one exception — see D18; the argument is unchanged, and stronger for being exact),
+so an SDK in one flavor makes the Play listing contradict the first
 run screen of the same APK. (2) D4 already ruled on gating. (3) Both flavor
 source sets were empty, so nothing needed unwinding. Both published builds are
 feature-identical; flavors carry distribution config only. No feature may live

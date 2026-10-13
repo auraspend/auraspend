@@ -17,7 +17,7 @@
         })();
     </script>
     <title>Privacy Policy — AuraSpend</title>
-    <meta name="description" content="How AuraSpend handles your data: what stays on your phone, the two optional network features, and the rights you have over your information.">
+    <meta name="description" content="How AuraSpend handles your data: what is kept on your phone, what can leave it and when, and the rights you have over your information.">
     <meta property="og:title" content="Privacy Policy — AuraSpend">
     <meta property="og:description" content="AuraSpend keeps your financial data on your device. Here is exactly what it does and does not do.">
     <meta property="og:url" content="https://auraspend.github.io/auraspend/privacy.html">
@@ -138,7 +138,7 @@
                     <ul>
                         <li><strong>Scope:</strong> the app requests the <code>drive.file</code> scope. This lets it read and write only the files it creates, not the rest of your Drive.</li>
                         <li><strong>Where it lives:</strong> the backup is a file named <code>auraspend_backup.json</code> in your own Google Drive.</li>
-                        <li><strong>Contents:</strong> transactions, categories, budgets, subscriptions, savings goals, and the stored bank-message queue and classification memory. The file is not encrypted by AuraSpend, so anyone who can open your Drive can read it.</li>
+                        <li><strong>Contents:</strong> transactions, categories, budgets, subscriptions, savings goals, the stored bank-message queue, the messages the app could not turn into a transaction, and the classification memory. Message bodies are stored with phone numbers, account fragments and reference ids masked, but they are still message text. The file is not encrypted by AuraSpend, so anyone who can open your Drive can read it.</li>
                         <li><strong>Restore replaces data:</strong> restoring replaces the data on the device in a single transaction. If the restore fails, the existing data is left as it was.</li>
                         <li><strong>Authentication:</strong> sign-in is handled by Google. We never see your Google password.</li>
                     </ul>
@@ -158,11 +158,11 @@
 
                 <section id="retention">
                     <h2>6. Storage and deletion</h2>
-                    <p>Data stays on your device until you remove it.</p>
+                    <p>Your data is stored on this device, and kept until you remove it.</p>
                     <ul>
                         <li><strong>Individual records:</strong> delete a transaction, budget, subscription, goal or category from its screen.</li>
                         <li><strong>Bank-message queue:</strong> processed messages remain in the local queue. Uninstalling the app removes them.</li>
-                        <li><strong>Unrecognised messages:</strong> these are meant to be deleted automatically after 30 days. Until that clean-up is confirmed in a release, you can remove them by uninstalling the app.</li>
+                        <li><strong>Unrecognised messages:</strong> deleted automatically after 30 days, by the same background pass that classifies new messages.</li>
                         <li><strong>Smart-categories model:</strong> delete it from Settings.</li>
                         <li><strong>Everything at once:</strong> uninstall AuraSpend. Android removes its local data with the app. Clearing the app's storage in Android's Settings does the same without uninstalling.</li>
                         <li><strong>Drive backups:</strong> uninstalling does not delete backups in your Google Drive. Delete the <code>auraspend_backup.json</code> file in Drive to remove it.</li>
@@ -224,8 +224,9 @@
                     <h3>Product</h3>
                     <ul>
                         <li><a href="index.html#features">Features</a></li>
-                        <li><a href="https://github.com/auraspend/auraspend/releases" target="_blank" rel="noopener">Downloads</a></li>
-                        <li><a href="https://github.com/auraspend/auraspend/blob/main/CHANGELOG.md" target="_blank" rel="noopener">Changelog</a></li>
+                        <li><a href="https://github.com/auraspend/auraspend/releases">Downloads</a></li>
+                        <li><a href="https://github.com/auraspend/auraspend#building-a-release" target="_blank" rel="noopener">Build from source</a></li>
+                        <li><a href="changelog.html">Changelog</a></li>
                     </ul>
                 </div>
                 <div>

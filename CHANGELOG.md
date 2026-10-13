@@ -10,13 +10,83 @@ internal APIs.
 
 ## [Unreleased]
 
+## [0.1.3] — 2026-10-13
+
+A categorisation fix release, measured by draining a real 1,952-message inbox
+on a device: the triage surface became visible, and four defects that had
+silently dropped or mis-filed real money are fixed.
+
 ### Added
 
-- **Tag-driven release workflow** (`.github/workflows/release.yml`): pushing a
-  `v*` tag builds the signed Play AAB and prod APK, names them
-  `AuraSpend-V<version>.Alpha.{aab,apk}`, verifies the signatures, writes
-  `SHA256SUMS`, and attaches everything to a GitHub Release. It never uploads
-  to Google Play — sending for review stays a human action.
+- **Visible categorisation status.** The triage tab shows a determinate progress
+  header, an "N messages waiting" line and a "Categorizing…" chip on the
+  message being processed. A message being worked on is claimed before the
+  expensive work, and a pass that dies mid-message is swept back into the
+  queue on the next pass — instead of leaving a row stuck forever.
+- **One honest notification per drain** — a single ongoing determinate
+  notification while messages are categorised, and one summary at the end; the
+  per-run "N transactions saved" posts are gone. Draining also continues in
+  the background after the app is swiped away.
+- OTPs, alerts and promos are dropped when messages are ingested, so the
+  queue, its progress count and the pick-list hold only real candidates.
+
+### Fixed
+
+- **Genuine ICICI card spends were silently deleted.** ICICI appends
+  "If not you, call 1800 2662/SMS BLOCK …" to every card alert, and the hard
+  anti-fraud veto treated that tail as a phishing lure — three real spends
+  appeared nowhere, not even in the unrecognised list. The veto now has one
+  narrow exception for the bank's own alarm shape; phishing framings
+  ("if not done by you", "not authorised by you") stay vetoed.
+- **The triage screen no longer hides behind the optional 22 MB model.** The
+  queue, its progress and its swipe actions render whether or not the model is
+  downloaded; the model prompt now appears only when the queue is empty.
+- **Credits phrased around their reversal were skipped as typeless.**
+  "…is credited … as a reversal of debit transaction" and "…received …
+  through Bharat Bill Payment System" made the debit and credit lexicons both
+  fire; these now record as income, as do the card-payment acknowledgements
+  they carry.
+- **Dashed month-name dates ("21-JUL-26") never parsed**, so those
+  transactions were saved with the time they were processed and one payment
+  was false-skipped as a duplicate of an unrelated credit hours earlier. The
+  date pattern, month-name matching and the duplicate check's amount gate are
+  all fixed; saved transactions carry their real dates again.
+- **"Payment attempt … unsuccessful" and "refund … has been initiated"
+  notices** are treated as alerts instead of piling into the unrecognised
+  list — money has not moved in either case.
+
+**Verified on a device:** the full inbox drains to exactly the predicted
+candidate set (706 rows, 0 failures, no duplicates), notifications match the
+new model, and the test suite grew 382 → 396.
+
+## [0.1.2] — 2026-10-11
+
+The reliability release. A 32-finding code review is fixed end to end — the
+on-device categoriser had been silently inert in production, and three separate
+paths could lose, hide or overwrite real money — plus Google Drive backup,
+a currency picker, and guarded release signing.
+
+### Added
+
+- **Google Drive backup.** The app could restore from Drive but had no way to
+  create a backup; Settings → Data now has "Back up to Google Drive" and
+  "Restore from Google Drive". The backup serialises every user-owned table
+  (format v4) inside one Room transaction, and restore (a replace, not a merge)
+  asks for confirmation first.
+- **Currency picker.** 30 currencies, captured offline as a source constant
+  (no runtime network), with the device currency preselected and first. A
+  fourth onboarding page and a Settings → Finance row host the same list, plus
+  a "Match my device" reset. Formatting only — **no FX conversion, and the
+  picker says so**.
+- **Signed, approval-gated builds for PRs to `main`.** The release workflow now
+  also runs for main-targeting pull requests, so a signing regression is caught
+  before merge. Releases are still tag-driven.
+- **Release signing moved to a protected GitHub environment**: required
+  reviewer, restricted to `main`, `v*` tags and main-targeting PR refs.
+- **The test suite grew 256 → 350** (real-asset decode, Room in-memory round
+  trips, ingest planner, retention, ViewModel and repository-batch tests), and
+  `tools/check_privacy_claims.sh` joins `check_license.sh` in CI: an absolute
+  privacy claim without its exception now fails the build.
 
 ### Changed
 
@@ -26,13 +96,78 @@ internal APIs.
   the only distributed build. The `benchmark` build type was removed and the
   macrobenchmark module now links the prod release variant. See
   [ADR 0010](docs/adr/0010-dev-prod-flavors.md).
+- **Public wording is honest about distribution**: "Download APK" claims are
+  gone from the landing page, README and terms until a release is actually
+  published ("build from source; the Play listing is staged, not published").
+- **The privacy copy is qualified in-app and in the policy**: the only upload
+  is the Drive backup the user starts; the policy now lists the
+  unrecognized-message table and states the 30-day purge.
 - **`secrets.properties.example` no longer lists `WEB_CLIENT_ID` /
-  `DRIVE_API_KEY`** — nothing ever read them. Drive backup authenticates with
-  Google Sign-In directly (the OAuth client is matched by package id + signing
-  certificate).
-- **Public docs trued up**: F-Droid distribution claims removed from the
-  README, landing page and terms (the app is not on F-Droid yet); the landing
-  page's SDK stat now says Android 17 (API 37).
+  `DRIVE_API_KEY`** — nothing ever read them.
+- The shipping variant removes the `profileable` manifest tag (a profileable
+  release build allows heap dumps of the decrypted database); the dev flavor
+  keeps it for baseline-profile generation.
+- Lottie (attributed but never in the build) and its licence text are removed,
+  and every attribution was re-checked with `tools/check_license.sh`.
+
+### Fixed
+
+- **The flagship on-device categoriser was inert in production.** The centroid
+  asset is little-endian; the reader parsed big-endian, failed, and the failure
+  was swallowed into `model = null` while settings said "ready". The codec now
+  validates bounds and layout, the asset SHA-256 is pinned, a test decodes the
+  real asset, and readiness reflects a failed load. Measured accuracy is
+  unchanged (regex floor 13.8 % exact; fused 16.9 %, 0 destroyed, 5 rescued) —
+  the fix made the numbers real.
+- **The model's discard gate was dead code.** It reported the class probability
+  instead of confidence in the emitted verdict, so the 0.9 threshold could
+  never fire; it now converts via `verdictConfidence`, and a test fails if the
+  gate becomes unreachable again.
+- **A duplicate `sourceSmsId` could delete the user's edited transaction.**
+  Transaction writes used `REPLACE` (delete-then-insert in SQLite); writes are
+  now update-if-present, insert-if-absent, and CSV import is one all-or-nothing
+  batch instead of a per-row loop.
+- **A fresh install never ingested its SMS history.** A single watermark
+  advanced past everything older than the newest 500 messages; the scan now
+  keeps a high-water mark plus a downwards history walk that runs only when the
+  live queue is empty.
+- **Deposits and refunds with a balance tail were dropped before parsing**, and
+  sender-first routing had zero production callers (three bank parsers were
+  unreachable). Both fixed; the paste path, pipeline and evals now pass the
+  sender.
+- **Triage said "Saved" before the save happened**; the confirmation event now
+  fires only after the transaction is written, and failures surface as errors.
+- **Restore re-imported unmasked message bodies** from pre-masker backups;
+  restore now masks the SMS queue and unrecognized messages on the way in.
+- **The 30-day unrecognized-message purge was never called**; it now runs on
+  the periodic worker tick — and the SMS queue is explicitly never swept.
+- **A v1 database could have been destructively wiped instead of migrated.**
+  The 2→3 migration is added, destructive fallback is limited to v1, and Room
+  schemas are exported (`app/schemas/`) for review.
+- Repository writes from UI were unguarded; every composable write now
+  degrades to a banner or stays open with a reason (Recurring and Budget deletes
+  gained their missing confirmation dialogs).
+- Hardcoded `₹` removed from chrome (all money text follows the theme's
+  currency); duplicate keyword-map key removed with a guard test; ~30 EN/HI
+  strings localized (parity 489/489).
+- **The R8 and native-runtime audits are now CI gates.** The native audit's
+  `nm` probes had ignored their arguments, so it could not fail; fixed and run
+  against both shipped arm64 libraries, with ONNX Runtime's loader exception
+  named, evidence-gated and documented.
+
+### Removed
+
+- Dead code the review found: duplicate-detection stubs, the unreachable
+  duplicate dialog, `MessageDedup`, `searchTransactions`, `nextScanCursor`
+  (whose premise *was* the ingest bug), `CurrencyStyle.supported`, and the four
+  unreferenced animation assets.
+
+### Security
+
+- Signing secrets live in the protected `release` environment (required
+  reviewer; `main`, `v*` and main-PR refs only; forks never receive them).
+- The production manifest no longer allows runtime heap profiling.
+- Privacy claims are enforced by a build-time check, not review comments.
 
 ## [0.1.1] — 2026-09-30
 
@@ -118,6 +253,8 @@ First alpha. Feature-complete for its scope: Material 3 UI, bank SMS
 classification, budgets, subscriptions, savings goals, and Google Drive backup.
 Licensed under Apache-2.0.
 
-[Unreleased]: https://github.com/auraspend/auraspend/compare/v0.1.1...HEAD
+[Unreleased]: https://github.com/auraspend/auraspend/compare/v0.1.3...HEAD
+[0.1.3]: https://github.com/auraspend/auraspend/compare/v0.1.2...v0.1.3
+[0.1.2]: https://github.com/auraspend/auraspend/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/auraspend/auraspend/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/auraspend/auraspend/releases/tag/v0.1.0

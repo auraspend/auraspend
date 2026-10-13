@@ -8,6 +8,7 @@ import com.awbuilds.auraspend.data.classification.AutoClassificationWorker
 import com.awbuilds.auraspend.data.ai.LocalLlmProvider
 import com.awbuilds.auraspend.data.ai.ModelDownloadManager
 import com.awbuilds.auraspend.data.classification.BackgroundClassificationCoordinator
+import com.awbuilds.auraspend.data.classification.SmsProgressNotifier
 import com.awbuilds.auraspend.data.classification.ClassificationMemory
 import com.awbuilds.auraspend.data.privacy.PrivacyBackfill
 import com.awbuilds.auraspend.data.classification.defaultCategories
@@ -27,7 +28,13 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
-class AuraSpendApp : Application() {
+/**
+ * The application object.
+ *
+ * `open` so JVM tests can build a variant that satisfies WorkManager's on-demand
+ * initialization (see [RobolectricWorkManagerApp]); production never subclasses it.
+ */
+open class AuraSpendApp : Application() {
 
     lateinit var database: AppDatabase
         private set
@@ -60,6 +67,16 @@ class AuraSpendApp : Application() {
     lateinit var unrecognizedSms: UnrecognizedSmsRepository
         private set
 
+    /**
+     * Background categorisation status, as one ongoing notification plus one summary.
+     *
+     * Process-wide on purpose: the WorkManager pass and the in-process coordinator both report
+     * through it, and the accumulated "drain so far" totals have to live somewhere both can
+     * reach. Built with the Application context, so it holds no Activity.
+     */
+    lateinit var smsProgressNotifier: SmsProgressNotifier
+        private set
+
     private val applicationScope = CoroutineScope(Dispatchers.IO)
 
     override fun onCreate() {
@@ -80,6 +97,7 @@ class AuraSpendApp : Application() {
 
         classificationMemory = ClassificationMemory(database.classificationMemoryDao())
         unrecognizedSms = UnrecognizedSmsRepository(database.unrecognizedSmsDao())
+        smsProgressNotifier = SmsProgressNotifier(this)
 
         driveSyncManager = DriveSyncManager(this)
         backupRestoreManager = BackupRestoreManager(database)
@@ -105,12 +123,18 @@ class AuraSpendApp : Application() {
             seedDefaultCategories()
         }
 
-        // Background auto-classification: while the app sits in the background but its process
-        // is alive (not cleared from recents), keep classifying pending queue rows one-by-one.
-        // The moment any activity becomes visible, the loop stops so the device stays smooth.
+        // Background auto-classification: while the app's process lives — foreground or
+        // background — keep classifying pending queue rows one-by-one. `start()` is idempotent,
+        // so both lifecycle transitions can call it; the coordinator no longer stops when an
+        // activity becomes visible (the user asked to watch the categorisation happen), it just
+        // stops posting notifications while the app is on screen. Pacing is unchanged
+        // (background thread priority, a pause between messages) so a long batch stays polite.
         ProcessLifecycleOwner.get().lifecycle.addObserver(object : DefaultLifecycleObserver {
             override fun onStart(owner: LifecycleOwner) {
-                BackgroundClassificationCoordinator.stop()
+                BackgroundClassificationCoordinator.start(this@AuraSpendApp)
+                // The Classification screen shows the same queue live, so the shade copy of
+                // that status is redundant while the app is on screen.
+                smsProgressNotifier.cancel()
             }
 
             override fun onStop(owner: LifecycleOwner) {

@@ -23,7 +23,7 @@ object DuplicateDetector {
                         originalId = existing.id,
                         duplicateId = newTransaction.id,
                         similarity = similarity,
-                        reason = buildDuplicateReason(newTransaction, existing, similarity)
+                        reason = buildDuplicateReason(newTransaction, existing)
                     )
                 )
             }
@@ -114,11 +114,16 @@ object DuplicateDetector {
         return dp[s1.length][s2.length]
     }
 
-    private fun buildDuplicateReason(t1: Transaction, t2: Transaction, similarity: Float): String {
+    private fun buildDuplicateReason(t1: Transaction, t2: Transaction): String {
         val reasons = mutableListOf<String>()
 
         if (t1.amount == t2.amount) {
-            reasons.add("Same amount: ₹${t1.amount}")
+            // The raw amount, never a currency-formatted string: a `₹` here (or any
+            // locale-formatted money) is wrong for every user who picked another
+            // currency in Settings, and this is the data layer — see
+            // `ui/designsystem/Money.kt`. A UI that displays a reason formats the
+            // amount itself with `formatMoney`.
+            reasons.add("Same amount: ${t1.amount}")
         }
 
         if (t1.merchant != null && t2.merchant != null &&

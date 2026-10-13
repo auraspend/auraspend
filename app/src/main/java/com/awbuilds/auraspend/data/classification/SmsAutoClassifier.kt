@@ -68,7 +68,7 @@ object SmsAutoClassifier {
         Regex("(?i)\\b(avail(?:able)?\\s+balance|bal(ance)?\\s+(?:amount|is|of)|current\\s+balance)\\b"),
         Regex("(?i)\\b(due|deadline|maturity|interest\\s+(?:charged|posted)|annual\\s+fee)\\b"),
         Regex("(?i)\\b(congratulations|welcome|thank\\s+you)\\b"),
-        Regex("(?i)\\b(limit\\s+(?:exceed|reached)|threshold|invalid|failed|declined)\\b"),
+        Regex("(?i)\\b(limit\\s+(?:exceed|reached)|threshold|invalid|failed|declined|unsuccessful)\\b"),
         Regex("(?i)\\b(application|document|status|pending|submitted)\\b"),
         Regex("(?i)\\b(have\\s+used|utilization|remaining|offer|promo|%\\s*off|discount|sale|coupon)\\b"),
         Regex("(?i)\\b(kyc|re-?kyc|block(?:ed)?|unblock|token|de-?register)\\b"),
@@ -82,17 +82,42 @@ object SmsAutoClassifier {
      *
      * NOTE: bare "fraud"/"report cyber fraud" is deliberately NOT a hard veto — Canara
      * appends "Dial 1930 to report cyber fraud" boilerplate to every genuine transaction
-     * SMS. Only conditional/unauthorised framing and advance notices are unconditional.
+     * SMS. Only conditional/unauthorised framing and advance notices are unconditional;
+     * the conditional framing carries one narrow exception in
+     * [bankAlarmTailPattern], see there.
      */
     private val hardVetoPatterns = listOf(
-        // Conditional/unauthorised framing ("Rs.X debited? report cyber fraud if not done by you").
-        Regex("(?i)\\b(if\\s+not\\s+(?:done\\s+)?by\\s+you|if\\s+(?:it['’]?s?\\s+)?not\\s+you|if\\s+you\\s+(?:have\\s+)?not\\s+(?:done|authorised|initiated)|not\\s+authorised\\s+by\\s+you|unauthorised\\s+transaction)\\b"),
         // Advance mandate registrations: money has NOT moved yet ("will be debited on <date>").
         Regex("(?i)\\bupcoming\\s+mandate\\b"),
         Regex("(?i)\\be-?mandate\\b[\\s\\S]{0,120}?(?:has\\s+been\\s+registered|set\\s+at|limit\\s+amount)"),
         // Payment reminders: "Ignore if paid" proves this SMS is not the payment itself.
         Regex("(?i)\\bignore\\s+if\\s+paid\\b"),
-        Regex("(?i)\\b(?:installment|emi|bill)\\b[\\s\\S]{0,60}?\\bis\\s+due\\b")
+        Regex("(?i)\\b(?:installment|emi|bill)\\b[\\s\\S]{0,60}?\\bis\\s+due\\b"),
+        // A refund only "initiated" has not happened yet; the credit message follows.
+        Regex("(?i)\\brefund\\b[\\s\\S]{0,80}?\\binitiated\\b")
+    )
+
+    /**
+     * Conditional/unauthorised framing ("Rs.X debited? report cyber fraud if not done by
+     * you"). A hard veto — with ONE exception, [bankAlarmTailPattern].
+     */
+    private val conditionalFramingPattern = Regex(
+        "(?i)\\b(if\\s+not\\s+(?:done\\s+)?by\\s+you|if\\s+(?:it['’]?s?\\s+)?not\\s+you|if\\s+you\\s+(?:have\\s+)?not\\s+(?:done|authorised|initiated)|not\\s+authorised\\s+by\\s+you|unauthorised\\s+transaction)\\b"
+    )
+
+    /**
+     * The bank's own alarm boilerplate: "If not you, call 1800 2662/SMS BLOCK 5003 to
+     * <number>". ICICI appends this tail to every genuine card alert.
+     *
+     * Measured on the owner's real inbox (2026-10-13): vetoing this tail silently
+     * deleted three real ICICI card spends — they appeared nowhere, not even in the
+     * unrecognised list, because the veto has no rescue. This exception is deliberately
+     * narrow (the exact call + "/ SMS BLOCK <code> to <number>" shape); all other
+     * conditional framings stay unconditional, and the phishing case this veto exists
+     * for ("if not done by you", "not authorised by you") is untouched.
+     */
+    private val bankAlarmTailPattern = Regex(
+        "(?i)\\bif\\s+not\\s+you\\b[\\s\\S]{0,40}?\\bcall\\b[\\d\\s\\-]{6,}\\s*/\\s*sms\\s*block\\b[\\s\\S]{0,20}?\\d"
     )
 
     /**
@@ -118,18 +143,24 @@ object SmsAutoClassifier {
     }
 
     /**
-     * Next scan cursor: the newest timestamp in the batch. The worker only calls this after every
-     * message in the batch is terminal (saved, already saved, or recorded as ignored), so nothing
-     * is silently stranded below the cursor and unparsed messages are never re-read forever.
+     * Latest bank-like messages from the device inbox.
+     *
+     * The bounds are **exclusive**, so a message sharing a cursor's exact
+     * timestamp is re-readable rather than permanently skipped — re-reads are
+     * ignored by the queue's `OR IGNORE` insert, whereas a skipped message is
+     * lost. [oldestFirst] exists for the incremental scan: walking forward from a
+     * high-water mark is the only ordering that makes progress when more than one
+     * page has arrived, because newest-first would return the same page for ever.
+     *
+     * [beforeTimestamp] is the history walk's upper bound; [sinceTimestamp] alone
+     * cannot express "older than what I have already looked at".
      */
-    fun nextScanCursor(messages: List<ClassifiedSms>): Long? =
-        messages.maxOfOrNull { it.sms.timestamp }
-
-    /** Latest bank-like messages from the device inbox, newest first. */
     fun queryBankSms(
         context: Context,
         sinceTimestamp: Long = 0L,
-        maxMessages: Int = 500
+        maxMessages: Int = 500,
+        beforeTimestamp: Long = Long.MAX_VALUE,
+        oldestFirst: Boolean = false
     ): List<SmsInfo> {
         val uri = Telephony.Sms.Inbox.CONTENT_URI
         val projection = arrayOf(
@@ -144,8 +175,12 @@ object SmsAutoClassifier {
             if (sinceTimestamp > 0L) {
                 append(" AND ${Telephony.Sms.Inbox.DATE} > $sinceTimestamp")
             }
+            if (beforeTimestamp != Long.MAX_VALUE) {
+                append(" AND ${Telephony.Sms.Inbox.DATE} < $beforeTimestamp")
+            }
         }
-        val sortOrder = "${Telephony.Sms.Inbox.DATE} DESC LIMIT $maxMessages"
+        val direction = if (oldestFirst) "ASC" else "DESC"
+        val sortOrder = "${Telephony.Sms.Inbox.DATE} $direction LIMIT $maxMessages"
 
         val cursor = context.contentResolver.query(uri, projection, selection, null, sortOrder)
 
@@ -188,15 +223,19 @@ object SmsAutoClassifier {
     /** A currency amount written the way banks write it. */
     private val amountMarker = Regex("""(?:Rs\.?|INR|₹)\s*\d|₹\s*\d|\d+\s*(?:Rs|INR)""")
 
-    /** A verb that means money actually moved. */
-    private val movementVerb = Regex(
-        "(?:debited|credited|spent|paid|transferred|withdrawn)",
-        RegexOption.IGNORE_CASE
-    )
-
-    /** True when the message states both an amount and a movement — i.e. it is a transaction. */
-    private fun looksLikeTransaction(message: String): Boolean =
-        amountMarker.containsMatchIn(message) && movementVerb.containsMatchIn(message)
+    /**
+     * True when the message states both an amount and a movement — i.e. it is a
+     * transaction.
+     *
+     * The movement half comes from [BankMessageParser.hasMovementVerb] so this
+     * filter and the parser can never disagree about what money moving looks
+     * like. The local six-word copy it replaced (`debited|credited|spent|paid|
+     * transferred|withdrawn`) omitted the whole credit lexicon, so a deposit or
+     * refund carrying a balance tail was dropped as an "alert" even though it
+     * named a completed movement.
+     */
+    fun looksLikeTransaction(message: String): Boolean =
+        amountMarker.containsMatchIn(message) && BankMessageParser.hasMovementVerb(message)
 
     fun isOtpOrAlertMessage(message: String): Boolean {
         // OTPs are skipped — unless the message is really a debit that happens to
@@ -214,6 +253,16 @@ object SmsAutoClassifier {
         // one, so the only thing separating them is this veto. Losing one real
         // transaction is far cheaper than inventing a phantom one.
         if (hardVetoPatterns.any { it.containsMatchIn(message) }) {
+            return true
+        }
+
+        // Conditional framing is the same veto, minus the bank's own alarm tail
+        // ([bankAlarmTailPattern]) — ICICI appends it to genuine card alerts, and
+        // vetoing it deleted real spends. That tail falls through to the alert
+        // branch below, which keeps its amount+verb rescue.
+        if (conditionalFramingPattern.containsMatchIn(message) &&
+            !bankAlarmTailPattern.containsMatchIn(message)
+        ) {
             return true
         }
 

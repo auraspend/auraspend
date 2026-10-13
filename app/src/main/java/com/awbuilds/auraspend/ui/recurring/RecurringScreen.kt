@@ -22,14 +22,18 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.awbuilds.auraspend.R
+import com.awbuilds.auraspend.core.boundary
 import com.awbuilds.auraspend.domain.model.RecurrenceFrequency
 import com.awbuilds.auraspend.domain.model.Subscription
 import com.awbuilds.auraspend.domain.repository.TransactionRepository
+import com.awbuilds.auraspend.ui.core.UiError
 import com.awbuilds.auraspend.ui.designsystem.AuraCard
 import com.awbuilds.auraspend.ui.designsystem.AuraCardStyle
 import com.awbuilds.auraspend.ui.designsystem.AuraEmptyState
+import com.awbuilds.auraspend.ui.designsystem.AuraErrorBanner
 import com.awbuilds.auraspend.ui.designsystem.AuraSpacing
 import com.awbuilds.auraspend.ui.designsystem.AuraType
+import com.awbuilds.auraspend.ui.designsystem.LocalCurrencyStyle
 import com.awbuilds.auraspend.ui.designsystem.formatMoney
 import kotlinx.coroutines.launch
 import java.time.LocalDateTime
@@ -51,6 +55,16 @@ fun RecurringScreen(
     var subscriptionCategory by remember { mutableStateOf("") }
     var subscriptionCycle by remember { mutableStateOf(RecurrenceFrequency.MONTHLY) }
 
+    // Removing a subscription is destructive and had no confirmation, unlike every
+    // other destructive action in the app. The pending row lives here until the
+    // user confirms.
+    var confirmRemove by remember { mutableStateOf<Subscription?>(null) }
+
+    // A write that failed. Neither the add sheet nor the remove dialog is dismissed
+    // on failure, so the form survives and the banner explains what happened.
+    var error by remember { mutableStateOf<UiError?>(null) }
+    val errorMessage = error?.let { stringResource(it.messageRes) }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -61,7 +75,10 @@ fun RecurringScreen(
                     }
                 },
                 actions = {
-                    IconButton(onClick = { showAddSheet = true }) {
+                    IconButton(onClick = {
+                        error = null
+                        showAddSheet = true
+                    }) {
                         Icon(Icons.Default.Add, contentDescription = stringResource(R.string.recurring_add))
                     }
                 }
@@ -182,7 +199,7 @@ fun RecurringScreen(
                                     stringResource(
                                         R.string.recurring_category_cycle,
                                         category?.name ?: stringResource(R.string.recurring_other_category),
-                                        sub.billingCycle.name.lowercase().replaceFirstChar { it.uppercase() }
+                                        stringResource(sub.billingCycle.labelRes())
                                     ),
                                     style = MaterialTheme.typography.labelSmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -219,7 +236,8 @@ fun RecurringScreen(
                                 )
                             }
                             IconButton(onClick = {
-                                scope.launch { repository.deleteSubscription(sub.id, false) }
+                                error = null
+                                confirmRemove = sub
                             }) {
                                 Icon(
                                     Icons.Default.Close,
@@ -247,6 +265,12 @@ fun RecurringScreen(
                     .padding(bottom = AuraSpacing.xxxl),
                 verticalArrangement = Arrangement.spacedBy(AuraSpacing.xl)
             ) {
+                // A failed save is reported inside the sheet — where the user is
+                // looking — instead of the sheet dismissing as if it had saved.
+                errorMessage?.let { message ->
+                    AuraErrorBanner(message = message)
+                }
+
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
@@ -302,15 +326,12 @@ fun RecurringScreen(
                     label = { Text(stringResource(R.string.recurring_amount)) },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
-                    prefix = { Text("₹") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                    leadingIcon = {
-                        Icon(
-                            Icons.Default.CurrencyRupee,
-                            contentDescription = null,
-                            modifier = Modifier.size(18.dp)
-                        )
-                    }
+                    // Theme currency, not a hardcoded ₹; the field holds raw digits,
+                    // so the prefix cannot double a symbol. The decorative
+                    // `Icons.Default.CurrencyRupee` beside it was rupee-specific in
+                    // every locale and is gone with it.
+                    prefix = { Text(LocalCurrencyStyle.current.symbol) },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
                 )
 
                 Column(verticalArrangement = Arrangement.spacedBy(AuraSpacing.sm)) {
@@ -329,7 +350,7 @@ fun RecurringScreen(
                                 onClick = { subscriptionCycle = cycle },
                                 label = {
                                     Text(
-                                        cycle.name.lowercase().replaceFirstChar { it.uppercase() },
+                                        stringResource(cycle.labelRes()),
                                         style = MaterialTheme.typography.labelSmall
                                     )
                                 },
@@ -395,20 +416,31 @@ fun RecurringScreen(
                             RecurrenceFrequency.YEARLY -> now.plusYears(1)
                         }
                         scope.launch {
-                            repository.saveSubscription(
-                                Subscription(
-                                    name = subscriptionName.trim(),
-                                    amount = amt,
-                                    categoryId = subscriptionCategory,
-                                    billingCycle = subscriptionCycle,
-                                    nextBillingDate = next
+                            // The sheet used to close before the write was attempted, so a
+                            // Room failure looked exactly like a save. It now closes only
+                            // after the write succeeds; the form survives a failure.
+                            val saved = boundary(TAG, false) {
+                                repository.saveSubscription(
+                                    Subscription(
+                                        name = subscriptionName.trim(),
+                                        amount = amt,
+                                        categoryId = subscriptionCategory,
+                                        billingCycle = subscriptionCycle,
+                                        nextBillingDate = next
+                                    )
                                 )
-                            )
+                                true
+                            }
+                            if (saved) {
+                                error = null
+                                showAddSheet = false
+                                subscriptionName = ""
+                                subscriptionAmount = ""
+                                subscriptionCategory = ""
+                            } else {
+                                error = UiError.SAVE_FAILED
+                            }
                         }
-                        showAddSheet = false
-                        subscriptionName = ""
-                        subscriptionAmount = ""
-                        subscriptionCategory = ""
                     },
                     modifier = Modifier.fillMaxWidth(),
                     enabled = subscriptionName.isNotBlank() &&
@@ -420,4 +452,67 @@ fun RecurringScreen(
             }
         }
     }
+
+    confirmRemove?.let { sub ->
+        AlertDialog(
+            onDismissRequest = { confirmRemove = null },
+            title = {
+                Text(
+                    stringResource(R.string.recurring_delete_title, sub.name),
+                    modifier = Modifier.semantics { heading() }
+                )
+            },
+            text = {
+                Column {
+                    Text(stringResource(R.string.recurring_delete_message))
+                    // The delete failed: the dialog stays open so the user can retry,
+                    // and says so instead of vanishing as if the row were removed.
+                    errorMessage?.let { message ->
+                        Spacer(modifier = Modifier.height(AuraSpacing.md))
+                        AuraErrorBanner(message = message)
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        scope.launch {
+                            val removed = boundary(TAG, false) {
+                                repository.deleteSubscription(sub.id, false)
+                                true
+                            }
+                            if (removed) {
+                                error = null
+                                confirmRemove = null
+                            } else {
+                                error = UiError.DELETE_FAILED
+                            }
+                        }
+                    },
+                    colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
+                ) { Text(stringResource(R.string.action_remove)) }
+            },
+            dismissButton = {
+                TextButton(onClick = { confirmRemove = null }) { Text(stringResource(R.string.action_cancel)) }
+            }
+        )
+    }
+}
+
+/** Log tag for this screen's IO boundaries. */
+private const val TAG = "RecurringScreen"
+
+/**
+ * A billing cycle as copy.
+ *
+ * `RecurrenceFrequency` is a domain enum, so `cycle.name.lowercase()` put the
+ * identifier on screen in every locale. The `when` is exhaustive on purpose: a
+ * cycle added later fails to compile here rather than silently reading "Unknown"
+ * or a raw name on screen.
+ */
+private fun RecurrenceFrequency.labelRes(): Int = when (this) {
+    RecurrenceFrequency.DAILY -> R.string.recurring_cycle_daily
+    RecurrenceFrequency.WEEKLY -> R.string.recurring_cycle_weekly
+    RecurrenceFrequency.MONTHLY -> R.string.recurring_cycle_monthly
+    RecurrenceFrequency.YEARLY -> R.string.recurring_cycle_yearly
 }

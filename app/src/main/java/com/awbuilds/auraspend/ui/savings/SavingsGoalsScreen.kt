@@ -28,15 +28,19 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.awbuilds.auraspend.R
+import com.awbuilds.auraspend.core.boundary
 import com.awbuilds.auraspend.domain.model.SavingsGoal
 import com.awbuilds.auraspend.domain.repository.TransactionRepository
+import com.awbuilds.auraspend.ui.core.UiError
 import com.awbuilds.auraspend.ui.designsystem.AuraCard
 import com.awbuilds.auraspend.ui.designsystem.AuraCardStyle
 import com.awbuilds.auraspend.ui.designsystem.AuraEmptyState
+import com.awbuilds.auraspend.ui.designsystem.AuraErrorBanner
 import com.awbuilds.auraspend.ui.designsystem.AuraProgressRing
 import com.awbuilds.auraspend.ui.designsystem.AuraSpacing
 import com.awbuilds.auraspend.ui.designsystem.AuraType
 import com.awbuilds.auraspend.ui.designsystem.AnimatedMoney
+import com.awbuilds.auraspend.ui.designsystem.LocalCurrencyStyle
 import com.awbuilds.auraspend.ui.designsystem.formatMoney
 import com.awbuilds.auraspend.ui.theme.extendedColors
 import kotlinx.coroutines.launch
@@ -62,6 +66,13 @@ fun SavingsGoalsScreen(
     var addFundsGoal by remember { mutableStateOf<SavingsGoal?>(null) }
     var deleteGoal by remember { mutableStateOf<SavingsGoal?>(null) }
 
+    // A write that failed. The editor sheet, the add-funds dialog and the delete
+    // confirmation all stay open on failure, so the failure is rendered inside the
+    // surface that raised it — where the user is actually looking — rather than
+    // leaving a dismissed sheet that silently dropped the edit.
+    var error by remember { mutableStateOf<UiError?>(null) }
+    val errorMessage = error?.let { stringResource(it.messageRes) }
+
     val totalSaved = remember(goals) { goals.sumOf { it.currentAmount } }
     val totalTarget = remember(goals) { goals.sumOf { it.targetAmount } }
     val overallProgress = if (totalTarget > 0) (totalSaved / totalTarget).toFloat().coerceIn(0f, 1f) else 0f
@@ -77,6 +88,7 @@ fun SavingsGoalsScreen(
                 },
                 actions = {
                     IconButton(onClick = {
+                        error = null
                         editorGoal = null
                         showEditor = true
                     }) {
@@ -99,6 +111,7 @@ fun SavingsGoalsScreen(
                     message = stringResource(R.string.savings_empty_message),
                     actionLabel = stringResource(R.string.savings_create_goal),
                     onAction = {
+                        error = null
                         editorGoal = null
                         showEditor = true
                     }
@@ -162,12 +175,19 @@ fun SavingsGoalsScreen(
                 items(goals, key = { it.id }) { goal ->
                     GoalCard(
                         goal = goal,
-                        onAddFunds = { addFundsGoal = goal },
+                        onAddFunds = {
+                            error = null
+                            addFundsGoal = goal
+                        },
                         onEdit = {
+                            error = null
                             editorGoal = goal
                             showEditor = true
                         },
-                        onDelete = { deleteGoal = goal },
+                        onDelete = {
+                            error = null
+                            deleteGoal = goal
+                        },
                         modifier = Modifier.animateItem()
                     )
                 }
@@ -178,9 +198,23 @@ fun SavingsGoalsScreen(
     if (showEditor) {
         GoalEditorSheet(
             goal = editorGoal,
+            errorMessage = errorMessage,
             onSave = { goal ->
-                scope.launch { repository.saveSavingsGoal(goal) }
-                showEditor = false
+                scope.launch {
+                    // A failed write keeps the sheet (and the form) on screen; the
+                    // banner inside it says why, instead of the sheet closing as if
+                    // the goal had been saved.
+                    val saved = boundary(TAG, false) {
+                        repository.saveSavingsGoal(goal)
+                        true
+                    }
+                    if (saved) {
+                        error = null
+                        showEditor = false
+                    } else {
+                        error = UiError.SAVE_FAILED
+                    }
+                }
             },
             onDismiss = { showEditor = false }
         )
@@ -189,11 +223,20 @@ fun SavingsGoalsScreen(
     addFundsGoal?.let { goal ->
         AddFundsDialog(
             goal = goal,
+            errorMessage = errorMessage,
             onAdd = { amount ->
                 scope.launch {
-                    repository.saveSavingsGoal(goal.copy(currentAmount = goal.currentAmount + amount))
+                    val saved = boundary(TAG, false) {
+                        repository.saveSavingsGoal(goal.copy(currentAmount = goal.currentAmount + amount))
+                        true
+                    }
+                    if (saved) {
+                        error = null
+                        addFundsGoal = null
+                    } else {
+                        error = UiError.SAVE_FAILED
+                    }
                 }
-                addFundsGoal = null
             },
             onDismiss = { addFundsGoal = null }
         )
@@ -203,12 +246,32 @@ fun SavingsGoalsScreen(
         AlertDialog(
             onDismissRequest = { deleteGoal = null },
             title = { Text(stringResource(R.string.savings_delete_title, goal.name)) },
-            text = { Text(stringResource(R.string.savings_delete_message)) },
+            text = {
+                Column {
+                    Text(stringResource(R.string.savings_delete_message))
+                    // Deleting failed: the dialog stays open so the user can retry,
+                    // and says so rather than vanishing as if the goal were gone.
+                    errorMessage?.let { message ->
+                        Spacer(modifier = Modifier.height(AuraSpacing.md))
+                        AuraErrorBanner(message = message, onDismiss = { error = null })
+                    }
+                }
+            },
             confirmButton = {
                 TextButton(
                     onClick = {
-                        scope.launch { repository.deleteSavingsGoal(goal.id) }
-                        deleteGoal = null
+                        scope.launch {
+                            val deleted = boundary(TAG, false) {
+                                repository.deleteSavingsGoal(goal.id)
+                                true
+                            }
+                            if (deleted) {
+                                error = null
+                                deleteGoal = null
+                            } else {
+                                error = UiError.DELETE_FAILED
+                            }
+                        }
                     },
                     colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
                 ) { Text(stringResource(R.string.action_delete)) }
@@ -219,6 +282,9 @@ fun SavingsGoalsScreen(
         )
     }
 }
+
+/** Log tag for this screen's IO boundaries. */
+private const val TAG = "SavingsGoalsScreen"
 
 @Composable
 private fun GoalCard(
@@ -351,6 +417,8 @@ private fun GoalCard(
 @Composable
 private fun GoalEditorSheet(
     goal: SavingsGoal?,
+    /** A failed write, rendered inside the sheet so the form stays on screen. */
+    errorMessage: String?,
     onSave: (SavingsGoal) -> Unit,
     onDismiss: () -> Unit
 ) {
@@ -385,6 +453,12 @@ private fun GoalEditorSheet(
                 style = MaterialTheme.typography.titleLarge,
                 color = MaterialTheme.colorScheme.onSurface
             )
+            errorMessage?.let { message ->
+                Spacer(modifier = Modifier.height(AuraSpacing.md))
+                // No onDismiss: clearing the failure while the sheet is open would
+                // leave the user with an unexplained form. It clears on retry.
+                AuraErrorBanner(message = message)
+            }
             Spacer(modifier = Modifier.height(AuraSpacing.lg))
             OutlinedTextField(
                 value = name,
@@ -399,7 +473,9 @@ private fun GoalEditorSheet(
                 value = target,
                 onValueChange = { target = it },
                 label = { Text(stringResource(R.string.savings_target_amount)) },
-                prefix = { Text("₹") },
+                // Theme currency, not a hardcoded ₹: the field holds raw digits, so
+                // the prefix cannot double a symbol on already-formatted output.
+                prefix = { Text(LocalCurrencyStyle.current.symbol) },
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                 shape = RoundedCornerShape(14.dp),
@@ -469,6 +545,8 @@ private fun GoalEditorSheet(
 @Composable
 private fun AddFundsDialog(
     goal: SavingsGoal,
+    /** A failed write, rendered inside the dialog so the typed amount survives. */
+    errorMessage: String?,
     onAdd: (Double) -> Unit,
     onDismiss: () -> Unit
 ) {
@@ -494,12 +572,17 @@ private fun AddFundsDialog(
                     value = amount,
                     onValueChange = { amount = it },
                     label = { Text(stringResource(R.string.savings_amount)) },
-                    prefix = { Text("₹") },
+                    // Theme currency, not a hardcoded ₹: the field holds raw digits.
+                    prefix = { Text(LocalCurrencyStyle.current.symbol) },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     shape = RoundedCornerShape(14.dp),
                     modifier = Modifier.fillMaxWidth()
                 )
+                errorMessage?.let { message ->
+                    Spacer(modifier = Modifier.height(AuraSpacing.md))
+                    AuraErrorBanner(message = message)
+                }
             }
         },
         confirmButton = {

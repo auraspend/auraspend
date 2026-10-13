@@ -9,7 +9,6 @@ Full decoder ring for AuraSpend. Promote frequently used terms to `CLAUDE.md`.
 | Aurora tokens | `ui/designsystem/AuraTokens.kt`: `AuraSpacing`, `AuraMotion`, `AuraGradients`, `AuraType` |
 | Hero moment | Any surface using the full aurora gradient (balance card, FAB) — used sparingly |
 | Glass | Translucent surface style for floating chrome only (`AuraCardStyle.Glass`) |
-| Shim | `ui/core/CashewComponents.kt` compatibility layer; existing screens consume it until rebuilt |
 | Micro-label | Small uppercase `AuraType.metricLabel` caption above a metric |
 
 ## Process
@@ -20,6 +19,7 @@ Full decoder ring for AuraSpend. Promote frequently used terms to `CLAUDE.md`.
 | Handoff | `docs/handoffs/NNNN-name.md` written at the end of each work session |
 | Definition of Done (DoD) | Per-screen checklist in `docs/design/aurora.md` |
 | Triage inbox | Swipe accept/reject queue for auto-detected SMS (P2) |
+| History walk / backfill | The downwards pass over inbox messages older than the newest page (`SmsIngestPlanner`), one page per ingest call and only while the live queue is empty — see D16 |
 
 ## Architecture
 | Term | Meaning |

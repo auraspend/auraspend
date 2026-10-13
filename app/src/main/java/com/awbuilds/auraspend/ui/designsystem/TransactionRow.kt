@@ -16,12 +16,16 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.awbuilds.auraspend.R
 import com.awbuilds.auraspend.domain.model.Transaction
 import com.awbuilds.auraspend.domain.model.TransactionType
 import com.awbuilds.auraspend.ui.theme.extendedColors
@@ -34,14 +38,34 @@ import java.util.Locale
 fun categoryColor(colorInt: Int?): Color =
     Color(colorInt?.toLong() ?: 0xFF757575L)
 
-/** Human date for a transaction timestamp. */
+/** One day in milliseconds, named so the day boundaries below stay readable. */
+private const val DAY_MILLIS = 24 * 60 * 60 * 1000L
+
+/**
+ * Human date for a transaction timestamp.
+ *
+ * Resolves through resources, because this feeds the date line of every row in
+ * Home and Activity — the two highest-traffic lists in the app. It used to return
+ * literal `"Today"` / `"Yesterday"` / `"3d ago"` from inside the shared design
+ * system, so those lists read English in every locale. Dates older than a week
+ * keep the locale-aware `dd MMM` format.
+ */
+@Composable
 fun formatRelativeDate(timestamp: Long): String {
     val diff = System.currentTimeMillis() - timestamp
+    val days = (diff / DAY_MILLIS).toInt()
     return when {
-        diff < 24 * 60 * 60 * 1000 -> "Today"
-        diff < 48 * 60 * 60 * 1000 -> "Yesterday"
-        diff < 7 * 24 * 60 * 60 * 1000 -> "${diff / (24 * 60 * 60 * 1000)}d ago"
-        else -> SimpleDateFormat("dd MMM", Locale.getDefault()).format(Date(timestamp))
+        diff < DAY_MILLIS -> stringResource(R.string.activity_group_today)
+        diff < 2 * DAY_MILLIS -> stringResource(R.string.activity_group_yesterday)
+        diff < 7 * DAY_MILLIS -> pluralStringResource(R.plurals.activity_days_ago, days, days)
+        else -> {
+            // LocalConfiguration rather than Locale.getDefault(): this is a
+            // composable, and the default locale is not observable, so the month
+            // name would keep the language the screen was first composed in
+            // (lint's NonObservableLocale). Same reasoning as `Money.kt`.
+            val locale = LocalConfiguration.current.locales[0]
+            SimpleDateFormat("dd MMM", locale).format(Date(timestamp))
+        }
     }
 }
 
@@ -108,12 +132,13 @@ fun TransactionEntryRow(
                 overflow = TextOverflow.Ellipsis
             )
             Spacer(modifier = Modifier.height(1.dp))
+            // Read outside the string template: stringResource is @Composable, and
+            // an explicit local keeps the subtitling obvious at a glance.
+            val relativeDate = formatRelativeDate(
+                transaction.date.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
+            )
             Text(
-                "$categoryName · ${
-                    formatRelativeDate(
-                        transaction.date.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
-                    )
-                }",
+                "$categoryName · $relativeDate",
                 style = MaterialTheme.typography.bodySmall,
                 color = extended.textLight,
                 maxLines = 1,

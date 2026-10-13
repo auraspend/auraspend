@@ -35,23 +35,6 @@ data class CurrencyStyle(
     companion object {
         val INR = CurrencyStyle("INR")
 
-        /**
-         * Currencies offered in Settings. The full ISO list is impractical to
-         * browse, so this covers the common ones plus a free-text fallback.
-         */
-        val supported = listOf(
-            CurrencyStyle("INR"),
-            CurrencyStyle("USD"),
-            CurrencyStyle("EUR"),
-            CurrencyStyle("GBP"),
-            CurrencyStyle("AED"),
-            CurrencyStyle("SGD"),
-            CurrencyStyle("AUD"),
-            CurrencyStyle("CAD"),
-            CurrencyStyle("JPY"),
-            CurrencyStyle("CNY")
-        )
-
         /** Resolves an unknown/blank code to INR rather than throwing. */
         fun fromCode(code: String?): CurrencyStyle {
             if (code.isNullOrBlank()) return INR
@@ -231,20 +214,21 @@ fun formatMoneyCompact(
 }
 
 /**
- * Reads the currency the app should render in, from app preferences.
+ * Reads the currency the app should render in.
  *
- * Defaults to the device locale's own currency when unset, so a user in Germany
- * sees `€` without configuring anything. Call inside composition; the result is
- * also pushed into [MoneyConfig] so non-composable call sites agree.
+ * [chosenCode] is the value the picker wrote, hoisted by the caller
+ * (`MainActivity`) so that *changing* it recomposes the theme. Reading the
+ * preference here instead would look equivalent and be wrong: the preference is
+ * not observable state, so the theme would keep the old symbol until the next
+ * cold start — the same trap the locale comment below describes.
+ *
+ * When nothing is chosen the device locale decides, so a user in Germany sees `€`
+ * without configuring anything. Call inside composition; the result is also
+ * pushed into [MoneyConfig] so non-composable call sites agree.
  */
 @Composable
-fun rememberCurrencyStyle(): CurrencyStyle {
-    val context = LocalContext.current
-    val prefs = remember(context) {
-        context.getSharedPreferences("auraspend_prefs", android.content.Context.MODE_PRIVATE)
-    }
-    val stored = prefs.getString("currency_code", null)
-    if (!stored.isNullOrBlank()) return CurrencyStyle.fromCode(stored)
+fun rememberCurrencyStyle(chosenCode: String? = null): CurrencyStyle {
+    if (!chosenCode.isNullOrBlank()) return CurrencyStyle.fromCode(chosenCode)
 
     // LocalConfiguration rather than Locale.getDefault(): the latter is read once
     // at class-init and does not recompose when the user changes system language,

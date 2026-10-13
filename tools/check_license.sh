@@ -135,7 +135,7 @@ for f in README.md docs/index.html docs/terms.html \
     ' "$f" | grep -Eiv "$exempt" || true)"
     # A line naming a third-party component is not a claim about AuraSpend.
     offenders="$(printf '%s\n' "$offenders" \
-        | grep -Eiv 'all-MiniLM|model|encoder|Plus Jakarta|ONNX|Lottie|AndroidX|Google|OkHttp|Guava|SmolLM2|Gemma|dependenc|bundled' || true)"
+        | grep -Eiv 'all-MiniLM|model|encoder|Plus Jakarta|ONNX|AndroidX|Google|OkHttp|Guava|SmolLM2|Gemma|dependenc|bundled' || true)"
     if [ -n "$offenders" ]; then
         fail "$f mentions Apache without saying why:"
         printf '%s\n' "$offenders" | sed 's/^/          /'
@@ -189,7 +189,6 @@ check_attribution() {
 
 check_attribution "Plus Jakarta Sans" 'Plus Jakarta Sans'
 check_attribution "ONNX Runtime (MIT)" 'ONNX Runtime'
-check_attribution "Lottie" 'Lottie'
 check_attribution "AndroidX" 'AndroidX'
 check_attribution "Google API Client / Drive / play-services-auth" 'Google API Client'
 check_attribution "OkHttp" 'OkHttp'

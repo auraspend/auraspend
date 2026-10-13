@@ -54,4 +54,22 @@ object BudgetSpending {
         transactions: List<Transaction>,
         now: LocalDateTime = LocalDateTime.now()
     ): List<Budget> = budgets.map { it.copy(spentAmount = spentFor(it, transactions, now)) }
+
+    /**
+     * [periodRange] as inclusive epoch-millis bounds, for the indexed SQL
+     * aggregates (`observeExpenseByCategory`).
+     *
+     * ADR 0003 makes the aggregate the production path and [spentFor] the
+     * small-table/test path, which only works if both agree on the window. They
+     * now derive it from the same [periodRange], so Budget, Plan and the Dashboard
+     * cannot drift apart on a boundary.
+     */
+    fun periodEpochRange(
+        period: BudgetPeriod,
+        now: LocalDateTime = LocalDateTime.now()
+    ): Pair<Long, Long> {
+        val (start, end) = periodRange(period, now)
+        return start.atZone(zone).toInstant().toEpochMilli() to
+            end.atZone(zone).toInstant().toEpochMilli()
+    }
 }

@@ -34,7 +34,9 @@ import com.awbuilds.auraspend.R
 import com.awbuilds.auraspend.data.ai.ModelDownloadManager
 import com.awbuilds.auraspend.data.classification.AutoClassificationWorker
 import com.awbuilds.auraspend.data.classification.AutoDetect
+import com.awbuilds.auraspend.data.classification.BackgroundClassificationCoordinator
 import com.awbuilds.auraspend.data.classification.DuplicateDetector
+import com.awbuilds.auraspend.core.boundary
 import com.awbuilds.auraspend.core.boundaryOrNull
 import com.awbuilds.auraspend.data.local.BackupSerializer
 import com.awbuilds.auraspend.data.local.CsvManager
@@ -52,6 +54,7 @@ import com.awbuilds.auraspend.ui.classification.UnrecognizedSmsScreen
 import com.awbuilds.auraspend.ui.classification.ClassificationViewIntent
 import com.awbuilds.auraspend.ui.classification.ClassificationViewModel
 import com.awbuilds.auraspend.ui.core.AuraAppChrome
+import com.awbuilds.auraspend.ui.core.UiError
 import com.awbuilds.auraspend.ui.core.isNotificationPermissionNeeded
 import com.awbuilds.auraspend.ui.core.rememberNotificationPermissionLauncher
 import com.awbuilds.auraspend.ui.home.DashboardScreen
@@ -69,6 +72,7 @@ import com.awbuilds.auraspend.ui.transaction.TransactionDetailScreen
 import com.awbuilds.auraspend.ui.transaction.TransactionListScreen
 import com.awbuilds.auraspend.ui.transaction.TransactionListViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -142,7 +146,10 @@ fun AuraSpendNavHost(
     themeMode: AppThemeMode = AppThemeMode.LIGHT,
     onThemeChanged: (AppThemeMode) -> Unit = {},
     dynamicColor: Boolean = false,
-    onDynamicColorChanged: (Boolean) -> Unit = {}
+    onDynamicColorChanged: (Boolean) -> Unit = {},
+    /** The picked ISO code, or null to follow the device locale. */
+    currencyCode: String? = null,
+    onCurrencyChanged: (String?) -> Unit = {}
 ) {
     val navController = rememberNavController()
     val context = LocalContext.current
@@ -187,6 +194,8 @@ fun AuraSpendNavHost(
             composable(Routes.ONBOARDING) {
                 OnboardingFlow(
                     repository = repository,
+                    currencyCode = currencyCode,
+                    onCurrencyChanged = onCurrencyChanged,
                     onFinished = {
                         prefs.edit().putBoolean("onboarding_completed", true).apply()
                         navController.navigate(Routes.HOME) {
@@ -271,7 +280,9 @@ fun AuraSpendNavHost(
                     themeMode = themeMode,
                     onThemeChanged = onThemeChanged,
                     dynamicColor = dynamicColor,
-                    onDynamicColorChanged = onDynamicColorChanged
+                    onDynamicColorChanged = onDynamicColorChanged,
+                    currencyCode = currencyCode,
+                    onCurrencyChanged = onCurrencyChanged
                 )
             }
 
@@ -426,13 +437,31 @@ fun AuraSpendNavHost(
                 val scope = rememberCoroutineScope()
                 val categories by repository.getAllCategories()
                     .collectAsState(initial = emptyList())
+                // Category writes used to be fire-and-forget inside `launch`: a Room
+                // failure propagated out of the coroutine and crashed the UI. They now
+                // degrade to a typed reason rendered as a banner over the list, and
+                // report whether the write landed so the calling dialog can close on
+                // success and stay open on failure.
+                var categoryError by remember { mutableStateOf<UiError?>(null) }
                 CategoryManagementScreen(
                     categories = categories,
+                    error = categoryError,
+                    onErrorDismissed = { categoryError = null },
                     onSaveCategory = { category ->
-                        scope.launch { repository.saveCategory(category) }
+                        val saved = boundary(TAG, false) {
+                            repository.saveCategory(category)
+                            true
+                        }
+                        categoryError = if (saved) null else UiError.SAVE_FAILED
+                        saved
                     },
                     onDeleteCategory = { id ->
-                        scope.launch { repository.deleteCategory(id) }
+                        val deleted = boundary(TAG, false) {
+                            repository.deleteCategory(id)
+                            true
+                        }
+                        categoryError = if (deleted) null else UiError.DELETE_FAILED
+                        deleted
                     },
                     onBack = { navController.popBackStack() }
                 )
@@ -442,29 +471,45 @@ fun AuraSpendNavHost(
 
     if (showQuickAdd) {
         val categories by repository.getAllCategories().collectAsState(initial = emptyList())
+        // A failed quick-add keeps the sheet open with its amount and merchant
+        // intact; the banner inside the sheet says why nothing was saved. Closing it
+        // first (the old order) made a lost write look identical to a saved one.
+        var quickAddError by remember { mutableStateOf<UiError?>(null) }
         QuickAddSheet(
             categories = categories,
             initialType = quickAddType,
+            error = quickAddError,
+            onErrorDismissed = { quickAddError = null },
             onSave = { amount, categoryId, type, merchant, note ->
-                showQuickAdd = false
                 repositoryScope.launch {
-                    repository.saveTransaction(
-                        Transaction(
-                            amount = amount,
-                            categoryId = categoryId,
-                            note = note,
-                            merchant = merchant,
-                            date = java.time.LocalDateTime.now(),
-                            type = type
+                    val saved = boundary(TAG, false) {
+                        repository.saveTransaction(
+                            Transaction(
+                                amount = amount,
+                                categoryId = categoryId,
+                                note = note,
+                                merchant = merchant,
+                                date = java.time.LocalDateTime.now(),
+                                type = type
+                            )
                         )
-                    )
+                        true
+                    }
+                    if (saved) {
+                        quickAddError = null
+                        showQuickAdd = false
+                    } else {
+                        quickAddError = UiError.SAVE_FAILED
+                    }
                 }
             },
             onSmartAdd = {
+                quickAddError = null
                 showQuickAdd = false
                 navController.navigate(Routes.CLASSIFICATION)
             },
             onManualAdd = {
+                quickAddError = null
                 showQuickAdd = false
                 navController.navigate(Routes.ADD_TRANSACTION)
             },
@@ -473,10 +518,15 @@ fun AuraSpendNavHost(
     }
 }
 
+/** Log tag for this graph's IO boundaries. */
+private const val TAG = "NavGraph"
+
 /** Onboarding + optional Google Drive restore (unchanged behavior, new route). */
 @Composable
 private fun OnboardingFlow(
     repository: TransactionRepository,
+    currencyCode: String?,
+    onCurrencyChanged: (String?) -> Unit,
     onFinished: () -> Unit
 ) {
     val context = LocalContext.current
@@ -537,6 +587,8 @@ private fun OnboardingFlow(
 
     OnboardingScreen(
         onFinished = onFinished,
+        currencyCode = currencyCode,
+        onCurrencyChanged = onCurrencyChanged,
         onRestoreFromDrive = { signInLauncher.launch(driveSyncManager.getSignInIntent()) },
         isRestoring = isRestoring,
         restoreError = restoreError,
@@ -552,11 +604,12 @@ private fun SettingsDestination(
     themeMode: AppThemeMode,
     onThemeChanged: (AppThemeMode) -> Unit,
     dynamicColor: Boolean,
-    onDynamicColorChanged: (Boolean) -> Unit
+    onDynamicColorChanged: (Boolean) -> Unit,
+    currencyCode: String?,
+    onCurrencyChanged: (String?) -> Unit
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    val transactions by repository.getAllTransactions().collectAsState(initial = emptyList())
     val aiModelState by ModelDownloadManager.state.collectAsState()
     val notificationPermissionLauncher = rememberNotificationPermissionLauncher()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -566,6 +619,12 @@ private fun SettingsDestination(
     // back but never create a backup in the first place. Both actions live here
     // now. They share one sign-in launcher: without a signed-in account, the
     // requested action is remembered, sign-in runs, then the action continues.
+    //
+    // The sign-in API behind that launcher (`GoogleSignIn` in DriveSyncManager) is
+    // deprecated in favour of Credential Manager and is pinned deliberately — see
+    // ADR 0011 for why, and for what a migration would touch. Do not "upgrade" it
+    // in passing: the `drive.file` scope and the per-flavor OAuth clients have to
+    // survive the change.
     val app = context.applicationContext as AuraSpendApp
     val driveSyncManager = app.driveSyncManager
     val backupCreateManager = app.backupCreateManager
@@ -639,6 +698,10 @@ private fun SettingsDestination(
     val importAllDuplicatesMessage = stringResource(R.string.csv_import_all_duplicates)
     val importPartialTemplate = stringResource(R.string.csv_import_partial)
     val importSuccessTemplate = stringResource(R.string.csv_import_success)
+    // Resolved from the typed errors, not literals: these are the same strings the
+    // rest of the app reports a failed read/write with.
+    val loadFailedMessage = stringResource(UiError.LOAD_FAILED.messageRes)
+    val saveFailedMessage = stringResource(UiError.SAVE_FAILED.messageRes)
 
     val csvLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.CreateDocument("text/csv")
@@ -648,8 +711,18 @@ private fun SettingsDestination(
                 // Written straight to the SAF uri. The previous version staged the file
                 // in the public Downloads directory first, which cannot succeed on
                 // API 30+ and threw out of this unguarded coroutine.
-                val rows = withContext(Dispatchers.IO) {
-                    CsvManager.exportToCsv(context, transactions, uri)
+                //
+                // The rows are read here, once, instead of being collected in
+                // composition: an export is a one-shot, and observing the whole table
+                // kept a full-table flow alive the entire time Settings was on screen
+                // (ADR 0003 — aggregate, and bound what you load).
+                val toExport = boundaryOrNull(TAG) { repository.getAllTransactions().first() }
+                val rows = if (toExport == null) {
+                    -1
+                } else {
+                    withContext(Dispatchers.IO) {
+                        CsvManager.exportToCsv(context, toExport, uri)
+                    }
                 }
                 val message = if (rows >= 0) {
                     String.format(exportSuccessTemplate, rows)
@@ -667,13 +740,30 @@ private fun SettingsDestination(
         if (uri != null) {
             scope.launch {
                 val result = withContext(Dispatchers.IO) { CsvManager.importFromCsv(context, uri) }
+                // Read once, inside the coroutine. Without it the duplicate filter
+                // would see an empty history and import every row again.
+                val existing = boundaryOrNull(TAG) { repository.getAllTransactions().first() }
+                if (existing == null) {
+                    snackbarHostState.showSnackbar(loadFailedMessage)
+                    return@launch
+                }
                 // Re-importing the same file used to duplicate every row: the
                 // duplicate detector was never consulted on this path.
                 val fresh = result.imported.filter { incoming ->
-                    DuplicateDetector.detectDuplicates(incoming, transactions).isEmpty()
+                    DuplicateDetector.detectDuplicates(incoming, existing).isEmpty()
                 }
                 if (fresh.isNotEmpty()) {
-                    repository.saveTransactions(fresh)
+                    // CSV rows carry no sourceSmsId, so the DAO's conflict strategy
+                    // cannot protect them, and the loop writes row by row: an
+                    // unguarded failure could crash with half the file written.
+                    val written = boundary(TAG, false) {
+                        repository.saveTransactions(fresh)
+                        true
+                    }
+                    if (!written) {
+                        snackbarHostState.showSnackbar(saveFailedMessage)
+                        return@launch
+                    }
                 }
                 val message = when {
                     result.imported.isEmpty() -> importFailedMessage
@@ -692,6 +782,8 @@ private fun SettingsDestination(
         onThemeChanged = onThemeChanged,
         dynamicColor = dynamicColor,
         onDynamicColorChanged = onDynamicColorChanged,
+        currencyCode = currencyCode,
+        onCurrencyChanged = onCurrencyChanged,
         snackbarHostState = snackbarHostState,
         onBack = { navController.popBackStack() },
         onExportCsv = { csvLauncher.launch("AuraSpend_export.csv") },
@@ -743,8 +835,16 @@ private fun SettingsDestination(
                 if (isNotificationPermissionNeeded(context)) {
                     notificationPermissionLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
                 }
+                // Start draining now rather than at the next lifecycle transition: the user
+                // just asked for categorisation, and the loop is what does it in the
+                // foreground as well as the background.
+                BackgroundClassificationCoordinator.start(context)
                 scope.launch(Dispatchers.IO) { AutoClassificationWorker.runNow(context) }
             } else {
+                // Stop everything this feature had running, and clear its notification: a
+                // dismissed progress notification the user cannot explain is worse than none.
+                BackgroundClassificationCoordinator.stop()
+                (context.applicationContext as? AuraSpendApp)?.smsProgressNotifier?.cancel()
                 scope.launch(Dispatchers.IO) { AutoClassificationWorker.cancelPendingWork(context) }
             }
         }

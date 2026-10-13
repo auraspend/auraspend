@@ -1,8 +1,9 @@
 # Play Store assets — AuraSpend
 
 Everything here is what is uploaded to Google Play for the default (en-US) store
-listing. The live listing lives in the Play Console; this directory is the
-versioned source so assets can be changed and re-uploaded later.
+listing. The authoritative listing is the one saved in the Play Console — staged
+but not published, as of 2026-10-11; this directory is the versioned source so
+assets can be changed and re-uploaded later.
 
 | File | Used for | Play requirements |
 |---|---|---|
@@ -34,6 +35,11 @@ Offline expense tracker: budgets, subscriptions, insights. No ads, no tracking.
 — the text was composed for the 0.1.1 listing and lives in the Play Console's
 store listing editor. If it is edited there, copy the new text back here in the
 next handoff.
+
+## Release notes ("What's new")
+
+Per-release notes for the Play Console's *What's new* field (500 characters per
+language). Latest: `play-release-notes-0.1.3.md`.
 
 ## Regenerating the feature graphic
 

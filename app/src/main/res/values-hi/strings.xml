@@ -99,9 +99,6 @@
     <string name="activity_load_earlier">पुराने लेन-देन लोड करें</string>
     <string name="activity_group_today">आज</string>
     <string name="activity_group_yesterday">कल</string>
-    <string name="activity_group_this_week">इस हफ़्ते</string>
-    <string name="activity_group_this_month">इस महीने</string>
-    <string name="activity_group_older">पुराने</string>
 
     <!-- Transaction detail -->
     <string name="txn_detail_title">लेन-देन</string>
@@ -175,6 +172,10 @@
     <string name="settings_drive_restore_confirm_message">यह इस डिवाइस के सभी लेन-देन, बजट, सदस्यताएँ, लक्ष्य और श्रेणियाँ Google Drive में मौजूद बैकअप से बदल देगा। इसे पूर्ववत नहीं किया जा सकता।</string>
     <string name="action_restore">रिस्टोर करें</string>
     <string name="settings_finance">वित्त</string>
+    <string name="settings_currency">मुद्रा</string>
+    <string name="settings_currency_device_default">आपके डिवाइस के अनुसार</string>
+    <string name="currency_picker_device_default">मेरे डिवाइस के अनुसार रखें</string>
+    <string name="currency_picker_note">रकमें परिवर्तित नहीं होतीं — इससे केवल दिखावट बदलती है।</string>
     <string name="settings_categories">श्रेणियाँ</string>
     <string name="settings_categories_subtitle">श्रेणियाँ जोड़ें, संपादित करें या व्यवस्थित करें</string>
     <string name="settings_subscriptions">सदस्यताएँ</string>
@@ -201,7 +202,7 @@
     <string name="settings_ai_delete_title">श्रेणीकर्ता हटाएँ?</string>
     <string name="settings_ai_delete_message">इससे ऑन-डिवाइस श्रेणीकर्ता (~22 MB) हट जाएगा। आप इसे कभी भी फिर से डाउनलोड कर सकते हैं; आपके लेन-देन पर कोई असर नहीं पड़ेगा।</string>
     <string name="settings_ai_ready">स्मार्ट श्रेणियाँ चालू</string>
-    <string name="settings_ai_ready_subtitle">संदेश डिवाइस पर ही वर्गीकृत होते हैं। कोई डेटा आपके फ़ोन से बाहर नहीं जाता।</string>
+    <string name="settings_ai_ready_subtitle">संदेश डिवाइस पर ही वर्गीकृत होते हैं। केवल आपके द्वारा शुरू किया गया Drive बैकअप ही अपलोड होता है।</string>
     <string name="settings_ai_downloading">श्रेणीकर्ता डाउनलोड हो रहा है</string>
     <string name="settings_ai_downloading_progress">%1$d%% पूर्ण…</string>
     <string name="settings_ai_failed">डाउनलोड विफल</string>
@@ -279,6 +280,8 @@
     <string name="savings_edit_goal">लक्ष्य संपादित करें</string>
     <string name="savings_delete_goal">लक्ष्य हटाएँ</string>
     <string name="savings_delete_title">“%1$s” हटाएँ?</string>
+    <string name="recurring_delete_title">“%1$s” हटाएँ?</string>
+    <string name="recurring_delete_message">यह सदस्यता आपकी सूची से हटा दी जाएगी। इसे पूर्ववत नहीं किया जा सकता।</string>
     <string name="savings_delete_message">लक्ष्य और उसकी प्रगति हटा दी जाएगी। इसे पूर्ववत नहीं किया जा सकता।</string>
     <string name="savings_new_goal_title">नया लक्ष्य</string>
     <string name="savings_goal_name">लक्ष्य का नाम</string>
@@ -290,12 +293,14 @@
     <string name="savings_amount">राशि</string>
 
     <!-- Onboarding -->
-    <string name="onboarding_page1_title">हर रुपये का हिसाब रखें</string>
+    <string name="onboarding_page1_title">अपने पैसे का हिसाब रखें</string>
     <string name="onboarding_page1_description">आय, खर्च और शेष — हमेशा अद्यतन, हमेशा आपके डिवाइस पर।</string>
     <string name="onboarding_page2_title">डिफ़ॉल्ट रूप से स्मार्ट</string>
-    <string name="onboarding_page2_description">बैंक SMS को डिवाइस पर ही स्थानीय AI द्वारा स्वतः वर्गीकृत किया जाता है, जो आपका डेटा कभी अपलोड नहीं करता।</string>
+    <string name="onboarding_page2_description">बैंक SMS को डिवाइस पर ही स्थानीय AI द्वारा स्वतः वर्गीकृत किया जाता है। जब तक आप स्वयं Drive बैकअप शुरू नहीं करते, कुछ भी अपलोड नहीं होता।</string>
     <string name="onboarding_page3_title">पहले से योजना बनाएँ</string>
     <string name="onboarding_page3_description">बजट, सदस्यताएँ और लक्ष्य एक जगह, साथ में वाकई उपयोगी विश्लेषण।</string>
+    <string name="onboarding_page4_title">अपनी मुद्रा चुनें</string>
+    <string name="onboarding_page4_description">रकमें इसी मुद्रा में दिखाई जाएँगी। आप इसे सेटिंग्स में कभी भी बदल सकते हैं।</string>
     <string name="onboarding_restore_title">Google Drive से पुनर्स्थापित करें</string>
     <string name="onboarding_restore_subtitle">पिछला बैकअप वापस लाएँ</string>
     <string name="onboarding_restoring">आपका बैकअप पुनर्स्थापित हो रहा है…</string>
@@ -312,6 +317,8 @@
         <item quantity="other">इस महीने %1$d दिन बाकी</item>
     </plurals>
     <string name="budget_unknown_category">अज्ञात</string>
+    <string name="budget_delete_title">“%1$s” का बजट हटाएँ?</string>
+    <string name="budget_delete_message">बजट और उसकी प्रगति हटा दी जाएगी। इसे पूर्ववत नहीं किया जा सकता।</string>
     <string name="budget_spent">%1$s खर्च</string>
     <string name="budget_over_by">%1$s अधिक</string>
     <string name="budget_limit">%1$s सीमा</string>
@@ -403,6 +410,27 @@
     <string name="classification_download_model_short">(~22 MB) जोड़ें</string>
     <string name="classification_ai_categorizing">AI संदेशों को वर्गीकृत कर रहा है...</string>
     <string name="classification_reading_sms">बैंक संदेश पढ़े जा रहे हैं...</string>
+
+    <!-- SMS categorisation progress. The ongoing notification uses the same numbers as the
+         in-app header so the two surfaces can never disagree about what is happening. -->
+    <string name="sms_categorizing_title">संदेश वर्गीकृत हो रहे हैं…</string>
+    <string name="sms_categorizing_count">%1$d / %2$d</string>
+    <string name="sms_categorizing_row">वर्गीकृत हो रहा है…</string>
+    <plurals name="sms_categorizing_reviewed">
+        <item quantity="one">%1$d संदेश देखा गया</item>
+        <item quantity="other">%1$d संदेश देखे गए</item>
+    </plurals>
+    <string name="sms_categorizing_summary">%1$d सहेजे गए · %2$d छोड़े गए</string>
+    <plurals name="sms_categorizing_saved">
+        <item quantity="one">%1$d नया लेन-देन सहेजा गया</item>
+        <item quantity="other">%1$d नए लेन-देन सहेजे गए</item>
+    </plurals>
+    <plurals name="sms_categorizing_waiting">
+        <item quantity="one">%1$d संदेश प्रतीक्षा में</item>
+        <item quantity="other">%1$d संदेश प्रतीक्षा में</item>
+    </plurals>
+    <string name="sms_channel_name">संदेश वर्गीकरण</string>
+    <string name="sms_channel_description">आपके बैंक संदेशों के वर्गीकरण की प्रगति और परिणाम</string>
     <string name="classification_scan_message">बैंक संदेशों को पहचानने और वर्गीकृत करने के लिए अपना इनबॉक्स स्कैन करें।</string>
     <string name="classification_scan_sms">SMS स्कैन करें</string>
     <plurals name="classification_messages_found">
@@ -434,15 +462,6 @@
     <!-- Category selector + duplicate detection -->
     <string name="category_selector_title">श्रेणी चुनें</string>
     <string name="category_selector_ai_suggestion">AI सुझाव: %1$s (%2$d%% विश्वास)</string>
-    <string name="duplicate_title">संभावित प्रतिलिपि मिली</string>
-    <string name="duplicate_message">%1$s से मिलता-जुलता लेन-देन मिला</string>
-    <string name="duplicate_merchant">व्यापारी</string>
-    <string name="duplicate_amount">राशि</string>
-    <string name="duplicate_similarity">समानता</string>
-    <string name="duplicate_unknown_merchant">अज्ञात</string>
-    <string name="duplicate_question">क्या यह प्रतिलिपि लेन-देन है?</string>
-    <string name="duplicate_mark">प्रतिलिपि के रूप में चिह्नित करें</string>
-    <string name="duplicate_save_anyway">फिर भी सहेजें</string>
 
     <!-- Activity paging -->
     <string name="activity_load_error">लेन-देन लोड नहीं हो सके</string>
@@ -478,4 +497,116 @@
     <string name="error_permission_denied">ऐसा करने के लिए अनुमति आवश्यक है</string>
     <string name="error_unknown">कुछ गलत हो गया</string>
     <string name="budget_remaining">%1$s शेष</string>
+
+    <!-- ── 2026-10 review fixes: chrome, relative dates, enum names, splash and
+         taxonomy (findings #17, #18, #21). Mirrors the same block in
+         values/strings.xml key for key. -->
+
+    <!-- Chrome: nav bar labels and the two icon-only actions (#17). -->
+    <string name="home_title">होम</string>
+    <string name="insights_title">विश्लेषण</string>
+    <string name="action_add_transaction">लेन-देन जोड़ें</string>
+    <string name="action_settings">सेटिंग्स</string>
+
+    <!-- Relative dates in transaction rows (#18). -->
+    <plurals name="activity_days_ago">
+        <item quantity="one">%1$d दिन पहले</item>
+        <item quantity="other">%1$d दिन पहले</item>
+    </plurals>
+
+    <!-- Enum names must never reach the screen (#21). -->
+    <string name="txn_type_expense">खर्च</string>
+    <string name="txn_type_income">आय</string>
+    <string name="budget_period_weekly">साप्ताहिक</string>
+    <string name="budget_period_monthly">मासिक</string>
+    <string name="budget_period_yearly">वार्षिक</string>
+    <string name="recurring_cycle_daily">दैनिक</string>
+    <string name="recurring_cycle_weekly">साप्ताहिक</string>
+    <string name="recurring_cycle_monthly">मासिक</string>
+    <string name="recurring_cycle_yearly">वार्षिक</string>
+
+    <!-- Splash tagline (#21). -->
+    <string name="splash_tagline">खर्च का सुंदर प्रबंधन</string>
+
+    <!-- Hierarchical taxonomy (#21). Display-only labels for the canonical names
+         in `hierarchicalCategoryMap`; the ids those branches file into are
+         unchanged. -->
+    <string name="category_group_food_dining">खाना और भोजनालय</string>
+    <string name="category_group_transport">परिवहन</string>
+    <string name="category_group_shopping">खरीदारी</string>
+    <string name="category_group_bills_utilities">बिल और उपयोगिताएँ</string>
+    <string name="category_group_entertainment">मनोरंजन</string>
+    <string name="category_group_healthcare">स्वास्थ्य सेवा</string>
+    <string name="category_group_education">शिक्षा</string>
+    <string name="category_group_subscriptions">सदस्यताएँ</string>
+    <string name="category_group_travel_accommodation">यात्रा और ठहरने की व्यवस्था</string>
+    <string name="category_group_personal_care">व्यक्तिगत देखभाल</string>
+    <string name="category_group_transfers">ट्रांसफ़र</string>
+    <string name="category_group_salary_income">वेतन और आय</string>
+    <string name="category_leaf_food_delivery">फ़ूड डिलीवरी</string>
+    <string name="category_leaf_restaurants">रेस्टोरेंट</string>
+    <string name="category_leaf_groceries">किराना</string>
+    <string name="category_leaf_cafes_bakery">कैफ़े और बेकरी</string>
+    <string name="category_leaf_fast_food">फ़ास्ट फ़ूड</string>
+    <string name="category_leaf_meal_subscriptions">भोजन सदस्यताएँ</string>
+    <string name="category_leaf_auto_fuel">वाहन ईंधन</string>
+    <string name="category_leaf_cab_services">कैब सेवाएँ</string>
+    <string name="category_leaf_public_transit">सार्वजनिक परिवहन</string>
+    <string name="category_leaf_auto_rickshaw">ऑटो रिक्शा</string>
+    <string name="category_leaf_parking">पार्किंग</string>
+    <string name="category_leaf_tolls">टोल</string>
+    <string name="category_leaf_flights">हवाई यात्रा</string>
+    <string name="category_leaf_trains">रेल यात्रा</string>
+    <string name="category_leaf_buses">बस यात्रा</string>
+    <string name="category_leaf_e_commerce">ई-कॉमर्स</string>
+    <string name="category_leaf_fashion_retail">फ़ैशन</string>
+    <string name="category_leaf_beauty_cosmetics">सौंदर्य और कॉस्मेटिक</string>
+    <string name="category_leaf_electronics">इलेक्ट्रॉनिक्स</string>
+    <string name="category_leaf_home_furniture">घर और फ़र्नीचर</string>
+    <string name="category_leaf_sports_outdoors">खेल और आउटडोर</string>
+    <string name="category_leaf_jewelry">आभूषण</string>
+    <string name="category_leaf_books">किताबें</string>
+    <string name="category_leaf_electricity_bill">बिजली बिल</string>
+    <string name="category_leaf_water_bill">पानी बिल</string>
+    <string name="category_leaf_gas_bill">गैस बिल</string>
+    <string name="category_leaf_internet_bill">इंटरनेट बिल</string>
+    <string name="category_leaf_mobile_recharge">मोबाइल रिचार्ज</string>
+    <string name="category_leaf_dth_tv">DTH/टीवी</string>
+    <string name="category_leaf_rent">किराया</string>
+    <string name="category_leaf_streaming_video">वीडियो स्ट्रीमिंग</string>
+    <string name="category_leaf_streaming_audio_music">संगीत स्ट्रीमिंग</string>
+    <string name="category_leaf_gaming">गेमिंग</string>
+    <string name="category_leaf_movies_events">फ़िल्में और कार्यक्रम</string>
+    <string name="category_leaf_sports">खेल</string>
+    <string name="category_leaf_medical_consultations">डॉक्टर परामर्श</string>
+    <string name="category_leaf_pharmacy">दवा</string>
+    <string name="category_leaf_gym_fitness">जिम और फ़िटनेस</string>
+    <string name="category_leaf_dental">दंत चिकित्सा</string>
+    <string name="category_leaf_diagnostics">जाँच और परीक्षण</string>
+    <string name="category_leaf_mental_health">मानसिक स्वास्थ्य</string>
+    <string name="category_leaf_online_courses">ऑनलाइन कोर्स</string>
+    <string name="category_leaf_tuitions">ट्यूशन</string>
+    <string name="category_leaf_books_materials">किताबें और सामग्री</string>
+    <string name="category_leaf_college_school_fees">कॉलेज/स्कूल फ़ीस</string>
+    <string name="category_leaf_professional_certifications">प्रोफ़ेशनल सर्टिफ़िकेशन</string>
+    <string name="category_leaf_saas_software">SaaS और सॉफ़्टवेयर</string>
+    <string name="category_leaf_cloud_services">क्लाउड सेवाएँ</string>
+    <string name="category_leaf_memberships">सदस्यताएँ</string>
+    <string name="category_leaf_premium_services">प्रीमियम सेवाएँ</string>
+    <string name="category_leaf_hotels_stays">होटल और ठहराव</string>
+    <string name="category_leaf_flight_bookings">फ़्लाइट बुकिंग</string>
+    <string name="category_leaf_train_tickets">ट्रेन टिकट</string>
+    <string name="category_leaf_bus_tickets">बस टिकट</string>
+    <string name="category_leaf_tour_packages">टूर पैकेज</string>
+    <string name="category_leaf_haircut_salon">हेयरकट और सैलून</string>
+    <string name="category_leaf_skincare">स्किनकेयर</string>
+    <string name="category_leaf_personal_grooming">व्यक्तिगत ग्रूमिंग</string>
+    <string name="category_leaf_bank_transfers">बैंक ट्रांसफ़र</string>
+    <string name="category_leaf_upi_transfers">UPI ट्रांसफ़र</string>
+    <string name="category_leaf_peer_to_peer">पीयर-टू-पीयर</string>
+    <string name="category_leaf_loan_repayment">ऋण भुगतान</string>
+    <string name="category_leaf_monthly_salary">मासिक वेतन</string>
+    <string name="category_leaf_bonus">बोनस</string>
+    <string name="category_leaf_freelance_income">फ़्रीलांस आय</string>
+    <string name="category_leaf_investment_returns">निवेश पर प्रतिफल</string>
 </resources>

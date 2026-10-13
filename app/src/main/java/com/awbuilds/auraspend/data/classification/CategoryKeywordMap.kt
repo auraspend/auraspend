@@ -24,6 +24,13 @@ object CategoryKeywordMap {
     /**
      * Expense-side keywords. Keys are lowercase, matched as whole words or
      * whitespace-separated phrases.
+     *
+     * Resolution is longest-key-wins ([resolve]), **not** insertion order, so a
+     * key listed twice silently resolves to whichever value was written last.
+     * That is how `"mart"` came to mean Shopping: it was declared here as grocery
+     * ("Reliance Mart", "Vijay Mart") and declared again under Shopping, and the
+     * second declaration won without either entry looking wrong on its own.
+     * `KeywordMapGuardTest` now fails the build on a duplicate key.
      */
     private val EXPENSE: Map<String, String> = linkedMapOf(
         // Food & Dining
@@ -41,7 +48,7 @@ object CategoryKeywordMap {
         "burger" to "cat_food",
         "foodpanda" to "cat_food",
         "eatsure" to "cat_food",
-        // Groceries — before Shopping, so "bigbasket" is never read as retail
+        // Groceries. "mart" is a whole-word match, so "Walmart" is untouched.
         "bigbasket" to "cat_grocery",
         "dmart" to "cat_grocery",
         "reliance fresh" to "cat_grocery",
@@ -61,7 +68,6 @@ object CategoryKeywordMap {
         "decathlon" to "cat_shopping",
         "shop" to "cat_shopping",
         "store" to "cat_shopping",
-        "mart" to "cat_shopping",
         // Transport
         "uber" to "cat_transport",
         "ola" to "cat_transport",
