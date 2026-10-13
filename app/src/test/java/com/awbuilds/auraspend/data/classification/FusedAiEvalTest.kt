@@ -148,7 +148,14 @@ class FusedAiEvalTest {
         println("  dropped  : ${fused.dropped}")
         println("==============================================================")
 
-        assertEquals("every corpus case must be accounted for", 65, fused.total)
+        // Derived from the corpus, not hard-coded: the invariant is "no case
+        // silently dropped from the fused run", and it must survive the corpus
+        // growing (waves 1-3 added classes; a stale literal merely hides growth).
+        assertEquals(
+            "every corpus case must be accounted for",
+            com.awbuilds.auraspend.data.ai.ClassificationEval.loadCorpus().size,
+            fused.total
+        )
     }
 
     /**

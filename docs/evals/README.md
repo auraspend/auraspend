@@ -26,6 +26,15 @@ rather than mis-filing it. Standalone and fused scores can point opposite ways
 — Qwen and SmolLM2 both score 29.2 % standalone and reach opposite conclusions
 — which is why only the fused view is recorded here.
 
+**Corpus growth note (2026-10-13).** All rows above were measured on the
+65-case corpus of 2026-09-29. The corpus has since grown to 72 cases (the
+device-pass classes and the wave-1–3 bank formats), so CI now re-measures both
+evaluators on the larger set: the regex floor moved 13.8 % → **13.9 %** exact,
+type 95.4 % → **95.8 %**, category 36.9 % → **34.7 %** (`RegexBaselineEvalTest`
+and `FusedAiEvalTest` print their blocks). The fused rows keep their dated
+measurements: the shipped report carries no verdicts for the newer cases, which
+therefore run model-less in CI.
+
 ## Reproducing
 
 The encoder candidate was measured host-side:
