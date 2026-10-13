@@ -744,7 +744,12 @@ object BankMessageParser {
         return pretty.ifBlank { handle }
     }
 
-    private fun truncateMessage(message: String): String {
+    /**
+     * The note the pipeline stores when no merchant was found: whitespace
+     * collapsed, cut at 120 characters with an ellipsis. Internal so the
+     * transaction detail page can recognise its own filler.
+     */
+    internal fun truncateMessage(message: String): String {
         val cleaned = message.replace(Regex("""\s+"""), " ").trim()
         return if (cleaned.length > 120) cleaned.take(120) + "..." else cleaned
     }

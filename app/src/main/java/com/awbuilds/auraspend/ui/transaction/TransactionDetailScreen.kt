@@ -29,6 +29,7 @@ import androidx.compose.ui.unit.sp
 import com.awbuilds.auraspend.R
 import com.awbuilds.auraspend.core.boundary
 import com.awbuilds.auraspend.core.boundaryOrNull
+import com.awbuilds.auraspend.data.classification.BankMessageParser
 import com.awbuilds.auraspend.data.local.SmsMessageLookup
 import com.awbuilds.auraspend.data.local.entities.SmsMessageEntity
 import com.awbuilds.auraspend.domain.model.Category
@@ -359,7 +360,12 @@ private fun TransactionDetails(
 
         AuraCard(style = AuraCardStyle.Outlined, modifier = Modifier.fillMaxWidth()) {
             DetailRow(stringResource(R.string.txn_detail_merchant), transaction.merchant ?: stringResource(R.string.txn_detail_dash))
-            DetailRow(stringResource(R.string.txn_detail_note), transaction.note.ifBlank { stringResource(R.string.txn_detail_dash) })
+            // The pipeline's note is not user content (it is the merchant repeated,
+            // or the message's first 120 characters) — noise next to the full
+            // message. Hide only that; an edited note always stays.
+            if (!isPipelineNote(transaction.note, transaction.merchant, message?.body)) {
+                DetailRow(stringResource(R.string.txn_detail_note), transaction.note.ifBlank { stringResource(R.string.txn_detail_dash) })
+            }
             DetailRow(stringResource(R.string.txn_detail_bank), transaction.bankName ?: stringResource(R.string.txn_detail_dash))
             if (transaction.isRecurring) {
                 DetailRow(stringResource(R.string.txn_detail_recurring), transaction.subscriptionName ?: stringResource(R.string.txn_detail_yes))
@@ -414,6 +420,18 @@ private fun DetailRow(label: String, value: String) {
             textAlign = TextAlign.End
         )
     }
+}
+
+/**
+ * True when [note] is pipeline filler rather than user content: the merchant
+ * repeated, or the message itself as [BankMessageParser] truncates it
+ * (whitespace-collapsed, 120 characters + a trailing ellipsis). Anything else —
+ * an edited note, or one with no message to compare against — stays visible.
+ */
+internal fun isPipelineNote(note: String, merchant: String?, messageBody: String?): Boolean {
+    if (note.isBlank()) return false
+    if (!merchant.isNullOrBlank() && note == merchant) return true
+    return messageBody != null && note == BankMessageParser.truncateMessage(messageBody)
 }
 
 /** Clipboard label shown in the system's clipboard overlay. */
