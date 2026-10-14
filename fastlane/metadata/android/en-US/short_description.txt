@@ -1,0 +1,1 @@
+Offline money manager that reads your bank SMS on-device
