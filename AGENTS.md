@@ -3,7 +3,17 @@
 > Read this file and the latest file in `docs/handoffs/` before touching anything.
 > Update both (plus `CLAUDE.md` / `memory/` when you learn something durable) before ending a session.
 >
-> Latest: `docs/handoffs/0041-audit-device-pass-skipped-fix.md` — the ten 0040
+> Latest: `docs/handoffs/0042-epf-investment-and-release-approvals.md` — two
+> owner calls: **EPF contributions are investments, not income** (sender-routed
+> `EpfoParser` on EPFOHO — contribution amount pinned, type EXPENSE, new
+> default `cat_investment`; startup seeding now reconciles missing defaults so
+> existing installs get the category; PR #62) and **approvals only where they
+> matter** (`release.yml` no longer runs on PRs — every PR onto main had been
+> minting a `release`-environment approval request; stale runs cancelled;
+> approvals now = main-branch review + real release runs; PR #61). **540/540
+> tests.** Pending on-device: re-type the saved EPF rows (amounts already
+> right) + the two 0041-pass spot checks.
+> Before: `docs/handoffs/0041-audit-device-pass-skipped-fix.md` — the ten 0040
 > features walked on the owner's device; the pass found one real gap: with **no
 > model downloaded and the queue empty** — the model-less default — the Auto
 > Detect tab showed the model prompt and PR #59's **Skipped section was
