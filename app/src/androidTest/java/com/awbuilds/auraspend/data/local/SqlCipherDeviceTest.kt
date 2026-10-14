@@ -67,6 +67,13 @@ class SqlCipherDeviceTest {
         SqlCipherMigrator.migrateIfNeeded(context, name, passphrase)
 
         assertFalse("the migrated file must not carry the plaintext header", file.isPlaintextOnDisk())
+        // The crash-safe swap leaves nothing behind: no plaintext backup, no
+        // intermediate export.
+        assertFalse(
+            "the plaintext backup must be removed once the swap completed",
+            File(file.path + SqlCipherMigrator.PLAIN_BACKUP_SUFFIX).exists()
+        )
+        assertFalse("the intermediate export must be renamed, not copied", File(file.path + ".enc").exists())
         // Readable with the key, and the data made the trip.
         SQLiteDatabase.openDatabase(file.path, passphrase, null, SQLiteDatabase.OPEN_READWRITE, null).use { db ->
             db.rawQuery("SELECT note FROM t WHERE id = 1", null).use { cursor ->

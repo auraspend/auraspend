@@ -63,11 +63,25 @@ object JniSqlCipherGateway : SqlCipherGateway {
  * Detection is the open itself: an encrypted file cannot be read without the
  * passphrase, and a plaintext file cannot be read *with* one — so the probe is
  * "can we read sqlite_master using the passphrase". If not, the file is
- * exported through the gateway and swapped into place. A failed export throws
- * with the original file still on disk: this upgrade must never be the thing
- * that loses the user's records.
+ * exported through the gateway and swapped in.
+ *
+ * The swap is **crash-safe**, which is the whole reason it is written as three
+ * renames rather than "export, delete, rename". Deleting the original before
+ * putting the new one in place leaves a window — a crash, a battery pull, the
+ * process being killed — where neither file is where the app expects it and the
+ * user's records exist only as an `auraspend_db.enc` the app never looks at.
+ * Instead the plaintext is *renamed* to [PLAIN_BACKUP_SUFFIX], the encrypted
+ * copy takes its place, and only then is the backup removed. Every crash point
+ * leaves a readable database plus, at worst, a leftover backup — and
+ * [recoverInterruptedSwap] puts things back if the process died mid-swap.
+ *
+ * A failed export throws with the original file exactly where it was: this
+ * upgrade must never be the thing that loses the user's records.
  */
 object SqlCipherMigrator {
+
+    /** Suffix of the short-lived copy of the plaintext original. */
+    const val PLAIN_BACKUP_SUFFIX = ".plain.bak"
 
     fun migrateIfNeeded(
         context: Context,
@@ -76,6 +90,7 @@ object SqlCipherMigrator {
         gateway: SqlCipherGateway = JniSqlCipherGateway
     ) {
         val file = context.getDatabasePath(dbName)
+        recoverInterruptedSwap(file)
         // A fresh install has no file: the SupportOpenHelperFactory below Room
         // creates it encrypted from the start, so there is nothing to migrate.
         if (!file.exists()) return
@@ -84,8 +99,48 @@ object SqlCipherMigrator {
         val encrypted = File(file.parentFile, "$dbName.enc")
         encrypted.delete()
         gateway.exportToEncrypted(file, encrypted, passphrase)
+
+        // 1. Stale side files go first: they belong to the plaintext original,
+        //    and the encrypted database must not inherit a journal.
         for (suffix in listOf("-wal", "-shm")) File(file.path + suffix).delete()
-        check(file.delete()) { "could not remove the plaintext database during the encryption upgrade" }
-        check(encrypted.renameTo(file)) { "could not put the encrypted database in place" }
+
+        // 2. Move the plaintext aside rather than deleting it. From here on, a
+        //    crash leaves a readable database at the expected path plus a
+        //    backup, instead of neither.
+        val backup = File(file.path + PLAIN_BACKUP_SUFFIX)
+        backup.delete()
+        check(file.renameTo(backup)) { "could not move the plaintext database aside for the encryption upgrade" }
+
+        // 3. Put the encrypted copy in place.
+        if (!encrypted.renameTo(file)) {
+            // Put the user's data back where the app will look for it, then fail
+            // loudly — a half-finished upgrade is never a state to continue in.
+            backup.renameTo(file)
+            error("could not put the encrypted database in place; the plaintext original was restored")
+        }
+
+        // 4. Only now is the backup redundant.
+        backup.delete()
+    }
+
+    /**
+     * Undo the effects of a crash mid-swap, before anything else looks at the
+     * database.
+     *
+     * Two states are possible after a kill: the plaintext was moved aside but
+     * the encrypted copy never arrived (the file is missing, the backup holds
+     * the records — restore it, and the next run migrates again), or the swap
+     * completed and only the backup removal was missed (the encrypted file is
+     * in place — drop the stale backup).
+     */
+    internal fun recoverInterruptedSwap(file: File) {
+        val backup = File(file.path + PLAIN_BACKUP_SUFFIX)
+        if (!backup.exists()) return
+        if (file.exists()) {
+            backup.delete()
+        } else {
+            backup.renameTo(file)
+            for (suffix in listOf("-wal", "-shm")) File(file.path + suffix).delete()
+        }
     }
 }
