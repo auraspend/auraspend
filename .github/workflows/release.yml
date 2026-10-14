@@ -180,13 +180,18 @@ jobs:
           whatsNewDirectory: docs/store/whatsnew
           mappingFile: app/build/outputs/mapping/prodRelease/mapping.txt
 
-      - name: Check whether this tag already has a release
+      - name: Check whether this tag already has a published release
         id: release_exists
         if: startsWith(github.ref, 'refs/tags/')
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          if gh release view "$GITHUB_REF_NAME" > /dev/null 2>&1; then
+          # `gh release view` also finds the rolling *draft* that Release
+          # Drafter keeps under the next version. Treating that draft as
+          # "already released" skipped the publish step and left v0.1.4 a
+          # draft with everything attached (2026-10-14). Only a non-draft
+          # release counts as published.
+          if [ "$(gh release view "$GITHUB_REF_NAME" --json isDraft --jq '.isDraft' 2>/dev/null || echo missing)" = "false" ]; then
             echo "exists=true" >> "$GITHUB_OUTPUT"
           else
             echo "exists=false" >> "$GITHUB_OUTPUT"
@@ -214,3 +219,17 @@ jobs:
             "dist/${{ steps.names.outputs.base }}.apk" \
             dist/SHA256SUMS \
             --clobber
+
+      # Belt and braces: whatever the drafter step above decided, the tag's
+      # release must end this run published, with its assets attached.
+      - name: Publish the release if it is still a draft
+        if: startsWith(github.ref, 'refs/tags/')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [ "$(gh release view "$GITHUB_REF_NAME" --json isDraft --jq '.isDraft' 2>/dev/null)" = "true" ]; then
+            gh release edit "$GITHUB_REF_NAME" --draft=false
+            echo "published the draft"
+          else
+            echo "release is already published"
+          fi
