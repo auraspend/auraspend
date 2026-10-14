@@ -141,10 +141,13 @@ Release builds require a keystore in `secrets.properties` (see
 produces an `…-unsigned.apk`**, which Play and self-installers will reject —
 check the filename before uploading.
 
-Pushing a `v*` tag runs the release workflow, which builds both, verifies the
-signatures, and attaches them to a GitHub Release as
-`AuraSpend-V<version>.Alpha.{aab,apk}` — see
-`.github/workflows/release.yml`. The workflow does not publish to Play.
+Pushing a `v*` tag runs the release workflow: it builds both, verifies the
+signatures, attaches them to a GitHub Release as
+`AuraSpend-V<version>.Alpha.{aab,apk}`, and uploads the signed bundle to
+Google Play's closed-testing track with the per-language notes in
+`docs/store/whatsnew/` — see `.github/workflows/release.yml`. The run is
+approval-gated, and the destination track can be changed with the `PLAY_TRACK`
+repository variable.
 
 ### Google Drive backup
 

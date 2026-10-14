@@ -1,0 +1,9 @@
+What's new in 0.1.4
+
+• SMS dates read correctly, including "Jul 22" month-first formats.
+• Smart Add no longer lags while messages are being categorised.
+• Fewer false duplicates; wrongly skipped payments are restored.
+• New: "Detected from your messages" — track recurring payments in a tap.
+• Activity browses by month; Insights now drills into a category.
+• EPF contributions count as Investments, not income.
+• Fixes: dark/AMOLED visibility, homepage chart, categorisation search.
