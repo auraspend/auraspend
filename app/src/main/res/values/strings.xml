@@ -22,6 +22,7 @@
     <string name="action_remove">Remove</string>
     <string name="action_dismiss">Dismiss</string>
     <string name="action_duplicate">Duplicate</string>
+    <string name="action_share">Share</string>
     <string name="action_copy_message">Copy message</string>
     <string name="action_not_now">Not now</string>
 

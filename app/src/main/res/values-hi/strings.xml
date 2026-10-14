@@ -23,6 +23,7 @@
     <string name="action_remove">हटाएँ</string>
     <string name="action_dismiss">खारिज करें</string>
     <string name="action_duplicate">प्रतिलिपि बनाएँ</string>
+    <string name="action_share">शेयर करें</string>
     <string name="action_copy_message">संदेश कॉपी करें</string>
     <string name="action_not_now">अभी नहीं</string>
 
