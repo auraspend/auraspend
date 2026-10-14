@@ -1,0 +1,69 @@
+# F-Droid metadata — draft for fdroiddata (ADR 0012)
+#
+# This file is the metadata entry for the fdroiddata merge request. Copy it to
+# `metadata/com.awbuilds.auraspend.yml` in a fork of
+# https://gitlab.com/fdroid/fdroiddata once the release below exists as a tag.
+# See ./SUBMISSION.md for the full submission steps.
+#
+# The `fdroid` flavor (app/build.gradle.kts) carries no Google Play Services:
+# F-Droid's inclusion policy forbids the non-free dependency, and Drive backup
+# is absent from this build. Everything else is identical to the Play build.
+
+Categories:
+  - Money
+License: AGPL-3.0-or-later
+AuthorName: AuraSpend
+SourceCode: https://github.com/auraspend/auraspend
+IssueTracker: https://github.com/auraspend/auraspend/issues
+Changelog: https://github.com/auraspend/auraspend/releases
+
+AutoName: AuraSpend
+
+Summary: Offline money manager that reads your bank SMS on-device
+Description: |-
+  Turn your bank's SMS into organised spending — entirely on your phone.
+
+  AuraSpend reads your bank and payment messages locally and turns them into
+  transactions, budgets, subscriptions and category insights. No accounts, no
+  servers, no analytics, no ads: your messages never leave the device.
+
+  * Automatic categorisation: per-bank parsing plus an optional on-device
+    encoder (~22 MB MiniLM, downloaded only after an explicit in-app consent
+    tap; SHA-256 pinned). The app works without it.
+  * Budgets, recurring-subscription detection, savings goals, CSV export and
+    import.
+  * English and Hindi, Material 3 with a light, dark and AMOLED theme.
+
+  This build ships without Google Play Services: Google Drive backup is not
+  available here. CSV export/import moves your data in and out.
+
+RepoType: git
+Repo: https://github.com/auraspend/auraspend
+
+# NOTE: versionName/versionCode must match what the tagged commit's build
+# produces (app/build.gradle.kts). Adjust both + the tag if the next release
+# carries different numbers.
+Builds:
+  - versionName: 0.1.4
+    versionCode: 5
+    commit: v0.1.4
+    subdir: app
+    gradle:
+      - fdroid
+    sdks:
+      - platforms;android-37.0
+      - build-tools;36.0.0
+
+AutoUpdateMode: Version v%v
+UpdateCheckMode: Tags
+CurrentVersion: 0.1.4
+CurrentVersionCode: 5
+
+MaintainerNotes: |-
+  The `fdroid` flavor ships without Google Play Services (ADR 0012 in the app
+  repository): no Drive backup. The optional on-device categoriser model is an
+  Apache-2.0 MiniLM encoder (~22 MB), downloaded only after an explicit in-app
+  consent tap and SHA-256 verified before use; the app is fully functional
+  without it. No analytics, no ads, no accounts, no other network use.
+  The same repository builds the Play flavor (with Drive backup) from the
+  same commit.

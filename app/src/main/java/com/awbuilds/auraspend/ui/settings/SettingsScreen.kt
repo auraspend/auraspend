@@ -405,22 +405,26 @@ fun SettingsScreen(
 
         SettingsSectionHeader(stringResource(R.string.settings_data))
         SettingsCard {
-            SettingsRow(
-                icon = Icons.Default.Backup,
-                title = stringResource(R.string.settings_drive_backup),
-                subtitle = stringResource(R.string.settings_drive_backup_subtitle),
-                busy = driveBusy,
-                onClick = onBackupToDrive
-            )
-            DividerSpacer()
-            SettingsRow(
-                icon = Icons.Default.CloudDownload,
-                title = stringResource(R.string.settings_drive_restore),
-                subtitle = stringResource(R.string.settings_drive_restore_subtitle),
-                busy = driveBusy,
-                onClick = { showRestoreDialog = true }
-            )
-            DividerSpacer()
+            // The F-Droid build has no Google Play Services and no Drive backup
+            // (ADR 0012): the rows are absent, not dead buttons.
+            if (BuildConfig.DRIVE_BACKUP) {
+                SettingsRow(
+                    icon = Icons.Default.Backup,
+                    title = stringResource(R.string.settings_drive_backup),
+                    subtitle = stringResource(R.string.settings_drive_backup_subtitle),
+                    busy = driveBusy,
+                    onClick = onBackupToDrive
+                )
+                DividerSpacer()
+                SettingsRow(
+                    icon = Icons.Default.CloudDownload,
+                    title = stringResource(R.string.settings_drive_restore),
+                    subtitle = stringResource(R.string.settings_drive_restore_subtitle),
+                    busy = driveBusy,
+                    onClick = { showRestoreDialog = true }
+                )
+                DividerSpacer()
+            }
             SettingsRow(
                 icon = Icons.Default.FileDownload,
                 title = stringResource(R.string.settings_export_csv),

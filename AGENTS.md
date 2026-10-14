@@ -350,8 +350,10 @@ Kotlin source root: `app/src/main/java/com/awbuilds/auraspend/`
 ./gradlew assembleProdDebug               # prod APK (what ships; native build)
 ```
 
-Flavors: `dev` (development — `.dev` application id, "AuraSpend Dev" label) and
-`prod` (the only distributed build). Feature-identical; see ADR 0010.
+Flavors: `dev` (development — `.dev` application id, "AuraSpend Dev" label),
+`prod` (the Play build and the GitHub-release APK) and `fdroid` (F-Droid — no
+Google Play Services, so no Drive backup: ADR 0012, the one documented feature
+exception). dev/prod are feature-identical; see ADR 0010.
 The Play paywall was removed in Phase 0 — do not reintroduce premium gating.
 
 **Signed releases:** keystore credentials live in `secrets.properties`
@@ -575,13 +577,16 @@ application id): `:benchmark:connectedDevBenchmarkAndroidTest` — see README.
   every candidate with `FusedAiEval`.
 - **The `dev`/`prod` flavors are feature-identical.** No feature may live in a
   flavor source set that is absent from `app/src/main/`; only configuration
-  (application-id suffix, label, signing) may differ. **Neither build may carry
+  (application-id suffix, label, signing) may differ. The **`fdroid`** flavor is
+  the single documented exception (ADR 0012): it omits the non-free Google Play
+  Services dependency, so Drive backup — and only Drive backup — is absent
+  there. **Neither build may carry
   analytics, ads or any telemetry** — the app's on-screen claim is that bank SMS
   never leaves the device, and an SDK in one build would make that claim false
   and the store listing self-contradictory. There is no paywall and no in-app
   purchase; every feature ships in every build. Do not reintroduce premium
   gating (ADR 0007), and do not add a Play-only capability without superseding
-  ADR 0010.
+  ADR 0010 (the fdroid Drive exception is ADR 0012).
 - **A model may never delete a transaction on a bare boolean.** A model "not a
   transaction" verdict nulls `amount` and `type` in `AiSignalFusion`, and the
   pipeline's unresolved-fields gate then drops the row — so a false veto
