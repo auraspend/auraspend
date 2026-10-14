@@ -3,7 +3,18 @@
 > Read this file and the latest file in `docs/handoffs/` before touching anything.
 > Update both (plus `CLAUDE.md` / `memory/` when you learn something durable) before ending a session.
 >
-> Latest: `docs/handoffs/0043-theme-visibility-chart-fdroid.md` — untinted icons
+> Latest: `docs/handoffs/0044-play-upload-on-tag.md` — one `v*` tag now ships to
+> **both channels**: the GitHub release (as before) *and* a Google Play upload —
+> signed AAB to the closed-testing track (`alpha`, `PLAY_TRACK` overrides) with
+> the per-language notes in `docs/store/whatsnew/` and the R8 mapping. Tag runs
+> only, still behind the `release` approval. The Play credential
+> (`PLAY_SERVICE_ACCOUNT_JSON`) is a service account whose identity is
+> **deliberately unrecorded anywhere in this repo** — never name it; AGENTS.md
+> carries the rule. A read-only pre-flight confirmed auth + app access + the
+> `alpha` track name. PR #67. Remaining precondition: the Play upload-key reset
+> (a first upload without it fails loudly). F-Droid: sequence settled on #65 —
+> the fdroiddata MR (owner's GitLab account) follows the next tag.
+> Before: `docs/handoffs/0043-theme-visibility-chart-fdroid.md` — untinted icons
 > (back buttons, month chevrons) were black on every background — Compose's
 > `LocalContentColor` default; the theme now provides the scheme's
 > `onBackground` (+ a LIGHT/DARK/AMOLED guard test), and the nav-bar appearance
