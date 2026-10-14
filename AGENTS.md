@@ -3,7 +3,18 @@
 > Read this file and the latest file in `docs/handoffs/` before touching anything.
 > Update both (plus `CLAUDE.md` / `memory/` when you learn something durable) before ending a session.
 >
-> Latest: `docs/handoffs/0039-detected-subscriptions.md` — the Subscriptions
+> Latest: `docs/handoffs/0040-screen-audit-gaps.md` — the owner asked what each
+> screen was missing; ten small tested changes closed the gaps: subscription
+> **edit** + suggestion **dismiss**; a **Skipped (N)** section in Smart Add
+> with Classify-again and Skip All; Activity **month navigation** and a
+> **sort toggle**; Settings **SMS-access status**, a **notification toggle**
+> and **Delete all data** (restore-with-empty-backup + re-seed + cursor
+> reset); category **icon/colour pickers** (guarded by tests); detail-page
+> **re-categorize + Share**; editor **recurring switch**; Quick Add **date**;
+> Insights **drill-down** into filtered Activity. PR #59, **531/531 tests.**
+> Deliberately not ported (reasons in the handoff): dashboard month-stepping,
+> budget alert notifications, multi-select delete, global search.
+> Before: `docs/handoffs/0039-detected-subscriptions.md` — the Subscriptions
 > screen now shows the payments the classifier had **always** flagged recurring
 > but never displayed (eight real recurring payments on the owner's fresh
 > install; the owner's services and amounts are deliberately unrecorded): a
