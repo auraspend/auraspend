@@ -286,6 +286,11 @@ dependencies {
     implementation(libs.androidx.paging.compose)
     ksp(libs.androidx.room.compiler)
 
+    // Encrypted SQLite (SQLCipher, BSD-style Community Edition) — the whole
+    // database is encrypted at rest; see data/local/SqlCipherMigrator.kt for
+    // the one-time plaintext upgrade and DbPassphrase for the key handling.
+    implementation(libs.sqlcipher.android)
+
     testImplementation(libs.junit)
     // `runTest` + `Dispatchers.setMain` for ViewModel tests. The suite had no
     // ViewModel coverage at all, not because the logic is untestable but because

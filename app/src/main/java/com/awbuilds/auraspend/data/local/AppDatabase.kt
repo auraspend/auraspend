@@ -6,6 +6,8 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
+import androidx.sqlite.db.SupportSQLiteOpenHelper
+import com.awbuilds.auraspend.data.security.DbPassphrase
 import com.awbuilds.auraspend.data.local.dao.*
 import com.awbuilds.auraspend.data.local.entities.*
 
@@ -196,12 +198,32 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
-        fun getInstance(context: Context): AppDatabase {
+        private const val DB_NAME = "auraspend_db"
+
+        /**
+         * Both the passphrase and the open-helper factory are parameters rather
+         * than hidden Keystore calls: production passes SQLCipher with a
+         * Keystore-derived key, and a JVM test — where neither the
+         * AndroidKeyStore provider nor `libsqlcipher.so` exists — passes a
+         * fixed key and `null` for the factory. A silent "encryption
+         * unavailable, carry on in plaintext" fallback is precisely the failure
+         * this signature exists to prevent, so every caller has to choose.
+         */
+        fun getInstance(
+            context: Context,
+            passphrase: ByteArray,
+            openHelperFactory: SupportSQLiteOpenHelper.Factory?
+        ): AppDatabase {
+            val appContext = context.applicationContext
+            // Encrypted at rest (SQLCipher): run the one-time plaintext upgrade
+            // before any Room handle exists. A fresh install skips it — the
+            // factory below creates the file encrypted from the start.
+            SqlCipherMigrator.migrateIfNeeded(appContext, DB_NAME, passphrase)
             return INSTANCE ?: synchronized(this) {
-                val instance = Room.databaseBuilder(
-                    context.applicationContext,
+                val builder = Room.databaseBuilder(
+                    appContext,
                     AppDatabase::class.java,
-                    "auraspend_db"
+                    DB_NAME
                 )
                     .addMigrations(
                         MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6,
@@ -228,7 +250,10 @@ abstract class AppDatabase : RoomDatabase() {
                     // Write-ahead logging lets dashboard reads proceed while the
                     // SMS pipeline writes transactions — no lock contention.
                     .setJournalMode(RoomDatabase.JournalMode.WRITE_AHEAD_LOGGING)
-                    .build()
+                if (openHelperFactory != null) {
+                    builder.openHelperFactory(openHelperFactory)
+                }
+                val instance = builder.build()
                 INSTANCE = instance
                 instance
             }

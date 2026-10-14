@@ -417,6 +417,7 @@ their own terms — the AGPL covers AuraSpend's own source, not theirs:
 |---|---|---|
 | [Plus Jakarta Sans](https://fonts.google.com/specimen/Plus+Jakarta+Sans) | SIL OFL 1.1 | Bundled font, `app/src/main/res/font/` |
 | [ONNX Runtime](https://onnxruntime.ai/) (Android) | MIT | Native inference runtime, Maven AAR |
+| [SQLCipher](https://www.zetetic.net/sqlcipher/) Community Edition (Android) | BSD-3-Clause | Encrypted database at rest, Maven AAR; both shipped ABIs pass `tools/audit_native_runtime.sh` |
 | AndroidX (Room, Compose, Lifecycle, Work, Navigation) | Apache-2.0 | |
 | Google API Client, Google Drive API, play-services-auth | Apache-2.0 | Drive backup only; sign-in API is pinned by [ADR 0011](docs/adr/0011-google-signin-pinned.md) |
 | OkHttp, google-http-client-gson | Apache-2.0 | Declared directly |

@@ -55,7 +55,9 @@ class DemoDataSeeder {
 
     @Test
     fun seed() = runBlocking {
-        val db = AppDatabase.getInstance(context)
+        // The real application, so this seeder writes into the same encrypted
+        // database the app itself uses.
+        val db = (context.applicationContext as AuraSpendApp).database
 
         db.clearAllTables()
 

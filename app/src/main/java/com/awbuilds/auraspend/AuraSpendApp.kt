@@ -4,8 +4,11 @@ import android.app.Application
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ProcessLifecycleOwner
+import androidx.sqlite.db.SupportSQLiteOpenHelper
 import com.awbuilds.auraspend.data.classification.AutoClassificationWorker
 import com.awbuilds.auraspend.data.ai.LocalLlmProvider
+import com.awbuilds.auraspend.data.security.DbPassphrase
+import net.zetetic.database.sqlcipher.SupportOpenHelperFactory
 import com.awbuilds.auraspend.data.ai.ModelDownloadManager
 import com.awbuilds.auraspend.data.classification.BackgroundClassificationCoordinator
 import com.awbuilds.auraspend.data.classification.SmsProgressNotifier
@@ -80,10 +83,24 @@ open class AuraSpendApp : Application() {
 
     private val applicationScope = CoroutineScope(Dispatchers.IO)
 
+    /**
+     * How the encrypted database is opened. Both halves are `open` only so a
+     * JVM test can substitute them: the AndroidKeyStore provider and
+     * `libsqlcipher.so` do not exist on the test host. The alternative — a
+     * silent "encryption unavailable, carry on in plaintext" fallback — is the
+     * one thing this layer must never do, which is why the choice is explicit
+     * at every call site. `SqlCipherDeviceTest` covers the encrypted paths on a
+     * real device.
+     */
+    internal open val databasePassphrase: ByteArray get() = DbPassphrase.get()
+
+    internal open val databaseOpenHelperFactory: SupportSQLiteOpenHelper.Factory?
+        get() = SupportOpenHelperFactory(databasePassphrase)
+
     override fun onCreate() {
         super.onCreate()
 
-        database = AppDatabase.getInstance(this)
+        database = AppDatabase.getInstance(this, databasePassphrase, databaseOpenHelperFactory)
 
         transactionRepository = TransactionRepositoryImpl(
             transactionDao = database.transactionDao(),

@@ -189,6 +189,7 @@ check_attribution() {
 
 check_attribution "Plus Jakarta Sans" 'Plus Jakarta Sans'
 check_attribution "ONNX Runtime (MIT)" 'ONNX Runtime'
+check_attribution "SQLCipher" 'SQLCipher'
 check_attribution "AndroidX" 'AndroidX'
 check_attribution "Google API Client / Drive / play-services-auth" 'Google API Client'
 check_attribution "OkHttp" 'OkHttp'

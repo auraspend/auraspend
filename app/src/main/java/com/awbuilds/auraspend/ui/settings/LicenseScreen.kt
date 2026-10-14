@@ -89,6 +89,12 @@ private val THIRD_PARTY = listOf(
         url = "https://onnxruntime.ai/"
     ),
     ThirdPartyComponent(
+        name = "SQLCipher (Zetetic, Community Edition)",
+        license = "BSD-3-Clause",
+        role = ThirdPartyRole.BUNDLED,
+        url = "https://www.zetetic.net/sqlcipher/"
+    ),
+    ThirdPartyComponent(
         name = "AndroidX — Room, Compose, Lifecycle, Work, Navigation, Paging, ProfileInstaller",
         license = "Apache-2.0",
         role = ThirdPartyRole.BUNDLED,

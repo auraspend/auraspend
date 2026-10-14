@@ -115,6 +115,16 @@ jobs:
       - name: Unit tests (prod debug)
         run: ./gradlew testProdDebugUnitTest
 
+      # The instrumented (device) tests are the only coverage for the native
+      # paths — the encoder JNI, and now SQLCipher's plaintext upgrade — because
+      # none of them can load an Android .so on the JVM. Compiling that source
+      # set is cheap and needs no device, and it is how a stale device test gets
+      # caught: `R8ReleaseSmokeTest` had called `insertTransaction`, renamed to
+      # `insertTransactionIfAbsent` in 0026, and nothing here noticed for five
+      # releases because the device tests only compile when a phone is attached.
+      - name: Instrumented tests compile (dev debug)
+        run: ./gradlew :app:compileDevDebugAndroidTestKotlin
+
       - name: Lint (dev debug)
         run: ./gradlew :app:lintDevDebug
 
@@ -205,6 +215,23 @@ jobs:
           # nothing reports a clean result for every library it is given.
           ./tools/audit_native_runtime.sh /tmp/native-audit/jni/arm64-v8a/libonnxruntime.so 'Ort(GetApiBase|Session|Env)'
           ./tools/audit_native_runtime.sh /tmp/native-audit/jni/arm64-v8a/libonnxruntime4j_jni.so 'Java_ai_onnxruntime'
+
+          # SQLCipher's native layer gets the same audit, once per ABI the APK
+          # ships. The version lives in the catalog and the AAR in this job's
+          # freshly populated Gradle cache (added with the database-at-rest
+          # encryption); the allowance for its SQLite extension loader is pinned
+          # to these two digests inside the script, so a version bump blocks
+          # until the new binary is re-reviewed.
+          sqlcipher_version="$(grep -oE '^sqlcipher = "[^"]+"' gradle/libs.versions.toml | sed 's/.*"\(.*\)"/\1/')"
+          test -n "$sqlcipher_version" || { echo "::error::no sqlcipher version in gradle/libs.versions.toml"; exit 1; }
+          sqlcipher_aar="$(find "$HOME/.gradle/caches/modules-2/files-2.1/net.zetetic/sqlcipher-android/$sqlcipher_version" \
+                           -name '*.aar' 2>/dev/null | head -1 || true)"
+          test -n "$sqlcipher_aar" || { echo "::error::sqlcipher $sqlcipher_version AAR is not in the Gradle cache"; exit 1; }
+          rm -rf /tmp/sqlcipher-audit && mkdir -p /tmp/sqlcipher-audit
+          unzip -o -q "$sqlcipher_aar" 'jni/*/libsqlcipher.so' -d /tmp/sqlcipher-audit
+          for abi in arm64-v8a armeabi-v7a; do
+            ./tools/audit_native_runtime.sh "/tmp/sqlcipher-audit/jni/$abi/libsqlcipher.so" 'sqlite3_key'
+          done
 
       - name: Upload lint reports
         if: always()
