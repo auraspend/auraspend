@@ -3,6 +3,7 @@ package com.awbuilds.auraspend.ui.theme
 import android.app.Activity
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Typography
 import androidx.compose.material3.darkColorScheme
@@ -270,8 +271,12 @@ fun AuraSpendTheme(
     if (!view.isInEditMode) {
         SideEffect {
             val window = (view.context as Activity).window
-            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars =
-                resolved == AppThemeMode.LIGHT
+            val insetsController = WindowCompat.getInsetsController(window, view)
+            insetsController.isAppearanceLightStatusBars = resolved == AppThemeMode.LIGHT
+            // The navigation bar was never set, so DARK/AMOLED kept dark system
+            // icons on the near-black bar — the same class of bug as the black
+            // LocalContentColor default. Both bars follow the theme together.
+            insetsController.isAppearanceLightNavigationBars = resolved == AppThemeMode.LIGHT
         }
     }
 
@@ -282,7 +287,13 @@ fun AuraSpendTheme(
 
     CompositionLocalProvider(
         LocalExtendedColors provides extendedColors,
-        LocalCurrencyStyle provides currency
+        LocalCurrencyStyle provides currency,
+        // Compose's LocalContentColor default is black, which is what untinted
+        // Icons and bare Text inherit when no Material component sets one:
+        // readable in LIGHT, invisible in DARK and AMOLED. Observed on the
+        // owner's device (back buttons, the month chevrons). Material components
+        // still override it with their own container colours.
+        LocalContentColor provides colorScheme.onBackground
     ) {
         MaterialTheme(
             colorScheme = colorScheme,
