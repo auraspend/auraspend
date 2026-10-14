@@ -3,7 +3,17 @@
 > Read this file and the latest file in `docs/handoffs/` before touching anything.
 > Update both (plus `CLAUDE.md` / `memory/` when you learn something durable) before ending a session.
 >
-> Latest: `docs/handoffs/0044-play-upload-on-tag.md` — one `v*` tag now ships to
+> Latest: `docs/handoffs/0045-release-0.1.4-shipped.md` — **0.1.4 is out**:
+> GitHub release published (AAB/APK/checksums) and **Play closed testing
+> (`alpha`) holds 0.1.4 — status `completed`** (the tag run's Play upload
+> committed; the former upload-key precondition is evidently cleared). The run
+> left the release a **draft**: its exists-check counted Release Drafter's
+> rolling draft as "published"; PR #69 fixes that (`isDraft` check + a
+> guaranteed publish step). Public run logs scanned — only the secret **name**
+> and GitHub's `***` masking, no credential identity. F-Droid: everything
+> staged; the fdroiddata MR (owner's GitLab) is the last step — issue #65.
+> Device pass still pending (wireless debugging off).
+> Before: `docs/handoffs/0044-play-upload-on-tag.md` — one `v*` tag now ships to
 > **both channels**: the GitHub release (as before) *and* a Google Play upload —
 > signed AAB to the closed-testing track (`alpha`, `PLAY_TRACK` overrides) with
 > the per-language notes in `docs/store/whatsnew/` and the R8 mapping. Tag runs
