@@ -71,6 +71,14 @@ durable lives elsewhere. Keep it a pointer; promote findings to `memory/` or
   instrumented source set is now compiled by CI (`:app:compileDevDebugAndroidTestKotlin`),
   because `R8ReleaseSmokeTest` sat broken for five releases before that gate
   existed.
+- **Run the device suite on the local emulator, not only on the phone.** The
+  arm64 AVD (`Android_17`) takes about a minute: boot it headless, then
+  `ANDROID_SERIAL=emulator-5554 ./gradlew :app:connectedDevDebugAndroidTest`.
+  Three release-blocking SQLCipher defects were found this way and by nothing
+  else — nothing loads `libsqlcipher.so` (the app must call
+  `System.loadLibrary`), SQLCipher's documented ATTACH direction fails on
+  Android, and its factory ignores Room's journal mode. `/data` at 93 % gives
+  `INSTALL_FAILED_INSUFFICIENT_STORAGE`; `-wipe-data` fixes it.
 - Robolectric tests that instantiate the real app get
   `RobolectricWorkManagerApp`, which substitutes the database passphrase and
   passes `null` for the open-helper factory. Point a test at it explicitly

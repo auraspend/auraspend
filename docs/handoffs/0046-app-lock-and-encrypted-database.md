@@ -113,8 +113,11 @@ and a `check_license.sh` attribution check.
 ./gradlew :app:compileProdDebugKotlin :app:testProdDebugUnitTest \
           :app:lintProdDebug :app:compileDevDebugAndroidTestKotlin
 ./gradlew :app:assembleDevDebug :app:assembleProdDebug :app:assembleFdroidDebug
+ANDROID_SERIAL=emulator-5554 ./gradlew :app:connectedDevDebugAndroidTest \
+          -Pandroid.testInstrumentationRunnerArguments.class=com.awbuilds.auraspend.data.local.SqlCipherDeviceTest
 ./tools/check_license.sh ; ./tools/check_privacy_claims.sh
 ./tools/audit_native_runtime.sh <aar>/jni/{arm64-v8a,armeabi-v7a}/libsqlcipher.so sqlite3_key
+./tools/verify_r8_release.sh
 ```
 
 - #76: **557/557** (545 + 12), lint clean, dev + fdroid compile.
@@ -138,20 +141,97 @@ every step green, including the new "Instrumented tests compile" gate and the
 extended native audit. The audit step is named after what it covers (ONNX arm64
 + SQLCipher, every shipped ABI) so the label cannot drift from the work.
 
+## The emulator run, and the three defects it found
+
+The owner's phone was unreachable (wireless debugging off), so the device suite
+was run on the local arm64 emulator instead:
+
+```
+$ANDROID_HOME/emulator/emulator -avd Android_17 -no-window -no-audio \
+    -no-boot-anim -gpu swiftshader_indirect -no-snapshot-load
+ANDROID_SERIAL=emulator-5554 ./gradlew :app:connectedDevDebugAndroidTest \
+    -Pandroid.testInstrumentationRunnerArguments.class=...SqlCipherDeviceTest
+```
+
+(The AVD's `/data` was 93 % full and the first install died with
+`INSTALL_FAILED_INSUFFICIENT_STORAGE`; `-wipe-data` fixed it.)
+
+It was worth every minute, because **three release-blocking defects passed the
+entire JVM suite, lint, and the licence/privacy gates** — none of which can load
+an Android `.so`:
+
+1. **Nothing loads `libsqlcipher.so`.** Disassembling `sqlcipher-android-4.19.1`
+   shows no class calls `System.loadLibrary` — `SupportOpenHelperFactory` only
+   carries a passphrase and `SQLiteDatabase`'s static initializer sets up maps.
+   Without an explicit load, the first database access throws
+   `UnsatisfiedLinkError: … SQLiteConnection.nativeOpen`. This was a
+   crash-on-first-use in production, and the app's own database file sat at
+   **0 bytes** on the emulator as evidence. `SQLCipherLibrary.ensureLoaded`
+   (`System.loadLibrary("sqlcipher")`) now does it before the migration and
+   before Room.
+2. **The documented `ATTACH` recipe does not work on Android.** Attaching an
+   encrypted target *from a connection opened without a key* fails with
+   `SQLITE_CANTOPEN` — all four spellings measured (literal/bound path ×
+   literal/bound key), and a plain `ATTACH` with no key also failed to create
+   its file. The export now runs the other way, which is SQLCipher's documented
+   form for encrypting an existing database: open the encrypted **target** with
+   the key, attach the **plaintext** source with `KEY ''`, and
+   `sqlcipher_export('main', 'plaintext')`. A throwaway diagnostic test on the
+   emulator is what settled it; it has been deleted. Note the side effect: with
+   the old code every existing install's upgrade would have **thrown and left
+   the database un-migrated**.
+3. **SQLCipher ignores Room's journal mode.** `setJournalMode(WRITE_AHEAD_LOGGING)`
+   never reaches SQLCipher's factory — the device showed
+   `auraspend_db-journal`, i.e. a rollback journal, so the app would have lost
+   the concurrent-read behaviour the Room builder explicitly asks for. WAL is
+   now requested in the factory, and the device test asserts
+   `PRAGMA journal_mode == wal`.
+
+Also fixed before this: the swap deleted the plaintext original *before*
+renaming the encrypted file in, so a crash in that window stranded the user's
+records in an `auraspend_db.enc` nothing looks at. It is now three renames plus a
+recovery step (`recoverInterruptedSwap`), with four JVM tests covering each
+crash point.
+
+**Device result:** `SqlCipherDeviceTest` — 4 tests, all green, twice in a row
+after the fixes, and deterministic (the app's-database test calls the app's own
+idempotent seeding instead of racing the startup coroutine).
+
+What the device run does **not** cover: the R8-minified release build. The R8
+gate proves the JNI classes survive and the DEX is 3.89 MB, but no test runs
+against a minified binary (`testBuildType` was tried in 0045 and reverted for
+good reasons). Installing a signed release build on the emulator and watching
+the first launch would close that last gap.
+
+
 ## Open risks / not verified
 
-- **Neither feature has run on a device.** The PIN gate, the biometric prompt,
-  and above all the **real plaintext→encrypted migration of an existing install**
-  are reasoned and unit-tested at the policy level only. Run
-  `./gradlew :app:connectedDevDebugAndroidTest` with wireless debugging on, then
-  install the dev build over the owner's current install and confirm the data is
-  intact and the file no longer starts with `SQLite format 3`.
-- The Keystore passphrase is only exercised on a device
-  (`SqlCipherDeviceTest.the_keystore_passphrase_is_stable_across_calls`).
+- **The app lock has not run on a device** (PIN entry, biometric prompt,
+  background/return policy). The encrypted-database half now has — see the
+  emulator section above.
+- **The migration has not been run against the owner's real database** (a
+  real install with real history). The emulator proved the recipe on a
+  synthetic plaintext fixture with the same schema-less shape; doing it for real
+  is still the first thing to try when the phone is reachable, and the
+  0.1.4→next upgrade is when it will actually run for users.
+- **No test runs against the R8-minified build.** The release gate proves the
+  JNI classes are kept and the bundle builds; installing a signed release APK on
+  the emulator would close it.
+- The Keystore passphrase is exercised on a device only
+  (`SqlCipherDeviceTest.the_keystore_passphrase_is_stable_across_calls`) — covered.
 - A SQLCipher version bump **blocks the native gate** by design — re-review, then
   add the new digests.
 - Drive backup payloads and CSV exports are still unencrypted (already disclosed
   in the app copy); out of scope here.
+
+## Session note for the next agent
+
+A device-only path can be verified **without the owner's phone**: the local AVD
+(`Android_17`, arm64, API 37.1) boots headless and runs
+`connectedDevDebugAndroidTest` in about a minute. If `INSTALL_FAILED_INSUFFICIENT_STORAGE`
+appears, the AVD's `/data` is full — relaunch with `-wipe-data`. Three
+production defects in this very PR were found that way and by nothing else.
+
 
 ## Next
 

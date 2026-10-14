@@ -2,6 +2,20 @@
 
 Durable decisions with context. Latest first.
 
+## D21 — A device-only path gets run on the emulator before it is called verified (2026-10-15)
+PR #77 passed 549 unit tests, lint, the licence and privacy gates, the native
+audit and the R8 gate — and still shipped three release-blocking defects, all
+found within minutes of running the instrumented suite on the local arm64
+emulator: nothing loads `libsqlcipher.so` (the app must call
+`System.loadLibrary`); SQLCipher's documented ATTACH direction — encrypted target
+attached from an unkeyed connection — fails on Android with `SQLITE_CANTOPEN`,
+so the export must run as keyed target + plaintext source attached with
+`KEY ''`; and `SupportOpenHelperFactory` ignores Room's journal mode, so WAL has
+to be requested in the factory. The rule: when a change touches a
+`.so`-backed path, "it compiles and the JVM suite is green" is not evidence —
+boot the AVD (`Android_17`, headless, ~1 minute) and run
+`:app:connectedDevDebugAndroidTest`. `-wipe-data` if `/data` is full.
+
 ## D20 — A native-loader exception is granted per *binary*, pinned by digest (2026-10-14)
 `tools/audit_native_runtime.sh` blocked SQLCipher because `libsqlcipher.so`
 imports `dlopen`/`dlsym`, and the only named allowance was ONNX Runtime's

@@ -401,6 +401,14 @@ Kotlin source root: `app/src/main/java/com/awbuilds/auraspend/`
 ./gradlew :app:lintProdDebug               # new issues fail; 64 pre-existing baselined
 ./gradlew assembleDevDebug                # dev APK (fast inner loop)
 ./gradlew assembleProdDebug               # prod APK (what ships; native build)
+
+# Device-only paths (ONNX JNI, SQLCipher's migration) — no phone required: the
+# local arm64 AVD boots headless and runs the instrumented suite in ~1 minute.
+# If the install dies with INSTALL_FAILED_INSUFFICIENT_STORAGE the AVD's /data
+# is full; relaunch the emulator with `-wipe-data`.
+"$ANDROID_HOME/emulator/emulator" -avd Android_17 -no-window -no-audio \
+    -no-boot-anim -gpu swiftshader_indirect -no-snapshot-load &
+ANDROID_SERIAL=emulator-5554 ./gradlew :app:connectedDevDebugAndroidTest
 ```
 
 Flavors: `dev` (development — `.dev` application id, "AuraSpend Dev" label),
@@ -600,6 +608,16 @@ application id): `:benchmark:connectedDevBenchmarkAndroidTest` — see README.
   JVM suite and the recipe in `SqlCipherDeviceTest`, and remember the rule that
   produced the split: a JNI-backed path that cannot load on the host is not
   "tested" when it only compiles.
+  **Three things the device tests found that no JVM test can** (0046), each a
+  release-blocking defect, each worth re-checking on any SQLCipher bump:
+  nothing in the artifact calls `System.loadLibrary`, so
+  `SQLCipherLibrary.ensureLoaded` must run before the first open (otherwise
+  `UnsatisfiedLinkError: … nativeOpen`); the SQLCipher CLI recipe of attaching
+  an *encrypted target* from an unkeyed connection fails on Android with
+  `SQLITE_CANTOPEN`, so the export goes the other way — keyed target, plaintext
+  source attached with `KEY ''`, `sqlcipher_export('main', 'plaintext')`; and
+  `SupportOpenHelperFactory` ignores Room's journal mode, so WAL must be
+  requested in the factory or the app silently runs on a rollback journal.
 - **The inbox scan has three cursor values, not one.** `newestIngested` (a
   high-water mark), `historyBefore` (the downwards walk) and `historyWalkDone`.
   A single watermark advanced to `newest - 1` permanently stranded every message
