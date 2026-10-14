@@ -84,7 +84,7 @@ object Routes {
 
     // Top-level destinations (chrome visible).
     const val HOME = "home"
-    const val ACTIVITY = "activity"
+    const val ACTIVITY = "activity?categoryId={categoryId}&query={query}"
     const val PLAN = "plan"
     const val INSIGHTS = "insights"
 
@@ -101,6 +101,15 @@ object Routes {
     const val TRANSACTION_DETAIL = "transaction/{transactionId}"
 
     fun transactionDetail(id: String) = "transaction/$id"
+
+    /**
+     * The Activity tab pre-filtered, for drill-downs (a category slice from
+     * Insights, a merchant from the top list). Blank args mean "no filter", so
+     * plain tab navigation stays untouched.
+     */
+    fun activity(categoryId: String? = null, query: String? = null): String =
+        "activity?categoryId=${android.net.Uri.encode(categoryId.orEmpty())}" +
+            "&query=${android.net.Uri.encode(query.orEmpty())}"
 
     val topLevel = setOf(HOME, ACTIVITY, PLAN, INSIGHTS)
 }
@@ -232,9 +241,27 @@ fun AuraSpendNavHost(
                 )
             }
 
-            composable(Routes.ACTIVITY) {
+            composable(
+                route = Routes.ACTIVITY,
+                arguments = listOf(
+                    navArgument("categoryId") {
+                        type = NavType.StringType
+                        defaultValue = ""
+                    },
+                    navArgument("query") {
+                        type = NavType.StringType
+                        defaultValue = ""
+                    }
+                )
+            ) { entry ->
+                // Drill-down filters arrive as arguments; blank means the plain tab.
+                val initialCategoryId = entry.arguments?.getString("categoryId")
+                    ?.takeIf { it.isNotBlank() }
+                val initialQuery = entry.arguments?.getString("query").orEmpty()
                 val viewModel = viewModel<TransactionListViewModel>(
-                    factory = factoryOf { TransactionListViewModel(repository) }
+                    factory = factoryOf {
+                        TransactionListViewModel(repository, initialCategoryId, initialQuery)
+                    }
                 )
                 val categories by repository.getAllCategories()
                     .collectAsState(initial = emptyList())
@@ -267,7 +294,13 @@ fun AuraSpendNavHost(
                     transactions = transactions,
                     categories = categories,
                     onBack = { navController.navigateToTab(Routes.HOME) },
-                    onOpenSettings = { navController.navigate(Routes.SETTINGS) }
+                    onOpenSettings = { navController.navigate(Routes.SETTINGS) },
+                    onOpenCategory = { categoryId ->
+                        navController.navigate(Routes.activity(categoryId = categoryId))
+                    },
+                    onOpenMerchant = { merchant ->
+                        navController.navigate(Routes.activity(query = merchant))
+                    }
                 )
             }
 

@@ -45,10 +45,14 @@ import kotlinx.coroutines.launch
  */
 @OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
 class TransactionListViewModel(
-    private val repository: TransactionRepository
+    private val repository: TransactionRepository,
+    initialCategoryId: String? = null,
+    initialQuery: String = ""
 ) : ViewModel() {
 
-    private val _filter = MutableStateFlow(TransactionFilter())
+    private val _filter = MutableStateFlow(
+        TransactionFilter(query = initialQuery, categoryId = initialCategoryId)
+    )
 
     /** Current filter for the chips/segmented control (updates immediately). */
     val filter: StateFlow<TransactionFilter> = _filter.asStateFlow()

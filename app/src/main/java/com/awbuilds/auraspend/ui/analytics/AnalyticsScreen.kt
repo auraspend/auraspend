@@ -1,6 +1,7 @@
 package com.awbuilds.auraspend.ui.analytics
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
@@ -72,7 +73,11 @@ fun AnalyticsScreen(
     transactions: List<Transaction>,
     categories: List<Category>,
     onBack: () -> Unit,
-    onOpenSettings: () -> Unit = {}
+    onOpenSettings: () -> Unit = {},
+    /** Drill-down: open Activity filtered to one category slice. */
+    onOpenCategory: (String) -> Unit = {},
+    /** Drill-down: open Activity searched for one merchant. */
+    onOpenMerchant: (String) -> Unit = {}
 ) {
     val extended = MaterialTheme.extendedColors
     var period by remember { mutableStateOf(StatsPeriod.THIS_MONTH) }
@@ -286,6 +291,7 @@ fun AnalyticsScreen(
                                 Row(
                                     modifier = Modifier
                                         .fillMaxWidth()
+                                        .clickable { onOpenCategory(cat.id) }
                                         .padding(vertical = AuraSpacing.xs),
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
@@ -347,6 +353,7 @@ fun AnalyticsScreen(
                                 Row(
                                     modifier = Modifier
                                         .fillMaxWidth()
+                                        .clickable { onOpenMerchant(name) }
                                         .padding(vertical = AuraSpacing.sm),
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {

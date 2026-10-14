@@ -83,7 +83,9 @@ fun TransactionListScreen(
     val transactions = viewModel.transactions.collectAsLazyPagingItems()
     val loadState = transactions.loadState
 
-    var showSearch by remember { mutableStateOf(false) }
+    // A drill-down may arrive with a query already applied; the field opens so
+    // the filtered list explains itself.
+    var showSearch by remember { mutableStateOf(filter.query.isNotBlank()) }
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     val extended = MaterialTheme.extendedColors
