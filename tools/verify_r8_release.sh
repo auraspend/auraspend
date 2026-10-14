@@ -86,8 +86,16 @@ note "4. JNI classes R8 must not rename"
 # solely by AGP's default:
 #   -keepclasseswithmembernames,includedescriptorclasses class * { native <methods>; }
 # Note the package is ai.onnxruntime, not com.microsoft.onnxruntime.
+#
+# SQLCipher is the same shape — JNI_OnLoad + RegisterNatives — and unlike ONNX it
+# *does* ship consumer rules (`-keep class net.zetetic.database.** { *; }` plus a
+# native-method keep). They are checked here anyway rather than trusted: a
+# renamed SQLiteConnection would make the encrypted database impossible to open
+# in a release build, which is the worst possible failure for this app, and the
+# check costs one grep.
 if [[ -f "$MAPPING" ]]; then
-  for cls in ai.onnxruntime.OrtEnvironment ai.onnxruntime.OrtSession ai.onnxruntime.OnnxTensor; do
+  for cls in ai.onnxruntime.OrtEnvironment ai.onnxruntime.OrtSession ai.onnxruntime.OnnxTensor \
+             net.zetetic.database.sqlcipher.SQLiteConnection net.zetetic.database.sqlcipher.SupportOpenHelperFactory; do
     line="$(grep -m1 -E "^${cls} ->" "$MAPPING")"
     if [[ -z "$line" ]]; then
       bad "$cls is missing from the release build entirely"
