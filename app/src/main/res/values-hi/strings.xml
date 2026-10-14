@@ -389,6 +389,8 @@
     <string name="categories_delete_message">"%1$s" हटाएँ? इस श्रेणी वाले लेन-देन प्रभावित होंगे।</string>
     <string name="categories_default_badge">डिफ़ॉल्ट</string>
     <string name="categories_name">श्रेणी का नाम</string>
+    <string name="categories_icon">आइकन</string>
+    <string name="categories_color">रंग</string>
 
     <!-- Classification (smart add) -->
     <string name="classification_title">स्मार्ट ऐड</string>

@@ -404,6 +404,8 @@
     <string name="categories_delete_message">Delete "%1$s"? Transactions using this category will be affected.</string>
     <string name="categories_default_badge">Default</string>
     <string name="categories_name">Category Name</string>
+    <string name="categories_icon">Icon</string>
+    <string name="categories_color">Color</string>
 
     <!-- Classification (smart add) -->
     <string name="classification_title">Smart Add</string>

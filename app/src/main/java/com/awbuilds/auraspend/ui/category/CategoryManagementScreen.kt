@@ -1,6 +1,7 @@
 package com.awbuilds.auraspend.ui.category
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -30,6 +31,9 @@ import com.awbuilds.auraspend.ui.designsystem.AuraCardStyle
 import com.awbuilds.auraspend.ui.designsystem.AuraEmptyState
 import com.awbuilds.auraspend.ui.designsystem.AuraErrorBanner
 import com.awbuilds.auraspend.ui.designsystem.AuraSpacing
+import com.awbuilds.auraspend.ui.designsystem.categoryColorChoices
+import com.awbuilds.auraspend.ui.designsystem.categoryIconChoices
+import com.awbuilds.auraspend.ui.designsystem.categoryIconVector
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -116,13 +120,15 @@ fun CategoryManagementScreen(
         CategoryEditDialog(
             title = stringResource(R.string.categories_add),
             initialName = "",
-            onSave = { name ->
+            initialIcon = "category",
+            initialColor = 0xFF757575.toInt(),
+            onSave = { name, icon, color ->
                 scope.launch {
                     val saved = onSaveCategory(
                         Category(
                             name = name,
-                            icon = "category",
-                            color = 0xFF757575.toInt(),
+                            icon = icon,
+                            color = color,
                             isDefault = false
                         )
                     )
@@ -137,9 +143,11 @@ fun CategoryManagementScreen(
         CategoryEditDialog(
             title = stringResource(R.string.categories_edit),
             initialName = cat.name,
-            onSave = { name ->
+            initialIcon = cat.icon,
+            initialColor = cat.color,
+            onSave = { name, icon, color ->
                 scope.launch {
-                    val saved = onSaveCategory(cat.copy(name = name))
+                    val saved = onSaveCategory(cat.copy(name = name, icon = icon, color = color))
                     if (saved) editCategory = null
                 }
             },
@@ -248,26 +256,99 @@ private fun CategoryCard(
 private fun CategoryEditDialog(
     title: String,
     initialName: String,
-    onSave: (String) -> Unit,
+    initialIcon: String,
+    initialColor: Int,
+    onSave: (name: String, icon: String, color: Int) -> Unit,
     onDismiss: () -> Unit
 ) {
     var name by remember { mutableStateOf(initialName) }
+    var icon by remember { mutableStateOf(initialIcon) }
+    var color by remember { mutableStateOf(initialColor) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(title) },
         text = {
-            OutlinedTextField(
-                value = name,
-                onValueChange = { name = it },
-                label = { Text(stringResource(R.string.categories_name)) },
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth()
-            )
+            Column(verticalArrangement = Arrangement.spacedBy(AuraSpacing.md)) {
+                OutlinedTextField(
+                    value = name,
+                    onValueChange = { name = it },
+                    label = { Text(stringResource(R.string.categories_name)) },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                // The icon grid: exactly the keys the renderer knows, six per
+                // row, 48dp targets. Chunked rows instead of FlowRow — a fixed
+                // offer needs no layout experiment.
+                Column(verticalArrangement = Arrangement.spacedBy(AuraSpacing.xs)) {
+                    Text(
+                        stringResource(R.string.categories_icon),
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    categoryIconChoices.chunked(6).forEach { rowChoices ->
+                        Row(horizontalArrangement = Arrangement.spacedBy(AuraSpacing.xs)) {
+                            rowChoices.forEach { choice ->
+                                val selected = choice == icon
+                                Box(
+                                    modifier = Modifier
+                                        .size(48.dp)
+                                        .clip(CircleShape)
+                                        .background(
+                                            if (selected) MaterialTheme.colorScheme.primaryContainer
+                                            else Color.Transparent
+                                        )
+                                        .clickable { icon = choice },
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        imageVector = categoryIconVector(choice)
+                                            ?: Icons.Default.Category,
+                                        contentDescription = null,
+                                        tint = if (selected) MaterialTheme.colorScheme.onPrimaryContainer
+                                        else MaterialTheme.colorScheme.onSurfaceVariant,
+                                        modifier = Modifier.size(22.dp)
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+
+                Column(verticalArrangement = Arrangement.spacedBy(AuraSpacing.xs)) {
+                    Text(
+                        stringResource(R.string.categories_color),
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    categoryColorChoices.chunked(6).forEach { rowChoices ->
+                        Row(horizontalArrangement = Arrangement.spacedBy(AuraSpacing.xs)) {
+                            rowChoices.forEach { choice ->
+                                val selected = choice == color
+                                Box(
+                                    modifier = Modifier
+                                        .size(48.dp)
+                                        .clip(CircleShape)
+                                        .clickable { color = choice },
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(if (selected) 30.dp else 24.dp)
+                                            .clip(CircleShape)
+                                            .background(Color(choice.toLong()))
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         },
         confirmButton = {
             TextButton(onClick = {
-                if (name.isNotBlank()) onSave(name.trim())
+                if (name.isNotBlank()) onSave(name.trim(), icon, color)
             }) {
                 Text(stringResource(R.string.action_save))
             }
