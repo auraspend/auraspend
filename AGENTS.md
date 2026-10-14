@@ -3,7 +3,26 @@
 > Read this file and the latest file in `docs/handoffs/` before touching anything.
 > Update both (plus `CLAUDE.md` / `memory/` when you learn something durable) before ending a session.
 >
-> Latest: `docs/handoffs/0045-release-0.1.4-shipped.md` — **0.1.4 is out**:
+> Latest: `docs/handoffs/0046-app-lock-and-encrypted-database.md` — the two
+> privacy features from the improvement list are implemented as separate PRs:
+> **#76 an optional app lock** (4-digit PIN as a salted PBKDF2 hash, biometric
+> shortcut, locks on cold start and after >60 s backgrounded, "forgot PIN"
+> wipes through the same `AuraSpendApp.wipeAllData()` the Settings action uses)
+> and **#77 the database is encrypted at rest** (SQLCipher Community Edition,
+> passphrase derived from a non-exportable Keystore HMAC key, one-time in-place
+> plaintext upgrade). Issues **#71–#75** file the backlog (lock, encryption,
+> global search, budget alerts, scheduled Drive backup). Four traps worth
+> keeping: SQLCipher's real artifact is `net.zetetic:sqlcipher-android` (the
+> similarly-named `android-database-sqlcipher` on Central is 4.5.4, the *legacy*
+> API; Zetetic's S3 is 403, JitPack has only 3.x); its native recipe **cannot
+> run on the JVM** (`UnsatisfiedLinkError`), so the migration policy sits behind
+> a `SqlCipherGateway` seam with the recipe proven in `SqlCipherDeviceTest`; the
+> native audit's loader allowance is now a **digest-pinned `APPROVED_LOADERS`
+> entry**, so a version bump blocks until re-reviewed; and **CI now compiles
+> `androidTest`**, after `R8ReleaseSmokeTest` sat broken since 0026. Both PRs are
+> green (557/557 and 549/549, lint clean) but **neither has run on a device** —
+> the migration in particular is unobserved against a real install. Before:
+> `docs/handoffs/0045-release-0.1.4-shipped.md` — **0.1.4 is out**:
 > GitHub release published (AAB/APK/checksums) and **Play closed testing
 > (`alpha`) holds 0.1.4 — status `completed`** (the tag run's Play upload
 > committed; the former upload-key precondition is evidently cleared). The run
@@ -566,6 +585,21 @@ application id): `:benchmark:connectedDevBenchmarkAndroidTest` — see README.
   queue row) used to *delete the row the user had edited* and rebuild it from the
   pipeline's parse. An edit arrives with the row's existing id, so `saveTransaction`
   updates first and only inserts when no row matched.
+- **The database is encrypted at rest, and that must never degrade silently.**
+  `AppDatabase.getInstance` takes the passphrase **and** the open-helper factory
+  as parameters precisely so there is no "Keystore unavailable → carry on in
+  plaintext" path: production passes SQLCipher with `DbPassphrase`'s
+  Keystore-derived key, and only `RobolectricWorkManagerApp` substitutes (a fixed
+  key and `null`), because neither the AndroidKeyStore provider nor
+  `libsqlcipher.so` exists on the JVM host. A silent fallback here would undo the
+  feature silently on exactly the devices it protects. The passphrase is derived
+  (non-exportable Keystore HMAC over a fixed seed, base64'd so it survives
+  `ATTACH … KEY ?` as a bound string) and must never be written to disk, logs or
+  a backup. The plaintext upgrade runs once, before any Room handle exists, via
+  `SqlCipherMigrator` behind the `SqlCipherGateway` seam — keep the policy in the
+  JVM suite and the recipe in `SqlCipherDeviceTest`, and remember the rule that
+  produced the split: a JNI-backed path that cannot load on the host is not
+  "tested" when it only compiles.
 - **The inbox scan has three cursor values, not one.** `newestIngested` (a
   high-water mark), `historyBefore` (the downwards walk) and `historyWalkDone`.
   A single watermark advanced to `newest - 1` permanently stranded every message
@@ -663,4 +697,13 @@ application id): `:benchmark:connectedDevBenchmarkAndroidTest` — see README.
   single loader exception is its execution-provider plugin loader (`dlopen`/
   `dlsym` on the `libonnxruntime_providers_*.so` shipped in the same APK),
   permitted by name and only when those plugin names are embedded in the
-  artifact — any other loader symbol still fails.
+  artifact — any other loader symbol still fails. A second, **digest-pinned**
+  exception exists for SQLCipher's `libsqlcipher.so`: its `dlopen`/`dlsym` come
+  from SQLite's loadable-extension support, which nothing in
+  `sqlcipher-android`'s Java layer, Room or this app declares or calls. It is
+  granted only by an `APPROVED_LOADERS` entry keyed on
+  `<library>|<sha256>|<evidence-regex>|<reason>` — the same library name with a
+  different digest gets nothing, which is what makes a version bump block. Add
+  the new digests only after re-reviewing the artifact; never widen an entry to
+  a glob. When the exception list grows, the *evidence* pattern is what matters:
+  a substring match that happens to be present is not evidence of anything.

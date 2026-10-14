@@ -61,6 +61,22 @@ durable lives elsewhere. Keep it a pointer; promote findings to `memory/` or
   `LazyColumn` first in the column eats the whole bounded height and anything
   after it is measured to zero (it rendered as nothing on device until 0027).
 
+## Device-only paths (added 0046)
+
+- **A JNI path that only compiles is not tested.** `libsqlcipher.so` and
+  `libonnxruntime*.so` are Android libraries — loading them on the JVM host is
+  an `UnsatisfiedLinkError`. When a new native dependency needs an upgrade or
+  migration, the *policy* goes behind a seam with JVM tests (see
+  `SqlCipherGateway`) and the *recipe* goes in `app/src/androidTest`. The
+  instrumented source set is now compiled by CI (`:app:compileDevDebugAndroidTestKotlin`),
+  because `R8ReleaseSmokeTest` sat broken for five releases before that gate
+  existed.
+- Robolectric tests that instantiate the real app get
+  `RobolectricWorkManagerApp`, which substitutes the database passphrase and
+  passes `null` for the open-helper factory. Point a test at it explicitly
+  (`@Config(application = RobolectricWorkManagerApp::class)`); the manifest
+  default runs `AuraSpendApp` and throws.
+
 ## Before ending a session
 
 - Green build: `:app:compileProdDebugKotlin`, `testProdDebugUnitTest` and
