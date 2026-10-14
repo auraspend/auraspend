@@ -121,6 +121,8 @@ sealed class ClassificationViewIntent {
     object LoadSmsMessages : ClassificationViewIntent()
     data class SmsSelected(val sms: SmsInfo) : ClassificationViewIntent()
     data class RestoreSkippedSms(val smsId: String) : ClassificationViewIntent()
+    /** Dismisses every message still awaiting a decision. Recoverable from the Skipped list. */
+    object SkipAllClassified : ClassificationViewIntent()
     object SaveTransaction : ClassificationViewIntent()
     object ResetSuccess : ClassificationViewIntent()
     object ClearError : ClassificationViewIntent()

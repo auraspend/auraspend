@@ -437,6 +437,16 @@ internal fun AutoDetectTab(
                                     }
                                 }
                                 Spacer(modifier = Modifier.height(AuraSpacing.xs))
+                                TextButton(
+                                    onClick = {
+                                        viewModel.handleIntent(ClassificationViewIntent.SkipAllClassified)
+                                    },
+                                    enabled = !state.isSavingAll,
+                                    modifier = Modifier.heightIn(min = 48.dp)
+                                ) {
+                                    Text(stringResource(R.string.classification_skip_all))
+                                }
+                                Spacer(modifier = Modifier.height(AuraSpacing.xxs))
                                 Text(
                                     stringResource(R.string.classification_swipe_hint),
                                     style = MaterialTheme.typography.labelSmall,

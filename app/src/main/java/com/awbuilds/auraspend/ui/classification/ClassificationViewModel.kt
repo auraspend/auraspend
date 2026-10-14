@@ -155,6 +155,7 @@ class ClassificationViewModel(
             is ClassificationViewIntent.SaveClassifiedSms -> saveClassifiedSms(intent.smsId)
             is ClassificationViewIntent.SaveAllClassified -> saveAllClassified()
             is ClassificationViewIntent.RestoreSkippedSms -> restoreSkippedSms(intent.smsId)
+            is ClassificationViewIntent.SkipAllClassified -> skipAllClassified()
             is ClassificationViewIntent.DismissClassifiedSms -> dismissClassifiedSms(intent.smsId)
             is ClassificationViewIntent.UndoSaveClassifiedSms -> undoSaveClassifiedSms(intent.smsId)
             is ClassificationViewIntent.UndoDismissClassifiedSms -> undoDismissClassifiedSms(intent.smsId)
@@ -442,6 +443,34 @@ class ClassificationViewModel(
      * classifies it again. This is the recovery path for a message that was
      * skipped wrongly — a parser fix lands on history through this door.
      */
+    /**
+     * Dismisses every pending message in one write loop. The per-row "Classify
+     * again" action in the Skipped list is the way back, so a bulk skip is not
+     * a bulk delete.
+     */
+    private fun skipAllClassified() {
+        viewModelScope.launch {
+            val app = context.applicationContext as? AuraSpendApp ?: return@launch
+            val dao = app.database.smsMessageDao()
+            val ids = _state.value.pendingSmsList.map { it.sms.id }
+            if (ids.isEmpty()) return@launch
+            val done = boundary(TAG, false) {
+                ids.forEach { id ->
+                    dao.getById(id)?.let { row ->
+                        dao.update(
+                            row.copy(
+                                status = com.awbuilds.auraspend.data.local.entities.SmsMessageStatus.SKIPPED.name,
+                                updatedAt = System.currentTimeMillis()
+                            )
+                        )
+                    }
+                }
+                true
+            }
+            if (!done) _state.update { it.copy(error = UiError.SAVE_FAILED) }
+        }
+    }
+
     private fun restoreSkippedSms(smsId: String) {
         viewModelScope.launch {
             val app = context.applicationContext as? AuraSpendApp ?: return@launch

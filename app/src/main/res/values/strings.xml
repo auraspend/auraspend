@@ -149,6 +149,8 @@
     <string name="txn_editor_merchant">Merchant / Payee</string>
     <string name="txn_editor_note">Note (optional)</string>
     <string name="txn_editor_category">Category</string>
+    <string name="txn_editor_recurring">Recurring payment</string>
+    <string name="txn_editor_recurring_subtitle">Marks this charge as a repeating subscription</string>
     <string name="txn_editor_save_new">Save transaction</string>
     <string name="txn_editor_save_changes">Save changes</string>
 
@@ -482,6 +484,7 @@
         <item quantity="other">%1$d messages found</item>
     </plurals>
     <string name="classification_save_all">Save All</string>
+    <string name="classification_skip_all">Skip All</string>
     <string name="classification_skipped_title">Skipped (%1$d)</string>
     <string name="classification_skipped_subtitle">Not transactions, duplicates, or already handled. Classify one again to re-check it.</string>
     <string name="classification_classify_again">Classify again</string>

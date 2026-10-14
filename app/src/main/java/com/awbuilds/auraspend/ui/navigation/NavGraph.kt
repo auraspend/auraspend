@@ -487,7 +487,7 @@ fun AuraSpendNavHost(
             initialType = quickAddType,
             error = quickAddError,
             onErrorDismissed = { quickAddError = null },
-            onSave = { amount, categoryId, type, merchant, note ->
+            onSave = { amount, categoryId, type, merchant, note, date ->
                 repositoryScope.launch {
                     val saved = boundary(TAG, false) {
                         repository.saveTransaction(
@@ -496,7 +496,7 @@ fun AuraSpendNavHost(
                                 categoryId = categoryId,
                                 note = note,
                                 merchant = merchant,
-                                date = java.time.LocalDateTime.now(),
+                                date = date,
                                 type = type
                             )
                         )
