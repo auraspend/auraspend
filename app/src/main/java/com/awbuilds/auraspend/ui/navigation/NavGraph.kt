@@ -32,6 +32,7 @@ import androidx.navigation.navArgument
 import com.awbuilds.auraspend.AuraSpendApp
 import com.awbuilds.auraspend.R
 import com.awbuilds.auraspend.data.ai.ModelDownloadManager
+import com.awbuilds.auraspend.data.local.SmsMessageLookup
 import com.awbuilds.auraspend.data.classification.AutoClassificationWorker
 import com.awbuilds.auraspend.data.classification.AutoDetect
 import com.awbuilds.auraspend.data.classification.BackgroundClassificationCoordinator
@@ -83,7 +84,7 @@ object Routes {
 
     // Top-level destinations (chrome visible).
     const val HOME = "home"
-    const val ACTIVITY = "activity"
+    const val ACTIVITY = "activity?categoryId={categoryId}&query={query}"
     const val PLAN = "plan"
     const val INSIGHTS = "insights"
 
@@ -100,6 +101,15 @@ object Routes {
     const val TRANSACTION_DETAIL = "transaction/{transactionId}"
 
     fun transactionDetail(id: String) = "transaction/$id"
+
+    /**
+     * The Activity tab pre-filtered, for drill-downs (a category slice from
+     * Insights, a merchant from the top list). Blank args mean "no filter", so
+     * plain tab navigation stays untouched.
+     */
+    fun activity(categoryId: String? = null, query: String? = null): String =
+        "activity?categoryId=${android.net.Uri.encode(categoryId.orEmpty())}" +
+            "&query=${android.net.Uri.encode(query.orEmpty())}"
 
     val topLevel = setOf(HOME, ACTIVITY, PLAN, INSIGHTS)
 }
@@ -153,6 +163,11 @@ fun AuraSpendNavHost(
 ) {
     val navController = rememberNavController()
     val context = LocalContext.current
+    // The queue row behind an SMS-detected transaction, for the original-message
+    // card on the detail page.
+    val smsMessageLookup = remember {
+        SmsMessageLookup((context.applicationContext as? AuraSpendApp)?.database?.smsMessageDao())
+    }
     val prefs = context.getSharedPreferences("auraspend_prefs", Context.MODE_PRIVATE)
     val startOnboarding = remember { !prefs.getBoolean("onboarding_completed", false) }
 
@@ -226,9 +241,27 @@ fun AuraSpendNavHost(
                 )
             }
 
-            composable(Routes.ACTIVITY) {
+            composable(
+                route = Routes.ACTIVITY,
+                arguments = listOf(
+                    navArgument("categoryId") {
+                        type = NavType.StringType
+                        defaultValue = ""
+                    },
+                    navArgument("query") {
+                        type = NavType.StringType
+                        defaultValue = ""
+                    }
+                )
+            ) { entry ->
+                // Drill-down filters arrive as arguments; blank means the plain tab.
+                val initialCategoryId = entry.arguments?.getString("categoryId")
+                    ?.takeIf { it.isNotBlank() }
+                val initialQuery = entry.arguments?.getString("query").orEmpty()
                 val viewModel = viewModel<TransactionListViewModel>(
-                    factory = factoryOf { TransactionListViewModel(repository) }
+                    factory = factoryOf {
+                        TransactionListViewModel(repository, initialCategoryId, initialQuery)
+                    }
                 )
                 val categories by repository.getAllCategories()
                     .collectAsState(initial = emptyList())
@@ -261,7 +294,13 @@ fun AuraSpendNavHost(
                     transactions = transactions,
                     categories = categories,
                     onBack = { navController.navigateToTab(Routes.HOME) },
-                    onOpenSettings = { navController.navigate(Routes.SETTINGS) }
+                    onOpenSettings = { navController.navigate(Routes.SETTINGS) },
+                    onOpenCategory = { categoryId ->
+                        navController.navigate(Routes.activity(categoryId = categoryId))
+                    },
+                    onOpenMerchant = { merchant ->
+                        navController.navigate(Routes.activity(query = merchant))
+                    }
                 )
             }
 
@@ -422,6 +461,7 @@ fun AuraSpendNavHost(
                 TransactionDetailScreen(
                     transactionId = transactionId,
                     repository = repository,
+                    messageLookup = smsMessageLookup,
                     onBack = { navController.popBackStack() },
                     onOpenTransaction = { id -> navController.navigate(Routes.transactionDetail(id)) }
                 )
@@ -480,7 +520,7 @@ fun AuraSpendNavHost(
             initialType = quickAddType,
             error = quickAddError,
             onErrorDismissed = { quickAddError = null },
-            onSave = { amount, categoryId, type, merchant, note ->
+            onSave = { amount, categoryId, type, merchant, note, date ->
                 repositoryScope.launch {
                     val saved = boundary(TAG, false) {
                         repository.saveTransaction(
@@ -489,7 +529,7 @@ fun AuraSpendNavHost(
                                 categoryId = categoryId,
                                 note = note,
                                 merchant = merchant,
-                                date = java.time.LocalDateTime.now(),
+                                date = date,
                                 type = type
                             )
                         )

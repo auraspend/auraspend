@@ -58,13 +58,18 @@ class DashboardViewModel(
         val (monthStart, monthEnd) = periodRange(BudgetPeriod.MONTHLY, now)
         val (weekStart, weekEnd) = periodRange(BudgetPeriod.WEEKLY, now)
         val (yearStart, yearEnd) = periodRange(BudgetPeriod.YEARLY, now)
-        val weekDates = (0..6).map { weekStart.plusDays(it.toLong()).toLocalDate() }
+        // The chart is a rolling window ending today, not the calendar week: a
+        // calendar week reads as an empty chart from Monday until the next spend
+        // (the owner hit it with the latest spend six days old), while the
+        // weekly *budget* window below stays the calendar week on purpose.
+        val (chartStart, chartEnd) = chartWindow(now)
+        val chartDates = (0..6).map { chartStart.plusDays(it.toLong()).toLocalDate() }
 
         val aggregates = combine(
             repository.observeSummary(epoch(monthStart), epoch(monthEnd)),
             repository.observeBalance(),
             repository.observeExpenseByCategory(epoch(monthStart), epoch(monthEnd)),
-            repository.observeDailyExpense(epoch(weekStart), epoch(weekEnd)),
+            repository.observeDailyExpense(epoch(chartStart), epoch(chartEnd)),
             repository.observeExpenseByCategory(epoch(weekStart), epoch(weekEnd))
         ) { summary, balance, monthCats, daily, weekCats ->
             Aggregates(
@@ -99,14 +104,14 @@ class DashboardViewModel(
                     // Report a reason, not e.message: the raw message reaches the user.
                     _state.update { it.copy(isLoading = false, error = UiError.LOAD_FAILED) }
                 }
-                .collect { (agg, sup) -> publish(agg, sup, weekDates, zone) }
+                .collect { (agg, sup) -> publish(agg, sup, chartDates, zone) }
         }
     }
 
     private fun publish(
         agg: Aggregates,
         sup: Supporting,
-        weekDates: List<LocalDate>,
+        chartDates: List<LocalDate>,
         zone: ZoneId
     ) {
         val budgets = sup.budgets.map { budget ->
@@ -118,7 +123,7 @@ class DashboardViewModel(
             budget.copy(spentAmount = totals[budget.categoryId] ?: 0.0)
         }
 
-        val dailySpending = weekDates.map { day ->
+        val dailySpending = chartDates.map { day ->
             day.atStartOfDay(zone).toInstant().toEpochMilli() to
                 (agg.dailyByDate[day] ?: 0.0)
         }
@@ -186,3 +191,16 @@ class DashboardViewModel(
         const val RECENT_LIMIT = 20
     }
 }
+
+/**
+ * The homepage chart's range: the last seven days ending today, both bounds
+ * inclusive.
+ *
+ * Not the calendar week: on a calendar week the chart summarised Mon–Sun, so
+ * from Monday morning it read "no spending" even with the latest spend hours or
+ * days old (the owner's device: last spend on Friday, chart empty on
+ * Wednesday). The weekly budget window is a different thing and stays the
+ * calendar week.
+ */
+internal fun chartWindow(now: LocalDateTime): Pair<LocalDateTime, LocalDateTime> =
+    now.toLocalDate().minusDays(6).atStartOfDay() to now.toLocalDate().atTime(LocalTime.MAX)

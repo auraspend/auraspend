@@ -306,7 +306,7 @@ class BackupRestoreManagerTest {
     @Test
     fun `a legacy backup cannot put unmasked SMS bodies back into the database`() = runBlocking {
         val rawSmsBody = "Your a/c XX4821 debited. Call 9000000042 for help"
-        val rawUnrecognizedBody = "Sent Rs.500 UPI Ref no 713508246195 -HDFC"
+        val rawUnrecognizedBody = "Sent Rs.500 UPI Ref no 600000000001 -HDFC"
         val rawNote = "Paid to 9000000042"
 
         // The test is only meaningful if the masker actually changes this text.
@@ -328,7 +328,7 @@ class BackupRestoreManagerTest {
         assertEquals(SensitiveDataMasker.mask(rawUnrecognizedBody), storedUnrecognized.body)
         assertFalse(
             "the UPI reference must not survive restore",
-            storedUnrecognized.body.contains("713508246195")
+            storedUnrecognized.body.contains("600000000001")
         )
 
         val storedNote = db.transactionDao().getAllOnce().single().note

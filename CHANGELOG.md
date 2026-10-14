@@ -10,6 +10,54 @@ internal APIs.
 
 ## [Unreleased]
 
+## [0.1.4] — 2026-10-14
+
+A correctness release measured against a real inbox: the on-device classifier
+runs for the first time, the reconstructed books match message for message,
+and the app gains its F-Droid build.
+
+### Added
+
+- **Detected subscriptions** — recurring payments the classifier had always
+  flagged now surface under a "Detected from your messages" section, each with
+  a one-tap Track that opens the add sheet prefilled. Suggestions stay out of
+  the monthly total until confirmed.
+- **Skipped-message history** in Smart Add — "Skipped (N)", Classify again and
+  Skip all — so a parser fix can reach messages that were set aside.
+- **Activity browsing**: month navigation, a newest/oldest sort toggle, and
+  drill-down from Insights into the filtered list.
+- **Settings**: SMS-access status, a categorisation-notifications toggle, and
+  Delete all data (wipe, re-seed, re-scan).
+- **Category icon and colour pickers** in the category editor.
+- **Transaction detail**: tap the hero to re-categorize, Share as plain text,
+  and the original SMS with sender and received time.
+- **Investments category** — EPF contribution confirmations book as an
+  investment, not income.
+- **F-Droid build** — a third flavor without Google Play Services (and without
+  Drive backup, which F-Droid's inclusion policy excludes; ADR 0012).
+
+### Fixed
+
+- **The optional on-device classifier now actually runs.** A wrong tokenizer
+  filename and a missing model input had kept it inert behind caught
+  exceptions while the UI said "ready".
+- **Dates**: month-first formats ("Jul 22 2026") parse, and messages without a
+  date are booked at their arrival time instead of when they were scanned.
+- **Smart Add no longer lags** while a drain is classifying messages.
+- **Fewer wrongly skipped payments** — the duplicate guard is paise-flat, and
+  payments it had swallowed are restored on the next pass.
+- **Dark and AMOLED visibility**: back buttons, month chevrons and the
+  navigation-bar icons were black on every background; the theme now supplies
+  the scheme's content colour.
+- **The homepage chart** shows the last 7 days instead of a calendar week that
+  read empty every Monday.
+- The Skipped section stays visible even with no categoriser model installed.
+
+### Changed
+
+- Releases publish to Google Play (closed testing) in the same tag run that
+  publishes the GitHub release.
+
 ## [0.1.3] — 2026-10-13
 
 A categorisation fix release, measured by draining a real 1,952-message inbox

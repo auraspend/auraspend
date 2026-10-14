@@ -127,6 +127,12 @@ jobs:
       - name: Build prod flavor
         run: ./gradlew assembleProdDebug
 
+      # The F-Droid flavor must keep compiling without the Google dependencies
+      # (ADR 0012) — a merge that assumes a Drive-only type in shared code fails
+      # here, not on fdroiddata's buildserver.
+      - name: Build fdroid flavor (no Google dependencies)
+        run: ./gradlew assembleFdroidDebug
+
       # Compiles the Macrobenchmark module and the R8-minified release variant,
       # which is what actually consumes app/src/main/baseline-prof.txt. Without
       # this, profile drift is invisible until someone runs it by hand.

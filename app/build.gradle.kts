@@ -30,13 +30,19 @@ android {
         applicationId = "com.awbuilds.auraspend"
         minSdk = 30
         targetSdk = 37
-        // 0.1.3 — categorisation fixes measured against a real inbox (handoff
-        // 0029), on top of the visible queue/notification flow (0028).
+        // 0.1.4 — the on-device classifier actually runs, the books reproduce
+        // against a real inbox, EPF books as an investment, and the F-Droid
+        // flavor exists (handoffs 0041–0044).
         // versionCode must strictly increase for every store upload; Play
         // rejects an update that reuses one, so it is not optional the way
         // the name is.
-        versionCode = 4
-        versionName = "0.1.3"
+        versionCode = 5
+        versionName = "0.1.4"
+
+        // True in dev/prod; the `fdroid` flavor flips it to false (ADR 0012).
+        // Screens read it to hide the Drive entry points rather than offer
+        // buttons that lead nowhere.
+        buildConfigField("boolean", "DRIVE_BACKUP", "true")
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
@@ -62,11 +68,13 @@ android {
         }
     }
 
-    // Two environments, one feature set (ADR 0010). `dev` exists so a
-    // development build can sit next to the store build on one device: it gets
-    // a `.dev` application id and its own "AuraSpend Dev" label. `prod` is the
-    // only distributed flavor — it is what Play receives and what the GitHub
-    // release APK is built from.
+    // Environments (ADR 0010, ADR 0012). `dev` exists so a development build
+    // can sit next to the store build on one device: it gets a `.dev`
+    // application id and its own "AuraSpend Dev" label. `prod` is the Play
+    // build and the GitHub-release APK. `fdroid` is the F-Droid build: the
+    // same package id as prod, but compiled without the non-free Google
+    // dependencies — Drive backup does not exist there (ADR 0012) and every
+    // other feature is identical.
     flavorDimensions += "env"
     productFlavors {
         create("dev") {
@@ -77,6 +85,28 @@ android {
         }
         create("prod") {
             dimension = "env"
+        }
+        create("fdroid") {
+            dimension = "env"
+            buildConfigField("boolean", "DRIVE_BACKUP", "false")
+        }
+    }
+
+    // The Google-Drive implementation lives in `src/gms`, wired into dev and
+    // prod only (ADR 0012): the `fdroid` flavor compiles its own no-op
+    // `DriveSyncManager` from `src/fdroid` and carries no Google Play Services
+    // in its runtime classpath, which F-Droid's inclusion policy requires.
+    // Both directory sets are needed: AGP 9's built-in Kotlin compiles from its
+    // own `kotlin` source dirs, and a `java.srcDir` alone does not reach it
+    // (found by the fdroid flavor building green while dev lost the class).
+    sourceSets {
+        getByName("dev") {
+            java.srcDir("src/gms/java")
+            kotlin.srcDir("src/gms/java")
+        }
+        getByName("prod") {
+            java.srcDir("src/gms/java")
+            kotlin.srcDir("src/gms/java")
         }
     }
 
@@ -217,12 +247,19 @@ dependencies {
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.navigation.compose)
 
-    // Google Sign-In & Drive
-    implementation(libs.play.services.auth)
-    implementation(libs.google.api.services.drive)
-    implementation(libs.google.api.client)
-    implementation(libs.google.api.client.android)
-    implementation(libs.google.http.client.gson)
+    // Google Sign-In & Drive — dev/prod only (ADR 0012): F-Droid's inclusion
+    // policy forbids non-free dependencies, so the `fdroid` flavor carries
+    // none of these and ships a no-op DriveSyncManager instead.
+    "devImplementation"(libs.play.services.auth)
+    "prodImplementation"(libs.play.services.auth)
+    "devImplementation"(libs.google.api.services.drive)
+    "prodImplementation"(libs.google.api.services.drive)
+    "devImplementation"(libs.google.api.client)
+    "prodImplementation"(libs.google.api.client)
+    "devImplementation"(libs.google.api.client.android)
+    "prodImplementation"(libs.google.api.client.android)
+    "devImplementation"(libs.google.http.client.gson)
+    "prodImplementation"(libs.google.http.client.gson)
     // Guava arrives transitively through google-api-client / google-http-client
     // and is attributed on that basis (LicenseScreen, docs/licenses). It was
     // declared directly here with no com.google.common import anywhere in

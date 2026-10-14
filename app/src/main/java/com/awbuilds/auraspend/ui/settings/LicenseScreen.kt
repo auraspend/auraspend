@@ -111,6 +111,12 @@ private val THIRD_PARTY = listOf(
         license = "Apache-2.0",
         role = ThirdPartyRole.DOWNLOADED,
         url = "https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2"
+    ),
+    ThirdPartyComponent(
+        name = "PennyWise AI — adapted parsing patterns (SMS amount, merchant and ingest-guard logic)",
+        license = "AGPL-3.0",
+        role = ThirdPartyRole.BUNDLED,
+        url = "https://github.com/sarim2000/pennywiseai-tracker"
     )
 )
 

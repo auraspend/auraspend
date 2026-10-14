@@ -6,7 +6,9 @@ import com.awbuilds.auraspend.domain.model.ParsedBankMessage
 import com.awbuilds.auraspend.domain.model.Transaction
 import com.awbuilds.auraspend.domain.model.TransactionType
 import com.awbuilds.auraspend.ui.classification.SmsInfo
+import java.time.Instant
 import java.time.LocalDateTime
+import java.time.ZoneId
 
 /** Live status of a message while it is being categorized, shown in the UI. */
 enum class SmsStatus { PENDING, CLASSIFYING, CLASSIFIED, SAVED, FAILED, SKIPPED }
@@ -40,6 +42,16 @@ data class ClassifiedSms(
 fun pendingInbox(messages: List<ClassifiedSms>): List<ClassifiedSms> =
     messages.filter { !it.isSaved && !it.isDismissed }
 
+/**
+ * Messages the pipeline (or the user) skipped — the audit surface.
+ *
+ * Skipped rows are deliberately absent from the triage inbox and the pick-list;
+ * this is the one place they are listed, with a way back in ("Classify again"
+ * re-queues the row, which is how a parser fix reaches old messages).
+ */
+fun skippedInbox(messages: List<ClassifiedSms>): List<ClassifiedSms> =
+    messages.filter { it.isDismissed }
+
 object SmsAutoClassifier {
 
     private val bankKeywords = listOf(
@@ -66,7 +78,9 @@ object SmsAutoClassifier {
         Regex("(?i)\\b(data\\s+usage|data\\s+plan|gb\\s+data|internet\\s+usage)\\b"),
         Regex("(?i)\\b(maintenance|system\\s+update|upgrade|server)\\b"),
         Regex("(?i)\\b(avail(?:able)?\\s+balance|bal(ance)?\\s+(?:amount|is|of)|current\\s+balance)\\b"),
-        Regex("(?i)\\b(due|deadline|maturity|interest\\s+(?:charged|posted)|annual\\s+fee)\\b"),
+        Regex("(?i)\\b(due|overdue|in\\s+arrears|deadline|maturity|interest\\s+(?:charged|posted)|annual\\s+fee)\\b"),
+        // Payment asks are not payments: "Pls pay your bill of Rs X by <date>".
+        Regex("(?i)\\b(?:please|pls)\\s+pay\\b"),
         Regex("(?i)\\b(congratulations|welcome|thank\\s+you)\\b"),
         Regex("(?i)\\b(limit\\s+(?:exceed|reached)|threshold|invalid|failed|declined|unsuccessful)\\b"),
         Regex("(?i)\\b(application|document|status|pending|submitted)\\b"),
@@ -89,12 +103,70 @@ object SmsAutoClassifier {
     private val hardVetoPatterns = listOf(
         // Advance mandate registrations: money has NOT moved yet ("will be debited on <date>").
         Regex("(?i)\\bupcoming\\s+mandate\\b"),
-        Regex("(?i)\\be-?mandate\\b[\\s\\S]{0,120}?(?:has\\s+been\\s+registered|set\\s+at|limit\\s+amount)"),
+        Regex("(?i)\\b(?:e|upi)[- ]?mandate\\b[\\s\\S]{0,120}?(?:has\\s+been\\s+registered|successfully\\s+created|set\\s+at|limit\\s+amount)"),
         // Payment reminders: "Ignore if paid" proves this SMS is not the payment itself.
-        Regex("(?i)\\bignore\\s+if\\s+paid\\b"),
+        Regex("(?i)\\bignore\\s*,?\\s*if\\s+(?:already\\s+)?paid\\b"),
         Regex("(?i)\\b(?:installment|emi|bill)\\b[\\s\\S]{0,60}?\\bis\\s+due\\b"),
         // A refund only "initiated" has not happened yet; the credit message follows.
-        Regex("(?i)\\brefund\\b[\\s\\S]{0,80}?\\binitiated\\b")
+        Regex("(?i)\\brefund\\b[\\s\\S]{0,80}?\\binitiated\\b"),
+        // Advance debit intimations — "Rs.500 will be debited from your A/c on
+        // <date>". The completed debit arrives as its own SMS ("has been
+        // debited"); booking the announcement doubles the spend. Covers the
+        // auto-debit and EMI-deduction variants the mandate patterns miss.
+        Regex("(?i)\\bwill\\s+be\\s+(?:auto[-\\s]?)?debit(?:ed|ing)?\\b"),
+        // Payment requests: money is being ASKED for, not moved.
+        Regex("(?i)\\b(?:has|have)\\s+requested\\b|\\b(?:payment|collect)\\s+request\\b|\\brequesting\\s+payment\\b|\\brequests\\s+rs\\b"),
+        // "Convert your bill to EMI" invitations — a completed conversion
+        // ("Rs.3282 debited … towards SmartEMI") still parses: the leading
+        // lookahead keeps the veto only when no debit verb appears anywhere.
+        Regex("(?i)^(?![\\s\\S]*\\b(?:debited|deducted|spent|charged|withdrawn)\\b)[\\s\\S]*\\bconvert(?:ed|s|ing)?\\b[\\s\\S]{0,80}?\\b(?:smartemi|into\\s+emi)\\b"),
+        // "received … for processing" (NACH / cheque notices) — acknowledged,
+        // not moved. Without this, "NACH Mandate … received today for
+        // processing" read "received" as a credit verb and booked phantom
+        // income of the full mandate amount.
+        Regex("(?i)\\bfor\\s+processing\\b"),
+        // Deposit-interest notices: "Net interest INR 248.07 paid on your
+        // Deposit No …" — an intimation where "paid" read as an expense and
+        // booked a phantom. A real credit ("net interest … credited") is
+        // untouched: the veto needs "paid on".
+        Regex("(?i)\\bnet\\s+interest\\b[\\s\\S]{0,80}?\\bpaid\\s+on\\b"),
+        // Bill notices, not bills: "is due for payment", "…is due by
+        // <date>". Measured on the owner's inbox (2026-10-13): every Jio
+        // monthly bill and every card statement booked as an EXPENSE — the
+        // amount is the amount owed, and no money has moved.
+        Regex("(?i)\\b(?:is|are)\\s+due\\s+(?:for\\s+payment|by)\\b"),
+        // Statement-mail notices: "E-statement … has been mailed. If not
+        // received, SMS ENRS. Total Amt Due …" — "received" read as a credit
+        // verb and booked phantom INCOME. No completed movement says "has
+        // been mailed".
+        Regex("(?i)\\bhas\\s+been\\s+mailed\\b"),
+        // Future refunds: "Amt will be refunded within 3-4 days" — money has
+        // not arrived yet; the credited message follows (same family as the
+        // "refund … initiated" veto).
+        Regex("(?i)\\bwill\\s+be\\s+refunded\\b"),
+        // E-bill bodies that carry no "due for payment" phrase still announce
+        // themselves: "Payment due date: …" / "Total amount payable : …".
+        // The veto must live HERE rather than in type scoring, because the
+        // classification memory can reinstate a type it once learned from a
+        // wrongly-saved instance (measured 2026-10-13: three Jio e-bills were
+        // resurrected by exactly that loop) — and the memory runs after the
+        // ingest guards, never before them.
+        Regex("(?i)\\bpayment\\s+due\\s+date\\b|\\btotal\\s+amount\\s+payable\\b"),
+        // ── Credit-card bill settlements are the user's own money moving
+        // between their own pockets, and both announcements look like
+        // transactions alone:
+        //  - card side — "Payment of Rs X has been received on your ICICI
+        //    Bank Credit Card", "…payment … credited to your SBI Credit
+        //    Card", "received as payment towards your PNB credit card";
+        //  - bank side — "Rs X debited … towards PNB credit card payment",
+        //    "… for credit card bill payment".
+        // Spending is already counted when the card is swiped, so booking
+        // either side double-counts it (and the card side used to inflate
+        // income). Refunds, reversals and cashbacks ON the card are money
+        // coming back and stay ingestable; so do card spends ("spent
+        // using/at") — the lookaheads carve both out.
+        Regex("(?i)^(?![\\s\\S]*\\b(?:refund|reversal|reversed|cashback|cash\\s+back)\\b)(?=[\\s\\S]*\\bcredit\\s+card\\b)[\\s\\S]*(?:\\bpayment\\b[\\s\\S]{0,80}?\\b(?:received|credited)\\b|\\breceived\\s+as\\s+payment\\b)"),
+        Regex("(?i)^(?![\\s\\S]*\\b(?:spent|used|purchased?|charged|refund|reversal|cashback)\\b)(?=[\\s\\S]*\\bcredit\\s+card\\b)[\\s\\S]*\\b(?:towards|for|to)\\b[\\s\\S]{0,40}?\\b(?:bill|payment|dues?|outstanding)\\b")
     )
 
     /**
@@ -121,11 +193,31 @@ object SmsAutoClassifier {
     )
 
     /**
+     * PNB's alibi tail, which decorates genuine debits too: "If not done by
+     * you, pl. forward this SMS from registered mobile to <number> to report
+     * unauthorized txn & block IBS/MBS." Vetoing it deletes real spends — the
+     * same failure the ICICI alarm tail caused. The shape is distinctly
+     * bank-owned ("forward this SMS … report unauthorized"), so it rescues
+     * while the phishing framings stay vetoed.
+     */
+    private val forwardAndReportTailPattern = Regex(
+        "(?i)\\bif\\s+not\\s+done\\s+by\\s+you\\b[\\s\\S]{0,80}?\\bforward\\s+(?:this\\s+)?sms\\b[\\s\\S]{0,80}?\\breport\\s+unauthor"
+    )
+
+    /**
      * Converts a parsed message into a savable transaction. All ingestion flows through the
      * persistent Room queue (SmsIngestor -> sms_messages -> SmsPipelineProcessor), which takes
      * messages one at a time — never parse the inbox directly.
+     *
+     * [receivedAt] is the SMS provider's arrival timestamp (epoch millis). It dates the
+     * transaction when the body carries no parseable date; zero means "unknown" and keeps the
+     * old save-clock behaviour for callers that have no message (tests, manual inserts).
      */
-    fun toTransaction(classified: ClassifiedSms, categoryId: String? = null): Transaction {
+    fun toTransaction(
+        classified: ClassifiedSms,
+        categoryId: String? = null,
+        receivedAt: Long = 0L
+    ): Transaction {
         val parsed = classified.parsed
         val subscriptionCategory = if (classified.isSubscription) "cat_subscription" else null
         val effectiveCategory = subscriptionCategory ?: categoryId ?: parsed.categoryId ?: "cat_other"
@@ -135,7 +227,16 @@ object SmsAutoClassifier {
             note = parsed.note ?: parsed.rawMessage.take(100),
             merchant = parsed.merchant,
             bankName = parsed.bankName,
-            date = parsed.date ?: LocalDateTime.now(),
+            // A body with no parseable date used to fall back to the save clock,
+            // which booked a July message as the October day the drain reached it
+            // (owner's device, 2026-10-13). The provider's arrival timestamp is
+            // the honest fallback.
+            date = parsed.date
+                ?: if (receivedAt > 0L) {
+                    LocalDateTime.ofInstant(Instant.ofEpochMilli(receivedAt), ZoneId.systemDefault())
+                } else {
+                    LocalDateTime.now()
+                },
             type = parsed.type ?: TransactionType.EXPENSE,
             isRecurring = classified.isSubscription,
             sourceSmsId = classified.sms.id.takeIf { it.isNotBlank() }
@@ -261,7 +362,8 @@ object SmsAutoClassifier {
         // vetoing it deleted real spends. That tail falls through to the alert
         // branch below, which keeps its amount+verb rescue.
         if (conditionalFramingPattern.containsMatchIn(message) &&
-            !bankAlarmTailPattern.containsMatchIn(message)
+            !bankAlarmTailPattern.containsMatchIn(message) &&
+            !forwardAndReportTailPattern.containsMatchIn(message)
         ) {
             return true
         }

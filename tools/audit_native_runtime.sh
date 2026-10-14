@@ -82,7 +82,15 @@ echo
 
 # A scan that finds nothing is only meaningful if it can find something. Prove
 # the method works before trusting a clean result.
-if $SYM_SRC | grep -qE "$EXPECT"; then
+#
+# The probe consumes its input fully instead of `$SYM_SRC | grep -qE "$EXPECT"`:
+# under `pipefail`, a `grep -q` that exits on the first match sends SIGPIPE to
+# the pipeline feeding it and returns 141, so a *successful* scan was reported
+# as "scan is broken — no symbols matched" on CI for a library whose 187
+# symbols had just been printed above. The count-based scans (wc -l, grep -c)
+# read to EOF and were never affected.
+SYMBOLS_BUFFER="$($SYM_SRC)"
+if grep -qE "$EXPECT" <<< "$SYMBOLS_BUFFER"; then
   echo "[ok]   scan validated: found expected API symbols ($EXPECT)"
 else
   echo "[FAIL] scan is broken - no symbols matched ($EXPECT), so a clean result below"

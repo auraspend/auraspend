@@ -22,6 +22,8 @@
     <string name="action_remove">Remove</string>
     <string name="action_dismiss">Dismiss</string>
     <string name="action_duplicate">Duplicate</string>
+    <string name="action_share">Share</string>
+    <string name="action_copy_message">Copy message</string>
     <string name="action_not_now">Not now</string>
 
     <!-- Shared formats -->
@@ -52,8 +54,8 @@
     <string name="home_quick_smart_add">Smart Add</string>
     <string name="home_quick_stats">Stats</string>
     <string name="home_cash_flow">Cash flow</string>
-    <string name="home_spending_this_week">Spending this week</string>
-    <string name="home_no_spending_this_week">No spending recorded this week yet</string>
+    <string name="home_spending_last_7_days">Spending in the last 7 days</string>
+    <string name="home_no_spending_last_7_days">No spending in the last 7 days</string>
     <string name="home_budgets">Budgets</string>
     <string name="home_manage">Manage</string>
     <string name="home_unknown_category">Unknown</string>
@@ -74,6 +76,10 @@
 
     <!-- Activity (transaction list) -->
     <string name="activity_title">Activity</string>
+    <string name="activity_previous_month">Previous month</string>
+    <string name="activity_sort_newest_first">Newest first</string>
+    <string name="activity_sort_oldest_first">Oldest first</string>
+    <string name="activity_next_month">Next month</string>
     <string name="activity_filter_all">All</string>
     <string name="activity_filter_outgoing">Outgoing</string>
     <string name="activity_filter_incoming">Incoming</string>
@@ -125,6 +131,9 @@
     <string name="txn_detail_source">Source</string>
     <string name="txn_detail_source_sms">Auto-detected from SMS</string>
     <string name="txn_detail_dash">—</string>
+    <string name="txn_detail_message_title">Original message</string>
+    <string name="txn_detail_message_meta">From %1$s · Received %2$s</string>
+    <string name="txn_detail_message_copied">Message copied</string>
 
     <!-- Quick add sheet -->
     <string name="quick_add_type_expense">Expense</string>
@@ -142,6 +151,8 @@
     <string name="txn_editor_merchant">Merchant / Payee</string>
     <string name="txn_editor_note">Note (optional)</string>
     <string name="txn_editor_category">Category</string>
+    <string name="txn_editor_recurring">Recurring payment</string>
+    <string name="txn_editor_recurring_subtitle">Marks this charge as a repeating subscription</string>
     <string name="txn_editor_save_new">Save transaction</string>
     <string name="txn_editor_save_changes">Save changes</string>
 
@@ -181,6 +192,17 @@
     <string name="settings_categories">Categories</string>
     <string name="settings_categories_subtitle">Add, edit, or organize categories</string>
     <string name="settings_subscriptions">Subscriptions</string>
+    <string name="settings_sms_access">SMS access</string>
+    <string name="settings_sms_access_granted">Granted — new bank messages are read on-device.</string>
+    <string name="settings_sms_access_missing">Not granted — automatic categorisation is paused.</string>
+    <string name="settings_notifications">Categorisation notifications</string>
+    <string name="settings_notifications_subtitle">Show progress while messages are being categorised.</string>
+    <string name="settings_delete_data">Delete all data</string>
+    <string name="settings_delete_data_subtitle">Remove every record and message from this device</string>
+    <string name="settings_delete_data_title">Delete all data?</string>
+    <string name="settings_delete_data_message">Every transaction, budget, goal, subscription and stored message on this device is removed. Messages already read are left alone; a fresh scan can re-import your SMS history. This cannot be undone.</string>
+    <string name="settings_delete_data_done">All data deleted</string>
+    <string name="settings_delete_data_failed">Could not delete the data</string>
     <string name="settings_subscriptions_subtitle">Track recurring payments</string>
     <string name="settings_budgets">Budgets</string>
     <string name="settings_budgets_subtitle">Set spending limits per category</string>
@@ -362,6 +384,12 @@
     <string name="recurring_due_today">Due today</string>
     <string name="recurring_tomorrow">Tomorrow</string>
     <string name="recurring_next">Next: %1$s</string>
+    <string name="recurring_edit">Edit Subscription</string>
+    <string name="recurring_detected_title">Detected from your messages</string>
+    <string name="recurring_detected_subtitle">Recurring payments we spotted — track the ones you want.</string>
+    <string name="recurring_detected_last_paid">Last paid %1$s</string>
+    <string name="recurring_detected_dismiss">Not a subscription</string>
+    <string name="recurring_track">Track</string>
     <string name="recurring_add_subtitle">Track a recurring payment</string>
     <string name="recurring_name">Name</string>
     <string name="recurring_name_hint">Netflix, Spotify, Rent...</string>
@@ -381,6 +409,8 @@
     <string name="categories_delete_message">Delete "%1$s"? Transactions using this category will be affected.</string>
     <string name="categories_default_badge">Default</string>
     <string name="categories_name">Category Name</string>
+    <string name="categories_icon">Icon</string>
+    <string name="categories_color">Color</string>
 
     <!-- Classification (smart add) -->
     <string name="classification_title">Smart Add</string>
@@ -456,6 +486,10 @@
         <item quantity="other">%1$d messages found</item>
     </plurals>
     <string name="classification_save_all">Save All</string>
+    <string name="classification_skip_all">Skip All</string>
+    <string name="classification_skipped_title">Skipped (%1$d)</string>
+    <string name="classification_skipped_subtitle">Not transactions, duplicates, or already handled. Classify one again to re-check it.</string>
+    <string name="classification_classify_again">Classify again</string>
     <string name="classification_swipe_hint">Swipe right to save · left to dismiss</string>
     <string name="classification_sms_saved">Saved to transactions</string>
     <string name="classification_sms_dismissed">Message dismissed</string>

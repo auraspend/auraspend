@@ -30,11 +30,17 @@ note() { printf '\n== %s\n' "$1"; }
 bad()  { printf '   FAIL  %s\n' "$1"; fail=1; }
 good() { printf '   ok    %s\n' "$1"; }
 
-if [[ ! -f "$MAPPING" || ! -f "$ANALYZER" ]]; then
+# The AAB is a third input this script needs but does not produce elsewhere:
+# on CI, `assembleProdRelease` yields mapping.txt and the config analyzer, so
+# checking only those two skipped the build and then failed on a bundle that
+# was never made. Anything the checks below read must trigger the build.
+# `${VARIANT^}` is bash 4+; macOS ships bash 3.2, so capitalise portably.
+VARIANT_CAP="$(printf '%s' "${VARIANT:0:1}" | tr '[:lower:]' '[:upper:]')${VARIANT:1}"
+if [[ ! -f "$MAPPING" || ! -f "$ANALYZER" || -z "$(ls "${AAB_OUT}"/*.aab 2>/dev/null)" ]]; then
   note "Building ${VARIANT}Release (bundle + APK)"
-  ./gradlew "bundle${VARIANT^}Release" "assemble${VARIANT^}Release" --console=plain -q \
+  ./gradlew "bundle${VARIANT_CAP}Release" "assemble${VARIANT_CAP}Release" --console=plain -q \
     || { echo "build failed"; exit 1; }
-  ./gradlew ":app:analyze${VARIANT^}ReleaseR8Config" --console=plain -q || true
+  ./gradlew ":app:analyze${VARIANT_CAP}ReleaseR8Config" --console=plain -q || true
 fi
 
 note "1. R8 scores vs Play's 25% floor (enforced February 2027)"

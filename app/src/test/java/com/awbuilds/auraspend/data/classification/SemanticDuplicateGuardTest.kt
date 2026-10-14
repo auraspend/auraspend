@@ -10,6 +10,7 @@ import com.awbuilds.auraspend.domain.model.Subscription
 import com.awbuilds.auraspend.domain.model.Transaction
 import com.awbuilds.auraspend.domain.repository.TransactionRepository
 import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.runBlocking
@@ -167,6 +168,44 @@ class SemanticDuplicateGuardTest {
     }
 
     @Test
+    fun `same merchant within the hour is not a duplicate when the amounts differ`() = runBlocking {
+        // Measured on the owner's device (2026-10-13): a card swipe 52 minutes
+        // after a similar one at the same merchant was auto-skipped as a
+        // "duplicate" of it — the old amount gate allowed a ±₹1 gap for small
+        // amounts, so two DIFFERENT payments of nearly the same size at the
+        // same shop collapsed into one and the second one vanished from the
+        // totals. SMS amounts are deterministic: a re-delivered copy states
+        // the same amount to the paisa.
+        val dao = FakeSmsMessageDao()
+        val repo = FakeTransactionRepository()
+        repo.existing.add(
+            Transaction(
+                amount = 78.5,
+                categoryId = "cat_other",
+                note = "CORNER STORE",
+                merchant = "CORNER STORE",
+                date = LocalDateTime.now().minusMinutes(52),
+                type = com.awbuilds.auraspend.domain.model.TransactionType.EXPENSE
+            )
+        )
+        val bodyDate = LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd-MM-yy HH:mm:ss"))
+        dao.insertAll(
+            listOf(
+                message(
+                    "swipe2",
+                    "Spent INR 79\nAxis Bank Card no. XX4821\n$bodyDate IST\nCORNER STORE\n" +
+                        "Avl Limit: INR 5000.00\nNot you? SMS BLOCK 5003"
+                )
+            )
+        )
+
+        val result = SmsPipelineProcessor(dao, repo).processPending(10)
+
+        assertEquals("a different amount is a different payment, not a duplicate", 1, result.saved)
+        assertEquals(0, result.skipped)
+    }
+
+    @Test
     fun `twin credits from bank and wallet are fingerprint-skipped`() = runBlocking {
         // Production case: the SAME ₹2,236.67 credit announced by two Canara senders
         // with completely different wording, minutes apart.
@@ -199,36 +238,36 @@ class SemanticDuplicateGuardTest {
 
     @Test
     fun `merchantless credits minutes apart are not duplicates when the amounts differ`() = runBlocking {
-        // Measured false positive (owner's device, 2026-10-13): ₹840.76 vs an
-        // unrelated ₹892 credit 37 minutes earlier, both merchantless, scored
-        // ~0.98 under the old detector call and the payment was skipped. A 6%
+        // Measured false positive (owner's device, 2026-10-13): ₹735.50 vs an
+        // unrelated ₹815.75 credit 37 minutes earlier, both merchantless, scored
+        // ~0.98 under the old detector call and the payment was skipped. A ~10%
         // amount gap is a different payment.
         val dao = FakeSmsMessageDao()
         val repo = FakeTransactionRepository()
         repo.existing.add(
             Transaction(
-                amount = 892.0,
+                amount = 815.75,
                 categoryId = "cat_other",
-                note = "We have received payment of Rs.892.00 via BBPS",
+                note = "We have received payment of Rs.815.75 via BBPS",
                 merchant = null,
                 date = LocalDateTime.now().minusMinutes(37),
                 type = com.awbuilds.auraspend.domain.model.TransactionType.INCOME
             )
         )
         // No date in the body: the transaction falls back to now(), so the duplicate
-        // window covers the ₹892 credit — the amount gate must still save it.
+        // window covers the ₹815.75 credit — the amount gate must still save it.
         dao.insertAll(
             listOf(
                 message(
                     "cardpayment",
-                    "Payment of Rs 840.76 has been received on your ICICI Bank Credit Card XX8000 through Bharat Bill Payment System"
+                    "Payment of Rs 735.50 has been received in your savings account"
                 )
             )
         )
 
         val result = SmsPipelineProcessor(dao, repo).processPending(10)
 
-        assertEquals("a 6% amount gap is a different payment, not a duplicate", 1, result.saved)
+        assertEquals("a ~10% amount gap is a different payment, not a duplicate", 1, result.saved)
         assertEquals(0, result.skipped)
     }
 

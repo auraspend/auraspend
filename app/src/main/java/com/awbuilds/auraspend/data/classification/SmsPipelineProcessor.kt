@@ -132,13 +132,20 @@ class SmsPipelineProcessor(
             // gate the similarity score's merchantless case (40% free when both
             // merchants are null) + a same-hour date could push a 6%-apart pair over
             // the 0.96 threshold. Measured on the owner's device (2026-10-13): an
-            // ₹840.76 card payment was skipped as a "duplicate" of an unrelated ₹892
+            // ₹735.50 payment was skipped as a "duplicate" of an unrelated ₹815.75
             // credit 37 minutes earlier, because its date had failed to parse and
             // collapsed onto the save hour. The date-parse fix removes that trigger;
             // this gate makes the class impossible.
             .filter {
-                kotlin.math.abs(it.amount - transaction.amount) <=
-                    maxOf(1.0, 0.002 * transaction.amount)
+                // SMS amounts are deterministic: a re-delivered copy states the
+                // SAME amount to the paisa, and anything wider is a different
+                // payment. The old `maxOf(1.0, 0.2 %)` floor allowed a ±₹1
+                // gap for small amounts, and on the owner's device
+                // (2026-10-13) a card swipe 52 minutes after a similar one at
+                // the same merchant was auto-skipped as a "duplicate" of it —
+                // a real second payment deleted by the guard that exists to
+                // protect payments.
+                kotlin.math.abs(it.amount - transaction.amount) <= 0.01
             }
         return DuplicateDetector.findMostLikelyDuplicate(
             transaction,
@@ -253,7 +260,11 @@ class SmsPipelineProcessor(
 
         val categoryId = enriched.parsed.categoryId
             ?: categoryResolver(enriched.parsed.merchant)
-        val transaction = SmsAutoClassifier.toTransaction(enriched, categoryId)
+        val transaction = SmsAutoClassifier.toTransaction(
+            enriched,
+            categoryId,
+            receivedAt = message.receivedAt
+        )
 
         // Semantic-duplicate guard: banks/wallets often deliver the SAME payment as several
         // distinct SMS (provider retries, app + bank notifications). The sourceSmsId unique

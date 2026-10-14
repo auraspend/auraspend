@@ -119,17 +119,21 @@ classified and stored on-device; the only way message text leaves the phone is
 the Google Drive backup you start yourself, which is why the in-app copy says
 exactly that.
 
-The flavors change configuration only — application-id suffix, label and
+The dev/prod flavors change configuration only — application-id suffix, label and
 signing. **No feature may live in a flavor source set that is absent from
 `app/src/main/`** — see [ADR 0007](docs/adr/0007-no-paywall.md),
 [ADR 0008](docs/adr/0008-distribution-flavors.md) and
-[ADR 0010](docs/adr/0010-dev-prod-flavors.md).
+[ADR 0010](docs/adr/0010-dev-prod-flavors.md). The one documented exception is
+the `fdroid` flavor, which drops Google Drive backup because F-Droid's inclusion
+policy forbids the non-free Play Services dependency — see
+[ADR 0012](docs/adr/0012-fdroid-flavor-without-gms.md).
 
 ### Building a release
 
 ```bash
 ./gradlew assembleProdRelease    # prod APK (self-install / website)
 ./gradlew bundleProdRelease      # prod AAB (Play Store)
+./gradlew assembleFdroidRelease  # F-Droid build — no Drive backup (ADR 0012)
 ```
 
 Release builds require a keystore in `secrets.properties` (see
@@ -137,10 +141,13 @@ Release builds require a keystore in `secrets.properties` (see
 produces an `…-unsigned.apk`**, which Play and self-installers will reject —
 check the filename before uploading.
 
-Pushing a `v*` tag runs the release workflow, which builds both, verifies the
-signatures, and attaches them to a GitHub Release as
-`AuraSpend-V<version>.Alpha.{aab,apk}` — see
-`.github/workflows/release.yml`. The workflow does not publish to Play.
+Pushing a `v*` tag runs the release workflow: it builds both, verifies the
+signatures, attaches them to a GitHub Release as
+`AuraSpend-V<version>.Alpha.{aab,apk}`, and uploads the signed bundle to
+Google Play's closed-testing track with the per-language notes in
+`docs/store/whatsnew/` — see `.github/workflows/release.yml`. The run is
+approval-gated, and the destination track can be changed with the `PLAY_TRACK`
+repository variable.
 
 ### Google Drive backup
 
@@ -156,6 +163,9 @@ it.
   signed with your own key needs its own OAuth client in a Google Cloud
   project (type *Android*, your package id + your signing SHA-1). Your backup
   still goes to your own Drive.
+- **F-Droid build** — ships without Google Play Services (F-Droid's inclusion
+  policy forbids the dependency), so Drive backup is not available there at
+  all; the in-app rows are hidden. CSV export/import moves data in and out.
 - **No Google account?** CSV export/import works in every build without any
   Google service — Settings → Data.
 
@@ -185,7 +195,7 @@ app/src/
 │   │   ├── classification/   # Bank parsers, regex layer, AI fusion, SMS intake
 │   │   ├── local/            # Room DB, DAOs, entities, CSV manager
 │   │   ├── privacy/          # SensitiveDataMasker
-│   │   ├── remote/           # Google Drive backup
+│   │   ├── remote/           # Drive backup: real impl in src/gms, stub in src/fdroid
 │   │   └── repository/       # Repository implementations
 │   ├── domain/
 │   │   ├── model/            # Core domain models
@@ -210,14 +220,20 @@ app/src/
 │   │   └── transaction/      # List + add/edit screens
 │   └── AuraSpendApp.kt       # Application class (DI)
 ├── dev/                      # Dev flavor: manifest + "AuraSpend Dev" label only
-└── prod/                     # Prod flavor: manifest only
+├── prod/                     # Prod flavor: manifest only
+├── gms/                      # DriveSyncManager (real) — compiled into dev + prod
+└── fdroid/                   # F-Droid flavor: no-op DriveSyncManager stub (ADR 0012)
 ```
 
-The `dev` and `prod` source sets deliberately contain **no Kotlin**. Every
+The `dev` and `prod` source sets deliberately contain **no Kotlin**: every
 feature lives in `main`, so both flavors are identical apart from the dev
 app-id suffix, label and signing — see
 [ADR 0008](docs/adr/0008-distribution-flavors.md) and
-[ADR 0010](docs/adr/0010-dev-prod-flavors.md).
+[ADR 0010](docs/adr/0010-dev-prod-flavors.md). The single exception is the
+`fdroid` flavor: `src/gms` (the Google Drive implementation) is compiled into
+dev and prod only, while `src/fdroid` holds a no-op stub — F-Droid forbids the
+non-free Play Services dependency, so Drive backup is absent there — see
+[ADR 0012](docs/adr/0012-fdroid-flavor-without-gms.md).
 
 ## Getting Started
 
@@ -406,6 +422,7 @@ their own terms — the AGPL covers AuraSpend's own source, not theirs:
 | OkHttp, google-http-client-gson | Apache-2.0 | Declared directly |
 | Guava | Apache-2.0 | Transitive, via google-api-client / google-http-client |
 | [`all-MiniLM-L6-v2`](https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2) | Apache-2.0 | **Downloaded at runtime**, not bundled |
+| [PennyWise AI](https://github.com/sarim2000/pennywiseai-tracker) (adapted parsing patterns) | AGPL-3.0 | SMS amount/limit/merchant patterns, ingest guards, UPI-handle intelligence and the sender IDs behind the per-bank parsers (HDFC, ICICI, Kotak), adapted 2026-10-13 |
 
 The full texts are in [`docs/licenses/`](docs/licenses/) and in the app under
 **Settings → About → Open-source licenses**.

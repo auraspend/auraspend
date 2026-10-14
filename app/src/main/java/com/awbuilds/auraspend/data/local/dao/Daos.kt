@@ -25,20 +25,26 @@ interface TransactionDao {
     @Query(
         """
         SELECT * FROM transactions
-        WHERE (:type IS NULL OR type = :type)
+        WHERE dateTimestamp BETWEEN :start AND :end
+          AND (:type IS NULL OR type = :type)
           AND (:categoryId IS NULL OR categoryId = :categoryId)
           AND (
               :query IS NULL OR :query = ''
               OR note LIKE '%' || :query || '%'
               OR merchant LIKE '%' || :query || '%'
           )
-        ORDER BY dateTimestamp DESC
+        ORDER BY
+          CASE WHEN :ascending THEN dateTimestamp END ASC,
+          CASE WHEN NOT :ascending THEN dateTimestamp END DESC
         """
     )
     fun pagedTransactions(
         query: String?,
         type: String?,
-        categoryId: String?
+        categoryId: String?,
+        start: Long,
+        end: Long,
+        ascending: Boolean
     ): PagingSource<Int, TransactionEntity>
 
     /**

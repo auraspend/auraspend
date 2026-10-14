@@ -135,7 +135,7 @@ class BankMessageParserTest {
         // of debit" scored both lexicons — the literal word "debit" — so the
         // ambiguity rule returned no type and the row was skipped.
         val parsed = BankMessageParser.parse(
-            "Rs.20.00 is credited to Kotak Bank a/c no. 8584 on 20-08-26 as a reversal of debit transaction (UPI Ref no 713508246195)"
+            "Rs.20.00 is credited to Kotak Bank a/c no. 8584 on 20-08-26 as a reversal of debit transaction (UPI Ref no 600000000001)"
         )
         assertEquals(TransactionType.INCOME, parsed.type)
     }
@@ -146,7 +146,7 @@ class BankMessageParserTest {
         // "Bharat Bill Payment System" contains the debit phrase "bill payment",
         // which made the type ambiguous and the row untyped.
         val parsed = BankMessageParser.parse(
-            "Payment of Rs 838.61 has been received on your ICICI Bank Credit Card XX8001 through Bharat Bill Payment System on 04-AUG-26"
+            "Payment of Rs 735.50 has been received on your ICICI Bank Credit Card XX8001 through Bharat Bill Payment System on 04-AUG-26"
         )
         assertEquals(TransactionType.INCOME, parsed.type)
     }
@@ -158,9 +158,160 @@ class BankMessageParserTest {
         // window (owner's device, 2026-10-13 — two card payments were skipped as
         // duplicates of an unrelated credit saved minutes earlier).
         val parsed = BankMessageParser.parse(
-            "Payment of Rs 838.61 has been received on your ICICI Bank Credit Card XX8001 through Bharat Bill Payment System on 04-AUG-26"
+            "Payment of Rs 735.50 has been received on your ICICI Bank Credit Card XX8001 through Bharat Bill Payment System on 04-AUG-26"
         )
         assertEquals(LocalDate.of(2026, 8, 4), parsed.date?.toLocalDate())
+    }
+
+    @Test
+    fun `an amount with no leading digit is still read`() {
+        // "Rs..6 Credited" — banks do print these; skipping them let a later
+        // balance figure win the amount pick.
+        val parsed = BankMessageParser.parse("Rs..6 Credited to your A/c XX1234 on 23-08-26")
+        assertEquals(0.6, parsed.amount ?: Double.NaN, 0.0001)
+        assertEquals(TransactionType.INCOME, parsed.type)
+    }
+
+    @Test
+    fun `a statement whose only figure is the available limit has no amount`() {
+        val parsed = BankMessageParser.parse(
+            "Your available credit limit is INR 42,731.09. Statement is ready."
+        )
+        assertNull(parsed.amount)
+    }
+
+    @Test
+    fun `deducted is an expense`() {
+        val parsed = BankMessageParser.parse(
+            "Rs. 250.00 deducted from your account towards insurance premium."
+        )
+        assertEquals(TransactionType.EXPENSE, parsed.type)
+        assertEquals(250.0, parsed.amount ?: Double.NaN, 0.0001)
+    }
+
+    @Test
+    fun `an updated balance tail is not the amount`() {
+        val parsed = BankMessageParser.parse(
+            "Rs 500 debited from A/c XX1234. Updated Balance: Rs 12,345.00."
+        )
+        assertEquals(500.0, parsed.amount ?: Double.NaN, 0.0001)
+    }
+
+    @Test
+    fun `a trailing PVT LTD is stripped from the merchant`() {
+        val parsed = BankMessageParser.parse(
+            "Sent Rs.500 towards ACME TECHNOLOGIES PVT LTD on 23-08-26"
+        )
+        assertEquals("ACME TECHNOLOGIES", parsed.merchant)
+    }
+
+    @Test
+    fun `a payment app QR handle reads as the app, not the raw id`() {
+        val parsed = BankMessageParser.parse(
+            "Sent Rs.15.00 from Kotak Bank AC X1234 to paytmqr288005050101t74afkchmxjd@paytm on 14-10-25.UPI Ref 1234567890"
+        )
+        assertEquals("Paytm", parsed.merchant)
+        assertEquals(TransactionType.EXPENSE, parsed.type)
+    }
+
+    @Test
+    fun `a phone-number UPI handle stays the number`() {
+        val parsed = BankMessageParser.parse(
+            "Sent Rs.500.00 from Kotak Bank AC X9999 to 9876543210@paytm on 15-10-25. UPI Ref 1111111111"
+        )
+        assertEquals("9876543210", parsed.merchant)
+    }
+
+    @Test
+    fun `a card spend's merchant follows the second on`() {
+        val parsed = BankMessageParser.parse(
+            "INR 500.00 spent using ICICI Bank Card XX5678 on 06-Sep-25 on Swiggy. Avl Limit: INR 1,50,000.00."
+        )
+        assertEquals(500.0, parsed.amount ?: Double.NaN, 0.0001)
+        assertEquals("Swiggy", parsed.merchant)
+        assertEquals(TransactionType.EXPENSE, parsed.type)
+    }
+
+    @Test
+    fun `a refund's merchant is the party before refunded`() {
+        val parsed = BankMessageParser.parse(
+            "INR 2 from Airport Lounge refunded to your Kotak Credit Card x8848 on 17-Jul-2026"
+        )
+        assertEquals("Airport Lounge", parsed.merchant)
+        assertEquals(TransactionType.INCOME, parsed.type)
+    }
+
+    @Test
+    fun `the payee before a counterparty credited is the merchant`() {
+        val parsed = BankMessageParser.parse(
+            "ICICI Bank Acct XX051 debited for Rs 180.00 on 10-Nov-25; MADURAI STORES credited. UPI:568069174081."
+        )
+        assertEquals("MADURAI STORES", parsed.merchant)
+        assertEquals(TransactionType.EXPENSE, parsed.type)
+    }
+
+    @Test
+    fun `credited to the beneficiary is money out, not income`() {
+        val parsed = BankMessageParser.parse(
+            "ICICI BANK NEFT Transaction with reference number IN12603221231681 for Rs. 22050.00 has been credited to the beneficiary account on 01-02-2026 at 10:32:51"
+        )
+        assertEquals(TransactionType.EXPENSE, parsed.type)
+        assertEquals(22050.0, parsed.amount ?: Double.NaN, 0.01)
+    }
+
+    @Test
+    fun `an Info SAL clause reads as Salary`() {
+        val parsed = BankMessageParser.parse(
+            "ICICI Bank Account XX566 credited:Rs. 18,832.00 on 28-Feb-25. Info INF*000169831922*IQBO SAL FE. Available Balance is Rs. 28,076.14."
+        )
+        assertEquals("Salary", parsed.merchant)
+        assertEquals(TransactionType.INCOME, parsed.type)
+    }
+
+    @Test
+    fun `passive sent-to mail phrasing is not a transfer verb`() {
+        val parsed = BankMessageParser.parse(
+            "ICICI Bank Credit Card XX8000 Statement is sent to a*****h@gmail.com. Total of Rs 735.50 or minimum of Rs 73.55 is due by 20-AUG-26."
+        )
+        assertNull(parsed.type)
+    }
+
+    @Test
+    fun `if-not-received boilerplate is not a credit`() {
+        val parsed = BankMessageParser.parse(
+            "E-statement of SBI Credit Card ending XX79 dated 10/02/2026 has been mailed. If not received, SMS ENRS to 5676766. Total Amt Due Rs 2075"
+        )
+        assertNull(parsed.type)
+    }
+
+    @Test
+    fun `a biller receipt is the user's own payment, not income`() {
+        // Card-side "received ON YOUR credit card" stays income (tested above);
+        // a biller receipting the user's payment is a debit.
+        val parsed = BankMessageParser.parse(
+            "Payment of Rs. 749.50 for your JioHome connection with JioFixedVoice Number +919000000000 through UPI Payments has been received on 01-Aug-26. Thank You!"
+        )
+        assertEquals(TransactionType.EXPENSE, parsed.type)
+        assertEquals(749.50, parsed.amount ?: Double.NaN, 0.001)
+    }
+
+    @Test
+    fun `an HDFC-style NEFT credit names the remitting organisation`() {
+        val parsed = BankMessageParser.parse(
+            "Update! INR 1.00 deposited in HDFC Bank A/c XX9999 on 30-MAR-26 for NEFT Cr-CITI0100000-ACME TECHNOLOGIES-PERSON NAME-CITIN99999999999.Avl bal INR 8.00."
+        )
+        assertEquals("ACME TECHNOLOGIES", parsed.merchant)
+        assertEquals(TransactionType.INCOME, parsed.type)
+        assertEquals(1.0, parsed.amount ?: Double.NaN, 0.001)
+    }
+
+    @Test
+    fun `an ICICI-style NEFT credit names the payer`() {
+        val parsed = BankMessageParser.parse(
+            "ICICI Bank Account XX378 credited:Rs. 6,000.00 on 24-Jun-26. Info NEFT-FDRLM4175907234-JOHN JOSE. Available Balance is Rs. 16,079.44."
+        )
+        assertEquals("JOHN JOSE", parsed.merchant)
+        assertEquals(TransactionType.INCOME, parsed.type)
     }
 
     // ─── Merchants ───────────────────────────────────────────────────────────
@@ -238,6 +389,20 @@ class BankMessageParserTest {
     fun `iso timestamp`() {
         val parsed = BankMessageParser.parse("Rs 89 debited 2026-07-04T18:02 at HOTSPOT")
         assertEquals(LocalDateTime.of(2026, 7, 4, 18, 2), parsed.date)
+    }
+
+    @Test
+    fun `month-first English dates are parsed with their time`() {
+        // "on Jul 22 2026 6:19AM" matches neither the day-first patterns nor
+        // `dateFormats`: month-first ordering has no "d MMM" shape. The message
+        // silently took the save-time date, so a July debit appeared as the
+        // October day the scan ran (owner's device, 2026-10-13). Amounts are
+        // synthetic; only the shape is real.
+        val parsed = BankMessageParser.parse(
+            "Rs.315.00 debited from your RWallet Account on Jul 22 2026 6:19AM. " +
+                "Available Balance Rs.412.05. Indian Railway"
+        )
+        assertEquals(LocalDateTime.of(2026, 7, 22, 6, 19), parsed.date)
     }
 
     // ─── Banks ───────────────────────────────────────────────────────────────

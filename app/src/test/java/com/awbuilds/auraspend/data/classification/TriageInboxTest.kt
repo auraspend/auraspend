@@ -68,6 +68,18 @@ class TriageInboxTest {
         assertTrue(pendingInbox(emptyList()).isEmpty())
     }
 
+    @Test
+    fun `the skipped inbox lists exactly the dismissed messages`() {
+        // The audit surface: skipped rows are absent from the triage inbox and
+        // the pick-list, and this is the only list that shows them.
+        val saved = msg("s", saved = true)
+        val pending = msg("p")
+        val dismissed = msg("d", dismissed = true, status = SmsStatus.SKIPPED)
+
+        assertEquals(listOf("d"), skippedInbox(listOf(saved, pending, dismissed)).map { it.sms.id })
+        assertTrue(skippedInbox(listOf(saved, pending)).isEmpty())
+    }
+
     private fun msg(
         id: String,
         saved: Boolean = false,

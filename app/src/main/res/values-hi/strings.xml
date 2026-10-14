@@ -23,6 +23,8 @@
     <string name="action_remove">हटाएँ</string>
     <string name="action_dismiss">खारिज करें</string>
     <string name="action_duplicate">प्रतिलिपि बनाएँ</string>
+    <string name="action_share">शेयर करें</string>
+    <string name="action_copy_message">संदेश कॉपी करें</string>
     <string name="action_not_now">अभी नहीं</string>
 
     <!-- Shared formats -->
@@ -53,8 +55,8 @@
     <string name="home_quick_smart_add">स्मार्ट ऐड</string>
     <string name="home_quick_stats">आंकड़े</string>
     <string name="home_cash_flow">नकदी प्रवाह</string>
-    <string name="home_spending_this_week">इस हफ़्ते का खर्च</string>
-    <string name="home_no_spending_this_week">इस हफ़्ते अभी तक कोई खर्च दर्ज नहीं है</string>
+    <string name="home_spending_last_7_days">पिछले 7 दिनों का खर्च</string>
+    <string name="home_no_spending_last_7_days">पिछले 7 दिनों में कोई खर्च दर्ज नहीं है</string>
     <string name="home_budgets">बजट</string>
     <string name="home_manage">प्रबंधित करें</string>
     <string name="home_unknown_category">अज्ञात</string>
@@ -75,6 +77,10 @@
 
     <!-- Activity (transaction list) -->
     <string name="activity_title">गतिविधि</string>
+    <string name="activity_previous_month">पिछला महीना</string>
+    <string name="activity_sort_newest_first">नवीनतम पहले</string>
+    <string name="activity_sort_oldest_first">पुराने पहले</string>
+    <string name="activity_next_month">अगला महीना</string>
     <string name="activity_filter_all">सभी</string>
     <string name="activity_filter_outgoing">जावक</string>
     <string name="activity_filter_incoming">आवक</string>
@@ -123,6 +129,9 @@
     <string name="txn_detail_source">स्रोत</string>
     <string name="txn_detail_source_sms">SMS से स्वतः पहचाना गया</string>
     <string name="txn_detail_dash">—</string>
+    <string name="txn_detail_message_title">मूल संदेश</string>
+    <string name="txn_detail_message_meta">%1$s से · प्राप्त: %2$s</string>
+    <string name="txn_detail_message_copied">संदेश कॉपी हो गया</string>
 
     <!-- Quick add sheet -->
     <string name="quick_add_type_expense">खर्च</string>
@@ -140,6 +149,8 @@
     <string name="txn_editor_merchant">व्यापारी / प्राप्तकर्ता</string>
     <string name="txn_editor_note">नोट (वैकल्पिक)</string>
     <string name="txn_editor_category">श्रेणी</string>
+    <string name="txn_editor_recurring">आवर्ती भुगतान</string>
+    <string name="txn_editor_recurring_subtitle">इस भुगतान को बार-बार होने वाली सदस्यता के रूप में चिह्नित करता है</string>
     <string name="txn_editor_save_new">लेन-देन सहेजें</string>
     <string name="txn_editor_save_changes">बदलाव सहेजें</string>
 
@@ -179,6 +190,17 @@
     <string name="settings_categories">श्रेणियाँ</string>
     <string name="settings_categories_subtitle">श्रेणियाँ जोड़ें, संपादित करें या व्यवस्थित करें</string>
     <string name="settings_subscriptions">सदस्यताएँ</string>
+    <string name="settings_sms_access">SMS पहुँच</string>
+    <string name="settings_sms_access_granted">अनुमति दी गई — नए बैंक संदेश डिवाइस पर ही पढ़े जाते हैं।</string>
+    <string name="settings_sms_access_missing">अनुमति नहीं दी गई — स्वतः वर्गीकरण रुका हुआ है।</string>
+    <string name="settings_notifications">वर्गीकरण सूचनाएँ</string>
+    <string name="settings_notifications_subtitle">संदेशों के वर्गीकरण के दौरान प्रगति दिखाएँ।</string>
+    <string name="settings_delete_data">सारा डेटा हटाएँ</string>
+    <string name="settings_delete_data_subtitle">इस डिवाइस से हर रिकॉर्ड और संदेश हटाएँ</string>
+    <string name="settings_delete_data_title">सारा डेटा हटाएँ?</string>
+    <string name="settings_delete_data_message">इस डिवाइस के सभी लेन-देन, बजट, लक्ष्य, सदस्यताएँ और संग्रहीत संदेश हट जाएँगे। पहले पढ़े गए संदेश अछूते रहते हैं; नया स्कैन आपका SMS इतिहास दोबारा आयात कर सकता है। इसे पूर्ववत नहीं किया जा सकता।</string>
+    <string name="settings_delete_data_done">सारा डेटा हटा दिया गया</string>
+    <string name="settings_delete_data_failed">डेटा हटाया नहीं जा सका</string>
     <string name="settings_subscriptions_subtitle">आवर्ती भुगतान ट्रैक करें</string>
     <string name="settings_budgets">बजट</string>
     <string name="settings_budgets_subtitle">प्रत्येक श्रेणी के लिए खर्च सीमा तय करें</string>
@@ -347,6 +369,12 @@
     <string name="recurring_due_today">आज देय</string>
     <string name="recurring_tomorrow">कल</string>
     <string name="recurring_next">अगला: %1$s</string>
+    <string name="recurring_edit">सदस्यता संपादित करें</string>
+    <string name="recurring_detected_title">आपके संदेशों से पहचाने गए</string>
+    <string name="recurring_detected_subtitle">हमें मिले आवर्ती भुगतान — जिन्हें चाहें ट्रैक करें।</string>
+    <string name="recurring_detected_last_paid">अंतिम भुगतान %1$s</string>
+    <string name="recurring_detected_dismiss">यह सदस्यता नहीं है</string>
+    <string name="recurring_track">ट्रैक करें</string>
     <string name="recurring_add_subtitle">आवर्ती भुगतान ट्रैक करें</string>
     <string name="recurring_name">नाम</string>
     <string name="recurring_name_hint">Netflix, Spotify, किराया...</string>
@@ -366,6 +394,8 @@
     <string name="categories_delete_message">"%1$s" हटाएँ? इस श्रेणी वाले लेन-देन प्रभावित होंगे।</string>
     <string name="categories_default_badge">डिफ़ॉल्ट</string>
     <string name="categories_name">श्रेणी का नाम</string>
+    <string name="categories_icon">आइकन</string>
+    <string name="categories_color">रंग</string>
 
     <!-- Classification (smart add) -->
     <string name="classification_title">स्मार्ट ऐड</string>
@@ -438,6 +468,10 @@
         <item quantity="other">%1$d संदेश मिले</item>
     </plurals>
     <string name="classification_save_all">सभी सहेजें</string>
+    <string name="classification_skip_all">सभी छोड़ें</string>
+    <string name="classification_skipped_title">छोड़े गए (%1$d)</string>
+    <string name="classification_skipped_subtitle">लेन-देन नहीं, डुप्लिकेट, या पहले ही संभाले गए। दोबारा जाँचने के लिए फिर से वर्गीकृत करें।</string>
+    <string name="classification_classify_again">फिर से वर्गीकृत करें</string>
     <string name="classification_swipe_hint">सहेजने के लिए दाएँ स्वाइप करें · खारिज करने के लिए बाएँ</string>
     <string name="classification_sms_saved">लेन-देन में सहेजा गया</string>
     <string name="classification_sms_dismissed">संदेश छोड़ दिया गया</string>

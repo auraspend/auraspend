@@ -3,7 +3,159 @@
 > Read this file and the latest file in `docs/handoffs/` before touching anything.
 > Update both (plus `CLAUDE.md` / `memory/` when you learn something durable) before ending a session.
 >
-> Latest: `docs/handoffs/0029-sms-categorisation-fix-verification.md` — the device
+> Latest: `docs/handoffs/0044-play-upload-on-tag.md` — one `v*` tag now ships to
+> **both channels**: the GitHub release (as before) *and* a Google Play upload —
+> signed AAB to the closed-testing track (`alpha`, `PLAY_TRACK` overrides) with
+> the per-language notes in `docs/store/whatsnew/` and the R8 mapping. Tag runs
+> only, still behind the `release` approval. The Play credential
+> (`PLAY_SERVICE_ACCOUNT_JSON`) is a service account whose identity is
+> **deliberately unrecorded anywhere in this repo** — never name it; AGENTS.md
+> carries the rule. A read-only pre-flight confirmed auth + app access + the
+> `alpha` track name. PR #67. Remaining precondition: the Play upload-key reset
+> (a first upload without it fails loudly). F-Droid: sequence settled on #65 —
+> the fdroiddata MR (owner's GitLab account) follows the next tag.
+> Before: `docs/handoffs/0043-theme-visibility-chart-fdroid.md` — untinted icons
+> (back buttons, month chevrons) were black on every background — Compose's
+> `LocalContentColor` default; the theme now provides the scheme's
+> `onBackground` (+ a LIGHT/DARK/AMOLED guard test), and the nav-bar appearance
+> follows the theme too. The homepage chart is the **last 7 days ending today**
+> (a calendar week reads empty every Monday). A third **`fdroid` flavor**
+> ships without Google Play Services (ADR 0012: Drive backup absent by design,
+> `BuildConfig.DRIVE_BACKUP` hides its rows, CI builds it, fdroiddata metadata
+> staged in `docs/fdroid/`, submission tracked in #65). PRs #63/#64, **545/545
+> tests.** The same PR fixed **two release gates that had never run on CI**: the
+> R8 gate now builds the bundle it checks (+ bash 3.2), and the native audit's
+> probe no longer SIGPIPEs itself into a failure. Issues: #16–#21 closed, #15
+> updated, #65/#66 new. On-device visual pass pending (wireless debugging off).
+> Before: `docs/handoffs/0042-epf-investment-and-release-approvals.md` — two
+> owner calls: **EPF contributions are investments, not income** (sender-routed
+> `EpfoParser` on EPFOHO — contribution amount pinned, type EXPENSE, new
+> default `cat_investment`; startup seeding now reconciles missing defaults so
+> existing installs get the category; PR #62) and **approvals only where they
+> matter** (`release.yml` no longer runs on PRs — every PR onto main had been
+> minting a `release`-environment approval request; stale runs cancelled;
+> approvals now = main-branch review + real release runs; PR #61). **540/540
+> tests.** Pending on-device: re-type the saved EPF rows (amounts already
+> right) + the two 0041-pass spot checks.
+> Before: `docs/handoffs/0041-audit-device-pass-skipped-fix.md` — the ten 0040
+> features walked on the owner's device; the pass found one real gap: with **no
+> model downloaded and the queue empty** — the model-less default — the Auto
+> Detect tab showed the model prompt and PR #59's **Skipped section was
+> unreachable** (wired into QUEUE/EMPTY only). The prompt branch now shows the
+> skipped history below the prompt; PR #60, **531/531**, re-verified on-device.
+> Also verified: Settings rows, category pickers, Activity month+sort, detail
+> re-categorize + Share, Insights drill-down, Quick Add date. Session note: the
+> consent card and the tab's model prompt are two stacked layers, not a
+> duplicated dialog.
+> Before: `docs/handoffs/0040-screen-audit-gaps.md` — the owner asked what each
+> screen was missing; ten small tested changes closed the gaps: subscription
+> **edit** + suggestion **dismiss**; a **Skipped (N)** section in Smart Add
+> with Classify-again and Skip All; Activity **month navigation** and a
+> **sort toggle**; Settings **SMS-access status**, a **notification toggle**
+> and **Delete all data** (restore-with-empty-backup + re-seed + cursor
+> reset); category **icon/colour pickers** (guarded by tests); detail-page
+> **re-categorize + Share**; editor **recurring switch**; Quick Add **date**;
+> Insights **drill-down** into filtered Activity. PR #59, **531/531 tests.**
+> Deliberately not ported (reasons in the handoff): dashboard month-stepping,
+> budget alert notifications, multi-select delete, global search.
+> Before: `docs/handoffs/0039-detected-subscriptions.md` — the Subscriptions
+> screen now shows the payments the classifier had **always** flagged recurring
+> but never displayed (eight real recurring payments on the owner's fresh
+> install; the owner's services and amounts are deliberately unrecorded): a
+> "Detected from your messages" section, one row
+> per service (newest amount/date, junk names filtered, tracked services
+> suppressed), each with a Track action that opens the add sheet prefilled.
+> Suggestions stay out of the monthly total until the user confirms. Also the
+> recorded answer to "do I need the 22 MB model?": **no** — categorisation and
+> recurring detection run offline without it; the model is optional refinement.
+> PR #58, **516/516 tests.**
+> Before: `docs/handoffs/0038-smart-add-lag-and-clean-slate-audit.md` — the Smart
+> Add lag is root-caused and fixed (the triage observer re-parsed every
+> skipped/pending row **on the main thread** on every queue write): the parse is
+> memoized (`ParseMemo`) and the derivation runs on `Dispatchers.Default` with
+> conflation. Clean-slate A/B on-device: late frames **15.5 % → 3.3 %**, p95
+> frame interval **435 ms → 17.7 ms** at an identical workload. The
+> duplicate guard's ±₹1 window for small amounts was swallowing real payments
+> (a card swipe 52 min after a similar one at the same merchant) — the gate is
+> paise-flat now and the fresh re-ingest rescued two payments automatically.
+> Owner-directed clean-slate run (wipe → fresh full re-ingest under the fixed
+> build) **reproduced the books exactly**; the skipped set has zero unmatched
+> rows. PR #57, **509/509 tests.** Device notes: `gfxinfo` shows 0 frames for
+> this app on vivo — use SurfaceFlinger `--latency` sampling; fresh installs
+> must seed `currency_code=INR` or the locale renders `$`.
+> Before: `docs/handoffs/0037-txn-detail-original-message.md` — the transaction
+> detail page now shows the **original SMS**: sender, received time, the full
+> body (selectable, no truncation) and a Copy action, read back and verified on
+> device (`message copy: 112 chars, clipboard readback=112`). The Note row hides
+> only when it is pipeline filler (merchant repeated / first 120 chars of the
+> body — single-sourced from `BankMessageParser.truncateMessage`), never for an
+> edited note. A read-only `SmsMessageLookup` degrades to "no card" on any
+> failure. PR #56, **501/501 tests.** Device gotcha: vivo/OriginOS drops
+> `Log.d` app lines — use `i`/`w`/`e` for field diagnostics.
+> Before: `docs/handoffs/0036-encoder-live-and-reported-fixes.md` — the owner's
+> on-device report peeled **four defects, two stacked under one another**: the
+> on-device encoder had *never run* — the vocab reader looked for
+> `tokenizer.json` while the downloader writes `minilm-tokenizer.json`, and
+> behind that the model required a `token_type_ids` input `encode()` never fed.
+> Both fixed; first real inference ever on the owner's device (`on-device
+> classifier ready: minilm-centroid`), zero inference errors. Month-first
+> dates now parse ("Jul 22 2026 6:19AM") and undated messages fall back to the
+> provider `receivedAt` instead of the save clock — 17 re-staged rows
+> re-booked their true July–September dates, far-date audit back to zero. The
+> search crash was `LazyPagingItems.peek` throwing on a composition-captured
+> `itemCount` vs a layout-time snapshot — the count is read inside the builder
+> now. PR #55, **490/490 tests.** Branch `fix/on-device-defects`.
+> Before: `docs/handoffs/0035-device-pass-and-wave-5.md` — the targeted device
+> pass removed the last 14 phantom card-payment "incomes" (all 22
+> credit-card rows re-verified as SKIPPED on-device; device now 467 saved /
+> 233 skipped / 467 txns), and wave 5 added the last institutions (HDFC
+> Mutual Fund + Navi Mutual Fund with their in-clause payees, Kerala Gramin
+> Bank, Kerala Bank, DBS, IPPB, Jana — **53 parsers** in the registry).
+> **484/484 tests.**
+> Before: `docs/handoffs/0034-wave-4-corrections.md` — wave 4 ported the six
+> corrections the wave-3 cohort's fixtures demanded ("used at" joins the debit
+> lexicon; Indian Bank ATM labels; Saraswat ACH-payee + rail labels; Standard
+> Chartered rail credits; Dhanlaxmi's quoted "Payment from X" payee; Amazon Pay
+> wallet direction + label). Deliberately not ported: merchants containing
+> masked accounts, foreign-currency messages, and self-transfer shapes.
+> **478/478 tests.**
+> Before: `docs/handoffs/0033-wave-3-and-card-payments.md` — wave 3 (28 more
+> sender-routed parsers: national banks + cards/wallets; 46 total), credit-card
+> bill payments excluded on **both** sides at ingest (spending is counted at
+> swipe time; refunds/cashbacks stay income), synthetic-only fixtures with a new
+> `FixturePrivacyTest` tripwire, and the golden corpus grown to 72 cases with the
+> floor re-measured (13.9 % exact / type 95.8 % / category 34.7 %).
+> **465/465 tests.**
+> Before: `docs/handoffs/0032-wave-2-and-device-audit.md` — wave 2 (12 more
+> sender-routed parsers; 18 total) went through a **fresh full re-ingest of the
+> owner's real inbox**, diffed per message. The phone found six classes the
+> fixtures had not: balance "CR." annotations making PNB debits typeless;
+> passive "sent to"/"if not received" mail phrasing booking statements as
+> expenses/income; bill notices ("due for payment", "Total amount payable")
+> booking as expenses; future-refund notices as income; the user's own utility
+> payments booked as income; and the comma variant "ignore, if already paid"
+> slipping the reminder veto. It also proved the **classification memory can
+> resurrect a wrongly-saved class** — the e-bill veto sits at ingest, upstream
+> of it. Final inbox: **700 candidates, 481 saved / 219 skipped / 0 failed**,
+> 24 phantoms gone, 58 old false-dedup casualties recovered, every save's
+> direction now matches the regex. **451/451 tests.**
+> Before: `docs/handoffs/0031-per-bank-parsers-wave-1.md` — sender-routed parsers
+> for **HDFC, ICICI and Kotak** (corrections layered on the global engine, so the
+> amount/merchant logic cannot drift), plus engine round 3: NEFT remitter names
+> (HDFC "NEFT Cr-…" and ICICI "NEFT-<ref>-<name>"), "towards X for Y" cutoff, and
+> the "received … for processing" veto that stops NACH mandates booking as
+> phantom income. **426/426 tests.** Branch `feat/per-bank-parsers`.
+> Wave 2 (PNB, BoB, IDFC First, IndusInd, Federal, Union, …) and the corpus
+> re-baseline are staged next.
+> Before: `docs/handoffs/0030-parsing-coverage.md` — the SMS engine absorbed the
+> real-world amount/merchant/guard handling of the PennyWise AI parser knowledge
+> base (AGPL-3.0, attributed in the licences index): no-leading-digit amounts,
+> credit-limit clause masking, payment-app QR / payee / refund / salary merchant
+> intelligence, the beneficiary-direction type fix, and five new ingest guards.
+> **413/413 tests.** On branch `feat/bank-parser-coverage`, deliberately not
+> merged (dev is the 0.1.3 release-PR head). The per-bank registry wave and the
+> corpus re-baseline are staged next.
+> Before: `docs/handoffs/0029-sms-categorisation-fix-verification.md` — the device
 > pass on the owner's real inbox found and fixed four issues: genuine ICICI card
 > spends were deleted by the hard fraud veto (the bank's own alarm tail was the
 > trigger — now a narrow exception); the triage UI was hidden behind the optional
@@ -222,14 +374,21 @@ Kotlin source root: `app/src/main/java/com/awbuilds/auraspend/`
 ./gradlew assembleProdDebug               # prod APK (what ships; native build)
 ```
 
-Flavors: `dev` (development — `.dev` application id, "AuraSpend Dev" label) and
-`prod` (the only distributed build). Feature-identical; see ADR 0010.
+Flavors: `dev` (development — `.dev` application id, "AuraSpend Dev" label),
+`prod` (the Play build and the GitHub-release APK) and `fdroid` (F-Droid — no
+Google Play Services, so no Drive backup: ADR 0012, the one documented feature
+exception). dev/prod are feature-identical; see ADR 0010.
 The Play paywall was removed in Phase 0 — do not reintroduce premium gating.
 
 **Signed releases:** keystore credentials live in `secrets.properties`
 (gitignored, see `secrets.properties.example`). Without them `assembleProdRelease`
 still succeeds but produces `app-prod-release-unsigned.apk` and logs a warning —
 check the filename before calling a release build shippable.
+Tag runs of `release.yml` also upload the signed bundle to Google Play's
+closed-testing track (`PLAY_TRACK` overrides). The Play credential is a
+service account: **never record its account, project or key anywhere in this
+repository** — not in docs, handoffs, comments, commit messages or workflow
+logs. Reference it only as the `PLAY_SERVICE_ACCOUNT_JSON` secret.
 
 **Lint:** `app/lint-baseline.xml` pins the pre-existing issues (64 rows after the
 0026 regeneration) so only *new* ones fail CI. Run `./gradlew updateLintBaseline`
@@ -432,22 +591,31 @@ application id): `:benchmark:connectedDevBenchmarkAndroidTest` — see README.
   `EmbeddingClassifierAssetTest` decodes the real asset and fails on a digest or
   layout change, and `OnDeviceClassifier.isOperational` keeps readiness honest —
   a runtime whose session, vocabulary or centroids failed to load is *not* ready.
+  **Readiness is not proof this path runs**: the vocabulary file name and a
+  missing `token_type_ids` input each kept the encoder inert behind caught
+  exceptions while everything "loaded" (0036), and nothing in JVM tests can
+  catch that (the ONNX session never runs there) — only an on-device inference
+  smoke proves it, and a model swap must re-run that smoke.
 - **Any new runtime must beat the measured floor, *fused*.** Baseline with the
-  model switched off: **13.8 % exact match**, type 95.4 %, category 36.9 %
-  (`RegexBaselineEval`, `./gradlew :app:classificationBaseline`).
+  model switched off: **13.9 % exact match**, type 95.8 %, category 34.7 %
+  (72-case corpus, re-measured 2026-10-13; `RegexBaselineEval`,
+  `./gradlew :app:classificationBaseline`).
   `RegexBaselineEvalTest` fails if the regex layer regresses. A model that beats
   that floor *standalone* may still be worse in the pipeline — Qwen and
   SmolLM2 both score 29.2 % standalone and reached opposite conclusions. Judge
   every candidate with `FusedAiEval`.
 - **The `dev`/`prod` flavors are feature-identical.** No feature may live in a
   flavor source set that is absent from `app/src/main/`; only configuration
-  (application-id suffix, label, signing) may differ. **Neither build may carry
+  (application-id suffix, label, signing) may differ. The **`fdroid`** flavor is
+  the single documented exception (ADR 0012): it omits the non-free Google Play
+  Services dependency, so Drive backup — and only Drive backup — is absent
+  there. **Neither build may carry
   analytics, ads or any telemetry** — the app's on-screen claim is that bank SMS
   never leaves the device, and an SDK in one build would make that claim false
   and the store listing self-contradictory. There is no paywall and no in-app
   purchase; every feature ships in every build. Do not reintroduce premium
   gating (ADR 0007), and do not add a Play-only capability without superseding
-  ADR 0010.
+  ADR 0010 (the fdroid Drive exception is ADR 0012).
 - **A model may never delete a transaction on a bare boolean.** A model "not a
   transaction" verdict nulls `amount` and `type` in `AiSignalFusion`, and the
   pipeline's unresolved-fields gate then drops the row — so a false veto

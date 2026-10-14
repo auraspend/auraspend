@@ -1,45 +1,48 @@
 name: Release
 
 # Release build. Tags publish a GitHub Release with the two shippable
-# artifacts; PRs targeting main run the same signed build as a pre-merge check
-# (workflow artifacts only). It does NOT upload anything to Google Play.
+# artifacts AND upload the signed bundle to Google Play. It does NOT run on
+# pull requests: a PR-triggered run needs the same environment approval as a
+# real release, so every PR onto main (Dependabot's included) minted an
+# approval request that was noise, not a gate (owner call, 2026-10-14). The
+# only approval surfaces are the main-branch PR review and a real release run.
 #
 #   git tag v0.1.2 && git push origin v0.1.2
 #
 # Release assets are named AuraSpend-V<version>.Alpha.{aab,apk}, e.g.
-#   AuraSpend-V0.1.2.Alpha.aab   (Play — closed-testing / alpha track)
+#   AuraSpend-V0.1.2.Alpha.aab   (the bundle Play receives — also attached here)
 #   AuraSpend-V0.1.2.Alpha.apk   (prod build for F-Droid / self-install / website)
-# - Play Store: download the AAB from the release assets and upload it on the
-#   closed-testing track in the Play Console. A human decides when to send it
-#   for review; CI never submits.
+# - Google Play: tag runs upload the AAB to the closed-testing track with the
+#   per-language notes in docs/store/whatsnew/ (plain text, ≤500 chars each).
+#   The track is `alpha` unless the PLAY_TRACK repository variable says
+#   otherwise; a dispatch run never touches Play. To stage a release without
+#   sending it for review, set `changesNotSentForReview: true` on the upload
+#   step below.
 #
 # Signing: the build signs with the *upload key* (auraspend.jks, alias key0)
-# from secrets.properties, which this workflow materialises from four secrets
-# on the `release` GitHub environment. The keystore must be the existing
-# upload key — a newly generated keystore is a different key and Play rejects
-# the upload. Secrets:
+# from secrets.properties, which this workflow materialises from secrets on
+# the `release` GitHub environment (four for signing, one for the Play
+# upload). The keystore must be the existing upload key — a newly generated
+# keystore is a different key and Play rejects the upload. Secrets:
 #
-#   KEYSTORE_BASE64    base64 of auraspend.jks
-#   KEYSTORE_PASSWORD  keystore (store) password
-#   KEY_ALIAS          key0
-#   KEY_PASSWORD       key password
+#   KEYSTORE_BASE64            base64 of auraspend.jks
+#   KEYSTORE_PASSWORD          keystore (store) password
+#   KEY_ALIAS                  key0
+#   KEY_PASSWORD               key password
+#   PLAY_SERVICE_ACCOUNT_JSON  a Google Play Console service-account key.
+#                              Its identity is deliberately not recorded
+#                              anywhere in this repository.
 #
 # The environment is the gate: it requires a reviewer (the maintainer approves
-# every run that uses it) and only `main`, `v*` tags and main-targeting PRs may
-# reach it — a dispatch from any other branch cannot. PRs targeting main run
-# this workflow as a pre-merge signed build (approval-gated; workflow
-# artifacts only, never a Release — Releases are published by tags). Anyone
-# can read this workflow; nobody can read the values, and GitHub never exposes
-# them to forks or fork pull requests (the build job skips fork PRs entirely).
+# every run that uses it) and only `main` and `v*` tags may reach it — a
+# dispatch from any other branch cannot. Releases are published by tags only.
+# Anyone can read this workflow; nobody can read the values, and GitHub never
+# exposes them to forks or fork pull requests.
 
 on:
   push:
     tags: ["v*"]
   workflow_dispatch:
-  # A PR targeting main gets the same signed build before merge. It is
-  # approval-gated like a release but only uploads workflow artifacts.
-  pull_request:
-    branches: [main]
 
 permissions:
   contents: write # publish the Release Drafter draft and attach assets
@@ -47,12 +50,9 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
-    # Gates the signing secrets: a required reviewer approves every run, and
-    # only `main`, `v*` tags and main-targeting PRs may use the environment.
+    # Gates the signing secrets: a required reviewer approves every release
+    # run, and only `main` and `v*` tags may use the environment.
     environment: release
-    # Fork PRs can never receive environment secrets; skip the job cleanly
-    # instead of failing the missing-secret guard.
-    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -71,19 +71,26 @@ jobs:
           yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
           "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-37.0" "build-tools;36.0.0" > /dev/null
 
-      # Fail before building if the four secrets are missing — otherwise the
+      # Fail before building if a required secret is missing — otherwise the
       # build would "succeed" and silently produce ...-unsigned artifacts.
+      # Tag runs also upload to Play, so they additionally require the
+      # service-account secret; a dispatch run never touches Play.
       - name: Write signing config from secrets
         env:
           KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+          PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
         run: |
+          required="KEYSTORE_BASE64 KEYSTORE_PASSWORD KEY_ALIAS KEY_PASSWORD"
+          if [[ "${GITHUB_REF:-}" == refs/tags/* ]]; then
+            required="$required PLAY_SERVICE_ACCOUNT_JSON"
+          fi
           missing=0
-          for name in KEYSTORE_BASE64 KEYSTORE_PASSWORD KEY_ALIAS KEY_PASSWORD; do
+          for name in $required; do
             if [ -z "${!name:-}" ]; then
-              echo "::error::Missing signing secret $name — see the header of this workflow."
+              echo "::error::Missing secret $name — see the header of this workflow."
               missing=1
             fi
           done
@@ -154,6 +161,24 @@ jobs:
             dist/${{ steps.names.outputs.base }}.apk
             dist/SHA256SUMS
           if-no-files-found: error
+
+      # Tags upload the signed bundle to Google Play, with the per-language
+      # "what's new" notes from docs/store/whatsnew/ (plain text, ≤500 chars,
+      # files named whatsnew-<locale>) and the R8 mapping for crash reports.
+      # `status: completed` assigns the release to the track and sends it for
+      # review; set `changesNotSentForReview: true` to stage it for a manual
+      # send instead. Never runs on a dispatch.
+      - name: Upload to Google Play
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: r0adkll/upload-google-play@v1
+        with:
+          serviceAccountJsonPlainText: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+          packageName: com.awbuilds.auraspend
+          releaseFiles: dist/${{ steps.names.outputs.base }}.aab
+          tracks: ${{ vars.PLAY_TRACK || 'alpha' }}
+          status: completed
+          whatsNewDirectory: docs/store/whatsnew
+          mappingFile: app/build/outputs/mapping/prodRelease/mapping.txt
 
       - name: Check whether this tag already has a release
         id: release_exists

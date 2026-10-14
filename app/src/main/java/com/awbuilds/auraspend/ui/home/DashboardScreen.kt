@@ -228,7 +228,7 @@ fun DashboardScreen(
                                     contentAlignment = Alignment.Center
                                 ) {
                                     Text(
-                                        text = stringResource(R.string.home_no_spending_this_week),
+                                        text = stringResource(R.string.home_no_spending_last_7_days),
                                         style = MaterialTheme.typography.bodyMedium,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
@@ -240,7 +240,7 @@ fun DashboardScreen(
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .height(120.dp),
-                                    contentDescription = stringResource(R.string.home_spending_this_week)
+                                    contentDescription = stringResource(R.string.home_spending_last_7_days)
                                 )
                             }
                             Spacer(modifier = Modifier.height(AuraSpacing.sm))

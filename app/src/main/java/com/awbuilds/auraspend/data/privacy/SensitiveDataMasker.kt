@@ -21,7 +21,7 @@ object SensitiveDataMasker {
     private val phoneWithCountry = Regex("""(?<![\dA-Za-z])(?:\+?91[- ]?)?[6-9]\d{9}(?![\d])""")
     private val phoneTwelveDigit = Regex("""(?<![\dA-Za-z])91[6-9]\d{9}(?![\d])""")
 
-    // ── Labelled references: "UPI Ref no 713508246195", "UTR HDFCH00…", "Folio 30917265" ──
+    // ── Labelled references: "UPI Ref no 600000000001", "UTR HDFCH00…", "Folio 30917265" ──
     private val labelledRef = Regex(
         """(?i)\b((?:upi\s+)?ref(?:\s*no)?\.?|utr|folio|si-?hub\s+id|mandate\s+id)\s*[:#]?\s*([A-Z0-9]{7,})"""
     )
