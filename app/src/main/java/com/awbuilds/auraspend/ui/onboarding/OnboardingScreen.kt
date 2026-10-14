@@ -32,6 +32,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.awbuilds.auraspend.BuildConfig
 import com.awbuilds.auraspend.R
 import com.awbuilds.auraspend.ui.designsystem.AuraCard
 import com.awbuilds.auraspend.ui.designsystem.AuraCardStyle
@@ -193,7 +194,9 @@ fun OnboardingScreen(
                 )
             }
 
-            if (pagerState.currentPage == onboardingPages.size - 1) {
+            // The F-Droid build has no Google Play Services, so no Drive restore
+            // (ADR 0012) — the card is absent rather than dead.
+            if (BuildConfig.DRIVE_BACKUP && pagerState.currentPage == onboardingPages.size - 1) {
                 Spacer(modifier = Modifier.height(AuraSpacing.md))
                 AuraCard(
                     style = AuraCardStyle.Outlined,

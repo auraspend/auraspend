@@ -119,17 +119,21 @@ classified and stored on-device; the only way message text leaves the phone is
 the Google Drive backup you start yourself, which is why the in-app copy says
 exactly that.
 
-The flavors change configuration only — application-id suffix, label and
+The dev/prod flavors change configuration only — application-id suffix, label and
 signing. **No feature may live in a flavor source set that is absent from
 `app/src/main/`** — see [ADR 0007](docs/adr/0007-no-paywall.md),
 [ADR 0008](docs/adr/0008-distribution-flavors.md) and
-[ADR 0010](docs/adr/0010-dev-prod-flavors.md).
+[ADR 0010](docs/adr/0010-dev-prod-flavors.md). The one documented exception is
+the `fdroid` flavor, which drops Google Drive backup because F-Droid's inclusion
+policy forbids the non-free Play Services dependency — see
+[ADR 0012](docs/adr/0012-fdroid-flavor-without-gms.md).
 
 ### Building a release
 
 ```bash
 ./gradlew assembleProdRelease    # prod APK (self-install / website)
 ./gradlew bundleProdRelease      # prod AAB (Play Store)
+./gradlew assembleFdroidRelease  # F-Droid build — no Drive backup (ADR 0012)
 ```
 
 Release builds require a keystore in `secrets.properties` (see
@@ -156,6 +160,9 @@ it.
   signed with your own key needs its own OAuth client in a Google Cloud
   project (type *Android*, your package id + your signing SHA-1). Your backup
   still goes to your own Drive.
+- **F-Droid build** — ships without Google Play Services (F-Droid's inclusion
+  policy forbids the dependency), so Drive backup is not available there at
+  all; the in-app rows are hidden. CSV export/import moves data in and out.
 - **No Google account?** CSV export/import works in every build without any
   Google service — Settings → Data.
 
@@ -185,7 +192,7 @@ app/src/
 │   │   ├── classification/   # Bank parsers, regex layer, AI fusion, SMS intake
 │   │   ├── local/            # Room DB, DAOs, entities, CSV manager
 │   │   ├── privacy/          # SensitiveDataMasker
-│   │   ├── remote/           # Google Drive backup
+│   │   ├── remote/           # Drive backup: real impl in src/gms, stub in src/fdroid
 │   │   └── repository/       # Repository implementations
 │   ├── domain/
 │   │   ├── model/            # Core domain models
@@ -210,14 +217,20 @@ app/src/
 │   │   └── transaction/      # List + add/edit screens
 │   └── AuraSpendApp.kt       # Application class (DI)
 ├── dev/                      # Dev flavor: manifest + "AuraSpend Dev" label only
-└── prod/                     # Prod flavor: manifest only
+├── prod/                     # Prod flavor: manifest only
+├── gms/                      # DriveSyncManager (real) — compiled into dev + prod
+└── fdroid/                   # F-Droid flavor: no-op DriveSyncManager stub (ADR 0012)
 ```
 
-The `dev` and `prod` source sets deliberately contain **no Kotlin**. Every
+The `dev` and `prod` source sets deliberately contain **no Kotlin**: every
 feature lives in `main`, so both flavors are identical apart from the dev
 app-id suffix, label and signing — see
 [ADR 0008](docs/adr/0008-distribution-flavors.md) and
-[ADR 0010](docs/adr/0010-dev-prod-flavors.md).
+[ADR 0010](docs/adr/0010-dev-prod-flavors.md). The single exception is the
+`fdroid` flavor: `src/gms` (the Google Drive implementation) is compiled into
+dev and prod only, while `src/fdroid` holds a no-op stub — F-Droid forbids the
+non-free Play Services dependency, so Drive backup is absent there — see
+[ADR 0012](docs/adr/0012-fdroid-flavor-without-gms.md).
 
 ## Getting Started
 
