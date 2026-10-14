@@ -295,8 +295,11 @@ internal fun AutoDetectTab(
         SmsPermissionRequired { permissionLauncher.launch(Manifest.permission.READ_SMS) }
         }
         AutoDetectTabMode.MODEL_PROMPT -> {
+        Column(modifier = Modifier.fillMaxSize()) {
         Box(
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = AuraSpacing.xl),
             contentAlignment = Alignment.Center
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -328,6 +331,22 @@ internal fun AutoDetectTab(
                     }
                 }
             }
+        }
+        // The model prompt must not hide the skipped history: most installs
+        // never download the optional model, and reviewing what was set aside
+        // is exactly what this tab is for after a drain.
+        if (state.skippedSmsList.isNotEmpty()) {
+            LazyColumn(
+                modifier = Modifier.weight(1f),
+                contentPadding = PaddingValues(
+                    horizontal = AuraSpacing.gutter,
+                    vertical = AuraSpacing.md
+                ),
+                verticalArrangement = Arrangement.spacedBy(AuraSpacing.sm)
+            ) {
+                skippedItems(state, viewModel)
+            }
+        }
         }
         }
         AutoDetectTabMode.SCANNING -> {
