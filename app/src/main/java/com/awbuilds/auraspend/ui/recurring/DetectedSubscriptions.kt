@@ -35,16 +35,20 @@ private val artifactNames = setOf(
  * - Names that are parser artefacts or carry fewer than three letters are
  *   skipped (`##` from a masking pass, "merchant" from a template).
  * - Only expenses suggest subscriptions; a flagged credit is not an outflow.
- * - Suggestions already covered by a tracked subscription ([trackedNames],
- *   matched loosely both ways so "Netflix" silences "NETFLIX COM") are
- *   dropped, so the section cannot nag about something just tracked.
+ * - Suggestions already covered by a tracked subscription ([trackedNames]) or
+ *   explicitly dismissed ([dismissedNames]) are dropped, matched loosely both
+ *   ways so "Netflix" silences "NETFLIX COM" — the section cannot nag about
+ *   something just tracked, nor about something the user rejected.
  * - Newest first.
  */
 internal fun detectedSubscriptions(
     transactions: List<Transaction>,
-    trackedNames: Collection<String> = emptyList()
+    trackedNames: Collection<String> = emptyList(),
+    dismissedNames: Collection<String> = emptyList()
 ): List<DetectedSubscription> {
-    val tracked = trackedNames.map { normalizeName(it) }.filter { it.isNotEmpty() }
+    val suppressed = (trackedNames + dismissedNames)
+        .map { normalizedSuggestionName(it) }
+        .filter { it.isNotEmpty() }
     return transactions
         .asSequence()
         // Self-contained: only the flagged rows, whatever the caller passes.
@@ -55,9 +59,9 @@ internal fun detectedSubscriptions(
             if (merchant.isEmpty()) return@mapNotNull null
             if (merchant.count { it.isLetter() } < 3) return@mapNotNull null
             if (merchant.lowercase() in artifactNames) return@mapNotNull null
-            val key = normalizeName(merchant)
+            val key = normalizedSuggestionName(merchant)
             if (key.isEmpty()) return@mapNotNull null
-            if (tracked.any { t -> looselyMatches(t, key) }) return@mapNotNull null
+            if (suppressed.any { t -> looselyMatches(t, key) }) return@mapNotNull null
             key to txn
         }
         .groupBy({ it.first }, { it.second })
@@ -86,5 +90,5 @@ private fun looselyMatches(a: String, b: String): Boolean {
 }
 
 /** Letters and digits only, single-spaced, lowercased — for loose matching. */
-private fun normalizeName(raw: String): String =
+internal fun normalizedSuggestionName(raw: String): String =
     raw.lowercase().replace(Regex("[^a-z0-9]+"), " ").trim()

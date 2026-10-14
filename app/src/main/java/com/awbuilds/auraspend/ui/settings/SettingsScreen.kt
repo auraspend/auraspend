@@ -1,7 +1,11 @@
 package com.awbuilds.auraspend.ui.settings
 
+import android.Manifest
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
@@ -21,6 +25,9 @@ import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Backup
 import androidx.compose.material.icons.filled.Category
 import androidx.compose.material.icons.filled.CloudDownload
+import androidx.compose.material.icons.filled.DeleteForever
+import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.Sms
 import androidx.compose.material.icons.filled.Payments
 import androidx.compose.material.icons.filled.PhoneAndroid
 import androidx.compose.material.icons.filled.Gavel
@@ -31,6 +38,7 @@ import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Sms
 import androidx.compose.material.icons.filled.Subscriptions
 import androidx.compose.material3.*
+import androidx.core.content.ContextCompat
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -44,9 +52,15 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.awbuilds.auraspend.AuraSpendApp
 import com.awbuilds.auraspend.BuildConfig
 import com.awbuilds.auraspend.R
+import com.awbuilds.auraspend.core.boundary
 import com.awbuilds.auraspend.data.ai.AiModelState
+import com.awbuilds.auraspend.data.classification.SmsIngestor
+import com.awbuilds.auraspend.data.classification.SmsNotifications
+import com.awbuilds.auraspend.data.local.BackupData
+import kotlinx.coroutines.launch
 import com.awbuilds.auraspend.ui.designsystem.AuraCard
 import com.awbuilds.auraspend.ui.designsystem.AuraCardStyle
 import com.awbuilds.auraspend.ui.designsystem.AuraSpacing
@@ -63,6 +77,8 @@ import com.awbuilds.auraspend.ui.theme.extendedColors
 import java.util.Locale
 
 private const val GITHUB_URL = "https://github.com/auraspend/auraspend"
+
+private const val TAG = "Settings"
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -96,6 +112,28 @@ fun SettingsScreen(
     var showDeleteDialog by remember { mutableStateOf(false) }
     var showRestoreDialog by remember { mutableStateOf(false) }
     var showCurrencySheet by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
+    // SMS access gates everything the categoriser does: if it is missing the
+    // toggle below silently does nothing, so the state is surfaced here with
+    // the way to fix it.
+    var smsGranted by remember {
+        mutableStateOf(
+            ContextCompat.checkSelfPermission(context, Manifest.permission.READ_SMS) ==
+                PackageManager.PERMISSION_GRANTED
+        )
+    }
+    val smsPermissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) {
+        // Re-check instead of trusting the callback value: the grant can arrive
+        // through system settings while the app was backgrounded.
+        smsGranted = ContextCompat.checkSelfPermission(context, Manifest.permission.READ_SMS) ==
+            PackageManager.PERMISSION_GRANTED
+    }
+    var notificationsEnabled by remember { mutableStateOf(SmsNotifications.isEnabled(context)) }
+    var showDeleteDataDialog by remember { mutableStateOf(false) }
+    val deleteDoneMessage = stringResource(R.string.settings_delete_data_done)
+    val deleteFailedMessage = stringResource(R.string.settings_delete_data_failed)
 
     // Restore is a replace, not a merge: the confirm step exists because one tap
     // would otherwise overwrite every local table with the Drive snapshot.
@@ -114,6 +152,55 @@ fun SettingsScreen(
             },
             dismissButton = {
                 TextButton(onClick = { showRestoreDialog = false }) { Text(stringResource(R.string.action_cancel)) }
+            }
+        )
+    }
+
+    // A wipe is the one local action that can destroy everything; it asks like
+    // the Drive restore does, then runs the same table sweep with nothing to
+    // restore, re-seeds the default categories, and forgets the ingest cursors
+    // so a fresh scan can re-import the inbox.
+    if (showDeleteDataDialog) {
+        AlertDialog(
+            onDismissRequest = { showDeleteDataDialog = false },
+            title = {
+                Text(
+                    stringResource(R.string.settings_delete_data_title),
+                    modifier = Modifier.semantics { heading() }
+                )
+            },
+            text = { Text(stringResource(R.string.settings_delete_data_message)) },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showDeleteDataDialog = false
+                        scope.launch {
+                            val app = context.applicationContext as? AuraSpendApp
+                            val done = boundary(TAG, false) {
+                                val summary = app?.backupRestoreManager?.restore(
+                                    BackupData(
+                                        transactions = emptyList(),
+                                        categories = emptyList(),
+                                        budgets = emptyList(),
+                                        subscriptions = emptyList()
+                                    )
+                                )
+                                if (app != null && summary != null) {
+                                    app.seedDefaultCategories()
+                                    SmsIngestor.resetIngestCursors(context)
+                                }
+                                app != null && summary != null
+                            }
+                            snackbarHostState.showSnackbar(
+                                if (done) deleteDoneMessage else deleteFailedMessage
+                            )
+                        }
+                    },
+                    colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
+                ) { Text(stringResource(R.string.action_delete)) }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteDataDialog = false }) { Text(stringResource(R.string.action_cancel)) }
             }
         )
     }
@@ -279,6 +366,12 @@ fun SettingsScreen(
 
         SettingsSectionHeader(stringResource(R.string.settings_intelligent_features))
         SettingsCard {
+            SmsAccessRow(
+                granted = smsGranted,
+                onGrant = { smsPermissionLauncher.launch(Manifest.permission.READ_SMS) }
+            )
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+            Spacer(modifier = Modifier.height(AuraSpacing.sm))
             AiModelSection(
                 aiModelState = aiModelState,
                 onDownload = onDownloadModel,
@@ -290,6 +383,23 @@ fun SettingsScreen(
             AutoDetectSection(
                 enabled = autoDetectEnabled,
                 onToggle = onAutoDetectChanged
+            )
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+            Spacer(modifier = Modifier.height(AuraSpacing.sm))
+            SettingToggleRow(
+                icon = Icons.Default.Notifications,
+                title = stringResource(R.string.settings_notifications),
+                subtitle = stringResource(R.string.settings_notifications_subtitle),
+                checked = notificationsEnabled,
+                onCheckedChange = { enabled ->
+                    notificationsEnabled = enabled
+                    SmsNotifications.setEnabled(context, enabled)
+                    if (!enabled) {
+                        // Take the live one down now; publish() keeps future
+                        // ones away while muted.
+                        (context.applicationContext as? AuraSpendApp)?.smsProgressNotifier?.cancel()
+                    }
+                }
             )
         }
 
@@ -323,6 +433,13 @@ fun SettingsScreen(
                 title = stringResource(R.string.settings_import_csv),
                 subtitle = stringResource(R.string.settings_import_csv_subtitle),
                 onClick = onImportCsv
+            )
+            DividerSpacer()
+            SettingsRow(
+                icon = Icons.Default.DeleteForever,
+                title = stringResource(R.string.settings_delete_data),
+                subtitle = stringResource(R.string.settings_delete_data_subtitle),
+                onClick = { showDeleteDataDialog = true }
             )
         }
 
@@ -453,6 +570,44 @@ private fun DividerSpacer() {
     Spacer(modifier = Modifier.height(AuraSpacing.sm))
     HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
     Spacer(modifier = Modifier.height(AuraSpacing.sm))
+}
+
+@Composable
+private fun SmsAccessRow(granted: Boolean, onGrant: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = AuraSpacing.sm),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(
+            Icons.Default.Sms,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.size(22.dp)
+        )
+        Spacer(modifier = Modifier.width(AuraSpacing.md))
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                stringResource(R.string.settings_sms_access),
+                style = MaterialTheme.typography.titleSmall,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Text(
+                stringResource(
+                    if (granted) R.string.settings_sms_access_granted
+                    else R.string.settings_sms_access_missing
+                ),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.extendedColors.textLight
+            )
+        }
+        if (!granted) {
+            TextButton(onClick = onGrant, modifier = Modifier.heightIn(min = 48.dp)) {
+                Text(stringResource(R.string.classification_grant_permission))
+            }
+        }
+    }
 }
 
 @Composable

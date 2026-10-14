@@ -42,6 +42,16 @@ data class ClassifiedSms(
 fun pendingInbox(messages: List<ClassifiedSms>): List<ClassifiedSms> =
     messages.filter { !it.isSaved && !it.isDismissed }
 
+/**
+ * Messages the pipeline (or the user) skipped — the audit surface.
+ *
+ * Skipped rows are deliberately absent from the triage inbox and the pick-list;
+ * this is the one place they are listed, with a way back in ("Classify again"
+ * re-queues the row, which is how a parser fix reaches old messages).
+ */
+fun skippedInbox(messages: List<ClassifiedSms>): List<ClassifiedSms> =
+    messages.filter { it.isDismissed }
+
 object SmsAutoClassifier {
 
     private val bankKeywords = listOf(

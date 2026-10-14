@@ -18,6 +18,7 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Done
 import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Sms
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -33,6 +34,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.awbuilds.auraspend.R
@@ -349,19 +351,38 @@ internal fun AutoDetectTab(
         }
         }
         AutoDetectTabMode.EMPTY -> {
-        Box(
-            modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center
-        ) {
-            AuraEmptyState(
-                icon = Icons.Default.Sms,
-                title = stringResource(R.string.classification_no_sms_title),
-                message = stringResource(R.string.classification_scan_message),
-                actionLabel = stringResource(R.string.classification_scan_sms),
-                onAction = {
-                    viewModel.handleIntent(ClassificationViewIntent.LoadAndClassifyAll)
+        Column(modifier = Modifier.fillMaxSize()) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = AuraSpacing.xl),
+                contentAlignment = Alignment.Center
+            ) {
+                AuraEmptyState(
+                    icon = Icons.Default.Sms,
+                    title = stringResource(R.string.classification_no_sms_title),
+                    message = stringResource(R.string.classification_scan_message),
+                    actionLabel = stringResource(R.string.classification_scan_sms),
+                    onAction = {
+                        viewModel.handleIntent(ClassificationViewIntent.LoadAndClassifyAll)
+                    }
+                )
+            }
+            // Nothing is awaiting a decision, but the skipped history is still
+            // the useful body of this tab — it is the only place those messages
+            // are visible.
+            if (state.skippedSmsList.isNotEmpty()) {
+                LazyColumn(
+                    modifier = Modifier.weight(1f),
+                    contentPadding = PaddingValues(
+                        horizontal = AuraSpacing.gutter,
+                        vertical = AuraSpacing.md
+                    ),
+                    verticalArrangement = Arrangement.spacedBy(AuraSpacing.sm)
+                ) {
+                    skippedItems(state, viewModel)
                 }
-            )
+            }
         }
         }
         AutoDetectTabMode.QUEUE -> {
@@ -416,6 +437,16 @@ internal fun AutoDetectTab(
                                     }
                                 }
                                 Spacer(modifier = Modifier.height(AuraSpacing.xs))
+                                TextButton(
+                                    onClick = {
+                                        viewModel.handleIntent(ClassificationViewIntent.SkipAllClassified)
+                                    },
+                                    enabled = !state.isSavingAll,
+                                    modifier = Modifier.heightIn(min = 48.dp)
+                                ) {
+                                    Text(stringResource(R.string.classification_skip_all))
+                                }
+                                Spacer(modifier = Modifier.height(AuraSpacing.xxs))
                                 Text(
                                     stringResource(R.string.classification_swipe_hint),
                                     style = MaterialTheme.typography.labelSmall,
@@ -473,6 +504,8 @@ internal fun AutoDetectTab(
                         )
                     }
                 }
+
+                skippedItems(state, viewModel)
             }
         }
     }
@@ -666,6 +699,72 @@ internal fun AiDownloadStatusBanner(progress: Float) {
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
+        }
+    }
+}
+
+/**
+ * The audit surface for skipped messages: every message the pipeline (or the
+ * user) set aside, with the way back in. Kept out of the inbox on purpose —
+ * this section is for looking, not for deciding again. "Classify again"
+ * re-queues the row, which is how a parser fix reaches old messages.
+ */
+private fun androidx.compose.foundation.lazy.LazyListScope.skippedItems(
+    state: ClassificationViewState,
+    viewModel: ClassificationViewModel
+) {
+    val skipped = state.skippedSmsList
+    if (skipped.isEmpty()) return
+    item(key = "skipped_header") {
+        Column(modifier = Modifier.padding(top = AuraSpacing.md)) {
+            Text(
+                stringResource(R.string.classification_skipped_title, skipped.size),
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.semantics { heading() }
+            )
+            Spacer(modifier = Modifier.height(AuraSpacing.xxs))
+            Text(
+                stringResource(R.string.classification_skipped_subtitle),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+    items(skipped, key = { "skipped_${it.sms.id}" }) { classified ->
+        SkippedMessageRow(classified) {
+            viewModel.handleIntent(ClassificationViewIntent.RestoreSkippedSms(classified.sms.id))
+        }
+    }
+}
+
+@Composable
+private fun SkippedMessageRow(classified: ClassifiedSms, onRestore: () -> Unit) {
+    AuraCard(modifier = Modifier.fillMaxWidth(), style = AuraCardStyle.Outlined) {
+        Column {
+            Text(
+                classified.sms.address,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Spacer(modifier = Modifier.height(AuraSpacing.xxs))
+            Text(
+                classified.sms.body.replace('\n', ' ').trim(),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurface,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis
+            )
+            Spacer(modifier = Modifier.height(AuraSpacing.xs))
+            TextButton(
+                onClick = onRestore,
+                modifier = Modifier.heightIn(min = 48.dp)
+            ) {
+                Icon(Icons.Default.Refresh, contentDescription = null, modifier = Modifier.size(18.dp))
+                Spacer(modifier = Modifier.width(AuraSpacing.xs))
+                Text(stringResource(R.string.classification_classify_again))
+            }
         }
     }
 }

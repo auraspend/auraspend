@@ -1,6 +1,8 @@
 package com.awbuilds.auraspend.ui.transaction
 
 import android.content.ClipData
+import android.content.Intent
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.rememberScrollState
@@ -10,9 +12,11 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CloudOff
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -85,6 +89,7 @@ fun TransactionDetailScreen(
     var loaded by remember { mutableStateOf(false) }
     var editing by remember { mutableStateOf(false) }
     var confirmDelete by remember { mutableStateOf(false) }
+    var showCategoryPicker by remember { mutableStateOf(false) }
     var categories by remember { mutableStateOf<List<Category>>(emptyList()) }
 
     // A read that failed. With no row to show this is the whole screen
@@ -225,6 +230,7 @@ fun TransactionDetailScreen(
                     message = message,
                     modifier = Modifier.weight(1f),
                     onCopied = { snackbarMessage(messageCopiedMessage) },
+                    onPickCategory = { showCategoryPicker = true },
                     onDuplicate = {
                         val copy = current.copy(
                             id = UUID.randomUUID().toString(),
@@ -293,6 +299,79 @@ fun TransactionDetailScreen(
             }
         )
     }
+
+    if (showCategoryPicker) {
+        val current = transaction
+        if (current != null) {
+            AlertDialog(
+                onDismissRequest = { showCategoryPicker = false },
+                title = {
+                    Text(
+                        stringResource(R.string.txn_editor_category),
+                        modifier = Modifier.semantics { heading() }
+                    )
+                },
+                text = {
+                    Column(
+                        modifier = Modifier
+                            .heightIn(max = 360.dp)
+                            .verticalScroll(rememberScrollState())
+                    ) {
+                        categories.forEach { cat ->
+                            val selected = cat.id == current.categoryId
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable {
+                                        showCategoryPicker = false
+                                        val updated = current.copy(categoryId = cat.id)
+                                        scope.launch {
+                                            val saved = boundary(TAG, false) {
+                                                repository.saveTransaction(updated)
+                                                true
+                                            }
+                                            if (saved) {
+                                                transaction = updated
+                                                snackbarMessage(transactionUpdatedMessage)
+                                            } else {
+                                                snackbarMessage(saveFailedMessage)
+                                            }
+                                        }
+                                    }
+                                    .padding(vertical = AuraSpacing.sm),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                CategoryAvatar(
+                                    icon = cat.icon,
+                                    color = androidx.compose.ui.graphics.Color(cat.color.toLong()),
+                                    size = 32.dp
+                                )
+                                Spacer(modifier = Modifier.width(AuraSpacing.md))
+                                Text(
+                                    cat.name,
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    color = MaterialTheme.colorScheme.onSurface,
+                                    modifier = Modifier.weight(1f)
+                                )
+                                if (selected) {
+                                    Icon(
+                                        Icons.Default.Check,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.primary
+                                    )
+                                }
+                            }
+                        }
+                    }
+                },
+                confirmButton = {
+                    TextButton(onClick = { showCategoryPicker = false }) {
+                        Text(stringResource(R.string.action_cancel))
+                    }
+                }
+            )
+        }
+    }
 }
 
 /** Log tag for this screen's IO boundaries. */
@@ -305,9 +384,18 @@ private fun TransactionDetails(
     message: SmsMessageEntity?,
     modifier: Modifier = Modifier,
     onCopied: () -> Unit,
+    onPickCategory: () -> Unit,
     onDuplicate: () -> Unit
 ) {
     val extended = MaterialTheme.extendedColors
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val shareText = remember(transaction) {
+        listOfNotNull(
+            (transaction.merchant ?: transaction.note).takeIf { it.isNotBlank() },
+            formatMoney(transaction.amount),
+            transaction.date.format(DateTimeFormatter.ofPattern("d MMM yyyy"))
+        ).joinToString(" · ")
+    }
     val isExpense = transaction.type == TransactionType.EXPENSE
     val amountColor = if (isExpense) extended.expenseAmount else extended.incomeAmount
     val dateFormatter = remember { DateTimeFormatter.ofPattern("EEEE, d MMM yyyy · h:mm a") }
@@ -321,7 +409,14 @@ private fun TransactionDetails(
         Spacer(modifier = Modifier.height(AuraSpacing.md))
 
         AuraCard(style = AuraCardStyle.Tonal, modifier = Modifier.fillMaxWidth()) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
+            // The category is the one field people correct most; tapping the
+            // hero opens the picker instead of the full editor.
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable(onClick = onPickCategory)
+            ) {
                 CategoryAvatar(
                     icon = category?.icon,
                     color = androidx.compose.ui.graphics.Color(category?.color?.toLong() ?: 0xFF757575),
@@ -383,16 +478,39 @@ private fun TransactionDetails(
 
         Spacer(modifier = Modifier.height(AuraSpacing.lg))
 
-        OutlinedButton(
-            onClick = onDuplicate,
-            modifier = Modifier
-                .fillMaxWidth()
-                .heightIn(min = 48.dp),
-            shape = RoundedCornerShape(14.dp)
-        ) {
-            Icon(Icons.Default.ContentCopy, contentDescription = null, modifier = Modifier.size(18.dp))
-            Spacer(modifier = Modifier.width(AuraSpacing.sm))
-            Text(stringResource(R.string.action_duplicate))
+        Row(horizontalArrangement = Arrangement.spacedBy(AuraSpacing.sm)) {
+            OutlinedButton(
+                onClick = {
+                    // User-initiated share; the chooser keeps the app out of
+                    // the decision of where it goes.
+                    val send = Intent(Intent.ACTION_SEND).apply {
+                        type = "text/plain"
+                        putExtra(Intent.EXTRA_TEXT, shareText)
+                    }
+                    boundary(TAG, Unit) {
+                        context.startActivity(Intent.createChooser(send, null))
+                    }
+                },
+                modifier = Modifier
+                    .weight(1f)
+                    .heightIn(min = 48.dp),
+                shape = RoundedCornerShape(14.dp)
+            ) {
+                Icon(Icons.Default.Share, contentDescription = null, modifier = Modifier.size(18.dp))
+                Spacer(modifier = Modifier.width(AuraSpacing.sm))
+                Text(stringResource(R.string.action_share))
+            }
+            OutlinedButton(
+                onClick = onDuplicate,
+                modifier = Modifier
+                    .weight(1f)
+                    .heightIn(min = 48.dp),
+                shape = RoundedCornerShape(14.dp)
+            ) {
+                Icon(Icons.Default.ContentCopy, contentDescription = null, modifier = Modifier.size(18.dp))
+                Spacer(modifier = Modifier.width(AuraSpacing.sm))
+                Text(stringResource(R.string.action_duplicate))
+            }
         }
 
         Spacer(modifier = Modifier.height(AuraSpacing.xxl))

@@ -10,11 +10,14 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.filled.ReceiptLong
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.SearchOff
+import androidx.compose.material.icons.filled.SwapVert
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -80,13 +83,16 @@ fun TransactionListScreen(
     val transactions = viewModel.transactions.collectAsLazyPagingItems()
     val loadState = transactions.loadState
 
-    var showSearch by remember { mutableStateOf(false) }
+    // A drill-down may arrive with a query already applied; the field opens so
+    // the filtered list explains itself.
+    var showSearch by remember { mutableStateOf(filter.query.isNotBlank()) }
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     val extended = MaterialTheme.extendedColors
     val transactionDeletedMessage = stringResource(R.string.activity_transaction_deleted)
     val undoLabel = stringResource(R.string.action_undo)
 
+    val monthLabelFormatter = remember { DateTimeFormatter.ofPattern("MMMM yyyy") }
     val itemCount = transactions.itemCount
     val isInitialLoading = itemCount == 0 && loadState.refresh is LoadState.Loading
     // Paging 3.5 removed CombinedLoadStates.endOfPaginationReached; the append
@@ -181,6 +187,18 @@ fun TransactionListScreen(
                             color = extended.textLight
                         )
                     }
+                    IconButton(onClick = { viewModel.onToggleSort() }) {
+                        Icon(
+                            Icons.Default.SwapVert,
+                            // The description names the order in effect, so the
+                            // icon never needs a second guess.
+                            contentDescription = stringResource(
+                                if (filter.sortAscending) R.string.activity_sort_oldest_first
+                                else R.string.activity_sort_newest_first
+                            ),
+                            tint = MaterialTheme.colorScheme.onBackground
+                        )
+                    }
                     IconButton(onClick = { showSearch = true }) {
                         Icon(
                             Icons.Default.Search,
@@ -192,7 +210,41 @@ fun TransactionListScreen(
                 }
             }
 
-            // ── Month-to-date summary strip (SQL aggregate, paging-independent)
+            // ── Month navigation: the list and the strip describe one month;
+            // browsing history is the chevrons' job.
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = AuraSpacing.sm, vertical = AuraSpacing.xs),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                IconButton(onClick = { viewModel.onPreviousMonth() }) {
+                    Icon(
+                        Icons.AutoMirrored.Filled.KeyboardArrowLeft,
+                        contentDescription = stringResource(R.string.activity_previous_month)
+                    )
+                }
+                Text(
+                    filter.month.format(monthLabelFormatter),
+                    style = MaterialTheme.typography.titleSmall,
+                    color = MaterialTheme.colorScheme.onBackground,
+                    fontWeight = FontWeight.SemiBold
+                )
+                IconButton(
+                    onClick = { viewModel.onNextMonth() },
+                    // The future has no rows to show; the chevron says so.
+                    enabled = !filter.isCurrentMonth
+                ) {
+                    Icon(
+                        Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                        contentDescription = stringResource(R.string.activity_next_month)
+                    )
+                }
+            }
+
+            // ── Summary strip: SQL aggregate over the browsed month, so it stays
+            // correct while rows are still paging in.
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -285,14 +337,14 @@ fun TransactionListScreen(
                     contentAlignment = Alignment.Center
                 ) {
                     AuraEmptyState(
-                        icon = if (filter.isActive) Icons.Default.SearchOff
+                        icon = if (filter.isActive || !filter.isCurrentMonth) Icons.Default.SearchOff
                         else Icons.AutoMirrored.Filled.ReceiptLong,
-                        title = if (filter.isActive) {
+                        title = if (filter.isActive || !filter.isCurrentMonth) {
                             stringResource(R.string.activity_empty_title_filtered)
                         } else {
                             stringResource(R.string.activity_empty_title)
                         },
-                        message = if (filter.isActive) {
+                        message = if (filter.isActive || !filter.isCurrentMonth) {
                             stringResource(R.string.activity_empty_message_filtered)
                         } else {
                             stringResource(R.string.activity_empty_message)

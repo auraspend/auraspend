@@ -17,6 +17,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Backspace
 import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.Event
 import androidx.compose.material.icons.filled.EditNote
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -52,6 +53,12 @@ import com.awbuilds.auraspend.ui.designsystem.AuraType
 import com.awbuilds.auraspend.ui.designsystem.CategoryAvatar
 import com.awbuilds.auraspend.ui.designsystem.formatMoney
 import com.awbuilds.auraspend.ui.theme.extendedColors
+import androidx.compose.material.icons.filled.Event
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.rememberDatePickerState
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 
 /**
  * Amount-first quick capture.
@@ -65,7 +72,14 @@ import com.awbuilds.auraspend.ui.theme.extendedColors
 fun QuickAddSheet(
     categories: List<Category>,
     initialType: TransactionType = TransactionType.EXPENSE,
-    onSave: (amount: Double, categoryId: String, type: TransactionType, merchant: String?, note: String) -> Unit,
+    onSave: (
+        amount: Double,
+        categoryId: String,
+        type: TransactionType,
+        merchant: String?,
+        note: String,
+        date: LocalDateTime
+    ) -> Unit,
     onSmartAdd: () -> Unit,
     onManualAdd: () -> Unit,
     onDismiss: () -> Unit,
@@ -83,6 +97,8 @@ fun QuickAddSheet(
     var selectedCategoryId by remember(categories, type) {
         mutableStateOf(defaultCategoryFor(categories, type))
     }
+    var date by remember { mutableStateOf(LocalDateTime.now()) }
+    var showDatePicker by remember { mutableStateOf(false) }
 
     val amount = input.toDoubleOrNull() ?: 0.0
     val canSave = amount > 0.0 && selectedCategoryId != null
@@ -210,13 +226,26 @@ fun QuickAddSheet(
                 }
             }
 
-            Spacer(modifier = Modifier.height(AuraSpacing.lg))
+            Spacer(modifier = Modifier.height(AuraSpacing.sm))
+
+            // "Now" stays the default; the chip is for cash spent earlier.
+            TextButton(onClick = { showDatePicker = true }) {
+                Icon(
+                    Icons.Default.Event,
+                    contentDescription = null,
+                    modifier = Modifier.size(16.dp)
+                )
+                Spacer(modifier = Modifier.width(AuraSpacing.xs))
+                Text(date.format(DateTimeFormatter.ofPattern("d MMM yyyy")))
+            }
+
+            Spacer(modifier = Modifier.height(AuraSpacing.sm))
 
             Button(
                 onClick = {
                     val categoryId = selectedCategoryId ?: return@Button
                     haptics.performHapticFeedback(HapticFeedbackType.LongPress)
-                    onSave(amount, categoryId, type, merchant.ifBlank { null }, "")
+                    onSave(amount, categoryId, type, merchant.ifBlank { null }, "", date)
                 },
                 enabled = canSave,
                 modifier = Modifier
@@ -241,6 +270,39 @@ fun QuickAddSheet(
                     Text(stringResource(R.string.quick_add_manual))
                 }
             }
+        }
+    }
+
+    if (showDatePicker) {
+        val datePickerState = rememberDatePickerState(
+            initialSelectedDateMillis = date.atZone(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli()
+        )
+        DatePickerDialog(
+            onDismissRequest = { showDatePicker = false },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        datePickerState.selectedDateMillis?.let { millis ->
+                            val picked = LocalDateTime.ofInstant(
+                                java.time.Instant.ofEpochMilli(millis),
+                                java.time.ZoneId.systemDefault()
+                            )
+                            // Keep the time of day; the picker chooses a day.
+                            date = date.withYear(picked.year)
+                                .withMonth(picked.monthValue)
+                                .withDayOfMonth(picked.dayOfMonth)
+                        }
+                        showDatePicker = false
+                    }
+                ) { Text(stringResource(R.string.action_done)) }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDatePicker = false }) {
+                    Text(stringResource(R.string.action_cancel))
+                }
+            }
+        ) {
+            DatePicker(state = datePickerState)
         }
     }
 }

@@ -148,7 +148,8 @@ open class AuraSpendApp : Application() {
         }
     }
 
-    private suspend fun seedDefaultCategories() {
+    /** Re-seeds the default categories when the table is empty (also after a wipe). */
+    suspend fun seedDefaultCategories() {
         val existing = database.categoryDao().getAllCategories().first()
         if (existing.isEmpty()) {
             defaultCategories.forEach { category ->

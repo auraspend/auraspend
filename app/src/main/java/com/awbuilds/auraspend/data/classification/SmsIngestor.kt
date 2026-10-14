@@ -1,6 +1,7 @@
 package com.awbuilds.auraspend.data.classification
 
 import android.content.Context
+import androidx.core.content.edit
 import com.awbuilds.auraspend.data.local.dao.SmsMessageDao
 import com.awbuilds.auraspend.data.local.entities.SmsMessageEntity
 import com.awbuilds.auraspend.data.local.entities.SmsMessageStatus
@@ -91,6 +92,21 @@ object SmsIngestor {
             .apply()
 
         return enqueued
+    }
+
+    /**
+     * Forgets every ingest cursor, so the next pass re-reads the provider as a
+     * fresh install would. Used by Settings -> Delete all data: without this the
+     * app would stay empty for ever, because the cursors point past the whole
+     * inbox that the wipe just removed.
+     */
+    fun resetIngestCursors(context: Context) {
+        context.getSharedPreferences(PREF_FILE, Context.MODE_PRIVATE)
+            .edit {
+                remove(PREF_INGEST_SINCE)
+                remove(PREF_HISTORY_BEFORE)
+                remove(PREF_HISTORY_WALK_DONE)
+            }
     }
 
     /**

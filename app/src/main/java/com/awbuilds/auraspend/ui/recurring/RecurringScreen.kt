@@ -17,6 +17,7 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -50,9 +51,17 @@ fun RecurringScreen(
     // tracked entries: the section below turns one into a tracked subscription
     // on the user's tap.
     val recurringPayments by repository.getRecurringTransactions().collectAsState(initial = emptyList())
-    val detected = remember(recurringPayments, subscriptions) {
-        detectedSubscriptions(recurringPayments, subscriptions.map { it.name })
+    val context = LocalContext.current
+    var dismissedSuggestions by remember { mutableStateOf(SuggestionDismissals.load(context)) }
+    val detected = remember(recurringPayments, subscriptions, dismissedSuggestions) {
+        detectedSubscriptions(
+            recurringPayments,
+            trackedNames = subscriptions.map { it.name },
+            dismissedNames = dismissedSuggestions
+        )
     }
+    // Non-null while the sheet edits an existing subscription instead of adding one.
+    var editingSubscription by remember { mutableStateOf<Subscription?>(null) }
     val categories by repository.getAllCategories().collectAsState(initial = emptyList())
     val scope = rememberCoroutineScope()
 
@@ -245,6 +254,21 @@ fun RecurringScreen(
                                 }
                                 IconButton(onClick = {
                                     error = null
+                                    editingSubscription = sub
+                                    subscriptionName = sub.name
+                                    subscriptionAmount = fieldAmount(sub.amount)
+                                    subscriptionCategory = sub.categoryId
+                                    subscriptionCycle = sub.billingCycle
+                                    showAddSheet = true
+                                }) {
+                                    Icon(
+                                        Icons.Default.Edit,
+                                        contentDescription = stringResource(R.string.action_edit),
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                }
+                                IconButton(onClick = {
+                                    error = null
                                     confirmRemove = sub
                                 }) {
                                     Icon(
@@ -326,10 +350,9 @@ fun RecurringScreen(
                                 TextButton(
                                     onClick = {
                                         error = null
+                                        editingSubscription = null
                                         subscriptionName = det.name
-                                        subscriptionAmount =
-                                            if (det.amount % 1.0 == 0.0) det.amount.toLong().toString()
-                                            else det.amount.toString()
+                                        subscriptionAmount = fieldAmount(det.amount)
                                         subscriptionCategory =
                                             det.categoryId?.takeIf { id -> categories.any { it.id == id } }
                                                 ?: categories.firstOrNull()?.id
@@ -341,6 +364,16 @@ fun RecurringScreen(
                                 ) {
                                     Text(stringResource(R.string.recurring_track))
                                 }
+                                IconButton(onClick = {
+                                    dismissedSuggestions =
+                                        SuggestionDismissals.dismiss(context, det.name)
+                                }) {
+                                    Icon(
+                                        Icons.Default.Close,
+                                        contentDescription = stringResource(R.string.recurring_detected_dismiss),
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                }
                             }
                         }
                     }
@@ -351,7 +384,7 @@ fun RecurringScreen(
 
     if (showAddSheet) {
         ModalBottomSheet(
-            onDismissRequest = { showAddSheet = false },
+            onDismissRequest = { showAddSheet = false; editingSubscription = null },
             containerColor = MaterialTheme.colorScheme.surface,
             tonalElevation = 3.dp
         ) {
@@ -389,7 +422,10 @@ fun RecurringScreen(
                     }
                     Column {
                         Text(
-                            stringResource(R.string.recurring_add),
+                            stringResource(
+                                if (editingSubscription != null) R.string.recurring_edit
+                                else R.string.recurring_add
+                            ),
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold
                         )
@@ -516,21 +552,37 @@ fun RecurringScreen(
                             // The sheet used to close before the write was attempted, so a
                             // Room failure looked exactly like a save. It now closes only
                             // after the write succeeds; the form survives a failure.
+                            val target = editingSubscription
                             val saved = boundary(TAG, false) {
-                                repository.saveSubscription(
-                                    Subscription(
-                                        name = subscriptionName.trim(),
-                                        amount = amt,
-                                        categoryId = subscriptionCategory,
-                                        billingCycle = subscriptionCycle,
-                                        nextBillingDate = next
+                                if (target != null) {
+                                    // Edit in place: same id, stored next billing date
+                                    // kept (the sheet has no date field; recomputing it
+                                    // would silently move the due date).
+                                    repository.saveSubscription(
+                                        target.copy(
+                                            name = subscriptionName.trim(),
+                                            amount = amt,
+                                            categoryId = subscriptionCategory,
+                                            billingCycle = subscriptionCycle
+                                        )
                                     )
-                                )
+                                } else {
+                                    repository.saveSubscription(
+                                        Subscription(
+                                            name = subscriptionName.trim(),
+                                            amount = amt,
+                                            categoryId = subscriptionCategory,
+                                            billingCycle = subscriptionCycle,
+                                            nextBillingDate = next
+                                        )
+                                    )
+                                }
                                 true
                             }
                             if (saved) {
                                 error = null
                                 showAddSheet = false
+                                editingSubscription = null
                                 subscriptionName = ""
                                 subscriptionAmount = ""
                                 subscriptionCategory = ""
@@ -544,7 +596,12 @@ fun RecurringScreen(
                             subscriptionAmount.toDoubleOrNull() != null &&
                             subscriptionCategory.isNotBlank()
                 ) {
-                    Text(stringResource(R.string.recurring_add))
+                    Text(
+                        stringResource(
+                            if (editingSubscription != null) R.string.recurring_edit
+                            else R.string.recurring_add
+                        )
+                    )
                 }
             }
         }
@@ -613,3 +670,7 @@ private fun RecurrenceFrequency.labelRes(): Int = when (this) {
     RecurrenceFrequency.MONTHLY -> R.string.recurring_cycle_monthly
     RecurrenceFrequency.YEARLY -> R.string.recurring_cycle_yearly
 }
+
+/** The amount as the sheet's plain-digit field wants it: no trailing ".0". */
+private fun fieldAmount(amount: Double): String =
+    if (amount % 1.0 == 0.0) amount.toLong().toString() else amount.toString()

@@ -23,6 +23,7 @@ import com.awbuilds.auraspend.data.classification.SmsAutoClassifier
 import com.awbuilds.auraspend.data.classification.SmsIngestor
 import com.awbuilds.auraspend.data.classification.SmsStatus
 import com.awbuilds.auraspend.data.classification.pendingInbox
+import com.awbuilds.auraspend.data.classification.skippedInbox
 import com.awbuilds.auraspend.data.classification.queueProgress
 import com.awbuilds.auraspend.data.classification.TransactionClassifier
 import com.awbuilds.auraspend.data.classification.toClassifiedSms
@@ -153,6 +154,8 @@ class ClassificationViewModel(
             is ClassificationViewIntent.LoadAndClassifyAll -> loadAndClassifyAll()
             is ClassificationViewIntent.SaveClassifiedSms -> saveClassifiedSms(intent.smsId)
             is ClassificationViewIntent.SaveAllClassified -> saveAllClassified()
+            is ClassificationViewIntent.RestoreSkippedSms -> restoreSkippedSms(intent.smsId)
+            is ClassificationViewIntent.SkipAllClassified -> skipAllClassified()
             is ClassificationViewIntent.DismissClassifiedSms -> dismissClassifiedSms(intent.smsId)
             is ClassificationViewIntent.UndoSaveClassifiedSms -> undoSaveClassifiedSms(intent.smsId)
             is ClassificationViewIntent.UndoDismissClassifiedSms -> undoDismissClassifiedSms(intent.smsId)
@@ -342,6 +345,7 @@ class ClassificationViewModel(
                             // stored status, the observer re-emits, and the message
                             // reappears here.
                             pendingSmsList = pendingInbox(classified),
+                            skippedSmsList = skippedInbox(classified),
                             // The "pick a message to classify by hand" list is for
                             // candidates. Skipped rows are OTP/alerts, duplicates the
                             // pipeline rejected, or messages the user dismissed —
@@ -429,6 +433,61 @@ class ClassificationViewModel(
                 throw e
             } catch (e: Exception) {
                 AuraLog.e(TAG, "Saving a classified message failed", e)
+                _state.update { it.copy(error = UiError.SAVE_FAILED) }
+            }
+        }
+    }
+
+    /**
+     * Re-queues one skipped message: status back to NEW so the pipeline
+     * classifies it again. This is the recovery path for a message that was
+     * skipped wrongly — a parser fix lands on history through this door.
+     */
+    /**
+     * Dismisses every pending message in one write loop. The per-row "Classify
+     * again" action in the Skipped list is the way back, so a bulk skip is not
+     * a bulk delete.
+     */
+    private fun skipAllClassified() {
+        viewModelScope.launch {
+            val app = context.applicationContext as? AuraSpendApp ?: return@launch
+            val dao = app.database.smsMessageDao()
+            val ids = _state.value.pendingSmsList.map { it.sms.id }
+            if (ids.isEmpty()) return@launch
+            val done = boundary(TAG, false) {
+                ids.forEach { id ->
+                    dao.getById(id)?.let { row ->
+                        dao.update(
+                            row.copy(
+                                status = com.awbuilds.auraspend.data.local.entities.SmsMessageStatus.SKIPPED.name,
+                                updatedAt = System.currentTimeMillis()
+                            )
+                        )
+                    }
+                }
+                true
+            }
+            if (!done) _state.update { it.copy(error = UiError.SAVE_FAILED) }
+        }
+    }
+
+    private fun restoreSkippedSms(smsId: String) {
+        viewModelScope.launch {
+            val app = context.applicationContext as? AuraSpendApp ?: return@launch
+            val dao = app.database.smsMessageDao()
+            val done = boundary(TAG, false) {
+                dao.getById(smsId)?.let { row ->
+                    dao.update(
+                        row.copy(
+                            status = com.awbuilds.auraspend.data.local.entities.SmsMessageStatus.NEW.name,
+                            attempts = 0,
+                            updatedAt = System.currentTimeMillis()
+                        )
+                    )
+                }
+                true
+            }
+            if (!done) {
                 _state.update { it.copy(error = UiError.SAVE_FAILED) }
             }
         }

@@ -52,6 +52,7 @@ fun TransactionEditor(
     var type by remember(transaction) { mutableStateOf(transaction?.type ?: TransactionType.EXPENSE) }
     var categoryId by remember(transaction) { mutableStateOf(transaction?.categoryId) }
     var date by remember(transaction) { mutableStateOf(transaction?.date ?: LocalDateTime.now()) }
+    var isRecurring by remember(transaction) { mutableStateOf(transaction?.isRecurring ?: false) }
     var showDatePicker by remember { mutableStateOf(false) }
 
     val parsedAmount = amount.toDoubleOrNull()
@@ -162,6 +163,27 @@ fun TransactionEditor(
             }
         }
 
+        // A manual entry had no way to say "this repeats" — only the detector
+        // could set the flag. Rent, SIPs and hand-added subscriptions need it.
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    stringResource(R.string.txn_editor_recurring),
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Text(
+                    stringResource(R.string.txn_editor_recurring_subtitle),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            Switch(checked = isRecurring, onCheckedChange = { isRecurring = it })
+        }
+
         Spacer(modifier = Modifier.height(AuraSpacing.xxl))
 
         Button(
@@ -177,7 +199,7 @@ fun TransactionEditor(
                         bankName = transaction?.bankName,
                         date = date,
                         type = type,
-                        isRecurring = transaction?.isRecurring ?: false,
+                        isRecurring = isRecurring,
                         recurrenceFrequency = transaction?.recurrenceFrequency,
                         nextDueDate = transaction?.nextDueDate,
                         subscriptionName = transaction?.subscriptionName,
