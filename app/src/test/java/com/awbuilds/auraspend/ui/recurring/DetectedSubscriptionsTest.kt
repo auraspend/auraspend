@@ -129,6 +129,16 @@ class DetectedSubscriptionsTest {
     }
 
     @Test
+    fun `dismissed services stay dismissed, matched loosely`() {
+        val grouped = detectedSubscriptions(
+            listOf(txn("NETFLIX COM"), txn("SPOTIFY INDIA P")),
+            dismissedNames = listOf("netflix")
+        )
+
+        assertEquals(listOf("SPOTIFY INDIA P"), grouped.map { it.name })
+    }
+
+    @Test
     fun `an empty input yields no suggestions`() {
         assertTrue(detectedSubscriptions(emptyList()).isEmpty())
     }

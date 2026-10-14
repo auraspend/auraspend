@@ -351,9 +351,11 @@
     <string name="recurring_due_today">आज देय</string>
     <string name="recurring_tomorrow">कल</string>
     <string name="recurring_next">अगला: %1$s</string>
+    <string name="recurring_edit">सदस्यता संपादित करें</string>
     <string name="recurring_detected_title">आपके संदेशों से पहचाने गए</string>
     <string name="recurring_detected_subtitle">हमें मिले आवर्ती भुगतान — जिन्हें चाहें ट्रैक करें।</string>
     <string name="recurring_detected_last_paid">अंतिम भुगतान %1$s</string>
+    <string name="recurring_detected_dismiss">यह सदस्यता नहीं है</string>
     <string name="recurring_track">ट्रैक करें</string>
     <string name="recurring_add_subtitle">आवर्ती भुगतान ट्रैक करें</string>
     <string name="recurring_name">नाम</string>
