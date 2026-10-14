@@ -259,6 +259,11 @@ private fun appInForeground(): Boolean = runCatching {
  * no reason to buzz or peek.
  */
 private fun publish(context: Context, copy: SmsNotificationCopy) {
+    // Muted from Settings: nothing may appear. The live notification is taken
+    // down by the toggle itself (via the notifier's cancel), so this path needs
+    // no cancel call of its own.
+    if (!SmsNotifications.isEnabled(context)) return
+
     // Inline (rather than in a helper) so lint's MissingPermission detector can see the
     // guard: the model-download notifications needed three baseline entries for the exact
     // same call, and this feature is small enough not to deserve a fourth.

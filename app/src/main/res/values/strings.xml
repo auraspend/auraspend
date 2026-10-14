@@ -187,6 +187,17 @@
     <string name="settings_categories">Categories</string>
     <string name="settings_categories_subtitle">Add, edit, or organize categories</string>
     <string name="settings_subscriptions">Subscriptions</string>
+    <string name="settings_sms_access">SMS access</string>
+    <string name="settings_sms_access_granted">Granted — new bank messages are read on-device.</string>
+    <string name="settings_sms_access_missing">Not granted — automatic categorisation is paused.</string>
+    <string name="settings_notifications">Categorisation notifications</string>
+    <string name="settings_notifications_subtitle">Show progress while messages are being categorised.</string>
+    <string name="settings_delete_data">Delete all data</string>
+    <string name="settings_delete_data_subtitle">Remove every record and message from this device</string>
+    <string name="settings_delete_data_title">Delete all data?</string>
+    <string name="settings_delete_data_message">Every transaction, budget, goal, subscription and stored message on this device is removed. Messages already read are left alone; a fresh scan can re-import your SMS history. This cannot be undone.</string>
+    <string name="settings_delete_data_done">All data deleted</string>
+    <string name="settings_delete_data_failed">Could not delete the data</string>
     <string name="settings_subscriptions_subtitle">Track recurring payments</string>
     <string name="settings_budgets">Budgets</string>
     <string name="settings_budgets_subtitle">Set spending limits per category</string>

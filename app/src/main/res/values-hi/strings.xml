@@ -185,6 +185,17 @@
     <string name="settings_categories">श्रेणियाँ</string>
     <string name="settings_categories_subtitle">श्रेणियाँ जोड़ें, संपादित करें या व्यवस्थित करें</string>
     <string name="settings_subscriptions">सदस्यताएँ</string>
+    <string name="settings_sms_access">SMS पहुँच</string>
+    <string name="settings_sms_access_granted">अनुमति दी गई — नए बैंक संदेश डिवाइस पर ही पढ़े जाते हैं।</string>
+    <string name="settings_sms_access_missing">अनुमति नहीं दी गई — स्वतः वर्गीकरण रुका हुआ है।</string>
+    <string name="settings_notifications">वर्गीकरण सूचनाएँ</string>
+    <string name="settings_notifications_subtitle">संदेशों के वर्गीकरण के दौरान प्रगति दिखाएँ।</string>
+    <string name="settings_delete_data">सारा डेटा हटाएँ</string>
+    <string name="settings_delete_data_subtitle">इस डिवाइस से हर रिकॉर्ड और संदेश हटाएँ</string>
+    <string name="settings_delete_data_title">सारा डेटा हटाएँ?</string>
+    <string name="settings_delete_data_message">इस डिवाइस के सभी लेन-देन, बजट, लक्ष्य, सदस्यताएँ और संग्रहीत संदेश हट जाएँगे। पहले पढ़े गए संदेश अछूते रहते हैं; नया स्कैन आपका SMS इतिहास दोबारा आयात कर सकता है। इसे पूर्ववत नहीं किया जा सकता।</string>
+    <string name="settings_delete_data_done">सारा डेटा हटा दिया गया</string>
+    <string name="settings_delete_data_failed">डेटा हटाया नहीं जा सका</string>
     <string name="settings_subscriptions_subtitle">आवर्ती भुगतान ट्रैक करें</string>
     <string name="settings_budgets">बजट</string>
     <string name="settings_budgets_subtitle">प्रत्येक श्रेणी के लिए खर्च सीमा तय करें</string>
