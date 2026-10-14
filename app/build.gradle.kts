@@ -30,13 +30,14 @@ android {
         applicationId = "com.awbuilds.auraspend"
         minSdk = 30
         targetSdk = 37
-        // 0.1.3 — categorisation fixes measured against a real inbox (handoff
-        // 0029), on top of the visible queue/notification flow (0028).
+        // 0.1.4 — the on-device classifier actually runs, the books reproduce
+        // against a real inbox, EPF books as an investment, and the F-Droid
+        // flavor exists (handoffs 0041–0044).
         // versionCode must strictly increase for every store upload; Play
         // rejects an update that reuses one, so it is not optional the way
         // the name is.
-        versionCode = 4
-        versionName = "0.1.3"
+        versionCode = 5
+        versionName = "0.1.4"
 
         // True in dev/prod; the `fdroid` flavor flips it to false (ADR 0012).
         // Screens read it to hide the Drive entry points rather than offer
