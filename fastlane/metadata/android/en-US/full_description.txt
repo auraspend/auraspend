@@ -1,0 +1,15 @@
+Turn your bank's SMS into organised spending — entirely on your phone.
+
+AuraSpend reads your bank and payment messages locally and turns them into
+transactions, budgets, subscriptions and category insights. No accounts, no
+servers, no analytics, no ads: your messages never leave the device.
+
+• Automatic categorisation: 50+ per-bank parsers, refined by an optional
+  on-device encoder (~22 MB MiniLM, downloaded only after an explicit consent
+  tap; SHA-256 verified). The app works without it.
+• Budgets, recurring-subscription detection, savings goals, CSV export and
+  import.
+• English and Hindi, Material 3 with light, dark and AMOLED themes.
+
+This build ships without Google Play Services: Google Drive backup is not
+available here. CSV export/import moves your data in and out.
