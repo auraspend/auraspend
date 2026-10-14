@@ -54,8 +54,8 @@
     <string name="home_quick_smart_add">Smart Add</string>
     <string name="home_quick_stats">Stats</string>
     <string name="home_cash_flow">Cash flow</string>
-    <string name="home_spending_this_week">Spending this week</string>
-    <string name="home_no_spending_this_week">No spending recorded this week yet</string>
+    <string name="home_spending_last_7_days">Spending in the last 7 days</string>
+    <string name="home_no_spending_last_7_days">No spending in the last 7 days</string>
     <string name="home_budgets">Budgets</string>
     <string name="home_manage">Manage</string>
     <string name="home_unknown_category">Unknown</string>

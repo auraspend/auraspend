@@ -55,8 +55,8 @@
     <string name="home_quick_smart_add">स्मार्ट ऐड</string>
     <string name="home_quick_stats">आंकड़े</string>
     <string name="home_cash_flow">नकदी प्रवाह</string>
-    <string name="home_spending_this_week">इस हफ़्ते का खर्च</string>
-    <string name="home_no_spending_this_week">इस हफ़्ते अभी तक कोई खर्च दर्ज नहीं है</string>
+    <string name="home_spending_last_7_days">पिछले 7 दिनों का खर्च</string>
+    <string name="home_no_spending_last_7_days">पिछले 7 दिनों में कोई खर्च दर्ज नहीं है</string>
     <string name="home_budgets">बजट</string>
     <string name="home_manage">प्रबंधित करें</string>
     <string name="home_unknown_category">अज्ञात</string>
