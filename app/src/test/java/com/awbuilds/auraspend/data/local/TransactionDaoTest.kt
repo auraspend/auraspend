@@ -128,7 +128,7 @@ class TransactionDaoTest {
         categoryId: String? = null,
         loadSize: Int = 50
     ): List<TransactionEntity> =
-        loadPage(dao.pagedTransactions(query, type, categoryId), loadSize = loadSize).data
+        loadPage(dao.pagedTransactions(query, type, categoryId, 0L, Long.MAX_VALUE), loadSize = loadSize).data
 
     /** What SQLite itself thinks its local UTC offset is at [timestamp], in seconds. */
     private fun sqliteLocalOffsetSeconds(timestamp: Long): Int {
@@ -337,12 +337,12 @@ class TransactionDaoTest {
         insert("t2", 2.0, "EXPENSE", start + 2)
         insert("t3", 3.0, "EXPENSE", start + 3)
 
-        val first = loadPage(dao.pagedTransactions(null, null, null), loadSize = 2)
+        val first = loadPage(dao.pagedTransactions(null, null, null, 0L, Long.MAX_VALUE), loadSize = 2)
         assertEquals(listOf("t3", "t2"), first.data.map { it.id })
         val nextKey = requireNotNull(first.nextKey) { "a full page must offer a next key" }
 
         val second = loadPage(
-            dao.pagedTransactions(null, null, null),
+            dao.pagedTransactions(null, null, null, 0L, Long.MAX_VALUE),
             key = nextKey,
             loadSize = 2,
             append = true

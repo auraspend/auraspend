@@ -76,6 +76,8 @@
 
     <!-- Activity (transaction list) -->
     <string name="activity_title">गतिविधि</string>
+    <string name="activity_previous_month">पिछला महीना</string>
+    <string name="activity_next_month">अगला महीना</string>
     <string name="activity_filter_all">सभी</string>
     <string name="activity_filter_outgoing">जावक</string>
     <string name="activity_filter_incoming">आवक</string>

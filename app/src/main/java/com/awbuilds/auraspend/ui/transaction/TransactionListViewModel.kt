@@ -8,11 +8,14 @@ import com.awbuilds.auraspend.core.AuraLog
 import com.awbuilds.auraspend.core.boundary
 import com.awbuilds.auraspend.domain.model.Transaction
 import com.awbuilds.auraspend.domain.model.TransactionFilter
+import com.awbuilds.auraspend.domain.model.nextMonthOrCurrent
+import com.awbuilds.auraspend.domain.model.toEpochRange
 import com.awbuilds.auraspend.domain.model.TransactionSummary
 import com.awbuilds.auraspend.domain.model.TransactionType
 import com.awbuilds.auraspend.domain.repository.TransactionRepository
 import java.time.LocalDateTime
 import java.time.LocalTime
+import java.time.YearMonth
 import java.time.ZoneId
 import java.time.temporal.TemporalAdjusters
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -66,8 +69,9 @@ class TransactionListViewModel(
     val transactions: Flow<PagingData<Transaction>> = combine(
         debouncedQuery,
         _filter.map { it.type }.distinctUntilChanged(),
-        _filter.map { it.categoryId }.distinctUntilChanged()
-    ) { query, type, categoryId -> TransactionFilter(query, type, categoryId) }
+        _filter.map { it.categoryId }.distinctUntilChanged(),
+        _filter.map { it.month }.distinctUntilChanged()
+    ) { query, type, categoryId, month -> TransactionFilter(query, type, categoryId, month) }
         .flatMapLatest { repository.pagedTransactions(it) }
         .catch { error ->
             AuraLog.e(TAG, "Paged transactions failed", error)
@@ -75,8 +79,16 @@ class TransactionListViewModel(
         }
         .cachedIn(viewModelScope)
 
-    /** Month-to-date SQL aggregate for the summary strip. */
-    val monthSummary: StateFlow<TransactionSummary> = createMonthSummary()
+    /** SQL aggregate for the summary strip, over the month being browsed. */
+    val monthSummary: StateFlow<TransactionSummary> = _filter
+        .map { it.month }
+        .distinctUntilChanged()
+        .flatMapLatest { createMonthSummary(it) }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(SUMMARY_STOP_TIMEOUT_MS),
+            initialValue = TransactionSummary(income = 0.0, expense = 0.0, incomeCount = 0, expenseCount = 0)
+        )
 
     fun onQueryChange(query: String) {
         _filter.update { it.copy(query = query) }
@@ -88,6 +100,16 @@ class TransactionListViewModel(
 
     fun onCategorySelected(categoryId: String?) {
         _filter.update { it.copy(categoryId = categoryId) }
+    }
+
+    /** Steps the browsed month back; there is no lower bound — history is the point. */
+    fun onPreviousMonth() {
+        _filter.update { it.copy(month = it.month.minusMonths(1)) }
+    }
+
+    /** Steps forward, clamped at the current month: no browsing the future. */
+    fun onNextMonth() {
+        _filter.update { it.copy(month = nextMonthOrCurrent(it.month)) }
     }
 
     /** Swipe-to-delete; failures are logged and leave the row restored. */
@@ -104,24 +126,13 @@ class TransactionListViewModel(
         }
     }
 
-    private fun createMonthSummary(): StateFlow<TransactionSummary> {
-        val zone = ZoneId.systemDefault()
-        val now = LocalDateTime.now()
-        val start = now.withDayOfMonth(1).with(LocalTime.MIN)
-            .atZone(zone).toInstant().toEpochMilli()
-        val end = now.with(TemporalAdjusters.lastDayOfMonth()).with(LocalTime.MAX)
-            .atZone(zone).toInstant().toEpochMilli()
-
+    private fun createMonthSummary(month: YearMonth): Flow<TransactionSummary> {
+        val (start, end) = month.toEpochRange(ZoneId.systemDefault())
         return repository.observeSummary(start, end)
             .catch { error ->
                 AuraLog.e(TAG, "Month summary failed", error)
                 emit(TransactionSummary(income = 0.0, expense = 0.0, incomeCount = 0, expenseCount = 0))
             }
-            .stateIn(
-                scope = viewModelScope,
-                started = SharingStarted.WhileSubscribed(SUMMARY_STOP_TIMEOUT_MS),
-                initialValue = TransactionSummary(income = 0.0, expense = 0.0, incomeCount = 0, expenseCount = 0)
-            )
     }
 
     private companion object {

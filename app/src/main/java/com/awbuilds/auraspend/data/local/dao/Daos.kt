@@ -25,7 +25,8 @@ interface TransactionDao {
     @Query(
         """
         SELECT * FROM transactions
-        WHERE (:type IS NULL OR type = :type)
+        WHERE dateTimestamp BETWEEN :start AND :end
+          AND (:type IS NULL OR type = :type)
           AND (:categoryId IS NULL OR categoryId = :categoryId)
           AND (
               :query IS NULL OR :query = ''
@@ -38,7 +39,9 @@ interface TransactionDao {
     fun pagedTransactions(
         query: String?,
         type: String?,
-        categoryId: String?
+        categoryId: String?,
+        start: Long,
+        end: Long
     ): PagingSource<Int, TransactionEntity>
 
     /**

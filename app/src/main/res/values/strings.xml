@@ -75,6 +75,8 @@
 
     <!-- Activity (transaction list) -->
     <string name="activity_title">Activity</string>
+    <string name="activity_previous_month">Previous month</string>
+    <string name="activity_next_month">Next month</string>
     <string name="activity_filter_all">All</string>
     <string name="activity_filter_outgoing">Outgoing</string>
     <string name="activity_filter_incoming">Incoming</string>

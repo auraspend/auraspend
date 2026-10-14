@@ -14,6 +14,7 @@ import com.awbuilds.auraspend.data.local.dao.SavingsGoalDao
 import com.awbuilds.auraspend.data.local.dao.SubscriptionDao
 import com.awbuilds.auraspend.data.local.dao.TransactionDao
 import com.awbuilds.auraspend.domain.model.*
+import java.time.ZoneId
 import com.awbuilds.auraspend.domain.repository.TransactionRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -53,10 +54,13 @@ class TransactionRepositoryImpl(
         Pager(
             config = PagingConfig(pageSize = PAGED_PAGE_SIZE, enablePlaceholders = false),
             pagingSourceFactory = {
+                val (start, end) = filter.month.toEpochRange(ZoneId.systemDefault())
                 transactionDao.pagedTransactions(
                     query = filter.query.trim().ifBlank { null },
                     type = filter.type?.name,
-                    categoryId = filter.categoryId
+                    categoryId = filter.categoryId,
+                    start = start,
+                    end = end
                 )
             }
         ).flow.map { pagingData ->
