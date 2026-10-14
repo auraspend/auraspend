@@ -9,9 +9,10 @@ import com.awbuilds.auraspend.domain.model.TransactionType
  *
  * A contribution confirmation names two amounts — the passbook balance first,
  * the month's contribution second — and ends "…has been received", so the
- * global engine booked the first amount as income. An employer's PF deposit
- * then inflated the month's income while touching nothing spendable. The
- * owner's call (2026-10-14): a PF contribution is an investment, not income.
+ * global engine booked it as income under no category. (Its amount heuristic
+ * landed on the contribution on the observed messages; the clause is pinned
+ * here so the balance can never win.) The owner's call (2026-10-14):
+ * a PF contribution is an investment, not income.
  *
  * Only a message that actually carries the contribution clause is re-typed:
  * the OTP and UAN-linking notices from the same sender keep the base parse
