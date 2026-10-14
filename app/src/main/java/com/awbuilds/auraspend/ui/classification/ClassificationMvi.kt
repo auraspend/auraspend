@@ -45,6 +45,11 @@ data class ClassificationViewState(
      */
     val pendingSmsList: List<ClassifiedSms> = emptyList(),
     /**
+     * Messages the pipeline skipped, newest first. The only surface where a
+     * skipped message can be seen (and re-queued) at all.
+     */
+    val skippedSmsList: List<ClassifiedSms> = emptyList(),
+    /**
      * True while the screen's first inbox snapshot is being taken.
      *
      * Not a progress bar: this covers the moment between opening the tab and the queue
@@ -115,6 +120,7 @@ sealed class ClassificationViewIntent {
     data class SmsPermissionResult(val granted: Boolean) : ClassificationViewIntent()
     object LoadSmsMessages : ClassificationViewIntent()
     data class SmsSelected(val sms: SmsInfo) : ClassificationViewIntent()
+    data class RestoreSkippedSms(val smsId: String) : ClassificationViewIntent()
     object SaveTransaction : ClassificationViewIntent()
     object ResetSuccess : ClassificationViewIntent()
     object ClearError : ClassificationViewIntent()

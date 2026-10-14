@@ -448,6 +448,9 @@
         <item quantity="other">%1$d संदेश मिले</item>
     </plurals>
     <string name="classification_save_all">सभी सहेजें</string>
+    <string name="classification_skipped_title">छोड़े गए (%1$d)</string>
+    <string name="classification_skipped_subtitle">लेन-देन नहीं, डुप्लिकेट, या पहले ही संभाले गए। दोबारा जाँचने के लिए फिर से वर्गीकृत करें।</string>
+    <string name="classification_classify_again">फिर से वर्गीकृत करें</string>
     <string name="classification_swipe_hint">सहेजने के लिए दाएँ स्वाइप करें · खारिज करने के लिए बाएँ</string>
     <string name="classification_sms_saved">लेन-देन में सहेजा गया</string>
     <string name="classification_sms_dismissed">संदेश छोड़ दिया गया</string>

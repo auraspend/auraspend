@@ -466,6 +466,9 @@
         <item quantity="other">%1$d messages found</item>
     </plurals>
     <string name="classification_save_all">Save All</string>
+    <string name="classification_skipped_title">Skipped (%1$d)</string>
+    <string name="classification_skipped_subtitle">Not transactions, duplicates, or already handled. Classify one again to re-check it.</string>
+    <string name="classification_classify_again">Classify again</string>
     <string name="classification_swipe_hint">Swipe right to save · left to dismiss</string>
     <string name="classification_sms_saved">Saved to transactions</string>
     <string name="classification_sms_dismissed">Message dismissed</string>

@@ -1,6 +1,7 @@
 package com.awbuilds.auraspend.ui.recurring
 
 import android.content.Context
+import androidx.core.content.edit
 import com.awbuilds.auraspend.core.AuraLog
 import com.awbuilds.auraspend.core.boundaryOrNull
 import org.json.JSONArray
@@ -30,7 +31,7 @@ internal object SuggestionDismissals {
         val updated = load(context) + normalizedSuggestionName(name)
         boundaryOrNull(TAG) {
             context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-                .edit().putString(KEY, serialize(updated)).apply()
+                .edit { putString(KEY, serialize(updated)) }
         }
         return updated
     }
