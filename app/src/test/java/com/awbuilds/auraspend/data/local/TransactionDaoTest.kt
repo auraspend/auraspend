@@ -126,9 +126,13 @@ class TransactionDaoTest {
         query: String? = null,
         type: String? = null,
         categoryId: String? = null,
-        loadSize: Int = 50
+        loadSize: Int = 50,
+        ascending: Boolean = false
     ): List<TransactionEntity> =
-        loadPage(dao.pagedTransactions(query, type, categoryId, 0L, Long.MAX_VALUE), loadSize = loadSize).data
+        loadPage(
+            dao.pagedTransactions(query, type, categoryId, 0L, Long.MAX_VALUE, ascending),
+            loadSize = loadSize
+        ).data
 
     /** What SQLite itself thinks its local UTC offset is at [timestamp], in seconds. */
     private fun sqliteLocalOffsetSeconds(timestamp: Long): Int {
@@ -332,17 +336,27 @@ class TransactionDaoTest {
     }
 
     @Test
+    fun `ascending paging lists the oldest row first`() = runBlocking {
+        insert("a", 1.0, "EXPENSE", start + 1)
+        insert("b", 2.0, "EXPENSE", start + 2)
+
+        val rows = page(ascending = true)
+
+        assertEquals(listOf("a", "b"), rows.map { it.id })
+    }
+
+    @Test
     fun `paging is bounded by loadSize and consecutive pages do not overlap`() = runBlocking {
         insert("t1", 1.0, "EXPENSE", start + 1)
         insert("t2", 2.0, "EXPENSE", start + 2)
         insert("t3", 3.0, "EXPENSE", start + 3)
 
-        val first = loadPage(dao.pagedTransactions(null, null, null, 0L, Long.MAX_VALUE), loadSize = 2)
+        val first = loadPage(dao.pagedTransactions(null, null, null, 0L, Long.MAX_VALUE, false), loadSize = 2)
         assertEquals(listOf("t3", "t2"), first.data.map { it.id })
         val nextKey = requireNotNull(first.nextKey) { "a full page must offer a next key" }
 
         val second = loadPage(
-            dao.pagedTransactions(null, null, null, 0L, Long.MAX_VALUE),
+            dao.pagedTransactions(null, null, null, 0L, Long.MAX_VALUE, false),
             key = nextKey,
             loadSize = 2,
             append = true

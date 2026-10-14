@@ -70,8 +70,11 @@ class TransactionListViewModel(
         debouncedQuery,
         _filter.map { it.type }.distinctUntilChanged(),
         _filter.map { it.categoryId }.distinctUntilChanged(),
-        _filter.map { it.month }.distinctUntilChanged()
-    ) { query, type, categoryId, month -> TransactionFilter(query, type, categoryId, month) }
+        _filter.map { it.month }.distinctUntilChanged(),
+        _filter.map { it.sortAscending }.distinctUntilChanged()
+    ) { query, type, categoryId, month, sortAscending ->
+        TransactionFilter(query, type, categoryId, month, sortAscending)
+    }
         .flatMapLatest { repository.pagedTransactions(it) }
         .catch { error ->
             AuraLog.e(TAG, "Paged transactions failed", error)
@@ -110,6 +113,11 @@ class TransactionListViewModel(
     /** Steps forward, clamped at the current month: no browsing the future. */
     fun onNextMonth() {
         _filter.update { it.copy(month = nextMonthOrCurrent(it.month)) }
+    }
+
+    /** Flips newest-first / oldest-first for the list. */
+    fun onToggleSort() {
+        _filter.update { it.copy(sortAscending = !it.sortAscending) }
     }
 
     /** Swipe-to-delete; failures are logged and leave the row restored. */

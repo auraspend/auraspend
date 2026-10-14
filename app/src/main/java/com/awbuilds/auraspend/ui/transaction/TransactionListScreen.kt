@@ -17,6 +17,7 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.SearchOff
+import androidx.compose.material.icons.filled.SwapVert
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -182,6 +183,18 @@ fun TransactionListScreen(
                             },
                             style = MaterialTheme.typography.bodySmall,
                             color = extended.textLight
+                        )
+                    }
+                    IconButton(onClick = { viewModel.onToggleSort() }) {
+                        Icon(
+                            Icons.Default.SwapVert,
+                            // The description names the order in effect, so the
+                            // icon never needs a second guess.
+                            contentDescription = stringResource(
+                                if (filter.sortAscending) R.string.activity_sort_oldest_first
+                                else R.string.activity_sort_newest_first
+                            ),
+                            tint = MaterialTheme.colorScheme.onBackground
                         )
                     }
                     IconButton(onClick = { showSearch = true }) {

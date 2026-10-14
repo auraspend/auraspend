@@ -60,7 +60,8 @@ class TransactionRepositoryImpl(
                     type = filter.type?.name,
                     categoryId = filter.categoryId,
                     start = start,
-                    end = end
+                    end = end,
+                    ascending = filter.sortAscending
                 )
             }
         ).flow.map { pagingData ->

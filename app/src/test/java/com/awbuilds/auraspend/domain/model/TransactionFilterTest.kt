@@ -5,6 +5,7 @@ import java.time.LocalDateTime
 import java.time.YearMonth
 import java.time.ZoneOffset
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -24,6 +25,11 @@ class TransactionFilterTest {
 
         assertEquals(YearMonth.now(), filter.month)
         assertTrue(filter.isCurrentMonth)
+    }
+
+    @Test
+    fun `newest-first is the default order`() {
+        assertFalse(TransactionFilter().sortAscending)
     }
 
     @Test

@@ -17,7 +17,9 @@ data class TransactionFilter(
      * stepper's job. Previously the list was all-time while the strip was
      * month-to-date, so the two never described the same rows.
      */
-    val month: java.time.YearMonth = java.time.YearMonth.now()
+    val month: java.time.YearMonth = java.time.YearMonth.now(),
+    /** Newest-first by default; the header toggle flips it. */
+    val sortAscending: Boolean = false
 ) {
     /** True when any constraint is active (drives the filtered empty state). */
     val isActive: Boolean

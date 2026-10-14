@@ -33,7 +33,9 @@ interface TransactionDao {
               OR note LIKE '%' || :query || '%'
               OR merchant LIKE '%' || :query || '%'
           )
-        ORDER BY dateTimestamp DESC
+        ORDER BY
+          CASE WHEN :ascending THEN dateTimestamp END ASC,
+          CASE WHEN NOT :ascending THEN dateTimestamp END DESC
         """
     )
     fun pagedTransactions(
@@ -41,7 +43,8 @@ interface TransactionDao {
         type: String?,
         categoryId: String?,
         start: Long,
-        end: Long
+        end: Long,
+        ascending: Boolean
     ): PagingSource<Int, TransactionEntity>
 
     /**
