@@ -12,6 +12,7 @@ import com.awbuilds.auraspend.data.classification.SmsProgressNotifier
 import com.awbuilds.auraspend.data.classification.ClassificationMemory
 import com.awbuilds.auraspend.data.privacy.PrivacyBackfill
 import com.awbuilds.auraspend.data.classification.defaultCategories
+import com.awbuilds.auraspend.data.classification.missingDefaultCategories
 import com.awbuilds.auraspend.data.classification.MerchantRepository
 import com.awbuilds.auraspend.data.local.AppDatabase
 import com.awbuilds.auraspend.data.local.BackupCreateManager
@@ -148,21 +149,19 @@ open class AuraSpendApp : Application() {
         }
     }
 
-    /** Re-seeds the default categories when the table is empty (also after a wipe). */
+    /** Seeds every default category the table does not already carry (fresh installs and older installs alike). */
     suspend fun seedDefaultCategories() {
-        val existing = database.categoryDao().getAllCategories().first()
-        if (existing.isEmpty()) {
-            defaultCategories.forEach { category ->
-                database.categoryDao().insertCategory(
-                    CategoryEntity(
-                        id = category.id,
-                        name = category.name,
-                        icon = category.icon,
-                        color = category.color,
-                        isDefault = category.isDefault
-                    )
+        val existingIds = database.categoryDao().getAllCategories().first().map { it.id }.toSet()
+        missingDefaultCategories(existingIds).forEach { category ->
+            database.categoryDao().insertCategory(
+                CategoryEntity(
+                    id = category.id,
+                    name = category.name,
+                    icon = category.icon,
+                    color = category.color,
+                    isDefault = category.isDefault
                 )
-            }
+            )
         }
     }
 }
