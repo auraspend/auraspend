@@ -195,7 +195,7 @@ jobs:
       # unexpected loader symbol, telemetry vendor strings, or a scan that read
       # nothing at all. Re-run it on every version bump: a pass is only valid for
       # the digest it was run against.
-      - name: Release gate — native runtime privacy audit (ONNX Runtime, arm64)
+      - name: Release gate — native runtime privacy audit (ONNX Runtime arm64 + SQLCipher, every shipped ABI)
         if: steps.gates.outputs.run == 'true'
         run: |
           set -euo pipefail

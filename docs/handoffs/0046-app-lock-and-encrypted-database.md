@@ -124,6 +124,19 @@ and a `check_license.sh` attribution check.
 - Also fixed on the way: the AGP-9 `srcDir` deprecations in the fdroid source
   wiring (rule 8 — they came from PR #64), 5 `UseKtx` lint errors and 2
   `LocalContextGetResourceValueCall` errors in the new code.
+- **`tools/verify_r8_release.sh` on a real prod release bundle**: 3.89 MB DEX,
+  99.07% obfuscated, 16 KB aligned, ONNX *and* SQLCipher JNI classes kept
+  un-renamed. The gate's JNI check was extended to
+  `net.zetetic.database.sqlcipher.SQLiteConnection` /
+  `SupportOpenHelperFactory` — the AAR ships `-keep class
+  net.zetetic.database.** { *; }`, and the check exists so a future version that
+  drops it fails a build instead of shipping a release where the encrypted
+  database cannot open.
+
+**CI:** both PRs are green. #76 `PR Check` success in 9m46s; #77 success with
+every step green, including the new "Instrumented tests compile" gate and the
+extended native audit. The audit step is named after what it covers (ONNX arm64
++ SQLCipher, every shipped ABI) so the label cannot drift from the work.
 
 ## Open risks / not verified
 
