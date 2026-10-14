@@ -101,12 +101,12 @@ android {
     // (found by the fdroid flavor building green while dev lost the class).
     sourceSets {
         getByName("dev") {
-            java.srcDir("src/gms/java")
-            kotlin.srcDir("src/gms/java")
+            java.directories.add("src/gms/java")
+            kotlin.directories.add("src/gms/java")
         }
         getByName("prod") {
-            java.srcDir("src/gms/java")
-            kotlin.srcDir("src/gms/java")
+            java.directories.add("src/gms/java")
+            kotlin.directories.add("src/gms/java")
         }
     }
 
@@ -271,6 +271,9 @@ dependencies {
 
     // Installs baseline profiles at first boot when present (startup performance).
     implementation(libs.androidx.profileinstaller)
+
+    // App lock (optional PIN gate) — the biometric shortcut for fingerprint/face.
+    implementation(libs.androidx.biometric)
 
     // On-device inference. The encoder runs on ONNX Runtime Mobile; the model
     // itself is downloaded separately (22 MB, SHA-256 verified) rather than

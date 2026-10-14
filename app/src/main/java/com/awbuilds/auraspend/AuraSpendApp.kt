@@ -6,6 +6,10 @@ import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ProcessLifecycleOwner
 import com.awbuilds.auraspend.data.classification.AutoClassificationWorker
 import com.awbuilds.auraspend.data.ai.LocalLlmProvider
+import com.awbuilds.auraspend.core.boundary
+import com.awbuilds.auraspend.data.security.AppLockManager
+import com.awbuilds.auraspend.data.classification.SmsIngestor
+import com.awbuilds.auraspend.data.local.BackupData
 import com.awbuilds.auraspend.data.ai.ModelDownloadManager
 import com.awbuilds.auraspend.data.classification.BackgroundClassificationCoordinator
 import com.awbuilds.auraspend.data.classification.SmsProgressNotifier
@@ -78,6 +82,9 @@ open class AuraSpendApp : Application() {
     lateinit var smsProgressNotifier: SmsProgressNotifier
         private set
 
+    /** The optional PIN/biometric gate; stores only a salted PIN hash. */
+    val appLockManager: AppLockManager by lazy { AppLockManager(this) }
+
     private val applicationScope = CoroutineScope(Dispatchers.IO)
 
     override fun onCreate() {
@@ -149,6 +156,27 @@ open class AuraSpendApp : Application() {
         }
     }
 
+    /**
+     * Deletes every user-owned row, re-seeds the default categories and forgets
+     * the ingest cursors so a fresh scan can re-import the inbox. One sweep,
+     * two callers: the Settings action and the lock screen's "Forgot PIN".
+     */
+    suspend fun wipeAllData(): Boolean = boundary(TAG, false) {
+        val summary = backupRestoreManager.restore(
+            BackupData(
+                transactions = emptyList(),
+                categories = emptyList(),
+                budgets = emptyList(),
+                subscriptions = emptyList()
+            )
+        )
+        if (summary != null) {
+            seedDefaultCategories()
+            SmsIngestor.resetIngestCursors(this)
+        }
+        summary != null
+    }
+
     /** Seeds every default category the table does not already carry (fresh installs and older installs alike). */
     suspend fun seedDefaultCategories() {
         val existingIds = database.categoryDao().getAllCategories().first().map { it.id }.toSet()
@@ -163,5 +191,9 @@ open class AuraSpendApp : Application() {
                 )
             )
         }
+    }
+
+    private companion object {
+        const val TAG = "AuraSpendApp"
     }
 }

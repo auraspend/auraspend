@@ -19,6 +19,7 @@ navigation = "2.10.1"
 room = "2.8.5"
 work = "2.10.0"
 profileinstaller = "1.4.1"
+androidxBiometric = "1.1.0"
 
 okhttp = "4.12.0"
 playServicesAuth = "21.6.0"
@@ -81,6 +82,7 @@ androidx-room-compiler = { group = "androidx.room", name = "room-compiler", vers
 
 androidx-work-runtime-ktx = { group = "androidx.work", name = "work-runtime-ktx", version.ref = "work" }
 androidx-profileinstaller = { group = "androidx.profileinstaller", name = "profileinstaller", version.ref = "profileinstaller" }
+androidx-biometric = { group = "androidx.biometric", name = "biometric", version.ref = "androidxBiometric" }
 
 okhttp = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhttp" }
 play-services-auth = { group = "com.google.android.gms", name = "play-services-auth", version.ref = "playServicesAuth" }
