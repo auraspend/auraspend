@@ -38,6 +38,10 @@ testCore = "1.7.0"
 benchmarkMacro = "1.5.0"
 uiautomator = "2.4.0"
 testRunner = "1.7.0"
+# Espresso 3.7.0 rather than the 3.5.0 that Compose's test rule pulls
+# transitively: 3.5.0 probes `InputManager.getInstance()`, removed in API 37,
+# so every Compose assertion on the current emulator image died in onIdle.
+espresso = "3.7.0"
 
 onnxruntime = "1.22.0"
 
@@ -101,6 +105,7 @@ kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-cor
 androidx-test-ext-junit = { group = "androidx.test.ext", name = "junit", version.ref = "testExtJunit" }
 androidx-test-core = { group = "androidx.test", name = "core", version.ref = "testCore" }
 androidx-test-runner = { group = "androidx.test", name = "runner", version.ref = "testRunner" }
+androidx-test-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espresso" }
 androidx-benchmark-macro-junit4 = { group = "androidx.benchmark", name = "benchmark-macro-junit4", version.ref = "benchmarkMacro" }
 androidx-uiautomator = { group = "androidx.test.uiautomator", name = "uiautomator", version.ref = "uiautomator" }
 androidx-compose-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4" }

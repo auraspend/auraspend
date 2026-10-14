@@ -296,6 +296,18 @@ dependencies {
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation("org.json:json:20240303")
     androidTestImplementation(libs.androidx.test.ext.junit)
+    // Compose assertions for the instrumented suite: the app lock's end-to-end
+    // test drives the real MainActivity's UI, which only exists on a device.
+    // The BOM has to be repeated here — its version pin lives in the platform,
+    // not in the catalog entry.
+    androidTestImplementation(platform(libs.androidx.compose.bom))
+    androidTestImplementation(libs.androidx.compose.ui.test.junit4)
+    // Compose's test rule drives Espresso for idling, and the version it pulls
+    // transitively (3.5.0) probes `InputManager.getInstance()` — a method that
+    // no longer exists on API 37, so every Compose assertion on the current
+    // emulator image died inside Espresso.onIdle. 3.7.0 issues the probe
+    // correctly.
+    androidTestImplementation(libs.androidx.test.espresso.core)
     // The instrumentation runner, declared because nothing else provides it any
     // more. testInstrumentationRunner above names AndroidJUnitRunner, which used
     // to arrive transitively through espresso-core — a dependency neither
