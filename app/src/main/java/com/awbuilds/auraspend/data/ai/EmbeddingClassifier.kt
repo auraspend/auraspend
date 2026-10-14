@@ -170,9 +170,10 @@ class EmbeddingClassifier(
         // single-segment encoding. This surfaced on the first inference ever
         // run on a device (2026-10-13, behind the tokenizer fix that finally
         // reached `encode`); a model swap must re-run the on-device smoke.
+        // A fresh LongArray is already zero-filled; the init lambda was noise.
         val typeIds = OnnxTensor.createTensor(
             env,
-            LongBuffer.wrap(LongArray(ids.size) { 0L }),
+            LongBuffer.wrap(LongArray(ids.size)),
             shape
         )
         try {
