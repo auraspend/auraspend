@@ -3,7 +3,20 @@
 > Read this file and the latest file in `docs/handoffs/` before touching anything.
 > Update both (plus `CLAUDE.md` / `memory/` when you learn something durable) before ending a session.
 >
-> Latest: `docs/handoffs/0042-epf-investment-and-release-approvals.md` — two
+> Latest: `docs/handoffs/0043-theme-visibility-chart-fdroid.md` — untinted icons
+> (back buttons, month chevrons) were black on every background — Compose's
+> `LocalContentColor` default; the theme now provides the scheme's
+> `onBackground` (+ a LIGHT/DARK/AMOLED guard test), and the nav-bar appearance
+> follows the theme too. The homepage chart is the **last 7 days ending today**
+> (a calendar week reads empty every Monday). A third **`fdroid` flavor**
+> ships without Google Play Services (ADR 0012: Drive backup absent by design,
+> `BuildConfig.DRIVE_BACKUP` hides its rows, CI builds it, fdroiddata metadata
+> staged in `docs/fdroid/`, submission tracked in #65). PRs #63/#64, **545/545
+> tests.** The same PR fixed **two release gates that had never run on CI**: the
+> R8 gate now builds the bundle it checks (+ bash 3.2), and the native audit's
+> probe no longer SIGPIPEs itself into a failure. Issues: #16–#21 closed, #15
+> updated, #65/#66 new. On-device visual pass pending (wireless debugging off).
+> Before: `docs/handoffs/0042-epf-investment-and-release-approvals.md` — two
 > owner calls: **EPF contributions are investments, not income** (sender-routed
 > `EpfoParser` on EPFOHO — contribution amount pinned, type EXPENSE, new
 > default `cat_investment`; startup seeding now reconciles missing defaults so
