@@ -373,6 +373,11 @@ The Play paywall was removed in Phase 0 — do not reintroduce premium gating.
 (gitignored, see `secrets.properties.example`). Without them `assembleProdRelease`
 still succeeds but produces `app-prod-release-unsigned.apk` and logs a warning —
 check the filename before calling a release build shippable.
+Tag runs of `release.yml` also upload the signed bundle to Google Play's
+closed-testing track (`PLAY_TRACK` overrides). The Play credential is a
+service account: **never record its account, project or key anywhere in this
+repository** — not in docs, handoffs, comments, commit messages or workflow
+logs. Reference it only as the `PLAY_SERVICE_ACCOUNT_JSON` secret.
 
 **Lint:** `app/lint-baseline.xml` pins the pre-existing issues (64 rows after the
 0026 regeneration) so only *new* ones fail CI. Run `./gradlew updateLintBaseline`
