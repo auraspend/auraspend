@@ -3,7 +3,17 @@
 > Read this file and the latest file in `docs/handoffs/` before touching anything.
 > Update both (plus `CLAUDE.md` / `memory/` when you learn something durable) before ending a session.
 >
-> Latest: `docs/handoffs/0040-screen-audit-gaps.md` — the owner asked what each
+> Latest: `docs/handoffs/0041-audit-device-pass-skipped-fix.md` — the ten 0040
+> features walked on the owner's device; the pass found one real gap: with **no
+> model downloaded and the queue empty** — the model-less default — the Auto
+> Detect tab showed the model prompt and PR #59's **Skipped section was
+> unreachable** (wired into QUEUE/EMPTY only). The prompt branch now shows the
+> skipped history below the prompt; PR #60, **531/531**, re-verified on-device.
+> Also verified: Settings rows, category pickers, Activity month+sort, detail
+> re-categorize + Share, Insights drill-down, Quick Add date. Session note: the
+> consent card and the tab's model prompt are two stacked layers, not a
+> duplicated dialog.
+> Before: `docs/handoffs/0040-screen-audit-gaps.md` — the owner asked what each
 > screen was missing; ten small tested changes closed the gaps: subscription
 > **edit** + suggestion **dismiss**; a **Skipped (N)** section in Smart Add
 > with Classify-again and Skip All; Activity **month navigation** and a
