@@ -94,8 +94,17 @@ open class AuraSpendApp : Application() {
      */
     internal open val databasePassphrase: ByteArray get() = DbPassphrase.get()
 
+    /**
+     * Write-ahead logging is requested explicitly: the app's Room builder asks
+     * for it (`setJournalMode(WRITE_AHEAD_LOGGING)`), but SQLCipher's
+     * `SupportOpenHelperFactory` does not read that setting — its default is a
+     * rollback journal, which the emulator confirmed by leaving an
+     * `auraspend_db-journal` beside the database. WAL is the mode this app was
+     * tuned for (dashboard reads during pipeline writes), so it is set here
+     * where SQLCipher actually listens.
+     */
     internal open val databaseOpenHelperFactory: SupportSQLiteOpenHelper.Factory?
-        get() = SupportOpenHelperFactory(databasePassphrase)
+        get() = SupportOpenHelperFactory(databasePassphrase, null, true)
 
     override fun onCreate() {
         super.onCreate()

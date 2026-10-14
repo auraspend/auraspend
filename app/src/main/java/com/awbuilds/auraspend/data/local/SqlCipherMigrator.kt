@@ -42,17 +42,25 @@ object JniSqlCipherGateway : SqlCipherGateway {
     }
 
     override fun exportToEncrypted(source: File, target: File, passphrase: ByteArray) {
-        SQLiteDatabase.openDatabase(source.path, null, SQLiteDatabase.OPEN_READWRITE).use { plain ->
-            // Rows can still live in the -wal journal; checkpoint first so the
-            // export carries them instead of stranding them on the file we are
-            // about to delete.
-            plain.rawExecSQL("PRAGMA wal_checkpoint(TRUNCATE)")
-            plain.rawExecSQL(
-                "ATTACH DATABASE ? AS encrypted KEY ?",
-                arrayOf(target.path, String(passphrase, Charsets.UTF_8))
-            )
-            plain.rawExecSQL("SELECT sqlcipher_export('encrypted')")
-            plain.rawExecSQL("DETACH DATABASE encrypted")
+        // The direction matters, and the device test is what settled it.
+        //
+        // The SQLCipher CLI recipe attaches the *encrypted target* to a
+        // plaintext connection. On Android that fails: an ATTACH from a
+        // connection opened without a key cannot create the target file —
+        // measured, all four spellings of it (literal and bound path, literal
+        // and bound key) failed with SQLITE_CANTOPEN, and so did a plain
+        // ATTACH with no key at all.
+        //
+        // So this goes the other way: SQLCipher opens (and creates) the
+        // encrypted target with the key, then the *plaintext source* is
+        // attached with an empty key — the documented "encrypt an existing
+        // database" form — and `sqlcipher_export` copies it into `main`. The
+        // attached source also gets SQLite's normal WAL recovery, so rows still
+        // living in the original's `-wal` journal are read rather than lost.
+        SQLiteDatabase.openOrCreateDatabase(target.path, passphrase, null, null).use { encrypted ->
+            encrypted.rawExecSQL("ATTACH DATABASE ? AS plaintext KEY ''", source.path)
+            encrypted.rawExecSQL("SELECT sqlcipher_export('main', 'plaintext')")
+            encrypted.rawExecSQL("DETACH DATABASE plaintext")
         }
     }
 }

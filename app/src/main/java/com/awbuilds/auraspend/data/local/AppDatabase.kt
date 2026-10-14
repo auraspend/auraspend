@@ -215,6 +215,18 @@ abstract class AppDatabase : RoomDatabase() {
             openHelperFactory: SupportSQLiteOpenHelper.Factory?
         ): AppDatabase {
             val appContext = context.applicationContext
+            // `SupportOpenHelperFactory` does NOT load SQLCipher's native
+            // library — it only supplies a passphrase. Without this call the
+            // first open throws
+            //   UnsatisfiedLinkError: No implementation found for
+            //   net.zetetic.database.sqlcipher.SQLiteConnection.nativeOpen
+            // i.e. an app that dies on its first database access. It was found
+            // by `SqlCipherDeviceTest` on an emulator, not by the JVM suite: no
+            // JVM test can load an Android `.so`, so every one of them passes
+            // with the library missing entirely.
+            if (openHelperFactory != null) {
+                SQLCipherLibrary.ensureLoaded(appContext)
+            }
             // Encrypted at rest (SQLCipher): run the one-time plaintext upgrade
             // before any Room handle exists. A fresh install skips it — the
             // factory below creates the file encrypted from the start.

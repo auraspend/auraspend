@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.room.Room
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import com.awbuilds.auraspend.AuraSpendApp
 import com.awbuilds.auraspend.data.local.entities.TransactionEntity
 import com.awbuilds.auraspend.data.security.DbPassphrase
 import kotlinx.coroutines.flow.first
@@ -14,6 +15,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Assert.fail
+import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import java.io.File
@@ -53,6 +55,19 @@ class SqlCipherDeviceTest {
 
     private fun File.isPlaintextOnDisk(): Boolean =
         readBytes().copyOf(16).toString(Charsets.ISO_8859_1).startsWith("SQLite format 3")
+
+    /**
+     * Load the native library first, exactly as `AppDatabase.getInstance` does.
+     *
+     * Without it `SupportOpenHelperFactory` opens nothing and every test here
+     * fails with `UnsatisfiedLinkError` — which is not a test artifact but the
+     * real production failure mode, and the reason this class exists. Loading it
+     * in `@Before` also stops the tests depending on each other's order.
+     */
+    @Before
+    fun loadNativeLibrary() {
+        SQLCipherLibrary.ensureLoaded(context)
+    }
 
     @Test
     fun a_plaintext_database_migrates_and_stops_being_plaintext() {
@@ -132,6 +147,39 @@ class SqlCipherDeviceTest {
         } finally {
             db.close()
         }
+    }
+
+    @Test
+    fun the_apps_own_database_is_encrypted_at_rest() = runBlocking {
+        // The production wiring, end to end: AuraSpendApp.onCreate already
+        // opened its database through AppDatabase.getInstance, which derives the
+        // passphrase from the Keystore, loads the native library and passes the
+        // SQLCipher factory. The read below forces the open if startup's
+        // background seeding had not got to it yet — Room opens lazily, so
+        // asserting on the file first would test the test's timing, not the app.
+        val app = context.applicationContext as AuraSpendApp
+        // Seeding runs on a background coroutine at startup, so waiting for it
+        // would make this test race the scheduler. The app's seeding call is
+        // idempotent ("every default category the table does not already
+        // carry"), so calling it here is the same work, done deterministically —
+        // and the write below is what actually forces the encrypted open.
+        app.seedDefaultCategories()
+        val categories = app.database.categoryDao().getAllOnce()
+        assertTrue("the seeded default categories must be readable", categories.isNotEmpty())
+
+        val file = context.getDatabasePath("auraspend_db")
+        assertTrue("the app must have created its database", file.exists())
+        assertFalse(
+            "the app's own database must be encrypted at rest",
+            file.isPlaintextOnDisk()
+        )
+        // SQLCipher's factory ignores Room's journal-mode setting, so WAL has to
+        // be requested where SQLCipher listens. Without that the app silently
+        // loses the concurrent-read behaviour its Room builder asks for.
+        val journalMode = app.database.openHelper.writableDatabase
+            .query("PRAGMA journal_mode")
+            .use { cursor -> cursor.moveToFirst(); cursor.getString(0) }
+        assertEquals("the app's database must run in WAL, as the Room builder asks", "wal", journalMode.lowercase())
     }
 
     @Test
