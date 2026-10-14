@@ -204,14 +204,37 @@ good reasons). Installing a signed release build on the emulator and watching
 the first launch would close that last gap.
 
 
+## The app lock on a device too
+
+`feat/app-lock` gained `AppLockDeviceTest` the same way — it launches the real
+`MainActivity` and asserts the claim the lock actually makes: while locked, the
+navigation host is **not composed**, so neither the app's splash nor the
+dashboard is behind the gate. Entering the PIN dismisses it and the app becomes
+usable; a wrong PIN leaves it up. Two tests, green on the emulator, pushed to
+#76.
+
+Two things had to be fixed to get them running, both worth remembering:
+
+- **Espresso 3.7.0 had to be pinned in the catalog.** Compose's test rule drives
+  Espresso for idling, and the 3.5.0 it pulls transitively calls
+  `InputManager.getInstance()` — removed in API 37 — so *every* Compose
+  assertion on the current emulator image died inside `onIdle`. Device-side
+  Compose testing is now possible for future work.
+- **The unlock assertion had to wait rather than demand.** The first version
+  wanted the dashboard immediately and failed on a fresh install for the right
+  reason: the app was showing its splash, because onboarding had not been
+  completed yet.
+
 ## Open risks / not verified
 
-- **The app lock has not run on a device** (PIN entry, biometric prompt,
-  background/return policy). The encrypted-database half now has — see the
-  emulator section above.
+- **The app lock has not run on the owner's phone** — but it *has* run on the
+  emulator (`AppLockDeviceTest`, 2 tests green): cold start gates the app, the
+  right PIN unlocks, a wrong PIN does not, and nothing app-owned is composed
+  behind the gate. What is still unverified on a device: the **biometric
+  prompt** (the emulator has no enrolled fingerprint) and the "Forgot PIN" wipe.
 - **The migration has not been run against the owner's real database** (a
   real install with real history). The emulator proved the recipe on a
-  synthetic plaintext fixture with the same schema-less shape; doing it for real
+  synthetic plaintext fixture with the same shape; doing it for real
   is still the first thing to try when the phone is reachable, and the
   0.1.4→next upgrade is when it will actually run for users.
 - **No test runs against the R8-minified build.** The release gate proves the
@@ -230,7 +253,10 @@ A device-only path can be verified **without the owner's phone**: the local AVD
 (`Android_17`, arm64, API 37.1) boots headless and runs
 `connectedDevDebugAndroidTest` in about a minute. If `INSTALL_FAILED_INSUFFICIENT_STORAGE`
 appears, the AVD's `/data` is full — relaunch with `-wipe-data`. Three
-production defects in this very PR were found that way and by nothing else.
+production defects in this PR were found that way and by nothing else, plus two
+harness problems for the lock tests (Espresso 3.7.0 needed for API 37; a fresh
+install shows its splash, not the dashboard). It is the fastest feedback loop
+this project has for anything touching a `.so` or the activity lifecycle.
 
 
 ## Next
