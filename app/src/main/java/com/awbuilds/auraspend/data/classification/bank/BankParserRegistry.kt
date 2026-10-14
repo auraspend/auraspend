@@ -20,6 +20,7 @@ object BankParserRegistry {
         SbiBankParser(),
         HdfcMutualFundParser(),
         NaviMutualFundParser(),
+        EpfoParser(),
         HdfcBankParser(),
         IciciBankParser(),
         KotakBankParser(),

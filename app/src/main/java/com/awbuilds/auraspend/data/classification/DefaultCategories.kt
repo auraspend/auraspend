@@ -13,11 +13,25 @@ val defaultCategories = listOf(
     Category(id = "cat_healthcare", name = "Healthcare", icon = "local_hospital", color = 0xFFE53935.toInt(), isDefault = true),
     Category(id = "cat_education", name = "Education", icon = "school", color = 0xFF5E35B1.toInt(), isDefault = true),
     Category(id = "cat_salary", name = "Salary", icon = "account_balance", color = 0xFF43A047.toInt(), isDefault = true),
+    Category(id = "cat_investment", name = "Investments", icon = "account_balance", color = 0xFF00897B.toInt(), isDefault = true),
     Category(id = "cat_subscription", name = "Subscriptions", icon = "subscriptions", color = 0xFF6D4C41.toInt(), isDefault = true),
     Category(id = "cat_transfer", name = "Transfer", icon = "swap_horiz", color = 0xFF546E7A.toInt(), isDefault = true),
     Category(id = "cat_grocery", name = "Grocery", icon = "local_grocery_store", color = 0xFF2E7D32.toInt(), isDefault = true),
     Category(id = "cat_other", name = "Other", icon = "category", color = 0xFF757575.toInt(), isDefault = true)
 )
+
+/**
+ * The default categories [existingIds] does not carry.
+ *
+ * Startup seeding used to run only on an empty table, so a category added to
+ * this list later (Investments, 2026-10-14) would never reach an existing
+ * install — and the EPFO parser would file into an id no row renders. Callers
+ * insert these without touching rows the user may have edited: a default's id
+ * never changes, only its name/icon/colour do.
+ */
+fun missingDefaultCategories(existingIds: Set<String>): List<Category> =
+    defaultCategories.filterNot { it.id in existingIds }
+
 
 /**
  * Merchant keyword -> category. Scanned with WORD-BOUNDARY matching and
