@@ -101,12 +101,12 @@ android {
     // (found by the fdroid flavor building green while dev lost the class).
     sourceSets {
         getByName("dev") {
-            java.srcDir("src/gms/java")
-            kotlin.srcDir("src/gms/java")
+            java.directories.add("src/gms/java")
+            kotlin.directories.add("src/gms/java")
         }
         getByName("prod") {
-            java.srcDir("src/gms/java")
-            kotlin.srcDir("src/gms/java")
+            java.directories.add("src/gms/java")
+            kotlin.directories.add("src/gms/java")
         }
     }
 
@@ -272,6 +272,9 @@ dependencies {
     // Installs baseline profiles at first boot when present (startup performance).
     implementation(libs.androidx.profileinstaller)
 
+    // App lock (optional PIN gate) — the biometric shortcut for fingerprint/face.
+    implementation(libs.androidx.biometric)
+
     // On-device inference. The encoder runs on ONNX Runtime Mobile; the model
     // itself is downloaded separately (22 MB, SHA-256 verified) rather than
     // shipped in the APK, so users who never opt in pay nothing for it.
@@ -298,6 +301,18 @@ dependencies {
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation("org.json:json:20240303")
     androidTestImplementation(libs.androidx.test.ext.junit)
+    // Compose assertions for the instrumented suite: the app lock's end-to-end
+    // test drives the real MainActivity's UI, which only exists on a device.
+    // The BOM has to be repeated here — its version pin lives in the platform,
+    // not in the catalog entry.
+    androidTestImplementation(platform(libs.androidx.compose.bom))
+    androidTestImplementation(libs.androidx.compose.ui.test.junit4)
+    // Compose's test rule drives Espresso for idling, and the version it pulls
+    // transitively (3.5.0) probes `InputManager.getInstance()` — a method that
+    // no longer exists on API 37, so every Compose assertion on the current
+    // emulator image died inside Espresso.onIdle. 3.7.0 issues the probe
+    // correctly.
+    androidTestImplementation(libs.androidx.test.espresso.core)
     // The instrumentation runner, declared because nothing else provides it any
     // more. testInstrumentationRunner above names AndroidJUnitRunner, which used
     // to arrive transitively through espresso-core — a dependency neither

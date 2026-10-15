@@ -20,6 +20,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.filled.OpenInNew
+import androidx.biometric.BiometricManager
+import androidx.compose.material.icons.filled.Fingerprint
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Pin
 import androidx.compose.material.icons.filled.AccountBalance
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Backup
@@ -55,11 +59,8 @@ import androidx.compose.ui.unit.sp
 import com.awbuilds.auraspend.AuraSpendApp
 import com.awbuilds.auraspend.BuildConfig
 import com.awbuilds.auraspend.R
-import com.awbuilds.auraspend.core.boundary
 import com.awbuilds.auraspend.data.ai.AiModelState
-import com.awbuilds.auraspend.data.classification.SmsIngestor
 import com.awbuilds.auraspend.data.classification.SmsNotifications
-import com.awbuilds.auraspend.data.local.BackupData
 import kotlinx.coroutines.launch
 import com.awbuilds.auraspend.ui.designsystem.AuraCard
 import com.awbuilds.auraspend.ui.designsystem.AuraCardStyle
@@ -112,6 +113,18 @@ fun SettingsScreen(
     var showDeleteDialog by remember { mutableStateOf(false) }
     var showRestoreDialog by remember { mutableStateOf(false) }
     var showCurrencySheet by remember { mutableStateOf(false) }
+    val lockManager = remember(context) { (context.applicationContext as? AuraSpendApp)?.appLockManager }
+    var lockEnabled by remember { mutableStateOf(lockManager?.isEnabled == true) }
+    var showPinCreateDialog by remember { mutableStateOf(false) }
+    var showPinVerifyDialog by remember { mutableStateOf(false) }
+    var pinVerifyPurpose by remember { mutableStateOf(PinVerifyPurpose.DISABLE) }
+    val biometricAvailable = remember(context) {
+        runCatching {
+            BiometricManager.from(context)
+                .canAuthenticate(BiometricManager.Authenticators.BIOMETRIC_STRONG) ==
+                BiometricManager.BIOMETRIC_SUCCESS
+        }.getOrDefault(false)
+    }
     val scope = rememberCoroutineScope()
     // SMS access gates everything the categoriser does: if it is missing the
     // toggle below silently does nothing, so the state is surfaced here with
@@ -176,21 +189,7 @@ fun SettingsScreen(
                         showDeleteDataDialog = false
                         scope.launch {
                             val app = context.applicationContext as? AuraSpendApp
-                            val done = boundary(TAG, false) {
-                                val summary = app?.backupRestoreManager?.restore(
-                                    BackupData(
-                                        transactions = emptyList(),
-                                        categories = emptyList(),
-                                        budgets = emptyList(),
-                                        subscriptions = emptyList()
-                                    )
-                                )
-                                if (app != null && summary != null) {
-                                    app.seedDefaultCategories()
-                                    SmsIngestor.resetIngestCursors(context)
-                                }
-                                app != null && summary != null
-                            }
+                            val done = app?.wipeAllData() ?: false
                             snackbarHostState.showSnackbar(
                                 if (done) deleteDoneMessage else deleteFailedMessage
                             )
@@ -203,6 +202,34 @@ fun SettingsScreen(
                 TextButton(onClick = { showDeleteDataDialog = false }) { Text(stringResource(R.string.action_cancel)) }
             }
         )
+
+        if (showPinCreateDialog) {
+            PinCreateDialog(
+                onDone = { pin ->
+                    lockManager?.setPin(pin)
+                    lockManager?.isEnabled = true
+                    lockEnabled = true
+                    showPinCreateDialog = false
+                },
+                onDismiss = { showPinCreateDialog = false }
+            )
+        }
+        if (showPinVerifyDialog) {
+            PinVerifyDialog(
+                verify = { pin -> lockManager?.verifyPin(pin) == true },
+                onVerified = {
+                    showPinVerifyDialog = false
+                    when (pinVerifyPurpose) {
+                        PinVerifyPurpose.DISABLE -> {
+                            lockManager?.clearPin()
+                            lockEnabled = false
+                        }
+                        PinVerifyPurpose.CHANGE -> showPinCreateDialog = true
+                    }
+                },
+                onDismiss = { showPinVerifyDialog = false }
+            )
+        }
     }
 
     if (showCurrencySheet) {
@@ -445,6 +472,46 @@ fun SettingsScreen(
                 subtitle = stringResource(R.string.settings_delete_data_subtitle),
                 onClick = { showDeleteDataDialog = true }
             )
+        }
+
+        SettingsSectionHeader(stringResource(R.string.settings_security))
+        SettingsCard {
+            SettingToggleRow(
+                icon = Icons.Default.Lock,
+                title = stringResource(R.string.settings_app_lock),
+                subtitle = stringResource(R.string.settings_app_lock_subtitle),
+                checked = lockEnabled,
+                onCheckedChange = { enable ->
+                    if (enable) {
+                        showPinCreateDialog = true
+                    } else {
+                        pinVerifyPurpose = PinVerifyPurpose.DISABLE
+                        showPinVerifyDialog = true
+                    }
+                }
+            )
+            if (lockEnabled) {
+                DividerSpacer()
+                SettingsRow(
+                    icon = Icons.Default.Pin,
+                    title = stringResource(R.string.settings_app_lock_change),
+                    subtitle = stringResource(R.string.settings_app_lock_change_subtitle),
+                    onClick = {
+                        pinVerifyPurpose = PinVerifyPurpose.CHANGE
+                        showPinVerifyDialog = true
+                    }
+                )
+                if (biometricAvailable) {
+                    DividerSpacer()
+                    SettingToggleRow(
+                        icon = Icons.Default.Fingerprint,
+                        title = stringResource(R.string.settings_app_lock_biometric),
+                        subtitle = stringResource(R.string.settings_app_lock_biometric_subtitle),
+                        checked = lockManager?.useBiometric == true,
+                        onCheckedChange = { lockManager?.useBiometric = it }
+                    )
+                }
+            }
         }
 
         SettingsSectionHeader(stringResource(R.string.settings_finance))
