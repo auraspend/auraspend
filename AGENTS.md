@@ -12,11 +12,19 @@
 > passphrase derived from a non-exportable Keystore HMAC key, one-time in-place
 > plaintext upgrade). Issues **#71–#75** file the backlog (lock, encryption,
 > global search, budget alerts, scheduled Drive backup). **Both have now run on
-> the arm64 emulator**, which is where three release-blocking SQLCipher defects
-> were found that the whole JVM suite, lint and every static gate had passed:
-> nothing loads `libsqlcipher.so` (the app must `System.loadLibrary` it), the
-> documented ATTACH direction fails on Android (`SQLITE_CANTOPEN`), and
-> SQLCipher's factory ignores Room's journal mode. Other traps worth keeping:
+> real hardware** — the arm64 emulator *and* the owner's Moto G40 — which is
+> where three release-blocking SQLCipher defects were found that the whole JVM
+> suite, lint and every static gate had passed: nothing loads `libsqlcipher.so`
+> (the app must `System.loadLibrary` it), the documented ATTACH direction fails
+> on Android (`SQLITE_CANTOPEN`), and SQLCipher's factory ignores Room's journal
+> mode. **The migration has run against a real schema-v8 database whose data
+> lived almost entirely in its WAL** (4 KB main file + 218 KB WAL → 102 KB
+> encrypted, rows intact), though not yet against the owner's production data —
+> both phones' prod installs are Play-signed, so that happens on the next Play
+> release. `connectedAndroidTest` **uninstalls** the app afterwards (use a manual
+> `am instrument` for a data-bearing install), and Compose device tests need the
+> **screen awake** — with the display off Compose emits no semantics at all.
+> Other traps worth keeping:
 > SQLCipher's real artifact is `net.zetetic:sqlcipher-android` (the
 > similarly-named `android-database-sqlcipher` on Central is 4.5.4, the *legacy*
 > API; Zetetic's S3 is 403, JitPack has only 3.x); the native audit's loader
@@ -24,9 +32,9 @@
 > blocks until re-reviewed; **CI now compiles `androidTest`** (it had been
 > broken since 0026 unnoticed); and device-side Compose tests need Espresso
 > **3.7.0**, because 3.5.0 probes an API-37-removed method and kills every
-> assertion. Both PRs are green (557/557 and 549/549, lint clean). Unverified
-> still: the migration against the owner's **real** database, the biometric
-> prompt (no enrolled fingerprint on the emulator), and an R8-minified run.
+> assertion. Both PRs are green (557/557 and 549/549, lint clean, 10/10
+> instrumented on the phone). Unverified still: the migration on the owner's
+> production rows, the biometric prompt, and an R8-minified run.
 > Before: `docs/handoffs/0045-release-0.1.4-shipped.md` — **0.1.4 is out**:
 > GitHub release published (AAB/APK/checksums) and **Play closed testing
 > (`alpha`) holds 0.1.4 — status `completed`** (the tag run's Play upload

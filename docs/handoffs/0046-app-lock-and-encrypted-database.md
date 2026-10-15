@@ -225,18 +225,74 @@ Two things had to be fixed to get them running, both worth remembering:
   reason: the app was showing its splash, because onboarding had not been
   completed yet.
 
+## On a real phone (Moto G40 Fusion, 2026-10-15)
+
+The owner connected their phones, so the emulator work was repeated on real
+hardware — and this is where the remaining claim was settled.
+
+**The migration ran on a real device, against a real database.** The Moto had a
+`0.1.3-dev` install whose data was almost entirely in its WAL (main file 4,096 B,
+`-wal` 218 KB, schema v8) — the exact shape the recipe has to survive. After
+updating it in place to the new dev build:
+
+| Check | Result |
+|---|---|
+| Startup | clean; `SQLCipherLibrary: libsqlcipher.so loaded` in logcat |
+| File header | random bytes — no longer `SQLite format 3` |
+| File size | 4,096 B + 218 KB WAL → 102,400 B encrypted |
+| Leftovers | no `.plain.bak`, no `.enc` — the crash-safe swap cleaned up |
+| Journal | a fresh 16 KB `-wal` — the app now runs WAL, as intended |
+| Data | `the_apps_own_database_is_encrypted_at_rest` passed: encrypted **and** the seeded rows (which lived in the WAL) were readable |
+
+**The full instrumented suite: 10/10 on the phone, 11/11 on the emulator**, with
+the phone's screen asleep at the start. Running it exposed three defects that
+per-class runs had hidden:
+
+1. **`DemoDataSeeder` closed the application's singleton database** — every test
+   after it in the same process failed with *"Database is closed"*, and every
+   routine run **wiped the app's data first**. It is opt-in now
+   (`-e seedDemoData true`) and closes nothing it did not open.
+2. **Compose emits no semantics while the display sleeps.** The lock tests timed
+   out on a phone whose lock screen was rendering perfectly; the test wakes the
+   screen itself now.
+3. **The PIN has to exist before `MainActivity.onCreate` runs** — a PIN set after
+   the activity launches locks nothing. It is set in an outer rule that wraps the
+   compose rule, with cleanup in a `finally`.
+
+And the lock was confirmed by hand on the phone: PIN set, the lock screen
+rendered, tapping `2-4-6-8` on the physical keypad unlocked it, and the app came
+up fully usable — dashboard, ₹0 balance, "No transactions yet" — reading its
+encrypted database.
+
+### What could not be tested, and why
+
+**Both phones' production installs are Play-signed** (identical APKs, signer
+`O=Google Inc.` — Google's app-signing key), so no locally built APK can be
+installed over them, and their data directories are unreadable without root. The
+owner's real production database therefore **cannot** be migrated by hand here:
+it will migrate in place the first time the next Play release lands on their
+phone, which is exactly the run this feature has to survive.
+
+Two ways to close that earlier, if wanted:
+- **CSV route** — export from Settings in the production app (it holds the rows),
+  then import into a pre-encryption dev build and update that: the migration then
+  runs on the owner's own transactions.
+- **Play route** — ship the next closed-testing release and watch the first
+  launch. If it ever fails, the crash-safe swap leaves the plaintext database
+  intact and a rebuild of the previous version still opens it.
+
 ## Open risks / not verified
 
-- **The app lock has not run on the owner's phone** — but it *has* run on the
-  emulator (`AppLockDeviceTest`, 2 tests green): cold start gates the app, the
-  right PIN unlocks, a wrong PIN does not, and nothing app-owned is composed
-  behind the gate. What is still unverified on a device: the **biometric
-  prompt** (the emulator has no enrolled fingerprint) and the "Forgot PIN" wipe.
-- **The migration has not been run against the owner's real database** (a
-  real install with real history). The emulator proved the recipe on a
-  synthetic plaintext fixture with the same shape; doing it for real
-  is still the first thing to try when the phone is reachable, and the
-  0.1.4→next upgrade is when it will actually run for users.
+- **The app lock has been verified on the owner's phone** (manual: PIN set, lock
+  screen, `2-4-6-8` on the physical keypad, unlocked to a working dashboard) and
+  automatically on a Moto G40 and the emulator. What is still unverified on a
+  device: the **biometric prompt** (no fingerprint enrolled on the test devices)
+  and the "Forgot PIN" wipe (deliberately not run against real data — it is
+  unit-tested, and the emulator covers the confirm dialog).
+- **The owner's production database has not been migrated**: their Play-signed
+  install cannot be side-loaded over, so it migrates on the next Play release.
+  The recipe itself is now proven on a real device against a real schema-v8
+  database whose data lived in the WAL — see above.
 - **No test runs against the R8-minified build.** The release gate proves the
   JNI classes are kept and the bundle builds; installing a signed release APK on
   the emulator would close it.
@@ -252,11 +308,12 @@ Two things had to be fixed to get them running, both worth remembering:
 A device-only path can be verified **without the owner's phone**: the local AVD
 (`Android_17`, arm64, API 37.1) boots headless and runs
 `connectedDevDebugAndroidTest` in about a minute. If `INSTALL_FAILED_INSUFFICIENT_STORAGE`
-appears, the AVD's `/data` is full — relaunch with `-wipe-data`. Three
-production defects in this PR were found that way and by nothing else, plus two
-harness problems for the lock tests (Espresso 3.7.0 needed for API 37; a fresh
-install shows its splash, not the dashboard). It is the fastest feedback loop
-this project has for anything touching a `.so` or the activity lifecycle.
+appears, the AVD's `/data` is full — relaunch with `-wipe-data`. On a real phone,
+two things are needed that the emulator never teaches: **keep the screen awake**
+(Compose has no semantics while the display sleeps) and remember that
+`connectedAndroidTest` **uninstalls** the app afterwards, so a data-bearing
+install must be exercised with a manual `am instrument` run instead. Three
+production defects were found this way and by nothing else.
 
 
 ## Next
