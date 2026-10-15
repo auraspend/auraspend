@@ -36,6 +36,14 @@
 > assertion. Both PRs are green (557/557 and 549/549, lint clean, 10/10
 > instrumented on the phone). Unverified still: the migration on the owner's
 > production rows, the biometric prompt, and an R8-minified run.
+> **F-Droid**: MR !52537 was closed for the app-inclusion template and YAML
+> structure; both are fixed and it is reopened, awaiting a maintainer CI
+> trigger. The three real defects were `sdks:` (not a metadata field — use
+> `prebuild: sdkmanager '…'`), `AutoUpdateMode: Version v%v` with
+> `UpdateCheckMode: Tags` (the reference requires plain `Version`), and
+> the comment header (`templates/build-gradle.yml`: "PLEASE REMOVE ALL
+> COMMENTS…"). GitLab writes went through the owner's browser session:
+> the stored git credential reads the fork but cannot push (403).
 > Before: `docs/handoffs/0045-release-0.1.4-shipped.md` — **0.1.4 is out**:
 > GitHub release published (AAB/APK/checksums) and **Play closed testing
 > (`alpha`) holds 0.1.4 — status `completed`** (the tag run's Play upload

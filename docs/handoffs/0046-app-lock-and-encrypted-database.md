@@ -359,12 +359,67 @@ install must be exercised with a manual `am instrument` run instead. Three
 production defects were found this way and by nothing else.
 
 
+## F-Droid MR !52537: closed for template/structure, fixed and reopened
+
+The maintainer reviewed it the same evening: **closed**, labelled
+`waiting-on-response`, with three comments —
+
+> "no need to provide any verification"
+> "closing this MR since there is no app inclusion template nor the yaml
+> structure is followed, please only re-open this MR only when you included app
+> inclusion template and correct yaml structure"
+> "remove comments from yaml and have a look at any other yaml to correct it -
+> have a look at !52534 (diffs)"
+
+Everything was read from the MR itself (description, both threads, the closure,
+the diff) and then checked against what the maintainer pointed at:
+`templates/build-gradle.yml` (which opens with *"PLEASE REMOVE ALL COMMENTS
+BEFORE SUBMITTING TO F-DROID DATA!"*), the Build Metadata Reference, and
+FilmLab's `!52534` diff as the model file.
+
+**Three defects were real, not just the comments:**
+
+1. **`sdks:` is not a metadata field at all** — zero occurrences in the Build
+   Metadata Reference. The SDK pins became
+   `prebuild: sdkmanager 'platforms;android-37.0' 'build-tools;36.0.0'` —
+   exactly the packages our own CI installs (`.github/workflows/pr_check.yml`),
+   so it is evidence rather than a copy of FilmLab's line.
+2. **`AutoUpdateMode: Version v%v` is wrong with `UpdateCheckMode: Tags`** — the
+   reference says Tags requires `Version` *without any pattern*, because the
+   checked tag is used directly. It is now plain `Version` with
+   `UpdateCheckMode: Tags ^v[0-9]+\.[0-9]+\.[0-9]+$` (our tags are `v0.1.2`…).
+3. **The 12-line comment header** — the template forbids it in capitals.
+
+`MaintainerNotes` was dropped to match the model file; its content (the F-Droid
+flavour has no Play Services, the optional model download, no other network use)
+moved into the MR description where reviewers read it. `SUBMISSION.md` no longer
+describes fields that are gone.
+
+The MR description is now the **filled App inclusion template** (Policy / Docs /
+MR Setup / Metadata / Pipeline, each box ticked with an annotation), with the two
+honest non-ticks: reproducible builds declined with the flavour reason — and the
+template's own note that no phone number or card details were submitted, asking
+for a CI trigger.
+
+**How it was applied:** our staging copy and `SUBMISSION.md` through a normal
+commit on `dev` (`3cb0268`); the fork's branch `add-auraspend` and the MR
+description, reopen and comment through the owner's logged-in GitLab session
+(the stored git credential can read the fork but not push to it — 403 — and
+GitLab's API needs a session for writes). Verified afterwards from the API: MR
+`opened`, one file changed (+26/−0), no comments in the YAML, template sections
+present, `blocking_discussions_resolved: true`.
+
+**Still needed:** a maintainer CI trigger ("the fork's pipelines fail with zero
+jobs" is stated in the description and in the comment, per the template), then
+the Reports tab and any review comments. The stale `waiting-on-response` label is
+the maintainers' to clear.
+
 ## Next
 
 1. Owner reviews #76 and #77 (both target `dev`).
-2. Device pass when wireless debugging is back: `connectedDevDebugAndroidTest`,
-   app-lock flows, and the migration on the owner's real database.
+2. F-Droid: wait for the maintainer's CI trigger on !52537 and answer anything
+   the Reports tab or review raises.
 3. #73 global search, #74 budget alerts, #75 scheduled Drive backup remain.
-4. Still pending from before: F-Droid maintainer review of MR !52537; the
-   owner-gated cleanups (GitHub Support purge, delete the temp audit dir and the
-   PennyWise clone, retire repo-level signing secrets).
+4. Still pending from before: the owner-gated cleanups (GitHub Support purge,
+   delete the temp audit dir and the PennyWise clone, retire repo-level signing
+   secrets).
