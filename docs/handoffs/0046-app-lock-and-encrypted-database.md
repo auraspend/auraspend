@@ -264,6 +264,22 @@ rendered, tapping `2-4-6-8` on the physical keypad unlocked it, and the app came
 up fully usable — dashboard, ₹0 balance, "No transactions yet" — reading its
 encrypted database.
 
+### The fourth defect, and it was not a test artefact
+
+After the vivo run, its dev app came back up **wearing a PIN no human had
+chosen**. `AppLockManager.clearPin()` used the KTX `edit {}` default, which is
+`apply()`: the write is asynchronous, and when the instrumentation killed the
+process the removal never reached disk.
+
+That is a security bug in both directions, not a test artefact — a PIN that
+never lands leaves the app **unlocked while the user believes it is locked**, and
+a PIN that lingers after "turn the lock off" leaves it locked. The four writes
+that make up the lock's state machine (`setPin`, `clearPin`, `isEnabled`,
+`useBiometric`) now commit synchronously; `lastBackgroundedAt` keeps the async
+path, because it is written on every backgrounding and is not a security
+decision. Re-verified on the vivo: 2/2, and no PIN or enabled flag in the prefs
+afterwards.
+
 ### What could not be tested, and why
 
 **Both phones' production installs are Play-signed** (identical APKs, signer
