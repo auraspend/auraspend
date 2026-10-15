@@ -75,10 +75,18 @@ durable lives elsewhere. Keep it a pointer; promote findings to `memory/` or
   arm64 AVD (`Android_17`) takes about a minute: boot it headless, then
   `ANDROID_SERIAL=emulator-5554 ./gradlew :app:connectedDevDebugAndroidTest`.
   Three release-blocking SQLCipher defects were found this way and by nothing
-  else — nothing loads `libsqlcipher.so` (the app must call
-  `System.loadLibrary`), SQLCipher's documented ATTACH direction fails on
-  Android, and its factory ignores Room's journal mode. `/data` at 93 % gives
-  `INSTALL_FAILED_INSUFFICIENT_STORAGE`; `-wipe-data` fixes it.
+  else. `/data` at 93 % gives `INSTALL_FAILED_INSUFFICIENT_STORAGE`;
+  `-wipe-data` fixes it. On a **real phone**, two extra rules: **keep the screen
+  awake** (Compose emits no semantics while the display sleeps, so assertions
+  time out on a UI that is drawing fine), and never use
+  `connectedAndroidTest` on an install whose data you care about — it
+  **uninstalls** the app afterwards; install both APKs and use
+  `am instrument` instead.
+- **A device test must not destroy the app's data or close its database.** The
+  demo seeder did both: `DemoDataSeeder` is opt-in (`-e seedDemoData true`) and
+  closes nothing it did not open, because closing the application's singleton
+  breaks every test after it in the same process ("Database is closed"). Per-class
+  runs hide this; run the whole suite.
 - Robolectric tests that instantiate the real app get
   `RobolectricWorkManagerApp`, which substitutes the database passphrase and
   passes `null` for the open-helper factory. Point a test at it explicitly
