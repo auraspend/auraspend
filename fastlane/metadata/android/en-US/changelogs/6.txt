@@ -1,0 +1,7 @@
+What's new in 0.1.5
+
+• Optional app lock: a 4-digit PIN, with fingerprint or face unlock.
+• The database is now encrypted at rest — unreadable without your device.
+• "Forgot PIN" erases everything, so a lost PIN never locks you out.
+• Turn it on in Settings → Security; change the PIN there too.
+• Existing records carry over unchanged when you update.

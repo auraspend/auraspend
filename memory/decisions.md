@@ -2,6 +2,64 @@
 
 Durable decisions with context. Latest first.
 
+## D21 — A device-only path gets run on the emulator before it is called verified (2026-10-15)
+PR #77 passed 549 unit tests, lint, the licence and privacy gates, the native
+audit and the R8 gate — and still shipped three release-blocking defects, all
+found within minutes of running the instrumented suite on the local arm64
+emulator: nothing loads `libsqlcipher.so` (the app must call
+`System.loadLibrary`); SQLCipher's documented ATTACH direction — encrypted target
+attached from an unkeyed connection — fails on Android with `SQLITE_CANTOPEN`,
+so the export must run as keyed target + plaintext source attached with
+`KEY ''`; and `SupportOpenHelperFactory` ignores Room's journal mode, so WAL has
+to be requested in the factory. The rule: when a change touches a
+`.so`-backed path, "it compiles and the JVM suite is green" is not evidence —
+boot the AVD (`Android_17`, headless, ~1 minute) and run
+`:app:connectedDevDebugAndroidTest`. `-wipe-data` if `/data` is full.
+
+## D20 — A native-loader exception is granted per *binary*, pinned by digest (2026-10-14)
+`tools/audit_native_runtime.sh` blocked SQLCipher because `libsqlcipher.so`
+imports `dlopen`/`dlsym`, and the only named allowance was ONNX Runtime's
+execution-provider loader. The imports are real and belong to **SQLite's
+loadable-extension support**: the strings `sqlite3_load_extension` /
+`sqlite3_extension_init` / `load_extension` are in the binary, and
+`sqlcipher-android`'s Java layer neither declares nor calls any of them — Room
+does not either, and Android leaves extension loading disabled by default. So the
+script grew `APPROVED_LOADERS`, keyed on `<library>|<sha256>|<evidence-regex>|<reason>`:
+the same library name with a different digest gets nothing, and the *evidence*
+pattern must be present in the binary as well. A one-byte-mutated copy still
+blocks, which is the property that makes the entry evidence rather than a
+rubber stamp. Consequence to remember: a dependency bump now **fails the gate**
+until someone re-reviews the artifact — that is the design, not an annoyance.
+Never widen an entry to a glob.
+
+## D19 — Encryption that can silently switch itself off is not encryption (2026-10-14)
+The database is encrypted at rest with SQLCipher Community Edition
+(BSD-3-Clause, AGPL-compatible). Three decisions came out of the work:
+
+1. **The passphrase is derived, never stored** — a non-exportable Android
+   Keystore HMAC-SHA256 key over a fixed seed, base64-encoded because
+   `ATTACH … KEY ?` binds the passphrase as a *string* and raw random bytes
+   cannot survive that round-trip. A copy of the app's files cannot produce it.
+2. **`AppDatabase.getInstance` takes the passphrase and the open-helper factory
+   as parameters.** The alternative — hiding `DbPassphrase.get()` inside and
+   falling back when the Keystore is unreachable — would have meant that on
+   exactly the compromised devices the feature protects, the database quietly
+   becomes plaintext. Parameters make the caller choose; only
+   `RobolectricWorkManagerApp` substitutes, visibly.
+3. **Policy tests in the JVM, the recipe on a device.** `libsqlcipher.so` cannot
+   load on the host (`UnsatisfiedLinkError`), so the migration sits behind
+   `SqlCipherGateway`: `SqlCipherMigratorTest` covers what to migrate, what to
+   leave alone, and that **a failed export leaves the original file**;
+   `SqlCipherDeviceTest` proves the real upgrade, byte-level. CI now compiles
+   `androidTest`, because `R8ReleaseSmokeTest` sat broken since 0026 and nobody
+   noticed for five releases.
+
+Also: the artifact is `net.zetetic:sqlcipher-android` (4.19.1). The
+similarly-named `net.zetetic:android-database-sqlcipher` on Maven Central is
+4.5.4 and ships the **legacy** `net.sqlcipher.*` API — Zetetic's own S3 repo
+answers 403 and JitPack only has 3.x tags, so both look like plausible fixes and
+neither is.
+
 ## D18 — A privacy claim states its exception, and a script enforces it (2026-10-11)
 The AI subtitle said "Nothing leaves your phone" and onboarding's second page
 said a local AI "never uploads your data". Both were written before Drive backup

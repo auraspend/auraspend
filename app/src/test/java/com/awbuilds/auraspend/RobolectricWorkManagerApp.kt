@@ -16,6 +16,21 @@ import androidx.work.Configuration
  */
 class RobolectricWorkManagerApp : AuraSpendApp(), Configuration.Provider {
 
+    /**
+     * A fixed passphrase, and no open-helper factory, for JVM tests. The
+     * AndroidKeyStore provider and `libsqlcipher.so` both do not exist on the
+     * test host, so the real app's database wiring throws there. Room falls back
+     * to framework SQLite under Robolectric, which is fine for tests that are
+     * about the queue, the notifications or the repository layer — the
+     * encryption paths themselves are covered on a device by
+     * `SqlCipherDeviceTest`.
+     */
+    override val databasePassphrase: ByteArray =
+        "auraspend-robolectric-test-passphrase".toByteArray()
+
+    override val databaseOpenHelperFactory: androidx.sqlite.db.SupportSQLiteOpenHelper.Factory?
+        get() = null
+
     override val workManagerConfiguration: Configuration
         get() = Configuration.Builder()
             .setMinimumLoggingLevel(android.util.Log.ERROR)

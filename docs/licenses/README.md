@@ -13,7 +13,27 @@ as a table in the [`README`](../README.md).
 |---|---|---|
 | `OFL-PlusJakartaSans.txt` | Plus Jakarta Sans (bundled font, `app/src/main/res/font/`) | SIL Open Font License 1.1 |
 | `MIT-ONNX-Runtime.txt` | ONNX Runtime for Android (native inference, Maven AAR) | MIT |
+| `SQLCipher-Community.txt` | SQLCipher Community Edition (encrypted database, Maven AAR) | BSD-3-Clause |
 | `Apache-2.0.txt` | AndroidX (Room, Compose, Lifecycle, Work, Navigation, Paging, ProfileInstaller), Google API Client, Google Drive API, play-services-auth, OkHttp, Guava, google-http-client-gson | Apache-2.0 |
+
+## Components linked inside SQLCipher
+
+`libsqlcipher.so` statically links **SQLite** (public domain, per
+[sqlite.org/copyright.html](https://sqlite.org/copyright.html)) into AuraSpend's
+APK. Zetetic's licence page
+([zetetic.net/sqlcipher/license](https://www.zetetic.net/sqlcipher/license/))
+lists the FOSS components a SQLCipher build may additionally rely on — SQLite
+Android Bindings, OpenSSL, libtomcrypt, incbin, the Unicode data files and
+others, each with its own licence — and requires that a product include SQLCipher's
+own BSD notice in a user-accessible location, which the in-app license screen
+does.
+
+Which of those are actually in the shipped binary was **measured, not assumed**:
+`libsqlcipher.so` exports no OpenSSL/libressl symbols or strings and imports no
+network symbols at all, and `tools/audit_native_runtime.sh` audits both ABIs the
+APK ships on every PR (its one `dlopen` allowance — SQLite's loadable-extension
+support — is pinned to these exact binaries' SHA-256 digests, so a version bump
+blocks until the new build is reviewed).
 
 ## Adapted code
 

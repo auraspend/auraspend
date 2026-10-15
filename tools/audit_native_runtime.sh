@@ -16,11 +16,12 @@
 # of this script got both of those wrong and reported a clean result for every
 # artifact it was given.
 #
-# Exactly one dlopen/dlsym use is allowed, by name and only on evidence: ONNX
-# Runtime's execution-provider loader, which loads the
-# libonnxruntime_providers_*.so plugins shipped beside it in the same APK. The
-# exception is granted only when those plugin names are embedded in the
-# artifact; any other loader symbol, or any network symbol, still fails.
+# Two dlopen/dlsym uses are allowed, each by name and only on evidence:
+# ONNX Runtime's execution-provider loader, which loads the
+# libonnxruntime_providers_*.so plugins shipped beside it in the same APK (the
+# plugin names must be embedded in the artifact), and — for the encrypted
+# database's SQLCipher — a digest-pinned entry in APPROVED_LOADERS below. Any
+# other loader symbol, or any network symbol, still fails.
 #
 # Usage:  tools/audit_native_runtime.sh <path-to-lib.a> [expected-symbol-regex]
 # Re-run whenever the vendor publishes a new build; a changed digest means the
@@ -172,6 +173,20 @@ fi
 # runtime code loading. The symbol name is the last field of an nm line.
 ALLOWED_DYN='dlopen|dlsym'
 DENIED_DYN='dlopen|dlsym|system|popen|fork|execve'
+
+# A runtime code loader is the one capability a static scan cannot rule out, so
+# an allowance is granted per *artifact*, never per project or per family name:
+# the entry names the library, pins the sha256 of the exact binary that was
+# reviewed, and carries an evidence pattern that must also be present in that
+# binary (plus the reason it is safe). A version bump changes the digest, the
+# entry stops matching, and the audit blocks until the new binary is reviewed —
+# which is the whole reason the digest is part of the key.
+#
+# Format: <library-basename>|<sha256>|<evidence-regex>|<reason>
+APPROVED_LOADERS=(
+  "libsqlcipher.so|32d4c1bb89a90b59a3d6be950bbc36c133f8762f627b333a3512205c8037a48b|sqlite3_load_extension|SQLCipher Community Edition (sqlcipher-android 4.19.1, arm64): the loader belongs to SQLite's loadable-extension support, reachable only through sqlite3_load_extension, which sqlcipher-android's Java layer never declares or calls (verified: no reference to it anywhere in classes.jar), Room never calls, and Android leaves extension loading disabled by default. No network symbols, no service URLs, no telemetry strings."
+  "libsqlcipher.so|c2084efe2469e69ffafa09425800de4bf62fb34cb246b645ac7951294f3e28ba|sqlite3_load_extension|SQLCipher Community Edition (sqlcipher-android 4.19.1, armeabi-v7a): same evidence as the arm64 entry above, re-reviewed for this ABI."
+)
 DYN_LIST=$($SYM_SRC -u 2>/dev/null \
   | awk '{print $NF}' \
   | sed 's/^_//; s/@.*$//' \
@@ -181,6 +196,22 @@ if [[ -z "$DYN_LIST" ]]; then
 else
   DYN_OTHER="$(printf '%s\n' "$DYN_LIST" | grep -vxE "$ALLOWED_DYN" || true)"
   DYN_PLUGINS="$(strings -a "$LIB" 2>/dev/null | grep -cE 'libonnxruntime_providers_[a-z0-9_]+\.so' || true)"
+  # Digest-pinned allowance: the reviewed binary, with its evidence present.
+  LIB_SHA="$(shasum -a 256 "$LIB" | awk '{print $1}')"
+  LIB_BASE="$(basename "$LIB")"
+  APPROVED_REASON=""
+  # `strings | grep -q` under pipefail is the SIGPIPE trap described above: grep
+  # exits on the first match, strings dies with 141, and a *found* pattern reads
+  # as absent. Buffer the strings and grep the buffer instead.
+  STRINGS_BUFFER="$(strings -a "$LIB" 2>/dev/null)"
+  for entry in "${APPROVED_LOADERS[@]}"; do
+    IFS='|' read -r approved_name approved_sha approved_evidence approved_reason <<< "$entry"
+    [[ "$approved_name" == "$LIB_BASE" && "$approved_sha" == "$LIB_SHA" ]] || continue
+    if grep -qE "$approved_evidence" <<< "$STRINGS_BUFFER"; then
+      APPROVED_REASON="$approved_reason"
+      break
+    fi
+  done
   if [[ -n "$DYN_OTHER" ]]; then
     echo "[FAIL] runtime code loading symbols present:"
     printf '%s\n' "$DYN_OTHER" | sed 's/^/         /'
@@ -190,10 +221,17 @@ else
     echo "       ($(printf '%s ' $DYN_LIST)against $DYN_PLUGINS embedded libonnxruntime_providers_*.so"
     echo "        name(s) — static plugin loading, no URL, no download. Any other"
     echo "        loader symbol, or a dlopen without those names, still fails.)"
+  elif [[ -n "$APPROVED_REASON" ]]; then
+    echo "[ok]   dlopen/dlsym allowed by digest-pinned entry ($(printf '%s ' $DYN_LIST)):"
+    echo "       $APPROVED_REASON"
+    echo "       Pinned to sha256 $LIB_SHA. A new build changes the digest and this"
+    echo "        entry stops applying — re-review it, then add the new binary."
   else
-    echo "[FAIL] dlopen/dlsym present but no execution-provider plugin name is embedded:"
-    echo "       this artifact loads something else at runtime, which is the case this"
-    echo "       check exists to catch. Do not ship it until that is understood."
+    echo "[FAIL] dlopen/dlsym present but no execution-provider plugin name is embedded"
+    echo "       and no APPROVED_LOADERS entry matches this binary:"
+    echo "       $(basename "$LIB") sha256 $LIB_SHA. This artifact loads something else"
+    echo "       at runtime, which is the case this check exists to catch. Do not ship it"
+    echo "       until that is understood."
     fail=1
   fi
 fi

@@ -12,6 +12,7 @@ import com.awbuilds.auraspend.data.local.entities.SubscriptionEntity
 import com.awbuilds.auraspend.data.local.entities.TransactionEntity
 import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.runBlocking
+import org.junit.Assume
 import org.junit.Test
 import org.junit.runner.RunWith
 
@@ -55,7 +56,20 @@ class DemoDataSeeder {
 
     @Test
     fun seed() = runBlocking {
-        val db = AppDatabase.getInstance(context)
+        // Opt-in only. This wipes the app's database and writes demo rows, so a
+        // routine instrumented run must not do that to whatever is on the
+        // device — a full-suite run on a real phone destroyed the data under
+        // test. It stays invokable on purpose:
+        //   am instrument -w -e class com.awbuilds.auraspend.DemoDataSeeder \
+        //       -e seedDemoData true com.awbuilds.auraspend.dev.test/androidx.test.runner.AndroidJUnitRunner
+        Assume.assumeTrue(
+            "pass -e seedDemoData true to wipe and seed demo data",
+            InstrumentationRegistry.getArguments().getString("seedDemoData") == "true"
+        )
+
+        // The real application, so this seeder writes into the same encrypted
+        // database the app itself uses.
+        val db = (context.applicationContext as AuraSpendApp).database
 
         db.clearAllTables()
 
@@ -249,6 +263,10 @@ class DemoDataSeeder {
             )
         )
 
-        db.close()
+        // Deliberately no `db.close()`: this is the *application's* singleton
+        // database, opened for the life of the process. Closing it here left
+        // every later test in the same instrumented run failing with
+        // "Database is closed" — a per-class run never noticed, a full-suite run
+        // on a real phone did.
     }
 }

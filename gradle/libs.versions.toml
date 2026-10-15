@@ -17,8 +17,12 @@ lifecycle = "2.11.0"
 navigation = "2.10.1"
 
 room = "2.8.5"
+# SQLCipher Community Edition, the androidx-compatible artifact (it tracks
+# androidx.sqlite; the old `android-database-sqlcipher` is the legacy API).
+sqlcipher = "4.19.1"
 work = "2.10.0"
 profileinstaller = "1.4.1"
+androidxBiometric = "1.1.0"
 
 okhttp = "4.12.0"
 playServicesAuth = "21.6.0"
@@ -37,6 +41,10 @@ testCore = "1.7.0"
 benchmarkMacro = "1.5.0"
 uiautomator = "2.4.0"
 testRunner = "1.7.0"
+# Espresso 3.7.0 rather than the 3.5.0 that Compose's test rule pulls
+# transitively: 3.5.0 probes `InputManager.getInstance()`, removed in API 37,
+# so every Compose assertion on the current emulator image died in onIdle.
+espresso = "3.7.0"
 
 onnxruntime = "1.22.0"
 
@@ -78,9 +86,11 @@ androidx-room-runtime = { group = "androidx.room", name = "room-runtime", versio
 androidx-room-ktx = { group = "androidx.room", name = "room-ktx", version.ref = "room" }
 androidx-room-paging = { group = "androidx.room", name = "room-paging", version.ref = "room" }
 androidx-room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "room" }
+sqlcipher-android = { group = "net.zetetic", name = "sqlcipher-android", version.ref = "sqlcipher" }
 
 androidx-work-runtime-ktx = { group = "androidx.work", name = "work-runtime-ktx", version.ref = "work" }
 androidx-profileinstaller = { group = "androidx.profileinstaller", name = "profileinstaller", version.ref = "profileinstaller" }
+androidx-biometric = { group = "androidx.biometric", name = "biometric", version.ref = "androidxBiometric" }
 
 okhttp = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhttp" }
 play-services-auth = { group = "com.google.android.gms", name = "play-services-auth", version.ref = "playServicesAuth" }
@@ -99,6 +109,7 @@ kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-cor
 androidx-test-ext-junit = { group = "androidx.test.ext", name = "junit", version.ref = "testExtJunit" }
 androidx-test-core = { group = "androidx.test", name = "core", version.ref = "testCore" }
 androidx-test-runner = { group = "androidx.test", name = "runner", version.ref = "testRunner" }
+androidx-test-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espresso" }
 androidx-benchmark-macro-junit4 = { group = "androidx.benchmark", name = "benchmark-macro-junit4", version.ref = "benchmarkMacro" }
 androidx-uiautomator = { group = "androidx.test.uiautomator", name = "uiautomator", version.ref = "uiautomator" }
 androidx-compose-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4" }
