@@ -1,6 +1,7 @@
 package com.awbuilds.auraspend.data.classification
 
 import androidx.test.core.app.ApplicationProvider
+import com.awbuilds.auraspend.RobolectricWorkManagerApp
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -28,7 +29,7 @@ import org.robolectric.annotation.Config
  * loses a user's trust when it is wrong.
  */
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [34])
+@Config(sdk = [34], application = RobolectricWorkManagerApp::class)
 class SmsProgressNotifierTest {
 
     private fun snapshot(

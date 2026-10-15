@@ -1,18 +1,3 @@
-# F-Droid metadata — the fdroiddata entry (submitted as merge request !52537).
-#
-# The listing text, images and per-version changelogs live in the upstream
-# Fastlane metadata (fastlane/metadata/android/, en-US + hi-IN), as the
-# inclusion checklist requires — so this file deliberately does not repeat a
-# summary or description.
-#
-# The `fdroid` flavor (app/build.gradle.kts) carries no Google Play Services:
-# F-Droid's inclusion policy forbids the non-free dependency, and Drive backup
-# is absent from this build. Everything else is identical to the Play build.
-#
-# `commit:` is a full hash (never a tag or branch) per the metadata rules; it
-# pins the commit that added the upstream Fastlane metadata. AutoUpdateMode
-# tracks release tags from here on.
-
 Categories:
   - Money
 License: AGPL-3.0-or-later
@@ -24,29 +9,18 @@ Changelog: https://github.com/auraspend/auraspend/releases
 AutoName: AuraSpend
 
 RepoType: git
-Repo: https://github.com/auraspend/auraspend
+Repo: https://github.com/auraspend/auraspend.git
 
 Builds:
-  - versionName: 0.1.4
+  - versionName: '0.1.4'
     versionCode: 5
     commit: da2459218483efe724bb7a17888a699b94bd1c43
     subdir: app
     gradle:
       - fdroid
-    sdks:
-      - platforms;android-37.0
-      - build-tools;36.0.0
+    prebuild: sdkmanager 'platforms;android-37.0' 'build-tools;36.0.0'
 
-AutoUpdateMode: Version v%v
-UpdateCheckMode: Tags
-CurrentVersion: 0.1.4
+AutoUpdateMode: Version
+UpdateCheckMode: Tags ^v[0-9]+\.[0-9]+\.[0-9]+$
+CurrentVersion: '0.1.4'
 CurrentVersionCode: 5
-
-MaintainerNotes: |-
-  The `fdroid` flavor ships without Google Play Services (ADR 0012 in the app
-  repository): no Drive backup. The optional on-device categoriser model is an
-  Apache-2.0 MiniLM encoder (~22 MB), downloaded only after an explicit in-app
-  consent tap and SHA-256 verified before use; the app is fully functional
-  without it. No analytics, no ads, no accounts, no other network use.
-  The same repository builds the Play flavor (with Drive backup) from the
-  same commit.

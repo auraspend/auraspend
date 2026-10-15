@@ -3,7 +3,48 @@
 > Read this file and the latest file in `docs/handoffs/` before touching anything.
 > Update both (plus `CLAUDE.md` / `memory/` when you learn something durable) before ending a session.
 >
-> Latest: `docs/handoffs/0045-release-0.1.4-shipped.md` — **0.1.4 is out**:
+> Latest: `docs/handoffs/0046-app-lock-and-encrypted-database.md` — the two
+> privacy features from the improvement list are implemented as separate PRs:
+> **#76 an optional app lock** (4-digit PIN as a salted PBKDF2 hash, biometric
+> shortcut, locks on cold start and after >60 s backgrounded, "forgot PIN"
+> wipes through the same `AuraSpendApp.wipeAllData()` the Settings action uses)
+> and **#77 the database is encrypted at rest** (SQLCipher Community Edition,
+> passphrase derived from a non-exportable Keystore HMAC key, one-time in-place
+> plaintext upgrade). Issues **#71–#75** file the backlog (lock, encryption,
+> global search, budget alerts, scheduled Drive backup). **Both have now run on
+> real hardware** — the arm64 emulator *and* the owner's Moto G40 — which is
+> where three release-blocking SQLCipher defects were found that the whole JVM
+> suite, lint and every static gate had passed: nothing loads `libsqlcipher.so`
+> (the app must `System.loadLibrary` it), the documented ATTACH direction fails
+> on Android (`SQLITE_CANTOPEN`), and SQLCipher's factory ignores Room's journal
+> mode. **The migration has run against a real schema-v8 database whose data
+> lived almost entirely in its WAL** (4 KB main file + 218 KB WAL → 102 KB
+> encrypted, rows intact) **and against the owner's own 492 production
+> transactions on their vivo**, carried in through the app's own CSV export and
+> compared by table fingerprint before and after (`docs/release/migration-rehearsal.md`)
+> — their Play-signed install itself still upgrades on the next Play release. `connectedAndroidTest` **uninstalls** the app afterwards (use a manual
+> `am instrument` for a data-bearing install), and Compose device tests need the
+> **screen awake** — with the display off Compose emits no semantics at all.
+> Other traps worth keeping:
+> SQLCipher's real artifact is `net.zetetic:sqlcipher-android` (the
+> similarly-named `android-database-sqlcipher` on Central is 4.5.4, the *legacy*
+> API; Zetetic's S3 is 403, JitPack has only 3.x); the native audit's loader
+> allowance is a **digest-pinned `APPROVED_LOADERS` entry**, so a version bump
+> blocks until re-reviewed; **CI now compiles `androidTest`** (it had been
+> broken since 0026 unnoticed); and device-side Compose tests need Espresso
+> **3.7.0**, because 3.5.0 probes an API-37-removed method and kills every
+> assertion. Both PRs are green (557/557 and 549/549, lint clean, 10/10
+> instrumented on the phone). Unverified still: the migration on the owner's
+> production rows, the biometric prompt, and an R8-minified run.
+> **F-Droid**: MR !52537 was closed for the app-inclusion template and YAML
+> structure; both are fixed and it is reopened, awaiting a maintainer CI
+> trigger. The three real defects were `sdks:` (not a metadata field — use
+> `prebuild: sdkmanager '…'`), `AutoUpdateMode: Version v%v` with
+> `UpdateCheckMode: Tags` (the reference requires plain `Version`), and
+> the comment header (`templates/build-gradle.yml`: "PLEASE REMOVE ALL
+> COMMENTS…"). GitLab writes went through the owner's browser session:
+> the stored git credential reads the fork but cannot push (403).
+> Before: `docs/handoffs/0045-release-0.1.4-shipped.md` — **0.1.4 is out**:
 > GitHub release published (AAB/APK/checksums) and **Play closed testing
 > (`alpha`) holds 0.1.4 — status `completed`** (the tag run's Play upload
 > committed; the former upload-key precondition is evidently cleared). The run
@@ -382,6 +423,14 @@ Kotlin source root: `app/src/main/java/com/awbuilds/auraspend/`
 ./gradlew :app:lintProdDebug               # new issues fail; 64 pre-existing baselined
 ./gradlew assembleDevDebug                # dev APK (fast inner loop)
 ./gradlew assembleProdDebug               # prod APK (what ships; native build)
+
+# Device-only paths (ONNX JNI, SQLCipher's migration) — no phone required: the
+# local arm64 AVD boots headless and runs the instrumented suite in ~1 minute.
+# If the install dies with INSTALL_FAILED_INSUFFICIENT_STORAGE the AVD's /data
+# is full; relaunch the emulator with `-wipe-data`.
+"$ANDROID_HOME/emulator/emulator" -avd Android_17 -no-window -no-audio \
+    -no-boot-anim -gpu swiftshader_indirect -no-snapshot-load &
+ANDROID_SERIAL=emulator-5554 ./gradlew :app:connectedDevDebugAndroidTest
 ```
 
 Flavors: `dev` (development — `.dev` application id, "AuraSpend Dev" label),
@@ -566,6 +615,31 @@ application id): `:benchmark:connectedDevBenchmarkAndroidTest` — see README.
   queue row) used to *delete the row the user had edited* and rebuild it from the
   pipeline's parse. An edit arrives with the row's existing id, so `saveTransaction`
   updates first and only inserts when no row matched.
+- **The database is encrypted at rest, and that must never degrade silently.**
+  `AppDatabase.getInstance` takes the passphrase **and** the open-helper factory
+  as parameters precisely so there is no "Keystore unavailable → carry on in
+  plaintext" path: production passes SQLCipher with `DbPassphrase`'s
+  Keystore-derived key, and only `RobolectricWorkManagerApp` substitutes (a fixed
+  key and `null`), because neither the AndroidKeyStore provider nor
+  `libsqlcipher.so` exists on the JVM host. A silent fallback here would undo the
+  feature silently on exactly the devices it protects. The passphrase is derived
+  (non-exportable Keystore HMAC over a fixed seed, base64'd so it survives
+  `ATTACH … KEY ?` as a bound string) and must never be written to disk, logs or
+  a backup. The plaintext upgrade runs once, before any Room handle exists, via
+  `SqlCipherMigrator` behind the `SqlCipherGateway` seam — keep the policy in the
+  JVM suite and the recipe in `SqlCipherDeviceTest`, and remember the rule that
+  produced the split: a JNI-backed path that cannot load on the host is not
+  "tested" when it only compiles.
+  **Three things the device tests found that no JVM test can** (0046), each a
+  release-blocking defect, each worth re-checking on any SQLCipher bump:
+  nothing in the artifact calls `System.loadLibrary`, so
+  `SQLCipherLibrary.ensureLoaded` must run before the first open (otherwise
+  `UnsatisfiedLinkError: … nativeOpen`); the SQLCipher CLI recipe of attaching
+  an *encrypted target* from an unkeyed connection fails on Android with
+  `SQLITE_CANTOPEN`, so the export goes the other way — keyed target, plaintext
+  source attached with `KEY ''`, `sqlcipher_export('main', 'plaintext')`; and
+  `SupportOpenHelperFactory` ignores Room's journal mode, so WAL must be
+  requested in the factory or the app silently runs on a rollback journal.
 - **The inbox scan has three cursor values, not one.** `newestIngested` (a
   high-water mark), `historyBefore` (the downwards walk) and `historyWalkDone`.
   A single watermark advanced to `newest - 1` permanently stranded every message
@@ -663,4 +737,13 @@ application id): `:benchmark:connectedDevBenchmarkAndroidTest` — see README.
   single loader exception is its execution-provider plugin loader (`dlopen`/
   `dlsym` on the `libonnxruntime_providers_*.so` shipped in the same APK),
   permitted by name and only when those plugin names are embedded in the
-  artifact — any other loader symbol still fails.
+  artifact — any other loader symbol still fails. A second, **digest-pinned**
+  exception exists for SQLCipher's `libsqlcipher.so`: its `dlopen`/`dlsym` come
+  from SQLite's loadable-extension support, which nothing in
+  `sqlcipher-android`'s Java layer, Room or this app declares or calls. It is
+  granted only by an `APPROVED_LOADERS` entry keyed on
+  `<library>|<sha256>|<evidence-regex>|<reason>` — the same library name with a
+  different digest gets nothing, which is what makes a version bump block. Add
+  the new digests only after re-reviewing the artifact; never widen an entry to
+  a glob. When the exception list grows, the *evidence* pattern is what matters:
+  a substring match that happens to be present is not evidence of anything.
