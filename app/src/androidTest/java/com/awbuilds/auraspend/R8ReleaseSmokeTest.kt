@@ -233,7 +233,7 @@ class R8ReleaseSmokeTest {
             .build()
         try {
             val dao = db.transactionDao()
-            dao.insertTransaction(
+            dao.insertTransactionIfAbsent(
                 TransactionEntity(
                     id = "r8-smoke-1",
                     amount = 450.0,
