@@ -41,9 +41,9 @@ the tag, and both must match `docs/fdroid/com.awbuilds.auraspend.yml`.
   dependency. The only network use is the *optional* model download.
 - **The optional model download** — an Apache-2.0 MiniLM encoder (~22 MB),
   behind an explicit in-app consent tap, SHA-256 pinned
-  (`ModelConstants`), and unnecessary for every feature. The
-  `MaintainerNotes` field says this; the reviewer may still raise it as a
-  question rather than an antifeature.
+  (`ModelConstants`), and unnecessary for every feature. The model is an
+  anti-feature candidate, so it is stated plainly in the MR description; the
+  reviewer may still raise it as a question rather than an antifeature.
 - **Binary dependencies** — all from Maven (androidx, ONNX Runtime
   (MIT/Apache-2.0), OkHttp, Compose). No prebuilt blobs in the repo.
 - **Licensing** — AGPL-3.0-or-later; `./tools/check_license.sh` guards the
@@ -55,9 +55,9 @@ the tag, and both must match `docs/fdroid/com.awbuilds.auraspend.yml`.
 - Once merged, the app appears on f-droid.org within a build cycle
   (usually days). Watch the build log from the MR; failures there are ours to
   fix (the buildserver environment occasionally differs from GitHub CI — the
-  `sdks:` list in the metadata handles the SDK pins).
-- Each release afterwards updates automatically: `AutoUpdateMode: Version v%v`
-  + `UpdateCheckMode: Tags` watch the `v*` tags.
+  `prebuild: sdkmanager …` line in the metadata handles the SDK pins).
+- Each release afterwards updates automatically: `AutoUpdateMode: Version`
+  + `UpdateCheckMode: Tags ^v[0-9]+\.[0-9]+\.[0-9]+$` watch the `v*` tags.
 - Add the F-Droid badge/link to the website's download section once the
   listing is live.
 
