@@ -19,13 +19,13 @@ class AppLockManager(context: Context) {
 
     var isEnabled: Boolean
         get() = prefs.getBoolean(KEY_ENABLED, false)
-        set(value) { prefs.edit { putBoolean(KEY_ENABLED, value) } }
+        set(value) { prefs.edit(commit = true) { putBoolean(KEY_ENABLED, value) } }
 
     val hasPin: Boolean get() = prefs.contains(KEY_PIN_SALT)
 
     var useBiometric: Boolean
         get() = prefs.getBoolean(KEY_BIOMETRIC, false)
-        set(value) { prefs.edit { putBoolean(KEY_BIOMETRIC, value) } }
+        set(value) { prefs.edit(commit = true) { putBoolean(KEY_BIOMETRIC, value) } }
 
     /** Epoch millis when the app last left the foreground; 0 = never (cold). */
     var lastBackgroundedAt: Long
@@ -35,7 +35,14 @@ class AppLockManager(context: Context) {
     fun setPin(pin: String) {
         require(pin.length == PIN_LENGTH) { "the app-lock PIN is $PIN_LENGTH digits" }
         val salt = PinHasher.newSalt()
-        prefs.edit {
+        // Committed, not applied: these four writes are the lock's own state
+        // machine, and a write that never reaches disk is a security answer that
+        // is wrong either way — a PIN that vanished leaves the app unlocked
+        // while the user believes it is locked, and a PIN that lingers after
+        // "turn the lock off" leaves it locked. Both were observed: an
+        // instrumented run's `clearPin()` was lost to a dying process, and the
+        // phone came back up wearing a PIN no human had chosen.
+        prefs.edit(commit = true) {
             putString(KEY_PIN_SALT, salt)
             putString(KEY_PIN_HASH, PinHasher.hash(pin, salt))
         }
@@ -48,7 +55,7 @@ class AppLockManager(context: Context) {
     }
 
     fun clearPin() {
-        prefs.edit {
+        prefs.edit(commit = true) {
             remove(KEY_PIN_SALT)
             remove(KEY_PIN_HASH)
             remove(KEY_ENABLED)
