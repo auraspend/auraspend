@@ -10,6 +10,35 @@ internal APIs.
 
 ## [Unreleased]
 
+## [0.1.5] — 2026-10-15
+
+A privacy release: the top two items of the improvement list, as separate PRs
+that landed together.
+
+### Added
+
+- **App lock** (Settings → Security): an opt-in 4-digit PIN, stored only as a
+  salted PBKDF2-HMAC-SHA256 hash, with a biometric shortcut where the hardware
+  supports it. It locks on every cold start and again after more than a minute
+  in the background — within that grace window (share sheet, file picker,
+  Drive sign-in) the session stays unlocked. "Forgot PIN" wipes through the
+  same sweep as Settings → Delete all data; there is no back door.
+- **The database is encrypted at rest** (SQLCipher Community Edition,
+  BSD-3-Clause). The passphrase is derived from a non-exportable Android
+  Keystore HMAC key and never stored anywhere; an existing database is upgraded
+  in place, once, before Room opens it.
+
+### Notes
+
+- The one-time upgrade is crash-safe: the plaintext original is moved aside
+  rather than deleted, the encrypted copy takes its place, and only then is the
+  backup removed. An interrupted upgrade restores the original and fails
+  loudly instead of starting with an empty database.
+- **Do not sideload an older release over 0.1.5** — a pre-0.1.5 build cannot
+  open the encrypted database. Play prevents this for normal installs.
+- Drive backup payloads and CSV exports are unchanged and remain unencrypted,
+  as the app's own copy discloses.
+
 ## [0.1.4] — 2026-10-14
 
 A correctness release measured against a real inbox: the on-device classifier

@@ -30,14 +30,14 @@ android {
         applicationId = "com.awbuilds.auraspend"
         minSdk = 30
         targetSdk = 37
-        // 0.1.4 — the on-device classifier actually runs, the books reproduce
-        // against a real inbox, EPF books as an investment, and the F-Droid
-        // flavor exists (handoffs 0041–0044).
+        // 0.1.5 — the two privacy features: an optional app lock (PIN +
+        // biometric) and the database encrypted at rest, upgraded in place on
+        // existing installs (handoff 0046).
         // versionCode must strictly increase for every store upload; Play
         // rejects an update that reuses one, so it is not optional the way
         // the name is.
-        versionCode = 5
-        versionName = "0.1.4"
+        versionCode = 6
+        versionName = "0.1.5"
 
         // True in dev/prod; the `fdroid` flavor flips it to false (ADR 0012).
         // Screens read it to hide the Drive entry points rather than offer

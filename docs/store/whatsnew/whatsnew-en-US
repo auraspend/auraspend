@@ -1,9 +1,7 @@
-What's new in 0.1.4
+What's new in 0.1.5
 
-• SMS dates read correctly, including "Jul 22" month-first formats.
-• Smart Add no longer lags while messages are being categorised.
-• Fewer false duplicates; wrongly skipped payments are restored.
-• New: "Detected from your messages" — track recurring payments in a tap.
-• Activity browses by month; Insights now drills into a category.
-• EPF contributions count as Investments, not income.
-• Fixes: dark/AMOLED visibility, homepage chart, categorisation search.
+• Optional app lock: a 4-digit PIN, with fingerprint or face unlock.
+• The database is now encrypted at rest — unreadable without your device.
+• "Forgot PIN" erases everything, so a lost PIN never locks you out.
+• Turn it on in Settings → Security; change the PIN there too.
+• Existing records carry over unchanged when you update.
