@@ -19,9 +19,10 @@
 > on Android (`SQLITE_CANTOPEN`), and SQLCipher's factory ignores Room's journal
 > mode. **The migration has run against a real schema-v8 database whose data
 > lived almost entirely in its WAL** (4 KB main file + 218 KB WAL → 102 KB
-> encrypted, rows intact), though not yet against the owner's production data —
-> both phones' prod installs are Play-signed, so that happens on the next Play
-> release. `connectedAndroidTest` **uninstalls** the app afterwards (use a manual
+> encrypted, rows intact) **and against the owner's own 492 production
+> transactions on their vivo**, carried in through the app's own CSV export and
+> compared by table fingerprint before and after (`docs/release/migration-rehearsal.md`)
+> — their Play-signed install itself still upgrades on the next Play release. `connectedAndroidTest` **uninstalls** the app afterwards (use a manual
 > `am instrument` for a data-bearing install), and Compose device tests need the
 > **screen awake** — with the display off Compose emits no semantics at all.
 > Other traps worth keeping:

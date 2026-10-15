@@ -109,11 +109,21 @@ should show `imported=N skippedRows=0`.
 ### 2d. Fingerprint A — what the app sees before the upgrade
 
 ```bash
+# The logcat prefix carries a timestamp and a pid, so strip it before comparing
+# anything: `diff` on the raw lines reports differences that are not there, and
+# a false "DIFFERS" is exactly the wrong thing to read at a release gate.
+capture_fingerprint() {   # $1 = output file
+  adb -s $PHONE logcat -d -s MIGRATION-REHEARSAL \
+    | sed -E 's/^[0-9-]+ +[0-9:.]+ +[0-9]+ +[0-9]+ +I MIGRATION-REHEARSAL: //' \
+    | grep -E "fingerprint |FINGERPRINT-TOTAL" > "$1"
+}
+
 adb -s $PHONE logcat -c
 adb -s $PHONE shell am instrument -w -e rehearsal fingerprint -e class \
     com.awbuilds.auraspend.data.local.MigrationRehearsalTest \
     $PKG.test/androidx.test.runner.AndroidJUnitRunner >/dev/null
-adb -s $PHONE logcat -d -s MIGRATION-REHEARSAL | tail -10 | tee /tmp/fingerprint-A.txt
+capture_fingerprint /tmp/fingerprint-A.txt
+cat /tmp/fingerprint-A.txt
 ```
 
 ### 2e. Upgrade in place — this is the migration
@@ -132,9 +142,10 @@ adb -s $PHONE logcat -c
 adb -s $PHONE shell am instrument -w -e rehearsal fingerprint -e class \
     com.awbuilds.auraspend.data.local.MigrationRehearsalTest \
     $PKG.test/androidx.test.runner.AndroidJUnitRunner >/dev/null
-adb -s $PHONE logcat -d -s MIGRATION-REHEARSAL | tail -10 | tee /tmp/fingerprint-B.txt
+capture_fingerprint /tmp/fingerprint-B.txt
 
-diff /tmp/fingerprint-A.txt /tmp/fingerprint-B.txt && echo "IDENTICAL — the migration preserved every row"
+diff /tmp/fingerprint-A.txt /tmp/fingerprint-B.txt \
+  && echo "IDENTICAL — the migration preserved every row"
 ```
 
 Also check the file itself (the rehearsal app is debuggable, so `run-as` works):
@@ -162,7 +173,11 @@ rm ~/auraspend-prod-export.csv ~/auraspend-backup.json     # the copies, once th
 The rehearsal **passes** when all of these hold:
 
 1. `diff /tmp/fingerprint-A.txt /tmp/fingerprint-B.txt` is empty — the same
-   `FINGERPRINT-TOTAL` and the same per-table hashes before and after.
+   `FINGERPRINT-TOTAL` and the same per-table hashes before and after. Compare
+   the **captured** files (the executor in §2d strips the logcat timestamp and
+   pid): a raw `logcat` diff reports differences that are not there, which is
+   exactly what the vivo run did before the prefix was stripped — every hash
+   underneath was identical.
 2. The database file does not start with `SQLite format 3`; no `.plain.bak` and
    no `.enc` are left beside it; a `-wal` file is present.
 3. `SQLCipherLibrary: libsqlcipher.so loaded` appears in logcat, and no
@@ -175,12 +190,22 @@ APK to get a working app back.
 
 ## 4. What the rehearsal was proven able to do
 
-Run end to end on the arm64 emulator on 2026-10-15, with a 32-transaction demo
-dataset: export → wipe → import → fingerprint A → in-place upgrade → fingerprint
-B, both totals `sha256=4899e00d2d968e5d388ea0ceef30a1b2c40e8cdf651656a4e3c40df216880618`
-and every per-table hash equal. The same upgrade has also run against a real
-schema-v8 device database whose data lived almost entirely in its WAL
-(handoff 0046).
+Run end to end on the arm64 emulator on 2026-10-15 with a 32-transaction demo
+dataset, and then — the run that matters — **on the owner's vivo V2158 with
+their own production export**:
+
+| Step | Result |
+|---|---|
+| Export from the production app | 492 transaction records (1,095 file lines; 121 records carry embedded newlines and the app's reader handled every one) |
+| Import into the pre-encryption build | `parsed=492 imported=492 skippedRows=0 written=492` |
+| Fingerprint A (pre-upgrade) | `transactions rows=492`, `categories rows=13`, total `rows=505 sha256=b088c22610231d3970de2de5767873a37c8ffe3fb5bd9fd816f0397e02281b02` |
+| In-place upgrade | `SQLCipherLibrary: libsqlcipher.so loaded`; header no longer `SQLite format 3`; only `auraspend_db`, `-wal`, `-shm` left |
+| Fingerprint B (post-upgrade) | **identical, every table and the total** |
+| The app on the data | dashboard renders the balance, the cash-flow chart and the recent list from the encrypted database |
+| The production app | untouched: `versionName=0.1.4`, unchanged `lastUpdateTime` |
+
+The same upgrade has also run against a real schema-v8 device database whose
+data lived almost entirely in its WAL (handoff 0046).
 
 ## 5. What it does not prove
 

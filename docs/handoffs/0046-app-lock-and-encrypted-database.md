@@ -226,7 +226,6 @@ Two things had to be fixed to get them running, both worth remembering:
   completed yet.
 
 ## On a real phone (Moto G40 Fusion, 2026-10-15)
-
 The owner connected their phones, so the emulator work was repeated on real
 hardware — and this is where the remaining claim was settled.
 
@@ -280,14 +279,42 @@ path, because it is written on every backgrounding and is not a security
 decision. Re-verified on the vivo: 2/2, and no PIN or enabled flag in the prefs
 afterwards.
 
+### The owner's own rows, migrated on their own phone (vivo V2158)
+
+The Moto run proved the recipe; this one proves it on the data that matters. The
+production install is Play-signed, so its database cannot be read from a
+workstation — the owner exported it through the app instead (**492 transaction
+records**, 1,095 file lines, 121 of them carrying embedded newlines), and the
+rehearsal carried those rows into a pre-encryption dev build, upgraded it in
+place, and compared fingerprints:
+
+| Step | Result |
+|---|---|
+| Import through `CsvManager` | `parsed=492 imported=492 skippedRows=0 written=492` |
+| Fingerprint A (pre-upgrade) | transactions 492, categories 13, total `rows=505 sha256=b088c22610231d3970de2de5767873a37c8ffe3fb5bd9fd816f0397e02281b02` |
+| In-place upgrade | `libsqlcipher.so loaded`; header no longer `SQLite format 3`; only `auraspend_db`, `-wal`, `-shm` left |
+| Fingerprint B (post-upgrade) | **identical — every table and the total** |
+| The app itself | dashboard renders the balance, the cash-flow chart and the recent list from the encrypted database |
+| The production app | untouched: `versionName=0.1.4`, `lastUpdateTime` unchanged |
+
+The harness (`MigrationRehearsalTest`) and the runbook
+(`docs/release/migration-rehearsal.md`) are in #77, and the data copies — mine
+on the workstation and the app's staged file — were deleted afterwards; the
+owner's own export is left in their Downloads for them to delete.
+
+One trap for the next operator, because it happened here: `diff` on raw logcat
+lines reports a difference that is not there (timestamps and pids). Strip the
+prefix first; the runbook now says so.
+
 ### What could not be tested, and why
 
 **Both phones' production installs are Play-signed** (identical APKs, signer
 `O=Google Inc.` — Google's app-signing key), so no locally built APK can be
-installed over them, and their data directories are unreadable without root. The
-owner's real production database therefore **cannot** be migrated by hand here:
-it will migrate in place the first time the next Play release lands on their
-phone, which is exactly the run this feature has to survive.
+installed over them, and their data directories are unreadable without root.
+Their *rows*, however, were rehearsed — see the vivo section below: the app's own
+export carried 492 real transactions into a pre-encryption build, the upgrade ran
+in place, and the fingerprints matched. What still cannot be done by hand is
+upgrading the production install itself; that happens on the next Play release.
 
 Two ways to close that earlier, if wanted:
 - **CSV route** — export from Settings in the production app (it holds the rows),
