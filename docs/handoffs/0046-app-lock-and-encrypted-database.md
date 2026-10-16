@@ -414,52 +414,12 @@ jobs" is stated in the description and in the comment, per the template), then
 the Reports tab and any review comments. The stale `waiting-on-response` label is
 the maintainers' to clear.
 
-## 0.1.5: merged, verified, and awaiting the release PR
-
-Both feature PRs were merged into `dev` (#76 → `f37e1ff`, #77 → `b6b96dc`) and
-the 0.1.5 prep landed on top (`56e9a48`: `versionCode 6`, `whatsnew-{en-US,hi-IN}`
-at 353 characters, `fastlane/…/{en-US,hi-IN}/changelogs/6.txt`, and a `[0.1.5]`
-CHANGELOG entry that states the crash-safe upgrade and the no-downgrade rule).
-
-Verified on the merged tree, not on the branches:
-
-| Check | Result |
-|---|---|
-| Unit tests, `--rerun-tasks` on merged `dev` | **565/565** (the earlier "up-to-date" run was not evidence, so it was forced) |
-| Lint, `check_license.sh`, `check_privacy_claims.sh` | clean |
-| Instrumented suite on the arm64 emulator from merged `dev` | all green (15 executed; 5 rehearsal commands + the seeder skip by design) |
-| `dev` CI on `56e9a48` | success |
-
-**Release PR #78** (`dev → main`) is open with the full evidence table
-(including the migration rehearsal on the owner's 492 real transactions) and the
-post-merge steps: tag `v0.1.5` → GitHub release + Play **alpha** upload → install
-the alpha on the owner's phone (app opens, data intact, lock, **biometric
-unlock** — the one path no test device can exercise) → promote to production.
-The Dependabot PRs, notably okhttp 4 → 5, are deliberately excluded.
-
-### One mess worth recording
-
-The merge of #77 into `dev` went through a branch that had merged `dev` into
-itself (`813f71c`), and this checkout was later left with an **abandoned rebase**
-of the (already merged) `feat/encrypted-database`: `.git/REBASE_HEAD` pointed at
-`d05a348` (the branch's first commit) and the working tree held 21 files of
-*deletions* — the entire app lock, the 0.1.5 prep and seven catalog lines. A
-commit of that tree would have shipped a release that silently dropped the
-feature. It was read, reported, and discarded on the owner's instruction
-(`git checkout -- .` + removing the stale marker); `HEAD` was re-verified file by
-file afterwards. Both merged branches were already deleted on the remote.
-
 ## Next
 
-1. **`v0.1.5` is tagged** on the #78 merge commit (`16912d5`). The release run
-   (GitHub release + Play **alpha** upload) waits for the owner's `release`
-   environment approval — nothing is published before that tap.
-2. Approve the run, then install the alpha on the vivo and verify: app opens, the
-   492 transactions are intact, the lock works, biometric unlock works. Then
-   promote to production.
-3. F-Droid: MR !52537 waits on a maintainer CI trigger, pinned to 0.1.4 —
-   untouched by this release.
-4. Afterwards: the okhttp 4 → 5 Dependabot PR as its own reviewed change; #73
-   global search, #74 budget alerts, #75 scheduled Drive backup; and the
-   owner-gated cleanups (GitHub Support purge, delete the temp audit dir and the
-   PennyWise clone, retire repo-level signing secrets).
+1. Owner reviews #76 and #77 (both target `dev`).
+2. F-Droid: wait for the maintainer's CI trigger on !52537 and answer anything
+   the Reports tab or review raises.
+3. #73 global search, #74 budget alerts, #75 scheduled Drive backup remain.
+4. Still pending from before: the owner-gated cleanups (GitHub Support purge,
+   delete the temp audit dir and the PennyWise clone, retire repo-level signing
+   secrets).
