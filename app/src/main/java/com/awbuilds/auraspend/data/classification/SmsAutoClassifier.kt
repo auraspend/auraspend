@@ -87,7 +87,46 @@ object SmsAutoClassifier {
         Regex("(?i)\\b(have\\s+used|utilization|remaining|offer|promo|%\\s*off|discount|sale|coupon)\\b"),
         Regex("(?i)\\b(kyc|re-?kyc|block(?:ed)?|unblock|token|de-?register)\\b"),
         Regex("(?i)\\b(fraud|scam|phishing|report\\s+cyber)\\b"),
-        Regex("(?i)\\b(win|won|lucky\\s+draw|prize|lottery)\\b")
+        Regex("(?i)\\b(win|won|lucky\\s+draw|prize|lottery)\\b"),
+        // Expiry reminders are dates, not money: "Use your 500 points at the
+        // rewards store before they expire on 31-Oct." has an amount and no
+        // movement, so the rescue below keeps it out of the veto's way only when
+        // money really moved.
+        Regex("(?i)\\b(expir(?:e|es|ed|ing|y)|before\\s+they\\s+expire)\\b"),
+        // A fund's NAV is a price. A real SIP purchase that quotes one also says
+        // "debited"/"purchased", which the rescue reads — a bare notice does not.
+        Regex("(?i)\\b(NAV)\\b"),
+        // Account-update notices ("An update has been made to your … account")
+        // are framed as changes, not as movements.
+        Regex("(?i)\\bupdate\\s+has\\s+been\\s+made\\b")
+    )
+
+    /**
+     * Informational families that veto **even when an amount and a credit word are
+     * present**, because the phrase itself is the money statement and no genuine
+     * transaction says it. Measured on a closed tester's export (2026-10-16),
+     * where a third of the rows were these shapes:
+     *
+     * - **Reward/loyalty points** — points are not rupees. "Rs.150 loyalty points
+     *   have been credited" is a points balance moving, and it was booked as
+     *   income; the same for earning and expiry notices.
+     * - **Marketing with a strong signature** — "Pre-Qualified … Credit Card",
+     *   "without income proof", "Special OFFER! … cashback", a joining gift. The
+     *   offers quote amounts and even the word "cashback", which is why the
+     *   rescued alert list let them through as income.
+     *
+     * Both stand down when [BankMessageParser.hasDebitVerb] finds money actually
+     * leaving — "Rs.1,499 spent at X. You have earned 15 reward points." is a
+     * purchase and must stay one.
+     */
+    private val pointsVetoPatterns = listOf(
+        Regex("(?i)\\b(?:loyalty|reward|bonus)\\s+points?\\b[^.!]{0,40}\\b(?:credited|added|earned|refunded|expiring|expired|expire)\\b"),
+        Regex("(?i)\\b(?:credited|added|earned|refunded)\\b[^.!]{0,24}\\b(?:loyalty|reward|bonus)\\s+points?\\b"),
+        Regex("(?i)(?:Rs\\.?|INR|₹)\\s*[\\d,]+(?:\\.\\d+)?\\s*(?:loyalty|reward|bonus)\\s+points?\\b")
+    )
+
+    private val marketingVetoPatterns = listOf(
+        Regex("(?i)\\b(?:pre-?qualified|without\\s+income\\s+proof|exclusive\\s+offer|special\\s+offer|joining\\s+(?:gift|bonus)|lucky\\s+draw|limited\\s+period\\s+offer)\\b")
     )
 
     /**
@@ -366,6 +405,17 @@ object SmsAutoClassifier {
             !forwardAndReportTailPattern.containsMatchIn(message)
         ) {
             return true
+        }
+
+        // Informational families whose phrase *is* the money statement — points
+        // balances and marketing offers. These outrank the amount+verb rescue,
+        // because their wording ("points have been credited", "get Rs.1000*
+        // cashback") is exactly what the rescue reads as a movement. A completed
+        // debit still outranks them: a real purchase may mention points or an
+        // offer, and it must not be dropped for it.
+        if (!BankMessageParser.hasDebitVerb(message)) {
+            if (pointsVetoPatterns.any { it.containsMatchIn(message) }) return true
+            if (marketingVetoPatterns.any { it.containsMatchIn(message) }) return true
         }
 
         // Check for alert patterns

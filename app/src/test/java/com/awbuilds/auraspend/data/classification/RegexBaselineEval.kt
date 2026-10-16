@@ -119,7 +119,15 @@ object RegexBaselineEval {
     ): String? = when (field) {
         "isTransaction" -> prediction.isTransaction.toString()
         "type" -> prediction.type?.name
-        "category" -> prediction.category
+        // A missing category is not a different answer from "Other": the pipeline
+        // saves `cat_other` when nothing matches (TransactionClassifier and
+        // SmsAutoClassifier both fall back to it), so comparing the intermediate
+        // null against a corpus that labelled the saved outcome as `cat_other`
+        // counted a correct result as a miss. Measured 2026-10-16 while removing
+        // the rail-to-Transfer mapping: four NEFT/UPI cases expected "Other" and
+        // were scored as misses for saying "no keyword", and they became exact
+        // once this compared the same thing the database stores.
+        "category" -> ClassificationEval.savedCategory(prediction.category)
         "merchant" -> prediction.merchant
         "subscription" -> prediction.isSubscription.toString()
         else -> null

@@ -7,11 +7,23 @@ import org.junit.Test
 /**
  * Establishes the accuracy floor: what the app does with the model switched off.
  *
- * The thresholds are anchored to the baseline **measured on 2026-09-29** (13.8%
- * exact match), not to a guess. The point is not that the app is accurate — at
- * 13.8% exact match it plainly is not — but that any future runtime now has a
- * number to beat, and any change to the parser has a number that must not move
- * without a deliberate decision.
+ * The thresholds are anchored to a measurement, never to a guess, and the number
+ * moved on **2026-10-16** for two reasons that are worth separating:
+ *
+ * - **Rails stopped being categories.** `upi`/`neft`/`imps`/`rtgs`/`transfer` no
+ *   longer map to Transfer (a person-to-person counterparty does), and the four
+ *   NEFT/UPI cases that expect "Other" now get it.
+ * - **The category field was being scored wrong.** A missing category is not a
+ *   different answer from `cat_other`: the pipeline saves Other when nothing
+ *   matches, so the eval now compares the same thing the database stores. That
+ *   alone moved thirteen rows from "miss" to "match" — it is a fidelity fix, not
+ *   a classification win, and the jump in the headline number should be read that
+ *   way.
+ *
+ * The corpus also grew 72 → 82 with the families that shipped as phantoms or
+ * went uncategorised (reward points, fund NAV notices, card offers, SIP debits,
+ * person-to-person transfers). Measured after both changes: **26/82 (31.7 %)
+ * exact, type 95.1 %, category 53.7 %, zero false vetoes**.
  *
  * Exact match is a deliberately harsh metric here: two of the five scored fields
  * (amount, date) are not even in the model's schema, because the regex layer owns
@@ -31,13 +43,13 @@ class RegexBaselineEvalTest {
     @Test
     fun `regex layer does not regress below its measured floor`() {
         assertTrue(
-            "regex-only exact match regressed: ${report.exactMatchPercent}% (floor 13.0%)",
-            report.exactMatchPercent >= 13.0
+            "regex-only exact match regressed: ${report.exactMatchPercent}% (floor 30.0%)",
+            report.exactMatchPercent >= 30.0
         )
         // The fields the regex layer is genuinely responsible for must hold up.
         assertTrue(
-            "type accuracy regressed: ${report.fieldRate("type")}% (floor 90%)",
-            report.fieldRate("type")!! >= 90.0
+            "type accuracy regressed: ${report.fieldRate("type")}% (floor 92%)",
+            report.fieldRate("type")!! >= 92.0
         )
     }
 

@@ -63,7 +63,15 @@ class CategoryResolutionTest {
     @Test
     fun `merchant upi payment keeps its own category over transfer`() {
         assertEquals("cat_food", keywordCategoryFor("UPI/DR/512345/SWIGGY"))
-        assertEquals("cat_transfer", keywordCategoryFor("UPI ref 512345 paid to rahim"))
+        // A rail is routing metadata, not a category (owner's call, 2026-10-16):
+        // "upi", "neft", "imps", "rtgs" and "transfer" no longer map to Transfer,
+        // because that filing hid 43 % of a closed tester's export — including
+        // payments to shops whose category was perfectly readable. A bare rail with
+        // no merchant keyword resolves to *no* category here; the person-to-person
+        // case (rail + a person-shaped counterparty) is decided in
+        // `BankMessageParser.categoryIdFor`, where the direction is known, and is
+        // pinned by `TransferAndInvestmentCategoryTest`.
+        assertNull(keywordCategoryFor("UPI ref 512345 paid to rahim"))
     }
 
     @Test

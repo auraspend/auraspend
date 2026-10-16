@@ -152,6 +152,21 @@ object BankMessageParser {
         debitRegexes.any { it.containsMatchIn(message) } ||
             creditRegexes.any { it.containsMatchIn(message) }
 
+    /**
+     * True when [message] names money *leaving* the account — the debit half of
+     * [hasMovementVerb].
+     *
+     * The distinction matters exactly once, and it is the difference between a
+     * phantom and a lost purchase: informational messages say "reward points have
+     * been **credited**" or quote an amount in an offer, and those words are in
+     * the credit lexicon, so the amount+verb rescue would keep them. A message
+     * that says money was **spent, paid, debited or purchased** is a real
+     * purchase no matter what else it mentions ("…spent at X. You have earned 15
+     * reward points."), so the informational vetoes stand down for it.
+     */
+    fun hasDebitVerb(message: String): Boolean =
+        debitRegexes.any { it.containsMatchIn(message) }
+
     /** A completed debit/credit must not be a failure / decline notice. */
     private val failureRegex = Regex(
         """\b(failed|failure|declined|decline|denied|unsuccessful|could not be processed|not (?:been )?completed|timed? ?out)\b""",
@@ -341,6 +356,11 @@ object BankMessageParser {
         "customer", "dear", "card", "debit card", "upi", "ref", "transaction", "txn", "info",
         "avail", "balance", "call", "sms", "block", "otp", "kyc", "imps", "neft",
         "rtgs", "ach", "nach", "valid", "login", "click", "www", "http",
+        // Fund prices and plan wording are not merchant names: "NAV of Example
+        // Bluechip Fund is Rs.24.53" produced the merchant "NAV of 24.53" on 25
+        // monthly SIP debits in a closed tester's export (2026-10-16).
+        "nav", "units", "folio", "as on", "sip",
+        // "SIP purchase" was extracted as a merchant on every monthly fund debit.
         // Boilerplate fragments observed leaking into production data.
         "enjoy", "uninterrupted", "pay your", "bill pay", "installment", "scheme",
         "investor", "report", "fraud", "cyber", "scam", "phishing", "statement",
@@ -659,7 +679,16 @@ object BankMessageParser {
      * user-visible noise. Bare "LTD"/"LIMITED" is deliberately NOT stripped —
      * it is part of real names (and of a pinned corpus expectation).
      */
-    private val merchantRefSuffix = Regex("""\s+Ref(?:erence)?\s+No.*$""", RegexOption.IGNORE_CASE)
+    // "Ref No 12345", "Reference No: 12345" and the compact "Refno 12345" that
+    // Indian banks prefer. The compact form was missing, so the capture in
+    // "trf to SURESH MENON Refno 123456789012" still carried a 12-digit run,
+    // `looksLikeMerchant` rejected it for looking like an account number, and the
+    // payee vanished — a person-to-person transfer with no counterparty and no
+    // category (closed tester's export, 2026-10-16).
+    private val merchantRefSuffix = Regex(
+        """\s+(?:ref(?:erence)?\.?\s*no|refno|rrn|utr)\.?\s*.*$""",
+        RegexOption.IGNORE_CASE
+    )
     private val merchantDateSuffix = Regex(
         """\s+on\s+\d{1,2}(?:[/.-]\d{1,2}(?:[/.-]\d{2,4})?|\s+[A-Za-z]{3,9}(?:\s+\d{2,4})?).*$""",
         RegexOption.IGNORE_CASE
@@ -780,11 +809,62 @@ object BankMessageParser {
         }
         // 2. Keyword scan over the message body.
         messageKeywordCategory(message)?.let { return it }
-        // 3. Income without stronger signals defaults to salary only when clearly payroll.
+        // 3. Person-to-person transfer: a payment rail plus a person-shaped
+        //    counterparty, with no merchant keyword to say otherwise. The category
+        //    is Transfer; the *type* comes from the direction lexicon, which is the
+        //    owner's rule — received is income, sent is expense (2026-10-16). Rails
+        //    alone are not category cues any more: `upi` in a Swiggy payment used
+        //    to file the row under Transfer and lose the merchant's category.
+        if (type != null && merchant != null && railTokenPattern.containsMatchIn(message) &&
+            looksLikePersonName(
+                merchant,
+                // A UPI handle is a payment address, so a one-token payee derived
+                // from it ("rahim@ybl" → "Rahim") is still a counterparty. Without
+                // this, "Sent Rs.299 … to rahim@ybl UPI ref 512345" — the corpus
+                // case that defines the owner's rule — had no category at all.
+                allowSingleToken = vpaPattern.containsMatchIn(message)
+            )
+        ) {
+            return "cat_transfer"
+        }
+        // 4. Income without stronger signals defaults to salary only when clearly payroll.
         if (type == TransactionType.INCOME &&
             Regex("""salary|payroll|wages""", RegexOption.IGNORE_CASE).containsMatchIn(message)
         ) return "cat_salary"
         return null
+    }
+
+    /** Payment rails: routing metadata, never a category by themselves. */
+    private val railTokenPattern = Regex("""(?i)\b(?:upi|neft|imps|rtgs|trf|transfer)\b""")
+
+    /**
+     * Business words that disqualify a name from being read as a person's name.
+     * Without them "LOCAL KIRANA STORE" (three alphabetic tokens) would be filed as
+     * a person-to-person transfer.
+     */
+    private val businessWords = setOf(
+        "store", "stores", "shop", "shoppe", "mart", "market", "mall", "bazaar", "bazar",
+        "ltd", "limited", "pvt", "private", "enterprises", "enterprise", "services", "service",
+        "traders", "trading", "agency", "company", "co", "industries", "solutions",
+        "bank", "hotel", "restaurant", "restro", "cafe", "foods", "food", "kitchen",
+        "medical", "medicals", "pharmacy", "hospital", "clinic", "diagnostics",
+        "petrol", "fuel", "filling", "travels", "travel", "tours", "courier", "logistics",
+        "technologies", "systems", "motors", "automobiles", "electronics", "mobiles"
+    )
+
+    /**
+     * True when [name] reads like a person's name rather than a business: two to
+     * four alphabetic tokens (initials allowed), no digits or handles, and no
+     * business word — "GEETHA VARASSIAR K V" is a person, "SWIGGY" and
+     * "LOCAL KIRANA STORE" are not.
+     */
+    private fun looksLikePersonName(name: String, allowSingleToken: Boolean = false): Boolean {
+        val trimmed = name.trim()
+        if (trimmed.isEmpty() || trimmed.length > 40) return false
+        val tokens = trimmed.split(Regex("\\s+"))
+        if (tokens.size !in (if (allowSingleToken) 1 else 2)..4) return false
+        if (tokens.any { it.lowercase(Locale.ENGLISH).trim('.') in businessWords }) return false
+        return tokens.all { Regex("^[A-Za-z][A-Za-z.'-]{0,20}\\.?$").matches(it) }
     }
 
     /** Word-boundary keyword scan across the whole message (shared logic). */

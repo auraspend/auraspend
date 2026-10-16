@@ -31,6 +31,19 @@ rather than mis-filing it. Standalone and fused scores can point opposite ways
 device-pass classes and the wave-1–3 bank formats), so CI now re-measures both
 evaluators on the larger set: the regex floor moved 13.8 % → **13.9 %** exact,
 type 95.4 % → **95.8 %**, category 36.9 % → **34.7 %** (`RegexBaselineEvalTest`
+
+**2026-10-16 — the regex floor re-measured on a larger, corrected corpus.** Two
+changes landed together and both moved the number, so read them separately:
+the rail-to-Transfer mapping was removed (a person-to-person counterparty decides
+that category now, and the four NEFT/UPI corpus cases that expect "Other" get it),
+and the eval stopped scoring a missing category as different from `cat_other` —
+the pipeline saves Other when nothing matches, so thirteen rows that were correct
+all along were being counted as misses. The corpus also grew 72 → 82 with the
+families a closed tester's export exposed (reward points, fund NAV notices, card
+offers, SIP debits, person-to-person transfers). Measured: **26/82 (31.7 %) exact,
+type 95.1 %, category 53.7 %, merchant 64.6 %, zero false vetoes** — the fidelity
+fix is most of the jump, and the classification win is the four rail cases plus
+the restored person-to-person one.
 and `FusedAiEvalTest` print their blocks). The fused rows keep their dated
 measurements: the shipped report carries no verdicts for the newer cases, which
 therefore run model-less in CI.
