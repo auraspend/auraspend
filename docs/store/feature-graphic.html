@@ -18,11 +18,7 @@
 <style>
   @font-face {
     font-family: 'PlusJakarta';
-    /* The app no longer bundles this face (the terracotta refresh ships Manrope
-       + Fraunces), but this store graphic is a frozen marketing asset: it keeps
-       rendering with the site's own copy until the store assets are regenerated
-       against the new brand. See the terracotta handoff. */
-    src: url('../fonts/plus-jakarta-sans.ttf');
+    src: url('../../app/src/main/res/font/plus_jakarta_sans.ttf');
     font-weight: 100 900;
   }
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -79,7 +75,7 @@
   <div class="content">
     <div class="left">
       <div class="brandrow">
-        <img class="appicon" src="app-icon.png">
+        <img class="appicon" src="../../app/src/main/res/drawable/app_icon.png">
         <div class="wordmark">Aura<span>Spend</span></div>
       </div>
       <div class="tagline">Smart expense tracking.<br>On your device. Ad-free.</div>

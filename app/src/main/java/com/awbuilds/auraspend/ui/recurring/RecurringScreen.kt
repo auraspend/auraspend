@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -33,7 +32,6 @@ import com.awbuilds.auraspend.ui.designsystem.AuraCard
 import com.awbuilds.auraspend.ui.designsystem.AuraCardStyle
 import com.awbuilds.auraspend.ui.designsystem.AuraEmptyState
 import com.awbuilds.auraspend.ui.designsystem.AuraErrorBanner
-import com.awbuilds.auraspend.ui.designsystem.AuraGradients
 import com.awbuilds.auraspend.ui.designsystem.AuraSpacing
 import com.awbuilds.auraspend.ui.designsystem.AuraType
 import com.awbuilds.auraspend.ui.designsystem.LocalCurrencyStyle
@@ -141,7 +139,7 @@ fun RecurringScreen(
                         }
                         AuraCard(
                             modifier = Modifier.fillMaxWidth(),
-                            style = AuraCardStyle.Hero
+                            style = AuraCardStyle.Tonal
                         ) {
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
@@ -152,27 +150,27 @@ fun RecurringScreen(
                                     Text(
                                         stringResource(R.string.recurring_monthly),
                                         style = AuraType.metricLabel,
-                                        color = AuraGradients.onAurora.copy(alpha = 0.82f)
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
                                     Spacer(modifier = Modifier.height(AuraSpacing.xs))
                                     Text(
                                         stringResource(R.string.recurring_monthly_amount, formatMoney(monthlyEquivalent)),
                                         style = AuraType.moneyLarge,
-                                        color = AuraGradients.onAurora
+                                        color = MaterialTheme.colorScheme.onSurface
                                     )
                                     if (subscriptions.any { it.billingCycle != RecurrenceFrequency.MONTHLY }) {
                                         Spacer(modifier = Modifier.height(AuraSpacing.xs))
                                         Text(
                                             stringResource(R.string.recurring_normalised),
                                             style = MaterialTheme.typography.labelSmall,
-                                            color = AuraGradients.onAurora.copy(alpha = 0.8f)
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
                                         )
                                     }
                                 }
                                 Icon(
                                     Icons.Default.Subscriptions,
                                     contentDescription = null,
-                                    tint = AuraGradients.onAurora,
+                                    tint = MaterialTheme.colorScheme.primary,
                                     modifier = Modifier.size(32.dp)
                                 )
                             }
@@ -194,8 +192,8 @@ fun RecurringScreen(
                                 Box(
                                     modifier = Modifier
                                         .size(44.dp)
-                                        .clip(RoundedCornerShape(15.dp))
-                                        .background(categoryColor.copy(alpha = 0.16f)),
+                                        .clip(CircleShape)
+                                        .background(categoryColor.copy(alpha = 0.14f)),
                                     contentAlignment = Alignment.Center
                                 ) {
                                     Icon(

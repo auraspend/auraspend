@@ -1,13 +1,9 @@
 package com.awbuilds.auraspend.ui.designsystem
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
@@ -19,7 +15,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
@@ -44,10 +39,8 @@ fun Modifier.softShadow(
         elevation = elevation,
         shape = shape,
         clip = false,
-        // Warm shadows: a neutral black shadow over a terracotta surface reads
-        // grey and muddy, so the shadow colour carries the same warm hue.
-        ambientColor = if (dark) Color(0x3D140D08) else Color(0x1F6B4A2E),
-        spotColor = if (dark) Color(0x4D140D08) else Color(0x336B4A2E)
+        ambientColor = if (dark) Color(0x2E000000) else Color(0x1A1C1B1F),
+        spotColor = if (dark) Color(0x40000000) else Color(0x33201A24)
     )
 }
 
@@ -68,24 +61,14 @@ fun AuraSectionHeader(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            // Terracotta tick: the section-header signature of the new identity.
-            Box(
-                modifier = Modifier
-                    .padding(end = AuraSpacing.sm)
-                    .size(width = 4.dp, height = 18.dp)
-                    .clip(RoundedCornerShape(2.dp))
-                    .background(AuraGradients.aurora)
-            )
-            Text(
-                title,
-                style = MaterialTheme.typography.titleLarge,
-                color = MaterialTheme.colorScheme.onBackground,
-                // Marked as a heading so TalkBack's heading navigation can jump between
-                // sections instead of reading the screen as one flat run of text.
-                modifier = Modifier.semantics { heading() }
-            )
-        }
+        Text(
+            title,
+            style = MaterialTheme.typography.titleLarge,
+            color = MaterialTheme.colorScheme.onBackground,
+            // Marked as a heading so TalkBack's heading navigation can jump between
+            // sections instead of reading the screen as one flat run of text.
+            modifier = Modifier.semantics { heading() }
+        )
         trailing?.invoke()
     }
 }

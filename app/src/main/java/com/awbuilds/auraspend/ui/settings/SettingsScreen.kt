@@ -64,7 +64,6 @@ import com.awbuilds.auraspend.data.classification.SmsNotifications
 import kotlinx.coroutines.launch
 import com.awbuilds.auraspend.ui.designsystem.AuraCard
 import com.awbuilds.auraspend.ui.designsystem.AuraCardStyle
-import com.awbuilds.auraspend.ui.designsystem.AuraGradients
 import com.awbuilds.auraspend.ui.designsystem.AuraSpacing
 import com.awbuilds.auraspend.ui.theme.AmoledBackground
 import com.awbuilds.auraspend.ui.theme.AppThemeMode
@@ -617,26 +616,13 @@ fun SettingsScreen(
 
 @Composable
 private fun SettingsSectionHeader(title: String) {
-    Row(
-        modifier = Modifier.padding(start = AuraSpacing.gutter, top = AuraSpacing.xxl, bottom = AuraSpacing.sm),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        // The same terracotta tick as AuraSectionHeader: settings sections
-        // belong to the same visual language as the rest of the app.
-        Box(
-            modifier = Modifier
-                .padding(end = AuraSpacing.sm)
-                .size(width = 3.dp, height = 14.dp)
-                .clip(RoundedCornerShape(2.dp))
-                .background(AuraGradients.aurora)
-        )
-        Text(
-            title.uppercase(),
-            style = MaterialTheme.typography.labelMedium,
-            letterSpacing = 1.2.sp,
-            color = MaterialTheme.extendedColors.textLight
-        )
-    }
+    Text(
+        title.uppercase(),
+        style = MaterialTheme.typography.labelMedium,
+        letterSpacing = 1.2.sp,
+        color = MaterialTheme.extendedColors.textLight,
+        modifier = Modifier.padding(start = AuraSpacing.gutter, top = AuraSpacing.xxl, bottom = AuraSpacing.sm)
+    )
 }
 
 @Composable

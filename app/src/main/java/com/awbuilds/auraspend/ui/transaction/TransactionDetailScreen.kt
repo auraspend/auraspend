@@ -50,12 +50,12 @@ import com.awbuilds.auraspend.ui.designsystem.AuraCardStyle
 import com.awbuilds.auraspend.ui.designsystem.AuraEmptyState
 import com.awbuilds.auraspend.ui.designsystem.AuraErrorBanner
 import com.awbuilds.auraspend.ui.designsystem.AuraErrorState
-import com.awbuilds.auraspend.ui.designsystem.AuraGradients
 import com.awbuilds.auraspend.ui.designsystem.AuraSpacing
 import com.awbuilds.auraspend.ui.designsystem.AuraType
 import com.awbuilds.auraspend.ui.designsystem.AnimatedMoney
 import com.awbuilds.auraspend.ui.designsystem.CategoryAvatar
 import com.awbuilds.auraspend.ui.designsystem.formatMoney
+import com.awbuilds.auraspend.ui.theme.extendedColors
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -413,7 +413,7 @@ private fun TransactionDetails(
     onPickCategory: () -> Unit,
     onDuplicate: () -> Unit
 ) {
-    val isExpense = transaction.type == TransactionType.EXPENSE
+    val extended = MaterialTheme.extendedColors
     val context = androidx.compose.ui.platform.LocalContext.current
     val shareText = remember(transaction) {
         listOfNotNull(
@@ -422,6 +422,8 @@ private fun TransactionDetails(
             transaction.date.format(DateTimeFormatter.ofPattern("d MMM yyyy"))
         ).joinToString(" · ")
     }
+    val isExpense = transaction.type == TransactionType.EXPENSE
+    val amountColor = if (isExpense) extended.expenseAmount else extended.incomeAmount
     val dateFormatter = remember { DateTimeFormatter.ofPattern("EEEE, d MMM yyyy · h:mm a") }
 
     Column(
@@ -432,7 +434,7 @@ private fun TransactionDetails(
     ) {
         Spacer(modifier = Modifier.height(AuraSpacing.md))
 
-        AuraCard(style = AuraCardStyle.Hero, modifier = Modifier.fillMaxWidth()) {
+        AuraCard(style = AuraCardStyle.Tonal, modifier = Modifier.fillMaxWidth()) {
             // The category is the one field people correct most; tapping the
             // hero opens the picker instead of the full editor.
             Row(
@@ -452,12 +454,12 @@ private fun TransactionDetails(
                     Text(
                         category?.name ?: stringResource(R.string.txn_detail_uncategorized),
                         style = MaterialTheme.typography.titleMedium,
-                        color = AuraGradients.onAurora
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
                         if (isExpense) stringResource(R.string.txn_detail_type_expense) else stringResource(R.string.txn_detail_type_income),
                         style = MaterialTheme.typography.bodySmall,
-                        color = AuraGradients.onAurora.copy(alpha = 0.78f)
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
@@ -465,14 +467,14 @@ private fun TransactionDetails(
             AnimatedMoney(
                 amount = if (isExpense) -transaction.amount else transaction.amount,
                 style = AuraType.moneyHero,
-                color = AuraGradients.onAurora,
+                color = amountColor,
                 signed = true
             )
             Spacer(modifier = Modifier.height(AuraSpacing.xs))
             Text(
                 transaction.date.atZone(ZoneId.systemDefault()).format(dateFormatter),
                 style = MaterialTheme.typography.bodySmall,
-                color = AuraGradients.onAurora.copy(alpha = 0.78f)
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
 

@@ -36,7 +36,6 @@ import com.awbuilds.auraspend.ui.designsystem.AuraCard
 import com.awbuilds.auraspend.ui.designsystem.AuraCardStyle
 import com.awbuilds.auraspend.ui.designsystem.AuraEmptyState
 import com.awbuilds.auraspend.ui.designsystem.AuraErrorBanner
-import com.awbuilds.auraspend.ui.designsystem.AuraGradients
 import com.awbuilds.auraspend.ui.designsystem.AuraProgressRing
 import com.awbuilds.auraspend.ui.designsystem.AuraSpacing
 import com.awbuilds.auraspend.ui.designsystem.AuraType
@@ -132,30 +131,29 @@ fun SavingsGoalsScreen(
                 verticalArrangement = Arrangement.spacedBy(AuraSpacing.md)
             ) {
                 item {
-                    AuraCard(style = AuraCardStyle.Hero, modifier = Modifier.fillMaxWidth()) {
+                    AuraCard(style = AuraCardStyle.Tonal, modifier = Modifier.fillMaxWidth()) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
                                     stringResource(R.string.savings_total_saved),
                                     style = AuraType.metricLabel,
-                                    color = AuraGradients.onAurora.copy(alpha = 0.82f)
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                                 Spacer(modifier = Modifier.height(AuraSpacing.xs))
                                 AnimatedMoney(
                                     amount = totalSaved,
                                     style = AuraType.moneyLarge,
-                                    color = AuraGradients.onAurora
+                                    color = MaterialTheme.colorScheme.onSurface
                                 )
                                 Text(
                                     stringResource(R.string.savings_of, formatMoney(totalTarget)),
                                     style = MaterialTheme.typography.bodySmall,
-                                    color = AuraGradients.onAurora.copy(alpha = 0.8f)
+                                    color = MaterialTheme.extendedColors.textLight
                                 )
                             }
                             AuraProgressRing(
                                 progress = overallProgress,
-                                color = AuraGradients.onAurora,
-                                trackColor = AuraGradients.onAurora.copy(alpha = 0.25f),
+                                color = MaterialTheme.colorScheme.primary,
                                 modifier = Modifier.size(72.dp),
                                 stroke = 7.dp,
                                 contentDescription = stringResource(
@@ -167,7 +165,7 @@ fun SavingsGoalsScreen(
                                     stringResource(R.string.common_percent, (overallProgress * 100).toInt()),
                                     style = MaterialTheme.typography.bodyMedium,
                                     fontWeight = FontWeight.SemiBold,
-                                    color = AuraGradients.onAurora
+                                    color = MaterialTheme.colorScheme.onSurface
                                 )
                             }
                         }

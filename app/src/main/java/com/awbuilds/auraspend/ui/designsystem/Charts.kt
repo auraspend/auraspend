@@ -43,7 +43,7 @@ fun AuraProgressRing(
     progress: Float,
     color: Color,
     modifier: Modifier = Modifier,
-    stroke: Dp = 5.dp,
+    stroke: Dp = 4.dp,
     trackColor: Color = MaterialTheme.colorScheme.outlineVariant,
     contentDescription: String? = null,
     content: @Composable () -> Unit = {}
@@ -95,7 +95,7 @@ fun AuraProgressRing(
 fun AuraDonutChart(
     data: List<AuraSlice>,
     modifier: Modifier = Modifier,
-    strokeWidth: Dp = 30.dp,
+    strokeWidth: Dp = 28.dp,
     gapDegrees: Float = 2.4f,
     trackColor: Color = MaterialTheme.colorScheme.outlineVariant,
     contentDescription: String? = null,
@@ -153,7 +153,7 @@ fun AuraDonutChart(
                     useCenter = false,
                     topLeft = topLeft,
                     size = arcSize,
-                    style = Stroke(strokePx, cap = StrokeCap.Round)
+                    style = Stroke(strokePx, cap = StrokeCap.Butt)
                 )
                 cursor += sweep
             }
@@ -173,7 +173,7 @@ fun AuraAreaChart(
     points: List<Pair<Long, Double>>,
     modifier: Modifier = Modifier,
     lineColor: Color = MaterialTheme.colorScheme.primary,
-    lineWidth: Dp = 3.dp,
+    lineWidth: Dp = 2.5.dp,
     fillTop: Color = lineColor.copy(alpha = 0.26f),
     fillBottom: Color = lineColor.copy(alpha = 0.0f),
     contentDescription: String? = null

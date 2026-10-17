@@ -173,7 +173,7 @@ it.
 
 - **Language**: Kotlin
 - **UI**: Jetpack Compose + Material 3 (Expressive), Aurora design system (`ui/designsystem`)
-- **Typography**: Manrope (bundled, variable) with tabular figures for money, Fraunces (bundled, variable) for display type
+- **Typography**: Plus Jakarta Sans (bundled, variable) with tabular figures for money
 - **Architecture**: Clean Architecture + MVI (Unidirectional data flow)
 - **DI**: Manual (Application class) — no Hilt/Koin
 - **Local Storage**: Room Database (indexed; SQL aggregates; Paging 3)
@@ -278,10 +278,9 @@ Build and run:
 | ![Onboarding](docs/screenshots/onboarding.png) | ![Home dark](docs/screenshots/home-dark.png) | ![Settings](docs/screenshots/settings.png) |
 
 The UI is built on the **Aurora design system** (`app/src/main/java/com/awbuilds/auraspend/ui/designsystem`):
-terracotta clay + sand + olive-sage, Manrope with tabular figures and Fraunces
-for display type, hairline borders instead of shadows, spring motion tokens and
-a light / dark / true-black AMOLED theme. Screenshots are from the dev debug
-build.
+brand purple + lavender + teal, Plus Jakarta Sans with tabular figures, hairline
+borders instead of shadows, spring motion tokens and a light / dark / true-black
+AMOLED theme. Screenshots are from the dev debug build.
 
 ## Testing
 
@@ -367,9 +366,8 @@ shaped the way it is, which is usually more informative than the roadmap.
 
 - **Jetpack Compose, AndroidX, Room, ONNX Runtime** and the rest of the
   dependency graph — see the attribution table below.
-- **[Manrope](https://fonts.google.com/specimen/Manrope)** and
-  **[Fraunces](https://fonts.google.com/specimen/Fraunces)**, under the SIL Open
-  Font License, for the typefaces.
+- **[Plus Jakarta Sans](https://fonts.google.com/specimen/Plus+Jakarta+Sans)**,
+  under the SIL Open Font License, for the typeface.
 - **[all-MiniLM-L6-v2](https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2)**,
   Apache-2.0, for the sentence encoder that powers on-device categorisation.
 - Everyone who has filed an issue. The bug list this project grew from was
@@ -416,8 +414,7 @@ their own terms — the AGPL covers AuraSpend's own source, not theirs:
 
 | Component | License | Notes |
 |---|---|---|
-| [Manrope](https://fonts.google.com/specimen/Manrope) | SIL OFL 1.1 | Bundled UI font, `app/src/main/res/font/` |
-| [Fraunces](https://fonts.google.com/specimen/Fraunces) | SIL OFL 1.1 | Bundled display font, `app/src/main/res/font/` |
+| [Plus Jakarta Sans](https://fonts.google.com/specimen/Plus+Jakarta+Sans) | SIL OFL 1.1 | Bundled font, `app/src/main/res/font/` |
 | [ONNX Runtime](https://onnxruntime.ai/) (Android) | MIT | Native inference runtime, Maven AAR |
 | [SQLCipher](https://www.zetetic.net/sqlcipher/) Community Edition (Android) | BSD-3-Clause | Encrypted database at rest, Maven AAR; both shipped ABIs pass `tools/audit_native_runtime.sh` |
 | AndroidX (Room, Compose, Lifecycle, Work, Navigation) | Apache-2.0 | |

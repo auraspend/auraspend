@@ -187,8 +187,7 @@ check_attribution() {
     fi
 }
 
-check_attribution "Manrope (UI font)" 'Manrope'
-check_attribution "Fraunces (display font)" 'Fraunces'
+check_attribution "Plus Jakarta Sans" 'Plus Jakarta Sans'
 check_attribution "ONNX Runtime (MIT)" 'ONNX Runtime'
 check_attribution "SQLCipher" 'SQLCipher'
 check_attribution "AndroidX" 'AndroidX'
@@ -198,7 +197,7 @@ check_attribution "Guava" 'Guava'
 check_attribution "all-MiniLM-L6-v2 (the runtime model)" 'all-MiniLM-L6-v2'
 
 # Every permissive licence the graph actually contains must have its text shipped.
-for lic in OFL-Manrope.txt OFL-Fraunces.txt MIT-ONNX-Runtime.txt Apache-2.0.txt; do
+for lic in OFL-PlusJakartaSans.txt MIT-ONNX-Runtime.txt Apache-2.0.txt; do
     if [ -s "docs/licenses/$lic" ]; then
         pass "licence text shipped: $lic"
     else

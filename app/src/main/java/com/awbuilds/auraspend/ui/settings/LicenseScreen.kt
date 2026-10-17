@@ -77,16 +77,10 @@ private enum class ThirdPartyRole { BUNDLED, DOWNLOADED }
 
 private val THIRD_PARTY = listOf(
     ThirdPartyComponent(
-        name = "Manrope",
+        name = "Plus Jakarta Sans",
         license = "SIL Open Font License 1.1",
         role = ThirdPartyRole.BUNDLED,
-        url = "https://fonts.google.com/specimen/Manrope"
-    ),
-    ThirdPartyComponent(
-        name = "Fraunces",
-        license = "SIL Open Font License 1.1",
-        role = ThirdPartyRole.BUNDLED,
-        url = "https://fonts.google.com/specimen/Fraunces"
+        url = "https://fonts.google.com/specimen/Plus+Jakarta+Sans"
     ),
     ThirdPartyComponent(
         name = "ONNX Runtime (Android)",

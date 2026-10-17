@@ -57,8 +57,8 @@ data class ExtendedColors(
 val LightExtendedColors = ExtendedColors(
     incomeAmount = IncomeGreenLight,
     expenseAmount = ExpenseRedLight,
-    upcoming = UpcomingBlueLight,
-    overdue = OverdueIndigoLight,
+    upcoming = UpcomingBlue,
+    overdue = OverdueIndigo,
     warningOrange = WarningOrangeLight,
     textLight = LightOnSurfaceVariant,
     canvasContainer = LightSurfContainerHighest
@@ -91,27 +91,16 @@ val MaterialTheme.extendedColors: ExtendedColors
     @Composable get() = LocalExtendedColors.current
 
 // ─── Typography ───────────────────────────────────────────────────────────────
-// Manrope (variable, OFL) — a semi-rounded geometric sans with confident,
-// slightly warmer letterforms than the old face, and a real `tnum` feature, so
-// money columns never jitter while they animate. Fraunces (variable, OFL), a
-// soft "wonky" serif, carries the display/headline/title voice: it is the
-// editorial counterpoint that makes the terracotta identity read as warm rather
-// than merely recoloured. Money always stays in Manrope for tabular figures.
+// Plus Jakarta Sans (variable, OFL) — a geometric humanist face with confident
+// numerals. `tnum` keeps money columns from jittering while they animate.
 
-val Manrope = FontFamily(
-    Font(R.font.manrope, weight = FontWeight.Light),
-    Font(R.font.manrope, weight = FontWeight.Normal),
-    Font(R.font.manrope, weight = FontWeight.Medium),
-    Font(R.font.manrope, weight = FontWeight.SemiBold),
-    Font(R.font.manrope, weight = FontWeight.Bold),
-    Font(R.font.manrope, weight = FontWeight.ExtraBold)
-)
-
-/** Display face — Fraunces, used for the largest type on a screen only. */
-val Fraunces = FontFamily(
-    Font(R.font.fraunces, weight = FontWeight.Medium),
-    Font(R.font.fraunces, weight = FontWeight.SemiBold),
-    Font(R.font.fraunces, weight = FontWeight.Bold)
+val PlusJakartaSans = FontFamily(
+    Font(R.font.plus_jakarta_sans, weight = FontWeight.Light),
+    Font(R.font.plus_jakarta_sans, weight = FontWeight.Normal),
+    Font(R.font.plus_jakarta_sans, weight = FontWeight.Medium),
+    Font(R.font.plus_jakarta_sans, weight = FontWeight.SemiBold),
+    Font(R.font.plus_jakarta_sans, weight = FontWeight.Bold),
+    Font(R.font.plus_jakarta_sans, weight = FontWeight.ExtraBold)
 )
 
 private const val NUMERIC_FEATURES = "tnum"
@@ -121,10 +110,9 @@ private fun auraStyle(
     size: Int,
     lineHeight: Int,
     letterSpacing: Double = 0.0,
-    numeric: Boolean = false,
-    family: FontFamily = Manrope
+    numeric: Boolean = false
 ) = TextStyle(
-    fontFamily = family,
+    fontFamily = PlusJakartaSans,
     fontWeight = weight,
     fontSize = size.sp,
     lineHeight = lineHeight.sp,
@@ -133,23 +121,21 @@ private fun auraStyle(
 )
 
 private val AuraSpendTypography = Typography(
-    // Display + headline: Fraunces, the editorial voice.
-    displayLarge = auraStyle(FontWeight.Bold, 52, 60, -0.8, family = Fraunces),
-    displayMedium = auraStyle(FontWeight.Bold, 42, 50, -0.6, family = Fraunces),
-    displaySmall = auraStyle(FontWeight.SemiBold, 34, 42, -0.4, family = Fraunces),
-    headlineLarge = auraStyle(FontWeight.SemiBold, 30, 38, -0.3, family = Fraunces),
-    headlineMedium = auraStyle(FontWeight.SemiBold, 26, 34, -0.2, family = Fraunces),
-    headlineSmall = auraStyle(FontWeight.SemiBold, 22, 30, -0.1, family = Fraunces),
-    titleLarge = auraStyle(FontWeight.SemiBold, 20, 26, -0.1, family = Fraunces),
-    // UI text: Manrope.
-    titleMedium = auraStyle(FontWeight.SemiBold, 16, 22, 0.0),
-    titleSmall = auraStyle(FontWeight.Medium, 14, 20, 0.05),
-    bodyLarge = auraStyle(FontWeight.Normal, 16, 24, 0.1),
-    bodyMedium = auraStyle(FontWeight.Normal, 14, 20, 0.15),
-    bodySmall = auraStyle(FontWeight.Normal, 12, 16, 0.25),
-    labelLarge = auraStyle(FontWeight.SemiBold, 14, 20, 0.05),
-    labelMedium = auraStyle(FontWeight.SemiBold, 12, 16, 0.35),
-    labelSmall = auraStyle(FontWeight.Medium, 11, 14, 0.45)
+    displayLarge = auraStyle(FontWeight.Bold, 52, 60, -0.5, numeric = true),
+    displayMedium = auraStyle(FontWeight.Bold, 42, 50, -0.4, numeric = true),
+    displaySmall = auraStyle(FontWeight.SemiBold, 34, 42, -0.3, numeric = true),
+    headlineLarge = auraStyle(FontWeight.Bold, 30, 38, -0.2, numeric = true),
+    headlineMedium = auraStyle(FontWeight.SemiBold, 26, 34, -0.1, numeric = true),
+    headlineSmall = auraStyle(FontWeight.SemiBold, 22, 30, numeric = true),
+    titleLarge = auraStyle(FontWeight.SemiBold, 20, 26),
+    titleMedium = auraStyle(FontWeight.SemiBold, 16, 22, 0.1),
+    titleSmall = auraStyle(FontWeight.Medium, 14, 20, 0.1),
+    bodyLarge = auraStyle(FontWeight.Normal, 16, 24, 0.15),
+    bodyMedium = auraStyle(FontWeight.Normal, 14, 20, 0.2),
+    bodySmall = auraStyle(FontWeight.Normal, 12, 16, 0.3),
+    labelLarge = auraStyle(FontWeight.SemiBold, 14, 20, 0.1),
+    labelMedium = auraStyle(FontWeight.SemiBold, 12, 16, 0.4),
+    labelSmall = auraStyle(FontWeight.Medium, 11, 14, 0.5)
 )
 
 // ─── Color schemes ────────────────────────────────────────────────────────────

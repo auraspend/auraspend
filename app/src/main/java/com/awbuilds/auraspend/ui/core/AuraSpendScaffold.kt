@@ -28,7 +28,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
@@ -131,10 +130,9 @@ private fun AuraBottomBar(
     onNavigate: (String) -> Unit,
     onAddClick: () -> Unit
 ) {
-    val barShape = RoundedCornerShape(30.dp)
     Surface(
         modifier = Modifier.fillMaxWidth(),
-        color = Color.Transparent,
+        color = MaterialTheme.colorScheme.background,
         tonalElevation = 0.dp
     ) {
         Box(modifier = Modifier.fillMaxWidth()) {
@@ -142,15 +140,14 @@ private fun AuraBottomBar(
                 modifier = Modifier
                     .fillMaxWidth()
                     .navigationBarsPadding()
-                    .padding(horizontal = AuraSpacing.lg, vertical = AuraSpacing.sm)
-                    .heightIn(min = 66.dp)
-                    .softShadow(barShape, elevation = 10.dp)
-                    .clip(barShape)
-                    .background(MaterialTheme.colorScheme.surfaceContainerHigh)
+                    .padding(horizontal = AuraSpacing.sm, vertical = AuraSpacing.sm)
+                    .heightIn(min = 64.dp)
+                    .clip(RoundedCornerShape(28.dp))
+                    .background(MaterialTheme.colorScheme.surfaceContainer)
                     .border(
                         1.dp,
-                        MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
-                        barShape
+                        MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.45f),
+                        RoundedCornerShape(28.dp)
                     ),
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -197,7 +194,6 @@ private fun AddButton(
         animationSpec = AuraMotion.snappy(),
         label = "addButtonScale"
     )
-    val shape = RoundedCornerShape(20.dp)
 
     Box(modifier = modifier, contentAlignment = Alignment.Center) {
         Box(
@@ -206,9 +202,9 @@ private fun AddButton(
                     scaleX = scale
                     scaleY = scale
                 }
-                .softShadow(shape, elevation = 8.dp)
+                .softShadow(CircleShape, elevation = 8.dp)
                 .size(54.dp)
-                .clip(shape)
+                .clip(CircleShape)
                 .background(AuraGradients.aurora)
                 .clickable(
                     interactionSource = interactionSource,
@@ -222,7 +218,7 @@ private fun AddButton(
             Icon(
                 Icons.Default.Add,
                 contentDescription = stringResource(R.string.action_add_transaction),
-                tint = AuraGradients.onAurora,
+                tint = MaterialTheme.colorScheme.onPrimary,
                 modifier = Modifier.size(30.dp)
             )
         }
@@ -237,20 +233,11 @@ private fun NavItem(
     modifier: Modifier = Modifier
 ) {
     val haptics = LocalHapticFeedback.current
-    // The gradient pill only wraps the icon, so the icon goes white on it while
-    // the label — which sits on the bar's own surface — takes the terracotta.
-    // Both used to be onAurora, which left the selected label white-on-cream.
-    val iconTint by animateColorAsState(
-        targetValue = if (selected) AuraGradients.onAurora
-        else MaterialTheme.colorScheme.onSurfaceVariant,
-        animationSpec = AuraMotion.standard(),
-        label = "navIconTint"
-    )
-    val labelTint by animateColorAsState(
+    val tint by animateColorAsState(
         targetValue = if (selected) MaterialTheme.colorScheme.primary
         else MaterialTheme.colorScheme.onSurfaceVariant,
         animationSpec = AuraMotion.standard(),
-        label = "navLabelTint"
+        label = "navTint"
     )
     val pillAlpha by animateFloatAsState(
         targetValue = if (selected) 1f else 0f,
@@ -278,19 +265,17 @@ private fun NavItem(
         Box(
             modifier = Modifier
                 .clip(RoundedCornerShape(50))
-                // Selected items sit on the terracotta gradient; the alpha fade
-                // keeps the unselected state weightless.
-                .background(AuraGradients.aurora, alpha = pillAlpha)
-                .padding(horizontal = 14.dp, vertical = 5.dp),
+                .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.12f * pillAlpha))
+                .padding(horizontal = 14.dp, vertical = 4.dp),
             contentAlignment = Alignment.Center
         ) {
-            Icon(destination.icon, contentDescription = label, tint = iconTint, modifier = Modifier.size(22.dp))
+            Icon(destination.icon, contentDescription = label, tint = tint, modifier = Modifier.size(22.dp))
         }
         Spacer(modifier = Modifier.height(AuraSpacing.xs))
         Text(
             label,
             style = MaterialTheme.typography.labelSmall,
-            color = labelTint,
+            color = tint,
             maxLines = 1
         )
     }
