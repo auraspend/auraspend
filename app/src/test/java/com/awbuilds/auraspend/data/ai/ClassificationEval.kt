@@ -25,6 +25,18 @@ import java.io.BufferedReader
  */
 object ClassificationEval {
 
+    /**
+     * The category that actually gets saved for a resolution result.
+     *
+     * A missing category is not a different answer from `cat_other`: the pipeline
+     * stores Other when nothing matches (`TransactionClassifier` and
+     * `SmsAutoClassifier` both fall back to it). Both evaluators compare against
+     * the saved outcome, so they call this — before 2026-10-16 they compared the
+     * intermediate null and counted thirteen correct rows as misses, which is a
+     * metric bug rather than a classification one.
+     */
+    fun savedCategory(categoryId: String?): String = categoryId ?: "cat_other"
+
     /** One labelled SMS. Mirrors the shape the classifier is asked to produce. */
     data class Case(
         val id: String,

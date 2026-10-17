@@ -230,7 +230,7 @@ object FusedAiEval {
     private fun actual(p: SmsExtraction, field: String): String? = when (field) {
         "isTransaction" -> p.isTransaction.toString()
         "type" -> p.type?.name
-        "category" -> p.category
+        "category" -> ClassificationEval.savedCategory(p.category)
         "merchant" -> p.merchant
         "subscription" -> p.isSubscription.toString()
         else -> null

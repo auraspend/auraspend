@@ -285,12 +285,24 @@ val categoryKeywordMap: Map<String, String> = mapOf(
     "dropbox" to "cat_subscription",
     "office 365" to "cat_subscription",
 
-    // Transfer
-    "transfer" to "cat_transfer",
-    "neft" to "cat_transfer",
-    "imps" to "cat_transfer",
-    "rtgs" to "cat_transfer",
-    "upi" to "cat_transfer",
+    // Investments — SIP and fund messages. Before this block existed NOTHING
+    // mapped to cat_investment from a message body, so a monthly SIP debit whose
+    // only readable words were "SIP purchase … NAV … folio" landed in "Other"
+    // for years (25 rows in a closed tester's export, all one amount, one a
+    // month — measured 2026-10-16).
+    "mutual fund" to "cat_investment",
+    "sip" to "cat_investment",
+    "folio" to "cat_investment",
+    "nav" to "cat_investment",
+
+    // Transfer — deliberately NO rail tokens here. `upi`, `neft`, `imps` and
+    // `rtgs` are routing metadata, not categories: with them in this map every
+    // UPI/NEFT payment whose merchant was not otherwise recognised was filed as
+    // "Transfer", which hid 66 of 155 rows in one tester's export (43 %, measured
+    // 2026-10-16) — including payments to shops. A rail plus a person-shaped
+    // counterparty is a person-to-person transfer, and that decision is made in
+    // `BankMessageParser.categoryIdFor` where the direction (received → income,
+    // sent → expense) is known.
     "to self" to "cat_transfer"
 )
 
