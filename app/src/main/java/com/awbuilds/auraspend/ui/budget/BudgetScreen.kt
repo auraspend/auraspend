@@ -164,8 +164,10 @@ fun BudgetScreen(
                                 modifier = Modifier.size(72.dp),
                                 stroke = 7.dp
                             ) {
+                                // The arc caps at a full circle; the number must not.
+                                // "100%" next to "₹33,467 of ₹26,000" reads as a bug.
                                 Text(
-                                    stringResource(R.string.common_percent, (overall.coerceIn(0f, 1f) * 100).toInt()),
+                                    stringResource(R.string.common_percent, (overall * 100).toInt()),
                                     style = MaterialTheme.typography.labelMedium,
                                     fontWeight = FontWeight.SemiBold,
                                     color = MaterialTheme.colorScheme.onSurface
@@ -177,7 +179,10 @@ fun BudgetScreen(
 
                 items(state.budgets) { budget ->
                     val category = state.categories.find { it.id == budget.categoryId }
-                    val progress = if (budget.limitAmount > 0) (budget.spentAmount / budget.limitAmount).toFloat().coerceIn(0f, 1f) else 0f
+                    // Raw ratio, not clamped: the ring's sweep caps itself, and the row
+                    // already says "Over by ₹X" — clamping here made every over-budget
+                    // row report a flat 100% next to the true overspend.
+                    val progress = if (budget.limitAmount > 0) (budget.spentAmount / budget.limitAmount).toFloat() else 0f
                     val overBy = budget.spentAmount - budget.limitAmount
                     val progressColor = when {
                         progress >= 1f -> MaterialTheme.colorScheme.error

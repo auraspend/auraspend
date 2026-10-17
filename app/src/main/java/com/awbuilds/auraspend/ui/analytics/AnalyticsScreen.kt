@@ -38,6 +38,7 @@ import com.awbuilds.auraspend.ui.designsystem.AnimatedMoney
 import com.awbuilds.auraspend.ui.designsystem.AuraDonutChart
 import com.awbuilds.auraspend.ui.designsystem.SettingsAvatarButton
 import com.awbuilds.auraspend.ui.designsystem.formatMoney
+import com.awbuilds.auraspend.ui.designsystem.moneySign
 import com.awbuilds.auraspend.ui.theme.extendedColors
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Insights
@@ -235,8 +236,15 @@ fun AnalyticsScreen(
                                 )
                             }
                             savingsRate?.let { rate ->
+                                val percent = rate.toInt()
+                                // The sign comes from the shared money helpers (U+2212),
+                                // not the platform's `-`: this badge sits directly under
+                                // "Net this month −₹32,163" in the same card, and the two
+                                // minus glyphs next to each other read as a rendering bug.
+                                // A rate that truncates to 0 gets no sign — "-0%" is noise.
+                                val sign = if (percent < 0) moneySign(rate) else ""
                                 Badge(
-                                    text = stringResource(R.string.analytics_saving_percent, rate.toInt()),
+                                    text = stringResource(R.string.analytics_saving_percent, sign + abs(percent)),
                                     color = if (rate >= 0) extended.incomeAmount else extended.expenseAmount
                                 )
                             }

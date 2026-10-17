@@ -506,7 +506,9 @@ private fun BudgetCarouselCard(
                 contentDescription = stringResource(
                     R.string.home_budget_percent_used,
                     name,
-                    (progress.coerceIn(0f, 1f) * 100).toInt()
+                    // True percent for assistive tech, not the ring's capped arc —
+                    // a 122%-used budget should not be announced as "100 percent used".
+                    (progress * 100).toInt()
                 )
             ) {
                 CategoryAvatar(icon = emoji, color = color, size = 26.dp)

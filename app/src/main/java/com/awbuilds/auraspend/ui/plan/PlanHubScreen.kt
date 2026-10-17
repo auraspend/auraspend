@@ -2,6 +2,8 @@ package com.awbuilds.auraspend.ui.plan
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.AccountBalance
@@ -104,7 +106,13 @@ fun PlanHubScreen(
 
     val totalLimit = remember(budgets) { budgets.sumOf { it.limitAmount } }
     val totalSpent = remember(budgets) { budgets.sumOf { it.spentAmount } }
-    val budgetProgress = if (totalLimit > 0) (totalSpent / totalLimit).toFloat().coerceIn(0f, 1f) else 0f
+    // The ratio is deliberately NOT clamped. It used to be, and the hero then read
+    // "₹33,467 of ₹26,000 — 100% used": two numbers on one card that visibly do
+    // not agree, with no hint of how far over the user is. The ring's arc is the
+    // only thing a full circle can cap; the text must tell the truth. AuraProgressRing
+    // clamps its own sweep, so passing the raw ratio is safe.
+    val budgetRatio = if (totalLimit > 0) (totalSpent / totalLimit).toFloat() else 0f
+    val overBy = totalSpent - totalLimit
     val monthlySubscriptions = remember(subscriptions) {
         RecurringCost.monthlyTotal(subscriptions)
     }
@@ -114,10 +122,11 @@ fun PlanHubScreen(
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
             .statusBarsPadding()
-            .padding(horizontal = AuraSpacing.gutter)
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = AuraSpacing.gutter),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
@@ -132,114 +141,139 @@ fun PlanHubScreen(
             SettingsAvatarButton(onClick = onOpenSettings)
         }
 
-        Spacer(modifier = Modifier.height(AuraSpacing.md))
+        // Everything below the pinned header scrolls. The hub is taller than a
+        // phone at 200% font scale (the four rows and two cards scale past the
+        // viewport on a 411dp-wide device), and a plain Column clips that overflow
+        // with no way to reach it.
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = AuraSpacing.gutter)
+        ) {
+            Spacer(modifier = Modifier.height(AuraSpacing.md))
 
-        // ── Budget health hero
-        AuraCard(style = AuraCardStyle.Tonal, modifier = Modifier.fillMaxWidth()) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        stringResource(R.string.plan_budgets_month),
-                        style = AuraType.metricLabel,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Spacer(modifier = Modifier.height(AuraSpacing.xs))
-                    Text(
-                        stringResource(R.string.plan_budget_of, formatMoney(totalSpent), formatMoney(totalLimit)),
-                        style = AuraType.moneyMedium,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                    Spacer(modifier = Modifier.height(AuraSpacing.xs))
-                    Text(
-                        if (totalLimit > 0) stringResource(R.string.plan_budget_percent_used, (budgetProgress * 100).toInt())
-                        else stringResource(R.string.plan_no_budgets),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.extendedColors.textLight
-                    )
-                }
-                AuraProgressRing(
-                    progress = budgetProgress,
-                    color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(64.dp),
-                    stroke = 6.dp
-                ) {
-                    Text(
-                        stringResource(R.string.common_percent, (budgetProgress * 100).toInt()),
-                        style = MaterialTheme.typography.bodySmall,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
+            // ── Budget health hero
+            AuraCard(style = AuraCardStyle.Tonal, modifier = Modifier.fillMaxWidth()) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            stringResource(R.string.plan_budgets_month),
+                            style = AuraType.metricLabel,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Spacer(modifier = Modifier.height(AuraSpacing.xs))
+                        Text(
+                            stringResource(R.string.plan_budget_of, formatMoney(totalSpent), formatMoney(totalLimit)),
+                            style = AuraType.moneyMedium,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Spacer(modifier = Modifier.height(AuraSpacing.xs))
+                        Text(
+                            when {
+                                totalLimit <= 0 -> stringResource(R.string.plan_no_budgets)
+                                // Over budget, "129% used" understates what happened and
+                                // duplicates the ring; the number people want is how much
+                                // over. Same wording as the per-budget rows downstairs.
+                                overBy > 0 -> stringResource(R.string.budget_over_by, formatMoney(overBy))
+                                else -> stringResource(R.string.plan_budget_percent_used, (budgetRatio * 100).toInt())
+                            },
+                            style = MaterialTheme.typography.bodySmall,
+                            color = if (totalLimit > 0 && overBy > 0) MaterialTheme.colorScheme.error
+                            else MaterialTheme.extendedColors.textLight
+                        )
+                    }
+                    AuraProgressRing(
+                        // Raw ratio on purpose: the ring caps its own sweep at a full
+                        // circle, and the number inside must not.
+                        progress = budgetRatio,
+                        color = when {
+                            totalLimit <= 0 -> MaterialTheme.colorScheme.primary
+                            budgetRatio >= 1f -> MaterialTheme.colorScheme.error
+                            budgetRatio >= 0.8f -> MaterialTheme.colorScheme.tertiary
+                            else -> MaterialTheme.colorScheme.primary
+                        },
+                        modifier = Modifier.size(64.dp),
+                        stroke = 6.dp
+                    ) {
+                        Text(
+                            stringResource(R.string.common_percent, (budgetRatio * 100).toInt()),
+                            style = MaterialTheme.typography.bodySmall,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
                 }
             }
-        }
 
-        Spacer(modifier = Modifier.height(AuraSpacing.lg))
+            Spacer(modifier = Modifier.height(AuraSpacing.lg))
 
-        // ── Forward-looking totals
-        AuraCard(style = AuraCardStyle.Outlined, modifier = Modifier.fillMaxWidth()) {
-            Text(
-                stringResource(R.string.plan_recurring_monthly),
-                style = AuraType.metricLabel,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            Spacer(modifier = Modifier.height(AuraSpacing.xs))
-            Text(
-                stringResource(
-                    R.string.plan_monthly_recurring,
-                    formatMoney(monthlySubscriptions, fractionDigits = 0)
-                ),
-                style = AuraType.moneyLarge,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-            Spacer(modifier = Modifier.height(AuraSpacing.xs))
-            Text(
-                pluralStringResource(R.plurals.plan_active_subscriptions, subscriptions.size, subscriptions.size),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.extendedColors.textLight
-            )
-        }
-
-        Spacer(modifier = Modifier.height(AuraSpacing.lg))
-
-        // ── Management entries
-        PlanRow(
-            icon = Icons.Default.AccountBalance,
-            title = stringResource(R.string.plan_budgets),
-            subtitle = stringResource(R.string.plan_budgets_subtitle),
-            onClick = onOpenBudgets
-        )
-        Spacer(modifier = Modifier.height(AuraSpacing.sm))
-        PlanRow(
-            icon = Icons.Default.Subscriptions,
-            title = stringResource(R.string.plan_subscriptions),
-            subtitle = stringResource(R.string.plan_subscriptions_subtitle),
-            onClick = onOpenSubscriptions
-        )
-        Spacer(modifier = Modifier.height(AuraSpacing.sm))
-        PlanRow(
-            icon = Icons.Default.Savings,
-            title = stringResource(R.string.plan_savings_goals),
-            subtitle = if (goals.isEmpty()) {
-                stringResource(R.string.plan_savings_goals_empty_subtitle)
-            } else {
-                pluralStringResource(
-                    R.plurals.plan_goals_saved,
-                    goals.size,
-                    goals.size,
-                    formatMoney(goals.sumOf { it.currentAmount })
+            // ── Forward-looking totals
+            AuraCard(style = AuraCardStyle.Outlined, modifier = Modifier.fillMaxWidth()) {
+                Text(
+                    stringResource(R.string.plan_recurring_monthly),
+                    style = AuraType.metricLabel,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-            },
-            onClick = onOpenGoals
-        )
-        Spacer(modifier = Modifier.height(AuraSpacing.sm))
-        PlanRow(
-            icon = Icons.Default.Category,
-            title = stringResource(R.string.plan_categories),
-            subtitle = stringResource(R.string.plan_categories_subtitle),
-            onClick = onOpenCategories
-        )
+                Spacer(modifier = Modifier.height(AuraSpacing.xs))
+                Text(
+                    stringResource(
+                        R.string.plan_monthly_recurring,
+                        formatMoney(monthlySubscriptions, fractionDigits = 0)
+                    ),
+                    style = AuraType.moneyLarge,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Spacer(modifier = Modifier.height(AuraSpacing.xs))
+                Text(
+                    pluralStringResource(R.plurals.plan_active_subscriptions, subscriptions.size, subscriptions.size),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.extendedColors.textLight
+                )
+            }
 
-        Spacer(modifier = Modifier.height(AuraSpacing.xxl))
+            Spacer(modifier = Modifier.height(AuraSpacing.lg))
+
+            // ── Management entries
+            PlanRow(
+                icon = Icons.Default.AccountBalance,
+                title = stringResource(R.string.plan_budgets),
+                subtitle = stringResource(R.string.plan_budgets_subtitle),
+                onClick = onOpenBudgets
+            )
+            Spacer(modifier = Modifier.height(AuraSpacing.sm))
+            PlanRow(
+                icon = Icons.Default.Subscriptions,
+                title = stringResource(R.string.plan_subscriptions),
+                subtitle = stringResource(R.string.plan_subscriptions_subtitle),
+                onClick = onOpenSubscriptions
+            )
+            Spacer(modifier = Modifier.height(AuraSpacing.sm))
+            PlanRow(
+                icon = Icons.Default.Savings,
+                title = stringResource(R.string.plan_savings_goals),
+                subtitle = if (goals.isEmpty()) {
+                    stringResource(R.string.plan_savings_goals_empty_subtitle)
+                } else {
+                    pluralStringResource(
+                        R.plurals.plan_goals_saved,
+                        goals.size,
+                        goals.size,
+                        formatMoney(goals.sumOf { it.currentAmount })
+                    )
+                },
+                onClick = onOpenGoals
+            )
+            Spacer(modifier = Modifier.height(AuraSpacing.sm))
+            PlanRow(
+                icon = Icons.Default.Category,
+                title = stringResource(R.string.plan_categories),
+                subtitle = stringResource(R.string.plan_categories_subtitle),
+                onClick = onOpenCategories
+            )
+
+            Spacer(modifier = Modifier.height(AuraSpacing.xxl))
+        }
     }
 }
 

@@ -268,7 +268,7 @@
     <string name="analytics_expense">खर्च</string>
     <string name="analytics_income">आय</string>
     <string name="analytics_net_period">शुद्ध %1$s</string>
-    <string name="analytics_saving_percent">बचत %1$d%%</string>
+    <string name="analytics_saving_percent">बचत %1$s%%</string>
     <string name="analytics_delta_up">↑ पिछले महीने से %1$d%% अधिक</string>
     <string name="analytics_delta_down">↓ पिछले महीने से %1$d%% कम</string>
     <string name="analytics_spending_by_category">श्रेणी अनुसार खर्च</string>
