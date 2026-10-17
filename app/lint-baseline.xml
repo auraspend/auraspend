@@ -562,13 +562,6 @@
     </issue>
 
     <issue
-        id="IconLocation"
-        message="Found bitmap drawable `res/drawable/app_icon.png` in densityless folder">
-        <location
-            file="src/main/res/drawable/app_icon.png"/>
-    </issue>
-
-    <issue
         id="UseKtx"
         message="Use the KTX extension function `SharedPreferences.edit` instead?"
         errorLine1="        context.getSharedPreferences(PREF_FILE, Context.MODE_PRIVATE)"

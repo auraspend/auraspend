@@ -4,6 +4,7 @@ import com.awbuilds.auraspend.core.AuraLog
 import com.awbuilds.auraspend.data.local.dao.SmsMessageDao
 import com.awbuilds.auraspend.data.local.entities.SmsMessageEntity
 import com.awbuilds.auraspend.data.local.entities.SmsMessageStatus
+import com.awbuilds.auraspend.domain.model.ParsedBankMessage
 import com.awbuilds.auraspend.domain.repository.TransactionRepository
 import com.awbuilds.auraspend.ui.classification.SmsInfo
 import kotlinx.coroutines.CancellationException
@@ -42,9 +43,8 @@ class SmsPipelineProcessor(
     private val dao: SmsMessageDao,
     private val transactionRepository: TransactionRepository,
     private val enrich: suspend (ClassifiedSms, Map<String, String>) -> ClassifiedSms = { c, _ -> c },
-    private val categoryResolver: (String?) -> String? = { merchant ->
-        merchant?.let { getCategoryIdForKeyword(it) }
-    },
+    private val categoryResolver: (ParsedBankMessage) -> String? =
+        { parsed -> TransactionClassifier.resolveCategory(parsed) },
     /** Called after a successful save so the classification memory can learn the mapping. */
     private val onSaved: suspend (transaction: com.awbuilds.auraspend.domain.model.Transaction) -> Unit = {},
     /**
@@ -203,7 +203,7 @@ class SmsPipelineProcessor(
         yield()
         val now = System.currentTimeMillis()
 
-        if (SmsAutoClassifier.isOtpOrAlertMessage(message.body)) {
+        if (SmsAutoClassifier.isOtpOrAlertMessage(message.body, message.address)) {
             dao.update(message.copy(
                 status = SmsMessageStatus.SKIPPED.name,
                 updatedAt = now
@@ -259,7 +259,7 @@ class SmsPipelineProcessor(
         }
 
         val categoryId = enriched.parsed.categoryId
-            ?: categoryResolver(enriched.parsed.merchant)
+            ?: categoryResolver(enriched.parsed)
         val transaction = SmsAutoClassifier.toTransaction(
             enriched,
             categoryId,

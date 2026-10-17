@@ -10,7 +10,6 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
@@ -18,18 +17,19 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.res.stringResource
 import com.awbuilds.auraspend.R
 import com.awbuilds.auraspend.ui.designsystem.AuraGradients
+import com.awbuilds.auraspend.ui.designsystem.AuraMarkMedallion
 import com.awbuilds.auraspend.ui.designsystem.AuraSpacing
 import kotlinx.coroutines.delay
 
 /**
- * Brand splash: the aurora mark settles in with a spring, the wordmark fades
+ * Brand splash: the terracotta mark settles in with a spring, the wordmark fades
  * up, then we hand off to the app. Kept under two seconds — first impressions
  * are quick.
  */
@@ -61,15 +61,16 @@ fun SplashScreen(onAnimationFinished: () -> Unit) {
             .background(MaterialTheme.colorScheme.background),
         contentAlignment = Alignment.Center
     ) {
-        // Soft aurora glow behind the mark.
+        // Soft terracotta glow behind the mark.
         Box(
             modifier = Modifier
-                .size(320.dp)
-                .clip(RoundedCornerShape(160.dp))
+                .size(340.dp)
+                .clip(RoundedCornerShape(170.dp))
                 .background(
                     Brush.radialGradient(
                         colors = listOf(
-                            MaterialTheme.colorScheme.primary.copy(alpha = 0.16f),
+                            MaterialTheme.colorScheme.primary.copy(alpha = 0.20f),
+                            MaterialTheme.colorScheme.tertiary.copy(alpha = 0.08f),
                             MaterialTheme.colorScheme.background.copy(alpha = 0f)
                         )
                     )
@@ -86,14 +87,14 @@ fun SplashScreen(onAnimationFinished: () -> Unit) {
                     animationSpec = tween(400)
                 )
             ) {
-                Icon(
-                    painter = painterResource(R.drawable.app_icon),
-                    contentDescription = null,
-                    modifier = Modifier
-                        .size(120.dp)
-                        .clip(RoundedCornerShape(32.dp)),
-                    tint = androidx.compose.ui.graphics.Color.Unspecified
-                )
+                Box(
+                    modifier = Modifier.graphicsLayer {
+                        scaleX = markScale
+                        scaleY = markScale
+                    }
+                ) {
+                    AuraMarkMedallion(size = 156.dp)
+                }
             }
 
             Spacer(modifier = Modifier.height(AuraSpacing.xl))

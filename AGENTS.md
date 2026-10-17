@@ -3,7 +3,53 @@
 > Read this file and the latest file in `docs/handoffs/` before touching anything.
 > Update both (plus `CLAUDE.md` / `memory/` when you learn something durable) before ending a session.
 >
-> Latest: `docs/handoffs/0046-app-lock-and-encrypted-database.md` — the two
+> Latest: `docs/handoffs/0051-play-listing-aso.md` — the Play long description was
+> not in the repo and the only checked-in copy was 786-char F-Droid text; the
+> canonical Play copy is now `docs/store/play-listing-en-US.md` (title 30/30,
+> short 79/80, full 3,270/4,000). The screenshots/icon/feature graphic still show
+> the pre-terracotta brand and must be regenerated; the Hindi listing is also
+> F-Droid copy and needs a Play-specific pass.
+> Before: `docs/handoffs/0050-classification-fixes.md` — the audit's defects are
+> fixed: the eval scores amount/date and correct rejections (80/82 exact, 97.6 %,
+> type 98.8, category 100, merchant 98.8, amount 98.8), sender-aware bank tails
+> rescue HDFC's “If not you” debit, routed parses merge over the global parse
+> instead of replacing it, own transfers are excluded from totals, and merchant/
+> category/ingest/memory gaps are closed. 616/616 tests (1 skipped), lint clean
+> (1 baseline hint). Remaining structural items: first-class TRANSFER/INVESTMENT,
+> full multi-currency, a user-rules UI, Hindi/regional SMS.
+> Before: `docs/handoffs/0049-classification-gap-analysis.md` — the read-only audit
+> that started it (31.7 % was not parse accuracy). Full report:
+> `docs/reviews/2026-10-17-message-classification-gap-analysis.md`.
+> Before: `docs/handoffs/0048-terracotta-ui-revamp.md` — the app has a new visual
+> identity and **nothing but the UI changed**: terracotta clay replaces the purple
+> brand (`#A64B2A` → `#D2764A` → `#F2D8BC`), warm cream/near-black canvases,
+> softer shapes, an illustrated clay-pot mark (`AuraMark`) and a one-per-screen
+> gradient hero (`AuraCardStyle.Hero`). Type is now **Manrope** (all UI + all
+> money — it has `tnum`) plus **Fraunces** for display/headline/titleLarge only,
+> with Plus Jakarta Sans gone and its OFL attribution swapped in nine files at
+> once. **The `Aurora*` symbol names stay on purpose** — don't "fix" them.
+> 584/584 tests, lint clean, licence + privacy checks green; captured in light
+> and dark on the arm64 AVD. Looking at it on a device found four things the whole
+> JVM suite had passed: the selected nav *label* was white-on-cream (the gradient
+> pill only wraps the icon), keypad digits were rendering in the display serif
+> (Fraunces has old-style figures — now `AuraType.keypadDigit`), the
+> notification-permission dialog still wore the old purple because
+> `res/values/colors.xml` (`android:colorAccent`) was never recoloured, and
+> `tools/seed_demo_data.sh` had **silently never seeded anything** (the seeder is
+> opt-in and the script never passed `-e seedDemoData true`; a skipped test still
+> reports OK). Default category colours were retuned for new installs only. **Not
+> committed** — the owner asked for the working tree. Launcher icon, website and
+> store assets still carry the old brand (follow-ups in the handoff).
+> Before: `docs/handoffs/0047-classification-informational-and-rails.md` — a tester's
+> CSV export showed three misclassification families; the fixes were an
+> informational veto set (points/marketing/NAV/expiry) with the load-bearing rule
+> that **a completed debit outranks every informational phrase**, the removal of
+> rail tokens (`upi`/`neft`/`imps`/`rtgs`) as *categories* so a UPI payment keeps
+> its real category, Investments as a keyword target, and `Refno`/`RRN`/`UTR` as
+> reference suffixes. Corpus 72 → 82 with the floor re-measured at 26/82 exact
+> (31.7 %), type 95.1 %, category 53.7 %; most of the jump was a metric-fidelity
+> fix. PR #78, 584/584 tests.
+> Before: `docs/handoffs/0046-app-lock-and-encrypted-database.md` — the two
 > privacy features from the improvement list are implemented as separate PRs:
 > **#76 an optional app lock** (4-digit PIN as a salted PBKDF2 hash, biometric
 > shortcut, locks on cold start and after >60 s backgrounded, "forgot PIN"
@@ -681,9 +727,11 @@ application id): `:benchmark:connectedDevBenchmarkAndroidTest` — see README.
   catch that (the ONNX session never runs there) — only an on-device inference
   smoke proves it, and a model swap must re-run that smoke.
 - **Any new runtime must beat the measured floor, *fused*.** Baseline with the
-  model switched off: **13.9 % exact match**, type 95.8 %, category 34.7 %
-  (72-case corpus, re-measured 2026-10-13; `RegexBaselineEval`,
-  `./gradlew :app:classificationBaseline`).
+  model switched off: **97.6 % exact match**, type 98.8 %, category 100 %,
+  merchant 98.8 %, amount 98.8 %, date 100 % (82-case corpus, re-measured
+  2026-10-17; `RegexBaselineEval`, `./gradlew :app:classificationBaseline`).
+  One accepted false veto remains (`canara_debit_10000`, the documented phishing
+  trade-off).
   `RegexBaselineEvalTest` fails if the regex layer regresses. A model that beats
   that floor *standalone* may still be worse in the pipeline — Qwen and
   SmolLM2 both score 29.2 % standalone and reached opposite conclusions. Judge

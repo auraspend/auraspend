@@ -4,24 +4,41 @@ import com.awbuilds.auraspend.domain.model.Category
 import com.awbuilds.auraspend.ui.theme.*
 import java.util.Locale
 
+/**
+ * The categories a fresh install starts with.
+ *
+ * Colours are the muted, earth-leaning set: the previous defaults were the
+ * 2014-era Material 500s (`#E53935` red, `#1E88E5` blue, `#8E24AA` purple) and
+ * they were the loudest thing on an otherwise warm clay-and-cream screen —
+ * every Activity row, category chip and donut segment carried one. These keep
+ * the same hue families, so a user's mental map of "red is food" still holds,
+ * but sit ~30% down in saturation so they belong to the aurora palette.
+ *
+ * Only *new* installs are affected: [missingDefaultCategories] never rewrites a
+ * row that already exists, so an install that has seen the old values keeps
+ * them until the user edits them.
+ */
 val defaultCategories = listOf(
-    Category(id = "cat_food", name = "Food & Dining", icon = "restaurant", color = 0xFFE53935.toInt(), isDefault = true),
-    Category(id = "cat_transport", name = "Transport", icon = "directions_car", color = 0xFF1E88E5.toInt(), isDefault = true),
-    Category(id = "cat_shopping", name = "Shopping", icon = "shopping_bag", color = 0xFF8E24AA.toInt(), isDefault = true),
-    Category(id = "cat_bills", name = "Bills & Utilities", icon = "receipt_long", color = 0xFFFF8F00.toInt(), isDefault = true),
-    Category(id = "cat_entertainment", name = "Entertainment", icon = "movie", color = 0xFF00ACC1.toInt(), isDefault = true),
-    Category(id = "cat_healthcare", name = "Healthcare", icon = "local_hospital", color = 0xFFE53935.toInt(), isDefault = true),
-    Category(id = "cat_education", name = "Education", icon = "school", color = 0xFF5E35B1.toInt(), isDefault = true),
-    Category(id = "cat_salary", name = "Salary", icon = "account_balance", color = 0xFF43A047.toInt(), isDefault = true),
-    Category(id = "cat_investment", name = "Investments", icon = "account_balance", color = 0xFF00897B.toInt(), isDefault = true),
-    Category(id = "cat_subscription", name = "Subscriptions", icon = "subscriptions", color = 0xFF6D4C41.toInt(), isDefault = true),
-    Category(id = "cat_transfer", name = "Transfer", icon = "swap_horiz", color = 0xFF546E7A.toInt(), isDefault = true),
-    Category(id = "cat_grocery", name = "Grocery", icon = "local_grocery_store", color = 0xFF2E7D32.toInt(), isDefault = true),
-    Category(id = "cat_other", name = "Other", icon = "category", color = 0xFF757575.toInt(), isDefault = true)
+    Category(id = "cat_food", name = "Food & Dining", icon = "restaurant", color = 0xFFC24C43.toInt(), isDefault = true),
+    Category(id = "cat_transport", name = "Transport", icon = "directions_car", color = 0xFF3C6E9E.toInt(), isDefault = true),
+    Category(id = "cat_shopping", name = "Shopping", icon = "shopping_bag", color = 0xFF7E4C93.toInt(), isDefault = true),
+    Category(id = "cat_bills", name = "Bills & Utilities", icon = "receipt_long", color = 0xFFB57A22.toInt(), isDefault = true),
+    Category(id = "cat_entertainment", name = "Entertainment", icon = "movie", color = 0xFF2B7F92.toInt(), isDefault = true),
+    Category(id = "cat_healthcare", name = "Healthcare", icon = "local_hospital", color = 0xFFA63A5B.toInt(), isDefault = true),
+    Category(id = "cat_education", name = "Education", icon = "school", color = 0xFF5B4FA0.toInt(), isDefault = true),
+    Category(id = "cat_salary", name = "Salary", icon = "account_balance", color = 0xFF3F8A55.toInt(), isDefault = true),
+    Category(id = "cat_investment", name = "Investments", icon = "account_balance", color = 0xFF27796B.toInt(), isDefault = true),
+    Category(id = "cat_subscription", name = "Subscriptions", icon = "subscriptions", color = 0xFF7A5B4A.toInt(), isDefault = true),
+    Category(id = "cat_transfer", name = "Transfer", icon = "swap_horiz", color = 0xFF556873.toInt(), isDefault = true),
+    Category(id = "cat_grocery", name = "Grocery", icon = "local_grocery_store", color = 0xFF4E7C3A.toInt(), isDefault = true),
+    Category(id = "cat_other", name = "Other", icon = "category", color = 0xFF7A7168.toInt(), isDefault = true)
 )
 
 /**
  * The default categories [existingIds] does not carry.
+ *
+ * Only ids are compared — a category the user has already customised keeps its
+ * own name, icon and colour, so the palette above re-seeds new installs only.
  *
  * Startup seeding used to run only on an empty table, so a category added to
  * this list later (Investments, 2026-10-14) would never reach an existing
@@ -212,18 +229,21 @@ val categoryKeywordMap: Map<String, String> = mapOf(
     "maintenance" to "cat_bills",
 
     // Entertainment
-    "netflix" to "cat_entertainment",
-    "prime video" to "cat_entertainment",
-    "amazon prime" to "cat_entertainment",
-    "hotstar" to "cat_entertainment",
-    "disney" to "cat_entertainment",
-    "sony liv" to "cat_entertainment",
-    "sonyliv" to "cat_entertainment",
-    "zee5" to "cat_entertainment",
+    // Streaming services are subscriptions by identity; the same keys in
+    // CategoryKeywordMap already said so. Keeping them Entertainment here made
+    // the final category depend on which layer filled it first.
+    "netflix" to "cat_subscription",
+    "prime video" to "cat_subscription",
+    "amazon prime" to "cat_subscription",
+    "hotstar" to "cat_subscription",
+    "disney" to "cat_subscription",
+    "sony liv" to "cat_subscription",
+    "sonyliv" to "cat_subscription",
+    "zee5" to "cat_subscription",
     "youtube" to "cat_entertainment",
-    "spotify" to "cat_entertainment",
-    "gaana" to "cat_entertainment",
-    "jiocinema" to "cat_entertainment",
+    "spotify" to "cat_subscription",
+    "gaana" to "cat_subscription",
+    "jiocinema" to "cat_subscription",
     "bookmyshow" to "cat_entertainment",
     "pvr" to "cat_entertainment",
     "inox" to "cat_entertainment",
@@ -285,12 +305,24 @@ val categoryKeywordMap: Map<String, String> = mapOf(
     "dropbox" to "cat_subscription",
     "office 365" to "cat_subscription",
 
-    // Transfer
-    "transfer" to "cat_transfer",
-    "neft" to "cat_transfer",
-    "imps" to "cat_transfer",
-    "rtgs" to "cat_transfer",
-    "upi" to "cat_transfer",
+    // Investments — SIP and fund messages. Before this block existed NOTHING
+    // mapped to cat_investment from a message body, so a monthly SIP debit whose
+    // only readable words were "SIP purchase … NAV … folio" landed in "Other"
+    // for years (25 rows in a closed tester's export, all one amount, one a
+    // month — measured 2026-10-16).
+    "mutual fund" to "cat_investment",
+    "sip" to "cat_investment",
+    "folio" to "cat_investment",
+    "nav" to "cat_investment",
+
+    // Transfer — deliberately NO rail tokens here. `upi`, `neft`, `imps` and
+    // `rtgs` are routing metadata, not categories: with them in this map every
+    // UPI/NEFT payment whose merchant was not otherwise recognised was filed as
+    // "Transfer", which hid 66 of 155 rows in one tester's export (43 %, measured
+    // 2026-10-16) — including payments to shops. A rail plus a person-shaped
+    // counterparty is a person-to-person transfer, and that decision is made in
+    // `BankMessageParser.categoryIdFor` where the direction (received → income,
+    // sent → expense) is known.
     "to self" to "cat_transfer"
 )
 

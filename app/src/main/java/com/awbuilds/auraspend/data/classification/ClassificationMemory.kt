@@ -52,6 +52,23 @@ object MemoryKeys {
     /** Best-effort key for a parsed message: merchant first, then note. */
     fun fromParsed(merchant: String?, note: String?): String? =
         normalize(merchant) ?: normalize(note)
+
+    /**
+     * Lookup keys from most to least specific. Banks append a branch, city or
+     * product suffix to the same merchant ("SWIGGY", "SWIGGY BANGALORE"), so the
+     * full key alone made one correction fail to transfer to the next message.
+     * The first token is a deliberately simple generalisation; it is only tried
+     * after the full key misses.
+     */
+    fun candidates(raw: String?): List<String> {
+        val full = normalize(raw) ?: return emptyList()
+        val first = full.substringBefore(' ').takeIf { it.length >= 3 && it != full }
+        return listOfNotNull(full, first).distinct()
+    }
+
+    /** Merchant candidates first, then note candidates. */
+    fun fromParsedCandidates(merchant: String?, note: String?): List<String> =
+        (candidates(merchant) + candidates(note)).distinct()
 }
 
 /**
@@ -62,8 +79,10 @@ class ClassificationMemory(private val dao: ClassificationMemoryDao) {
 
     /** Looks up the remembered category/type for a parsed message, if any. */
     suspend fun lookup(merchant: String?, note: String?): ClassificationMemoryEntity? {
-        val key = MemoryKeys.fromParsed(merchant, note) ?: return null
-        return dao.getByKey(key)
+        for (key in MemoryKeys.fromParsedCandidates(merchant, note)) {
+            dao.getByKey(key)?.let { return it }
+        }
+        return null
     }
 
     /**

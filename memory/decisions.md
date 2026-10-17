@@ -2,6 +2,74 @@
 
 Durable decisions with context. Latest first.
 
+## D23 — The classification floor is not parse accuracy; routing replaces instead of specializing (2026-10-17)
+
+Read-only audit; the full report is
+`docs/reviews/2026-10-17-message-classification-gap-analysis.md`. Four durable
+findings:
+
+- **The 31.7 % floor is not parse accuracy.** `ClassificationEval.Case` has no
+  amount or date; `run()` scores a null result as a miss on every field, so 24
+  correct rejections count as failures. Scored properly, the same five fields
+  are 50/82 exact and 78/82 `isTransaction`. `falseVetoes()` only counts
+  `predicted.isTransaction == false`, but the regex path returns null for a skip,
+  so “0 false vetoes” cannot see the HDFC “If not you” debit that
+  `conditionalFramingPattern` drops. `isFraudLineVeto` excuses every non-OTP
+  alert drop; `p2p_upi_debit_person_refno` is the counterexample.
+- **Sender routing replaces the global parse.** `TransactionClassifier` accepts
+  a routed parse when amount/type are non-null, so a per-bank parser can drop a
+  merchant/date/category the global parser got. Measured: single-line Axis loses
+  `SUNRISE DINER` and its time; Canara NEFT loses `ACME SOLUTIONS LIMITED` and
+  its date. Merge routed over global, or fall back on a field regression.
+- **The alert filter is sender-blind.** `isOtpOrAlertMessage(message)` never sees
+  the sender, so a known bank's own “If not you” tail is treated like a phishing
+  lure. Pass the sender and keep the hard veto for unknown senders.
+- **The domain model cannot represent a transfer.** Only `INCOME`/`EXPENSE`;
+  totals sum all expenses, so a “transfer to self” inflates spending and a
+  two-leg own transfer inflates both totals. Ingest is also a 22-word body
+  allowlist (no `₹`/`Dr`/`Cr`/`sent`/`transferred`/ISO currency), and
+  categorisation is a parser side effect with two divergent maps.
+
+**Rule:** fix the eval first (correct rejections, amount/date, a real false-veto
+counter, per-bank floors); do not tune the parser against 31.7 %.
+
+**Resolved in 0050 (same day).** The eval now scores amount/date and correct
+rejections; the floor is **80/82 (97.6 %) exact**, type 98.8 %, category 100 %,
+merchant 98.8 %, amount 98.8 %, date 100 %, with one accepted false veto
+(`canara_debit_10000`). Sender routing merges over the global parse, the HDFC
+"If not you" tail is rescued by sender context, own transfers are excluded from
+every aggregate, and merchant/category/ingest/memory gaps are closed. 616/616
+tests. The structural follow-ups (first-class TRANSFER/INVESTMENT, full
+multi-currency, a user-rules UI, Hindi) are listed in `0050`.
+
+## D22 — The design language is terracotta clay; the `Aurora*` names stay (2026-10-17)
+Full visual revamp, UI layer only: clay `#A64B2A` → ember `#D2764A` → sand
+`#F2D8BC`, olive-sage secondary, ochre tertiary, warm cream `#FCF7F2` and warm
+near-black `#17110D` canvases; shape scale 10/14/20/26/32; a new illustrated
+`AuraMark` (clay pot + coin, Compose `Canvas`); `AuraCardStyle.Hero` for the one
+gradient surface per screen. Three rules worth keeping:
+
+- **Symbol names stay `Aurora*`.** Renaming a token across 40 files buys nothing
+  and breaks every diff; "Aurora" is the design-system name, terracotta is its
+  palette. `docs/design/aurora.md` states this at the top so nobody "fixes" it.
+- **Fraunces is display-only; money is always Manrope.** Fraunces has no `tnum`,
+  and animated money that jitters is a correctness bug here — `AuraType.money*`
+  all pin Manrope + `tabular figures`. Keypad digits are Manrope too
+  (`AuraType.keypadDigit`): the display serif uses old-style figures, which makes
+  a 0–9 pad uneven.
+- **Default category colours were retuned** (`DefaultCategories.kt`) from the
+  2014-era Material 500s to the same hue families muted ~30 %. These are *seed*
+  values only — `missingDefaultCategories` never rewrites an existing row — so
+  the change reaches new installs and leaves stored user categories alone.
+
+The session also re-taught D21 the cheap way: the full JVM suite, lint and both
+shell gates passed while (a) the selected bottom-nav *label* was white-on-cream
+(the gradient pill only wraps the icon), (b) the keypad digits rendered in the
+display serif, and (c) the notification-permission dialog still wore the old
+purple because `res/values/colors.xml` (`android:colorAccent`) had not been
+recoloured. None of those is reachable from a unit test — they were found by
+installing the build and looking at it.
+
 ## D21 — A device-only path gets run on the emulator before it is called verified (2026-10-15)
 PR #77 passed 549 unit tests, lint, the licence and privacy gates, the native
 audit and the R8 gate — and still shipped three release-blocking defects, all

@@ -1,9 +1,12 @@
 package com.awbuilds.auraspend.data.ai
 
+import com.awbuilds.auraspend.domain.model.ParsedBankMessage
 import com.awbuilds.auraspend.domain.model.TransactionType
 import kotlinx.coroutines.runBlocking
 import org.json.JSONObject
 import java.io.BufferedReader
+import java.math.BigDecimal
+import java.math.RoundingMode
 
 /**
  * Accuracy harness for the on-device classifier.
@@ -25,6 +28,18 @@ import java.io.BufferedReader
  */
 object ClassificationEval {
 
+    /**
+     * The category that actually gets saved for a resolution result.
+     *
+     * A missing category is not a different answer from `cat_other`: the pipeline
+     * stores Other when nothing matches (`TransactionClassifier` and
+     * `SmsAutoClassifier` both fall back to it). Both evaluators compare against
+     * the saved outcome, so they call this — before 2026-10-16 they compared the
+     * intermediate null and counted thirteen correct rows as misses, which is a
+     * metric bug rather than a classification one.
+     */
+    fun savedCategory(categoryId: String?): String = categoryId ?: "cat_other"
+
     /** One labelled SMS. Mirrors the shape the classifier is asked to produce. */
     data class Case(
         val id: String,
@@ -34,6 +49,20 @@ object ClassificationEval {
         val category: String?,
         val merchant: String?,
         val subscription: Boolean,
+        /**
+         * The rupee amount the message states, or null when it names no amount
+         * (every non-transaction, and the few informational cases where an amount
+         * must not be booked). Scored numerically by the regex evaluator.
+         */
+        val amount: Double? = null,
+        /**
+         * The transaction's local calendar date as `yyyy-MM-dd`, or null when the
+         * message carries no date (the pipeline then falls back to `receivedAt`,
+         * which is not a value the corpus can label). Scored date-only so a
+         * parser that loses the time of day is still visible on `merchant`/other
+         * fields without failing an unrelated assertion.
+         */
+        val date: String? = null,
         val note: String? = null,
         /**
          * The SMS sender ID, as the phone receives it (e.g. `AXISBK`,
@@ -45,13 +74,37 @@ object ClassificationEval {
     )
 
     /** A single field's outcome for a single case. */
-    data class FieldOutcome(val field: String, val expected: String?, val actual: String?)
+    data class FieldOutcome(
+        val field: String,
+        val expected: String?,
+        val actual: String?,
+        /** False for a field the corpus does not label (e.g. date on an undated SMS). */
+        val applicable: Boolean = true
+    )
+
+    /**
+     * Field-aware equality. Merchant names are case- and whitespace-insensitive:
+     * `SWIGGY` and `Swiggy` are the same merchant, and a parser is not worse for
+     * preserving the bank's casing. Every other field stays exact.
+     */
+    fun same(field: String, expected: String?, actual: String?): Boolean =
+        if (field == "merchant") normalizeMerchant(expected) == normalizeMerchant(actual)
+        else expected == actual
+
+    fun normalizeMerchant(value: String?): String? =
+        value?.lowercase()?.replace(Regex("\\s+"), " ")?.trim()
+
+    /** Why a case produced no saveable result, when it did not. */
+    enum class Rejection { NONE, ALERT_FILTER, UNRESOLVED_FIELDS, MODEL_VETO, NO_RESULT }
 
     data class CaseResult(
         val case: Case,
         val predicted: SmsExtraction?,
         val fields: List<FieldOutcome>,
-        val exactMatch: Boolean
+        val exactMatch: Boolean,
+        val rejection: Rejection = Rejection.NONE,
+        /** The regex parse, when the case was not skipped; used to score amount/date. */
+        val parsed: ParsedBankMessage? = null
     )
 
     data class FieldAccuracy(
@@ -82,9 +135,17 @@ object ClassificationEval {
          * Cases where the runtime claimed "not a transaction" but the corpus says
          * money did move. This is the most damaging error class: the fusion layer
          * treats such a result as a veto and throws away a good regex parse.
+         *
+         * It also includes the regex path's `ALERT_FILTER` drops; the old
+         * implementation only looked at `predicted.isTransaction == false`, which
+         * the regex path never emits for a skipped row (it returns null), so the
+         * report could print 0 while the corpus contained a dropped HDFC debit.
          */
         fun falseVetoes(): List<CaseResult> = results.filter {
-            it.predicted?.isTransaction == false && it.case.isTransaction
+            it.case.isTransaction && (
+                it.rejection == Rejection.ALERT_FILTER ||
+                    it.rejection == Rejection.MODEL_VETO
+                )
         }
 
         fun format(): String = buildString {
@@ -114,21 +175,33 @@ object ClassificationEval {
         val results = corpus.map { case ->
             // Test harness, so blocking here is fine; production call sites are suspend.
             val predicted = runBlocking { classifier.extract(case.body, DEFAULT_CATEGORIES) }
+            val rejected = predicted == null || !predicted.isTransaction
             val fields = FIELDS.map { field ->
                 FieldOutcome(
                     field = field,
                     expected = expectedValue(case, field),
-                    actual = predicted?.let { actualValue(it, field) }
+                    actual = actualValue(predicted, field, rejected)
                 )
             }
-            CaseResult(case, predicted, fields, fields.all { it.expected == it.actual })
+            val rejection = when {
+                predicted == null -> Rejection.NO_RESULT
+                !predicted.isTransaction && case.isTransaction -> Rejection.MODEL_VETO
+                else -> Rejection.NONE
+            }
+            CaseResult(
+                case = case,
+                predicted = predicted,
+                fields = fields,
+                exactMatch = fields.filter { it.applicable }.all { same(it.field, it.expected, it.actual) },
+                rejection = rejection
+            )
         }
 
         val perField = FIELDS.map { field ->
             val outcomes = results.flatMap { it.fields }.filter { it.field == field }
             FieldAccuracy(
                 field = field,
-                correct = outcomes.count { it.expected == it.actual },
+                correct = outcomes.count { same(it.field, it.expected, it.actual) },
                 total = outcomes.size
             )
         }
@@ -152,14 +225,33 @@ object ClassificationEval {
         else -> null
     }
 
-    private fun actualValue(prediction: SmsExtraction, field: String): String? = when (field) {
-        "isTransaction" -> prediction.isTransaction.toString()
-        "type" -> prediction.type?.name
-        "category" -> prediction.category
-        "merchant" -> prediction.merchant
-        "subscription" -> prediction.isSubscription.toString()
-        else -> null
+    private fun actualValue(prediction: SmsExtraction?, field: String, rejected: Boolean): String? {
+        // A correct rejection is an answer, not a missing answer. The pipeline
+        // saves nothing for a non-transaction, so `false`/null/Other is what the
+        // database would hold; scoring it as a null miss made every correct OTP
+        // rejection look like a failure and made the headline number meaningless.
+        if (rejected) {
+            return when (field) {
+                "isTransaction" -> "false"
+                "category" -> "cat_other"
+                "subscription" -> "false"
+                else -> null
+            }
+        }
+        val p = prediction ?: return null
+        return when (field) {
+            "isTransaction" -> p.isTransaction.toString()
+            "type" -> p.type?.name
+            "category" -> p.category
+            "merchant" -> p.merchant
+            "subscription" -> p.isSubscription.toString()
+            else -> null
+        }
     }
+
+    /** Canvas amounts are doubled; compare them with paise precision, never as floats. */
+    fun formatAmount(value: Double): String =
+        BigDecimal.valueOf(value).setScale(2, RoundingMode.HALF_UP).toPlainString()
 
     /**
      * Category names as the app seeds them. The classifier is given these at
@@ -215,6 +307,8 @@ object ClassificationEval {
             category = o.optString("category").takeIf { it.isNotBlank() },
             merchant = o.optString("merchant").takeIf { it.isNotBlank() },
             subscription = o.getBoolean("subscription"),
+            amount = o.optDouble("amount").takeIf { !it.isNaN() },
+            date = o.optString("date").takeIf { it.isNotBlank() && it != "null" },
             note = o.optString("note").takeIf { it.isNotBlank() },
             // Blank for most cases, which is a real state rather than missing
             // data: many users bank with institutions we have no parser for, and

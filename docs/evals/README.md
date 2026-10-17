@@ -31,6 +31,31 @@ rather than mis-filing it. Standalone and fused scores can point opposite ways
 device-pass classes and the wave-1–3 bank formats), so CI now re-measures both
 evaluators on the larger set: the regex floor moved 13.8 % → **13.9 %** exact,
 type 95.4 % → **95.8 %**, category 36.9 % → **34.7 %** (`RegexBaselineEvalTest`
+
+**2026-10-16 — the regex floor re-measured on a larger, corrected corpus.** Two
+changes landed together and both moved the number, so read them separately:
+the rail-to-Transfer mapping was removed (a person-to-person counterparty decides
+that category now, and the four NEFT/UPI corpus cases that expect "Other" get it),
+and the eval stopped scoring a missing category as different from `cat_other` —
+the pipeline saves Other when nothing matches, so thirteen rows that were correct
+all along were being counted as misses. The corpus also grew 72 → 82 with the
+families a closed tester's export exposed (reward points, fund NAV notices, card
+offers, SIP debits, person-to-person transfers). Measured: **26/82 (31.7 %) exact,
+type 95.1 %, category 53.7 %, merchant 64.6 %, zero false vetoes** — the fidelity
+fix is most of the jump, and the classification win is the four rail cases plus
+the restored person-to-person one.
+
+**2026-10-17 — the floor was rebuilt after the classification audit.** The old
+number was not parse accuracy: correct rejections were scored as misses, amount
+and date were absent from the corpus, and `falseVetoes()` could not see a
+skipped row. The evaluator now scores seven fields, treats a correct skip as a
+pass, compares merchants case-insensitively, and applies the production category
+resolver. Measured: **80/82 (97.6 %) exact, type 98.8 %, category 100 %,
+merchant 98.8 %, amount 98.8 %, date 100 %, one accepted false veto** — the
+Canara phishing trade-off. The two non-exact cases are that trade-off and a
+flight-booking merchant that is a destination ("Dubai"), deliberately left null.
+The parser fixes behind the move are in handoff 0050.
+
 and `FusedAiEvalTest` print their blocks). The fused rows keep their dated
 measurements: the shipped report carries no verdicts for the newer cases, which
 therefore run model-less in CI.

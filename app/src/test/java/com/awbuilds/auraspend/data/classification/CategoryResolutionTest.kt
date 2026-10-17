@@ -63,7 +63,15 @@ class CategoryResolutionTest {
     @Test
     fun `merchant upi payment keeps its own category over transfer`() {
         assertEquals("cat_food", keywordCategoryFor("UPI/DR/512345/SWIGGY"))
-        assertEquals("cat_transfer", keywordCategoryFor("UPI ref 512345 paid to rahim"))
+        // A rail is routing metadata, not a category (owner's call, 2026-10-16):
+        // "upi", "neft", "imps", "rtgs" and "transfer" no longer map to Transfer,
+        // because that filing hid 43 % of a closed tester's export — including
+        // payments to shops whose category was perfectly readable. A bare rail with
+        // no merchant keyword resolves to *no* category here; the person-to-person
+        // case (rail + a person-shaped counterparty) is decided in
+        // `BankMessageParser.categoryIdFor`, where the direction is known, and is
+        // pinned by `TransferAndInvestmentCategoryTest`.
+        assertNull(keywordCategoryFor("UPI ref 512345 paid to rahim"))
     }
 
     @Test
@@ -91,11 +99,11 @@ class CategoryResolutionTest {
     }
 
     @Test
-    fun `netflix autopay classifies as entertainment pre-fusion`() {
-        // AiSignalFusion promotes this to cat_subscription when the recurring
-        // keyword fires; the raw parser keyword scan stays Entertainment.
+    fun `netflix autopay classifies as a subscription pre-fusion`() {
+        // The parser map and CategoryKeywordMap now agree; AiSignalFusion also
+        // marks the recurring keyword. No layer has to "fix" the other.
         val parsed = BankMessageParser.parse("AutoPay of Rs 499 NETFLIX e-mandate successful")
-        assertEquals("cat_entertainment", parsed.categoryId)
+        assertEquals("cat_subscription", parsed.categoryId)
     }
 
     @Test
@@ -103,5 +111,32 @@ class CategoryResolutionTest {
         val parsed = BankMessageParser.parse("Rs 45000 salary credited to A/c XX1234 NEFT ACME CORP")
         assertEquals("cat_salary", parsed.categoryId)
         assertEquals(TransactionType.INCOME, parsed.type)
+    }
+
+    @Test
+    fun `income rent is not filed as a household bill`() {
+        // The expense keyword map says rent -> Bills. Applying that map to an
+        // income row turned "rent received from tenant" into a bill; income now
+        // goes through its own direction-aware resolver.
+        val parsed = BankMessageParser.parse("Rs 20000 rent received from tenant")
+        assertEquals(TransactionType.INCOME, parsed.type)
+        assertEquals("cat_other", parsed.categoryId)
+    }
+
+    @Test
+    fun `a refund keeps the original merchant category`() {
+        val parsed = BankMessageParser.parse("Rs 999 refunded for cancelled Zomato order")
+        assertEquals(TransactionType.INCOME, parsed.type)
+        assertEquals("cat_food", parsed.categoryId)
+    }
+
+    @Test
+    fun `manual resolution uses the merchant when the parser left category null`() {
+        val parsed = com.awbuilds.auraspend.domain.model.ParsedBankMessage(
+            merchant = "Swiggy",
+            type = TransactionType.EXPENSE,
+            rawMessage = ""
+        )
+        assertEquals("cat_food", TransactionClassifier.resolveCategory(parsed))
     }
 }

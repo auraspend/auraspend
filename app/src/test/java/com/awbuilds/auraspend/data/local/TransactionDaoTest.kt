@@ -206,6 +206,36 @@ class TransactionDaoTest {
         assertEquals(750.0, dao.observeBalance().first(), 0.001)
     }
 
+    @Test
+    fun `own-account transfers never inflate income or expense`() = runBlocking {
+        // A transfer between the user's own accounts is money moving, not
+        // spending or income. Without this exclusion a two-leg transfer inflated
+        // both totals and a one-leg "to self" message inflated spending alone.
+        insert("exp", 500.0, "EXPENSE", start + 1, categoryId = "cat_food")
+        insert("transfer-out", 5_000.0, "EXPENSE", start + 2, categoryId = "cat_transfer")
+        insert("income", 1_000.0, "INCOME", start + 3, categoryId = "cat_salary")
+        insert("transfer-in", 5_000.0, "INCOME", start + 4, categoryId = "cat_transfer")
+
+        val summary = dao.observeSummary(start, end).first()
+        assertEquals(500.0, summary.expense, 0.001)
+        assertEquals(1_000.0, summary.income, 0.001)
+        assertEquals(1, summary.expenseCount)
+        assertEquals(1, summary.incomeCount)
+
+        assertEquals(
+            setOf("cat_food"),
+            dao.observeExpenseByCategory(start, end).first().map { it.categoryId }.toSet()
+        )
+        assertEquals(
+            500.0,
+            dao.observeDailyExpense(start, end).first().sumOf { it.total },
+            0.001
+        )
+        assertEquals(500.0, dao.getTotalByTypeInRange("EXPENSE", start, end).first()!!, 0.001)
+        assertEquals(1_000.0, dao.getTotalByTypeInRange("INCOME", start, end).first()!!, 0.001)
+        assertEquals(500.0, dao.observeBalance().first(), 0.001)
+    }
+
     // ─── GROUP BY categoryId (Daos.kt observeExpenseByCategory) ───────────────
 
     @Test

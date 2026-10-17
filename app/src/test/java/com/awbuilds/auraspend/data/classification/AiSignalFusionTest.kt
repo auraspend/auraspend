@@ -174,4 +174,12 @@ class AiSignalFusionTest {
         val disagree = AiSignalFusion.fuse(parsed(), ai(type = TransactionType.INCOME))
         assertTrue(agree.parsed.confidence > disagree.parsed.confidence)
     }
+
+    @Test
+    fun `an insurance premium is a recurring subscription`() {
+        val parsed = BankMessageParser.parse("Rs 4500 debited towards LIC insurance premium")
+        val fused = AiSignalFusion.fuse(parsed, ai = null)
+        org.junit.Assert.assertTrue("LIC premium should be recurring", fused.isSubscription)
+        org.junit.Assert.assertEquals("cat_subscription", fused.parsed.categoryId)
+    }
 }

@@ -6,6 +6,7 @@ import com.awbuilds.auraspend.domain.model.ParsedBankMessage
 import com.awbuilds.auraspend.domain.model.Transaction
 import com.awbuilds.auraspend.domain.model.TransactionType
 import java.time.LocalDateTime
+import java.time.LocalTime
 import java.util.UUID
 
 object TransactionClassifier {
@@ -36,9 +37,42 @@ object TransactionClassifier {
      * queue row written by a build that did not store it.
      */
     fun classify(rawMessage: String, sender: String? = null): ParsedBankMessage {
-        val routed = routedParse(rawMessage, sender)
-        if (routed?.amount != null && routed.type != null) return routed
-        return BankMessageParser.parse(rawMessage)
+        // Parse globally first, then let the bank parser override only the
+        // fields it actually resolved. The old code returned the routed result
+        // whenever amount and type were non-null, which silently discarded a
+        // merchant, date or category the global parser had already got right.
+        val global = BankMessageParser.parse(rawMessage)
+        return merge(global, routedParse(rawMessage, sender))
+    }
+
+    /**
+     * Merge a routed parse over the global one, non-null field by field.
+     *
+     * The bank parser is a correction layer, not a replacement: a field it did
+     * not resolve must fall through to the global parse. Date is the one field
+     * with a precision rule — a routed parser that only knows the day must not
+     * overwrite a global timestamp that carries the time.
+     */
+    internal fun merge(global: ParsedBankMessage, routed: ParsedBankMessage?): ParsedBankMessage {
+        if (routed == null) return global
+        return ParsedBankMessage(
+            amount = routed.amount ?: global.amount,
+            type = routed.type ?: global.type,
+            merchant = routed.merchant ?: global.merchant,
+            bankName = routed.bankName ?: global.bankName,
+            date = morePreciseDate(routed.date, global.date),
+            note = routed.note ?: global.note,
+            categoryId = routed.categoryId ?: global.categoryId,
+            confidence = maxOf(routed.confidence, global.confidence),
+            rawMessage = global.rawMessage
+        )
+    }
+
+    private fun morePreciseDate(routed: LocalDateTime?, global: LocalDateTime?): LocalDateTime? = when {
+        routed == null -> global
+        global == null -> routed
+        routed.toLocalTime() == LocalTime.MIDNIGHT && global.toLocalTime() != LocalTime.MIDNIGHT -> global
+        else -> routed
     }
 
     /**
@@ -55,6 +89,17 @@ object TransactionClassifier {
             ?: return null
         return boundaryOrNull(TAG) { parser.extract(rawMessage) }
     }
+
+    /**
+     * The category a manual save should start on: the parser's answer, else the
+     * merchant/message resolver, else Other. The triage screen used to stop at
+     * `parsed.categoryId ?: "cat_other"` and disagree with the background
+     * pipeline, which did apply the resolver.
+     */
+    fun resolveCategory(parsed: ParsedBankMessage): String =
+        parsed.categoryId
+            ?: BankMessageParser.categoryIdFor(parsed.rawMessage, parsed.merchant, parsed.type)
+            ?: "cat_other"
 
     fun toTransaction(
         parsed: ParsedBankMessage,

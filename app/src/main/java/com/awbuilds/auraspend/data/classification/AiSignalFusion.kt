@@ -25,31 +25,13 @@ object AiSignalFusion {
     /** Mandates / auto-debit machinery that always implies a recurring charge. */
     private val recurringKeywords = Regex(
         "(?i)\\b(renewal|renews?|auto[- ]?pay(?:ment)?|autopay|nach|e[- ]?mandate|emandate|" +
-            "mandate|standing\\s+instruction|si\\s+debit|recurring|subscription|plan\\s+renewal|billing\\s+cycle)\\b"
-    )
-
-    /**
-     * Services that are subscriptions by identity. Matched against merchant and
-     * note text with token boundaries so "amazon" alone never matches while
-     * "amazon prime" does.
-     */
-    private val subscriptionServices = listOf(
-        "netflix", "spotify", "prime video", "amazon prime", "hotstar", "jiocinema",
-        "sony liv", "zee5", "youtube premium", "youtube music", "google one",
-        "google ai", "icloud", "dropbox", "office 365", "microsoft 365", "adobe",
-        "chatgpt", "openai", "claude", "gemini advanced", "notion", "canva",
-        "duolingo", "gaana", "wynk", "jiosaavn", "audible", "kindle unlimited",
-        "disney+", "crunchyroll", "linkedin premium", "zoom pro", "figma",
-        "lastpass", "1password", "tata play", "times prime", "cult fit"
+            "mandate|standing\\s+instruction|si\\s+debit|recurring|subscription|plan\\s+renewal|billing\\s+cycle|" +
+            "insurance\\s+(?:premium|policy)|lic\\s+(?:insurance|premium))\\b"
     )
 
     /** True when [text] clearly names a subscription service. */
-    fun looksLikeSubscriptionService(text: String?): Boolean {
-        if (text.isNullOrBlank()) return false
-        val haystack = " " + text.lowercase().replace(Regex("[^a-z0-9&+ ]+"), " ")
-            .replace(Regex("\\s+"), " ") + " "
-        return subscriptionServices.any { svc -> haystack.contains(" $svc ") }
-    }
+    fun looksLikeSubscriptionService(text: String?): Boolean =
+        SubscriptionCatalog.match(text) != null
 
     fun fuse(regexParsed: ParsedBankMessage, ai: SmsExtraction?): Fused {
         val base = regexParsed
@@ -69,7 +51,8 @@ object AiSignalFusion {
             else -> base.type
         }
 
-        val recurringByKeyword = recurringKeywords.containsMatchIn(base.rawMessage)
+        val recurringByKeyword = resolvedType == TransactionType.EXPENSE &&
+            recurringKeywords.containsMatchIn(base.rawMessage)
         val subscriptionMerchant = resolvedType == TransactionType.EXPENSE && (
             looksLikeSubscriptionService(base.merchant) ||
                 (base.merchant == null && looksLikeSubscriptionService(base.note)) ||

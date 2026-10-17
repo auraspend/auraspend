@@ -204,7 +204,10 @@ class ClassificationViewModel(
         _state.update {
             it.copy(
                 parsedMessage = parsed,
-                selectedCategoryId = parsed.categoryId ?: "cat_other",
+                // Same resolver the background pipeline uses. Stopping at
+                // `?: "cat_other"` made the triage screen show Other for a
+                // routed parse whose merchant the resolver could categorise.
+                selectedCategoryId = TransactionClassifier.resolveCategory(parsed),
                 manualAmount = parsed.amount?.let { formatAmount(it) } ?: "",
                 manualNote = parsed.note ?: "",
                 manualType = parsed.type ?: TransactionType.EXPENSE,

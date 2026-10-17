@@ -7,6 +7,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.pager.HorizontalPager
@@ -38,6 +39,7 @@ import com.awbuilds.auraspend.ui.designsystem.AuraCard
 import com.awbuilds.auraspend.ui.designsystem.AuraCardStyle
 import androidx.compose.ui.platform.LocalConfiguration
 import com.awbuilds.auraspend.ui.designsystem.AuraGradients
+import com.awbuilds.auraspend.ui.designsystem.AuraMarkMedallion
 import com.awbuilds.auraspend.ui.designsystem.CurrencyPickerList
 import com.awbuilds.auraspend.ui.designsystem.AuraSpacing
 import kotlinx.coroutines.launch
@@ -289,22 +291,31 @@ private fun OnboardingPageContent(
     ) {
         if (interactive) Spacer(modifier = Modifier.height(AuraSpacing.md))
 
-        // A smaller badge on the interactive page, to leave the 30 rows room.
-        val badgeSize = if (interactive) 72.dp else 148.dp
-        val iconSize = if (interactive) 32.dp else 60.dp
-        Box(
-            modifier = Modifier
-                .size(badgeSize)
-                .clip(CircleShape)
-                .background(AuraGradients.aurora),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                page.icon,
-                contentDescription = null,
-                tint = AuraGradients.onAurora,
-                modifier = Modifier.size(iconSize)
-            )
+        // A smaller mark on the interactive page, to leave the 30 rows room.
+        val badgeSize = if (interactive) 84.dp else 148.dp
+        val iconSize = if (interactive) 20.dp else 30.dp
+        Box {
+            AuraMarkMedallion(size = badgeSize)
+            Box(
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .size(if (interactive) 28.dp else 40.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.surface)
+                    .border(
+                        1.dp,
+                        MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.7f),
+                        CircleShape
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    page.icon,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(iconSize)
+                )
+            }
         }
 
         Spacer(modifier = Modifier.height(if (interactive) AuraSpacing.lg else AuraSpacing.xxxl))
@@ -351,9 +362,12 @@ private fun PageIndicator(currentPage: Int, totalPages: Int) {
                     .height(8.dp)
                     .width(width)
                     .clip(CircleShape)
-                    .background(
-                        if (selected) MaterialTheme.colorScheme.primary
-                        else MaterialTheme.colorScheme.outlineVariant
+                    .then(
+                        if (selected) {
+                            Modifier.background(AuraGradients.aurora)
+                        } else {
+                            Modifier.background(MaterialTheme.colorScheme.outlineVariant)
+                        }
                     )
             )
         }

@@ -21,23 +21,15 @@ object RegexBaselineEval {
         val results = corpus.map { case ->
             // Sender-routed, exactly as production does it: the corpus carries the
             // sender precisely so routing is measured rather than assumed.
-            val classified = classify(case.body, case.sender)
-            val predicted = classified.extraction
-            val fields = FIELDS.map { field ->
-                ClassificationEval.FieldOutcome(
-                    field = field,
-                    expected = expected(case, field),
-                    actual = predicted?.let { actual(it, field) }
-                )
-            }
-            ClassificationEval.CaseResult(case, predicted, fields, fields.all { it.expected == it.actual })
+            score(case, classify(case.body, case.sender))
         }
 
         val perField = FIELDS.map { field ->
-            val outcomes = results.flatMap { it.fields }.filter { it.field == field }
+            val outcomes = results.flatMap { it.fields }
+                .filter { it.field == field && it.applicable }
             ClassificationEval.FieldAccuracy(
                 field = field,
-                correct = outcomes.count { it.expected == it.actual },
+                correct = outcomes.count { ClassificationEval.same(it.field, it.expected, it.actual) },
                 total = outcomes.size
             )
         }
@@ -52,14 +44,21 @@ object RegexBaselineEval {
         )
     }
 
-    private val FIELDS = listOf("isTransaction", "type", "category", "merchant", "subscription")
+    internal val FIELDS = listOf(
+        "isTransaction", "type", "category", "merchant", "subscription", "amount", "date"
+    )
 
     /** Why a case produced no saveable result. The distinction matters when
      *  reading a report: "the alert filter dropped it" and "the parser could not
      *  read a type" are very different problems. */
     enum class SkipReason { NONE, ALERT_FILTER, UNRESOLVED_FIELDS }
 
-    data class Classified(val extraction: com.awbuilds.auraspend.data.ai.SmsExtraction?, val skip: SkipReason)
+    data class Classified(
+        val extraction: com.awbuilds.auraspend.data.ai.SmsExtraction?,
+        val skip: SkipReason,
+        /** The regex parse, even when the row is not saveable; amount/date live here. */
+        val parsed: com.awbuilds.auraspend.domain.model.ParsedBankMessage? = null
+    )
 
     /** Mirrors `SmsPipelineProcessor.processOne` with `ai == null`, and reports
      *  which gate stopped it, exactly as the production pipeline orders them. */
@@ -81,7 +80,7 @@ object RegexBaselineEval {
         ai: com.awbuilds.auraspend.data.ai.SmsExtraction?,
         sender: String? = null
     ): Classified {
-        if (SmsAutoClassifier.isOtpOrAlertMessage(body)) {
+        if (SmsAutoClassifier.isOtpOrAlertMessage(body, sender)) {
             return Classified(null, SkipReason.ALERT_FILTER)
         }
         val parsed = TransactionClassifier.classify(body, sender)
@@ -89,7 +88,7 @@ object RegexBaselineEval {
         // The pipeline skips a row when amount or type is unresolved; scoring that
         // as "no result" keeps the floor honest about what the app can actually save.
         if (fused.parsed.amount == null || fused.parsed.type == null) {
-            return Classified(null, SkipReason.UNRESOLVED_FIELDS)
+            return Classified(null, SkipReason.UNRESOLVED_FIELDS, fused.parsed)
         }
         return Classified(
             com.awbuilds.auraspend.data.ai.SmsExtraction(
@@ -100,7 +99,40 @@ object RegexBaselineEval {
                 isSubscription = fused.isSubscription,
                 confidence = fused.parsed.confidence
             ),
-            SkipReason.NONE
+            SkipReason.NONE,
+            fused.parsed
+        )
+    }
+
+    /**
+     * Score one case. Shared with [FusedAiEval] so the model harness and the
+     * regex floor cannot drift in how they treat a rejection or an undated SMS.
+     */
+    internal fun score(case: ClassificationEval.Case, classified: Classified): ClassificationEval.CaseResult {
+        val fields = FIELDS.map { field ->
+            ClassificationEval.FieldOutcome(
+                field = field,
+                expected = expected(case, field),
+                actual = actual(classified, field),
+                // Only score a date the corpus actually states. An undated
+                // message may legitimately resolve to "today" from wording
+                // like "pay today"; that is not a parse error.
+                applicable = field != "date" || case.date != null
+            )
+        }
+        val rejection = when (classified.skip) {
+            SkipReason.ALERT_FILTER -> ClassificationEval.Rejection.ALERT_FILTER
+            SkipReason.UNRESOLVED_FIELDS -> ClassificationEval.Rejection.UNRESOLVED_FIELDS
+            SkipReason.NONE -> ClassificationEval.Rejection.NONE
+        }
+        return ClassificationEval.CaseResult(
+            case = case,
+            predicted = classified.extraction,
+            fields = fields,
+            exactMatch = fields.filter { it.applicable }
+                .all { ClassificationEval.same(it.field, it.expected, it.actual) },
+            rejection = rejection,
+            parsed = classified.parsed
         )
     }
 
@@ -110,29 +142,43 @@ object RegexBaselineEval {
         "category" -> case.category
         "merchant" -> case.merchant
         "subscription" -> case.subscription.toString()
+        "amount" -> case.amount?.let(ClassificationEval::formatAmount)
+        "date" -> case.date
         else -> null
     }
 
     private fun actual(
-        prediction: com.awbuilds.auraspend.data.ai.SmsExtraction,
+        classified: Classified,
         field: String
-    ): String? = when (field) {
-        "isTransaction" -> prediction.isTransaction.toString()
-        "type" -> prediction.type?.name
-        "category" -> prediction.category
-        "merchant" -> prediction.merchant
-        "subscription" -> prediction.isSubscription.toString()
-        else -> null
+    ): String? {
+        // A skip is a verdict, not a missing value. A non-transaction the
+        // classifier correctly rejected must score as a pass; a transaction it
+        // dropped must score as a failure with a reason attached.
+        if (classified.skip != SkipReason.NONE) {
+            return when (field) {
+                "isTransaction" -> "false"
+                "category" -> "cat_other"
+                "subscription" -> "false"
+                else -> null
+            }
+        }
+        val prediction = classified.extraction ?: return null
+        return when (field) {
+            "isTransaction" -> prediction.isTransaction.toString()
+            "type" -> prediction.type?.name
+            // A missing category is not a different answer from "Other": the pipeline
+            // saves `cat_other` when nothing matches (TransactionClassifier and
+            // SmsAutoClassifier both fall back to it), so comparing the intermediate
+            // null against a corpus that labelled the saved outcome as `cat_other`
+            // counted a correct result as a miss.
+            "category" -> ClassificationEval.savedCategory(prediction.category)
+            "merchant" -> prediction.merchant
+            "subscription" -> prediction.isSubscription.toString()
+            "amount" -> classified.parsed?.amount?.let(ClassificationEval::formatAmount)
+            "date" -> classified.parsed?.date?.toLocalDate()?.toString()
+            else -> null
+        }
     }
-
-    /**
-     * True for a message the hard fraud veto will always block, whether or not it
-     * is genuine. Lets the report separate "a bug we should fix" from "a trade-off
-     * we chose", instead of lumping both under "dropped".
-     */
-    fun isFraudLineVeto(body: String): Boolean =
-        SmsAutoClassifier.isOtpOrAlertMessage(body) &&
-            !Regex("(?i)otp").containsMatchIn(body)
 
     /** Categories the seeded defaults expose, so the regex path resolves the same vocabulary. */
     val CATEGORY_IDS: List<String> = defaultCategories.map { it.id }

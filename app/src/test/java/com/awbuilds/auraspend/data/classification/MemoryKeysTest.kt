@@ -54,4 +54,17 @@ class MemoryKeysTest {
         assertEquals("food order", MemoryKeys.fromParsed(null, "Food Order #123"))
         assertNull(MemoryKeys.fromParsed(null, null))
     }
+
+    @Test
+    fun `candidates include the full key and a general first token`() {
+        assertEquals(
+            listOf("swiggy bangalore", "swiggy"),
+            MemoryKeys.candidates("SWIGGY BANGALORE")
+        )
+    }
+
+    @Test
+    fun `candidates for a single token do not duplicate it`() {
+        assertEquals(listOf("swiggy"), MemoryKeys.candidates("SWIGGY"))
+    }
 }

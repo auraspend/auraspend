@@ -7,6 +7,7 @@ import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -76,8 +77,9 @@ fun AuraSkeleton(
 }
 
 /**
- * Consistent empty state: icon medallion, title, one sentence, optional action.
- * Every empty screen should use this so the app speaks with one voice.
+ * Consistent empty state: the illustrated terracotta mark, title, one sentence,
+ * optional action. The feature's own [icon] rides as a small badge on the mark,
+ * so every empty screen speaks with one visual voice without losing its meaning.
  */
 @Composable
 fun AuraEmptyState(
@@ -95,19 +97,24 @@ fun AuraEmptyState(
             .padding(horizontal = AuraSpacing.xxl, vertical = AuraSpacing.xxxl),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Box(
-            modifier = Modifier
-                .size(72.dp)
-                .clip(CircleShape)
-                .background(scheme.primary.copy(alpha = 0.10f)),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                tint = scheme.primary,
-                modifier = Modifier.size(32.dp)
-            )
+        Box {
+            AuraMarkMedallion(size = 104.dp)
+            Box(
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .size(32.dp)
+                    .clip(CircleShape)
+                    .background(scheme.surface)
+                    .border(1.dp, scheme.outlineVariant.copy(alpha = 0.7f), CircleShape),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = scheme.primary,
+                    modifier = Modifier.size(17.dp)
+                )
+            }
         }
         Spacer(modifier = Modifier.height(AuraSpacing.lg))
         Text(

@@ -1,7 +1,7 @@
-What's new in 0.1.5
+What's new in 0.1.6
 
-• Optional app lock: a 4-digit PIN, with fingerprint or face unlock.
-• The database is now encrypted at rest — unreadable without your device.
-• "Forgot PIN" erases everything, so a lost PIN never locks you out.
-• Turn it on in Settings → Security; change the PIN there too.
-• Existing records carry over unchanged when you update.
+• A fresh terracotta look with softer shapes and new type.
+• Smarter SMS classification: fewer wrong entries, better merchant names, and HDFC "if not you" debits are no longer dropped.
+• Own-account transfers no longer count as spending; batched debit/credit messages book the primary movement.
+• SIP and mutual-fund debits are investments, and corrections now teach future messages.
+• Broader SMS scanning, with a safety guard for foreign-currency messages.

@@ -10,6 +10,71 @@ internal APIs.
 
 ## [Unreleased]
 
+## [0.1.6] — 2026-10-17
+
+A visual refresh plus a classification-correctness release. No schema change and
+no change to the encrypted database — existing rows carry over unchanged.
+
+### Changed
+
+- **Terracotta visual identity** — warm clay palette, Manrope/Fraunces type,
+  softer shapes, an illustrated clay-pot mark and one gradient hero per screen.
+  UI only: no behaviour, data flow, schema or navigation change (handoff 0048).
+- **Classification accuracy re-measured honestly** — the golden corpus now
+  scores amount and date and counts correct rejections as passes. Measured:
+  **80/82 exact (97.6 %), type 98.8 %, category 100 %, merchant 98.8 %,
+  amount 98.8 %, date 100 %**. The one accepted false veto is the documented
+  Canara phishing trade-off. 616 tests (handoff 0050).
+
+### Fixed
+
+- **Informational messages are no longer saved as transactions.** Reward and
+  loyalty points, mutual-fund NAV notices, card offers and expiry reminders all
+  carried an amount plus a word the movement lexicon knows ("points have been
+  credited"), so the amount+verb rescue kept them — several were booked as
+  income. They are vetoed now, with the load-bearing rule that **a completed
+  debit outranks every informational phrase**: a purchase that merely earns
+  points or mentions an offer stays a purchase.
+- **Payment rails are not categories.** `upi`, `neft`, `imps`, `rtgs` and
+  `transfer` were category cues, which filed 43 % of a closed tester's export
+  under "Transfer" — including payments to shops whose category was perfectly
+  readable. A rail decides nothing by itself now; a rail with a person-shaped
+  counterparty is a person-to-person transfer, where **money received is income
+  and money sent is an expense**.
+- **Mutual-fund and SIP debits are investments**, and a fund's NAV can no longer
+  become the merchant.
+- **Payee names survive the compact "Refno" form** (as well as RRN and UTR),
+  which used to leave a digit run that was rejected as an account-number
+  fragment — taking the counterparty with it.
+- **HDFC's "If not you" tail no longer drops a genuine debit.** The alert filter
+  now takes the sender into account; unknown senders keep the hard phishing veto.
+- **Sender routing merges over the global parse.** A per-bank parser can no
+  longer blank a merchant or date the global parser already resolved (single-line
+  Axis, Canara NEFT).
+- **Own-account transfers are excluded from every total.** A transfer no longer
+  inflates spending or income, and "transfer to self" is not booked as a purchase.
+- **Batched debit/credit SMS book the primary movement** instead of dropping the
+  whole message.
+- **Merchant extraction:** names with digits, masked accounts, salary NEFT,
+  refunds, autopay and subscription services are handled; junk clauses are
+  rejected.
+- **Category policy:** income is resolved separately from expenses, streaming
+  services agree across both maps, insurance premiums recur, and manual triage
+  uses the same resolver as the background pipeline.
+- **Corrections teach future messages.** Detail-screen edits learn, memory
+  generalises location suffixes, and a remembered category no longer suppresses
+  recurring detection.
+- **Broader SMS ingest** — rupee-only, ledger and sender-based markers. Foreign
+  currency is no longer booked as rupees; it is surfaced as unrecognized until
+  per-transaction currency exists.
+
+### Notes
+
+- The release-store screenshots/icon/feature graphic still carry the pre-0.1.6
+  purple brand by owner decision; the app itself uses the terracotta UI.
+- No database migration. The encrypted database and every existing row are
+  untouched.
+
 ## [0.1.5] — 2026-10-15
 
 A privacy release: the top two items of the improvement list, as separate PRs

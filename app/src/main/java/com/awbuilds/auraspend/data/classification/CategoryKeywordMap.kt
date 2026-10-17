@@ -93,6 +93,10 @@ object CategoryKeywordMap {
         "google one" to "cat_subscription",
         "disney" to "cat_subscription",
         "prime video" to "cat_subscription",
+        "sony liv" to "cat_subscription",
+        "zee5" to "cat_subscription",
+        "gaana" to "cat_subscription",
+        "jiocinema" to "cat_subscription",
         // Healthcare
         "hospital" to "cat_healthcare",
         "pharmacy" to "cat_healthcare",

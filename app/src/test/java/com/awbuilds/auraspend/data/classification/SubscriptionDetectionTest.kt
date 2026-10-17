@@ -99,6 +99,21 @@ class SubscriptionDetectionTest {
         assertFalse(fused.isSubscription)
     }
 
+    @Test
+    fun `an auto-debit word on a credit is not a subscription`() {
+        val fused = AiSignalFusion.fuse(
+            ParsedBankMessage(
+                amount = 649.0,
+                type = com.awbuilds.auraspend.domain.model.TransactionType.INCOME,
+                merchant = "Netflix",
+                confidence = 0.85f,
+                rawMessage = "Rs 649 credited after auto-debit reversal"
+            ),
+            ai = null
+        )
+        assertFalse(fused.isSubscription)
+    }
+
     // ─── SMS filter layer ────────────────────────────────────────────────────
 
     @Test

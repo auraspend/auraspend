@@ -40,26 +40,30 @@ class SmsAiEnricher(
         classified: ClassifiedSms,
         categoryIdByName: Map<String, String>
     ): ClassifiedSms {
-        // 1. Memory fast path.
-        if (memory != null) {
-            memory.lookup(classified.parsed.merchant, classified.parsed.note)?.let { hit ->
-                val rememberedType = hit.type?.let { type ->
-                    runCatching { TransactionType.valueOf(type) }.getOrNull()
-                }
-                return classified.copy(
-                    parsed = classified.parsed.copy(
-                        categoryId = hit.categoryId,
-                        type = classified.parsed.type ?: rememberedType,
-                        confidence = maxOf(classified.parsed.confidence, MEMORY_CONFIDENCE)
-                    ),
-                    isSubscription = hit.categoryId == "cat_subscription"
-                )
+        // 1. Memory fills the category/type, but it must not return early:
+        //    recurring-keyword detection still has to run. A remembered
+        //    Entertainment category used to suppress "AutoPay ... NETFLIX"
+        //    from the Subscriptions screen for ever.
+        val remembered = memory?.lookup(classified.parsed.merchant, classified.parsed.note)
+        val base = if (remembered != null) {
+            val rememberedType = remembered.type?.let { type ->
+                runCatching { TransactionType.valueOf(type) }.getOrNull()
             }
+            classified.parsed.copy(
+                categoryId = remembered.categoryId,
+                type = classified.parsed.type ?: rememberedType,
+                confidence = maxOf(classified.parsed.confidence, MEMORY_CONFIDENCE)
+            )
+        } else {
+            classified.parsed
         }
 
         // 2. LLM fusion when available; regex-only fusion otherwise. Both paths apply
-        //    recurring-keyword / known-subscription-service detection.
-        val runtime = classifier
+        //    recurring-keyword / known-subscription-service detection. A memory
+        //    hit deliberately skips the model call (the original fast-path
+        //    promise) but still runs the fusion, so recurring detection is not
+        //    switched off by a remembered category.
+        val runtime = if (remembered == null) classifier else null
         val ai = if (runtime != null) {
             try {
                 runtime.extract(classified.sms.body, categoryIdByName)
@@ -72,8 +76,16 @@ class SmsAiEnricher(
             }
         } else null
 
-        val fused = AiSignalFusion.fuse(classified.parsed, ai)
-        return classified.copy(parsed = fused.parsed, isSubscription = fused.isSubscription)
+        val fused = AiSignalFusion.fuse(base, ai)
+        // The user's remembered category wins over the fusion's
+        // "subscription -> cat_subscription" rewrite, but the recurring flag is
+        // kept. That is the difference between "this is how I file it" and
+        // "stop telling me it recurs".
+        val finalCategory = remembered?.categoryId ?: fused.parsed.categoryId
+        return classified.copy(
+            parsed = fused.parsed.copy(categoryId = finalCategory),
+            isSubscription = fused.isSubscription || finalCategory == "cat_subscription"
+        )
     }
 
     private companion object {

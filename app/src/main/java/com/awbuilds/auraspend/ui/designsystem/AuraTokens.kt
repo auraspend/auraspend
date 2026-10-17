@@ -17,7 +17,7 @@ import androidx.compose.ui.unit.sp
 import com.awbuilds.auraspend.ui.theme.AuroraGradientEnd
 import com.awbuilds.auraspend.ui.theme.AuroraGradientMid
 import com.awbuilds.auraspend.ui.theme.AuroraGradientStart
-import com.awbuilds.auraspend.ui.theme.PlusJakartaSans
+import com.awbuilds.auraspend.ui.theme.Manrope
 
 /**
  * Aurora spacing scale — a strict 4dp grid. Screens must not invent one-off
@@ -41,15 +41,15 @@ object AuraSpacing {
 }
 
 /**
- * Aurora motion tokens. All animation specs come from here so the app feels
+ * Terracotta motion tokens. All animation specs come from here so the app feels
  * like one product instead of a collection of screens.
  */
 object AuraMotion {
     const val DURATION_QUICK = 150
     const val DURATION_STANDARD = 220
-    const val DURATION_EMPHASIZED = 300
-    const val DURATION_SLOW = 600
-    const val DURATION_CHART = 800
+    const val DURATION_EMPHASIZED = 320
+    const val DURATION_SLOW = 620
+    const val DURATION_CHART = 820
 
     /** No-overshoot settle: default for layout and content changes. */
     fun <T> standard(): SpringSpec<T> =
@@ -57,7 +57,7 @@ object AuraMotion {
 
     /** Playful but controlled: selection, indicators, chips. */
     fun <T> expressive(): SpringSpec<T> =
-        spring(dampingRatio = 0.72f, stiffness = Spring.StiffnessMedium)
+        spring(dampingRatio = 0.78f, stiffness = Spring.StiffnessMedium)
 
     /** Immediate feedback: press states and toggles. */
     fun <T> snappy(): SpringSpec<T> =
@@ -72,9 +72,9 @@ object AuraMotion {
         tween<T>(durationMillis, easing = FastOutSlowInEasing)
 }
 
-/** Aurora brand brushes. */
+/** Terracotta brand brushes. */
 object AuraGradients {
-    /** Signature aurora sweep — violet → purple → teal. */
+    /** Signature terracotta sweep — clay → ember → sand. */
     val aurora: Brush = Brush.linearGradient(
         colors = listOf(AuroraGradientStart, AuroraGradientMid, AuroraGradientEnd)
     )
@@ -86,6 +86,11 @@ object AuraGradients {
             AuroraGradientMid.copy(alpha = 0.86f),
             AuroraGradientEnd.copy(alpha = 0.82f)
         )
+    )
+
+    /** Diagonal sunset sweep for hero cards and the splash mark. */
+    val sunrise: Brush = Brush.linearGradient(
+        colors = listOf(AuroraGradientStart, AuroraGradientMid, AuroraGradientEnd)
     )
 
     /** Faint vertical wash used behind hero content. */
@@ -111,7 +116,7 @@ object AuraGradients {
  */
 object AuraType {
     val moneyHero = TextStyle(
-        fontFamily = PlusJakartaSans,
+        fontFamily = Manrope,
         fontWeight = FontWeight.Bold,
         fontSize = 40.sp,
         lineHeight = 46.sp,
@@ -120,7 +125,7 @@ object AuraType {
     )
 
     val moneyLarge = TextStyle(
-        fontFamily = PlusJakartaSans,
+        fontFamily = Manrope,
         fontWeight = FontWeight.Bold,
         fontSize = 28.sp,
         lineHeight = 34.sp,
@@ -129,7 +134,7 @@ object AuraType {
     )
 
     val moneyMedium = TextStyle(
-        fontFamily = PlusJakartaSans,
+        fontFamily = Manrope,
         fontWeight = FontWeight.SemiBold,
         fontSize = 18.sp,
         lineHeight = 24.sp,
@@ -137,16 +142,29 @@ object AuraType {
     )
 
     val moneySmall = TextStyle(
-        fontFamily = PlusJakartaSans,
+        fontFamily = Manrope,
         fontWeight = FontWeight.SemiBold,
         fontSize = 15.sp,
         lineHeight = 20.sp,
         fontFeatureSettings = "tnum"
     )
 
+    /**
+     * Keypad digits. Deliberately Manrope with tabular figures rather than the
+     * display serif: Fraunces uses old-style (text) figures, so a 0-9 pad set in
+     * it has uneven heights and reads as a gimmick rather than a keypad.
+     */
+    val keypadDigit = TextStyle(
+        fontFamily = Manrope,
+        fontWeight = FontWeight.SemiBold,
+        fontSize = 24.sp,
+        lineHeight = 30.sp,
+        fontFeatureSettings = "tnum"
+    )
+
     /** Small uppercase label used above metrics. */
     val metricLabel = TextStyle(
-        fontFamily = PlusJakartaSans,
+        fontFamily = Manrope,
         fontWeight = FontWeight.Medium,
         fontSize = 12.sp,
         lineHeight = 16.sp,

@@ -101,4 +101,22 @@ class SmsMovementVerbRescueTest {
             "It will be debited on 01-11-26."
         assertTrue(SmsAutoClassifier.isOtpOrAlertMessage(message))
     }
+
+    @Test
+    fun `a known bank's own if-not-you tail does not veto a completed debit`() {
+        // HDFC appends "If not you, call your bank." to ordinary UPI debits.
+        // The body-only veto could not tell that from a phishing lure; the sender
+        // is the context that can, and it is already used to choose a parser.
+        val message = "Dear UPI user A/C X1234 debited by Rs.200.00 on 12Mar26 " +
+            "trf to SURESH MENON Refno 123456789012. If not you, call your bank."
+        assertFalse(SmsAutoClassifier.isOtpOrAlertMessage(message, "CP-HDFCBK-S"))
+    }
+
+    @Test
+    fun `the same if-not-you tail from an unknown sender is still vetoed`() {
+        val message = "Dear UPI user A/C X1234 debited by Rs.200.00 on 12Mar26 " +
+            "trf to SURESH MENON Refno 123456789012. If not you, call your bank."
+        assertTrue(SmsAutoClassifier.isOtpOrAlertMessage(message, "9876543210"))
+    }
+
 }

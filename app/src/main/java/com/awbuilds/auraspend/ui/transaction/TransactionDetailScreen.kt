@@ -23,6 +23,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ClipEntry
 import androidx.compose.ui.platform.LocalClipboard
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.res.stringResource
@@ -30,12 +31,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.awbuilds.auraspend.AuraSpendApp
 import com.awbuilds.auraspend.R
 import com.awbuilds.auraspend.core.AuraLog
 import com.awbuilds.auraspend.core.boundary
 import com.awbuilds.auraspend.core.boundaryOrNull
 import com.awbuilds.auraspend.data.classification.BankMessageParser
 import com.awbuilds.auraspend.data.local.SmsMessageLookup
+import com.awbuilds.auraspend.data.local.entities.ClassificationMemoryEntity
 import com.awbuilds.auraspend.data.local.entities.SmsMessageEntity
 import com.awbuilds.auraspend.domain.model.Category
 import com.awbuilds.auraspend.domain.model.Transaction
@@ -47,12 +50,13 @@ import com.awbuilds.auraspend.ui.designsystem.AuraCardStyle
 import com.awbuilds.auraspend.ui.designsystem.AuraEmptyState
 import com.awbuilds.auraspend.ui.designsystem.AuraErrorBanner
 import com.awbuilds.auraspend.ui.designsystem.AuraErrorState
+import com.awbuilds.auraspend.ui.designsystem.AuraGradients
 import com.awbuilds.auraspend.ui.designsystem.AuraSpacing
 import com.awbuilds.auraspend.ui.designsystem.AuraType
 import com.awbuilds.auraspend.ui.designsystem.AnimatedMoney
 import com.awbuilds.auraspend.ui.designsystem.CategoryAvatar
 import com.awbuilds.auraspend.ui.designsystem.formatMoney
-import com.awbuilds.auraspend.ui.theme.extendedColors
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.time.Instant
@@ -75,6 +79,24 @@ fun TransactionDetailScreen(
     onOpenTransaction: (String) -> Unit = {}
 ) {
     val scope = rememberCoroutineScope()
+    val context = LocalContext.current
+    // A category correction on a saved row is the strongest user signal in the
+    // app, and it used to be ignored: only triage saves fed the classifier. Learn
+    // it here so the next message from the same merchant starts in the right
+    // category.
+    val learnCategory: (Transaction) -> Unit = { transaction ->
+        val app = context.applicationContext as? AuraSpendApp
+        if (app != null) {
+            scope.launch(Dispatchers.IO) {
+                runCatching {
+                    app.classificationMemory.learn(
+                        transaction,
+                        ClassificationMemoryEntity.SOURCE_USER_SAVE
+                    )
+                }
+            }
+        }
+    }
     val snackbarHostState = remember { SnackbarHostState() }
     val transactionUpdatedMessage = stringResource(R.string.txn_detail_updated)
     val duplicatedMessage = stringResource(R.string.txn_detail_duplicated)
@@ -200,6 +222,9 @@ fun TransactionDetailScreen(
                                 true
                             }
                             if (saved) {
+                                if (updated.categoryId != current.categoryId) {
+                                    learnCategory(updated)
+                                }
                                 transaction = updated
                                 editing = false
                                 snackbarMessage(transactionUpdatedMessage)
@@ -331,6 +356,7 @@ fun TransactionDetailScreen(
                                                 true
                                             }
                                             if (saved) {
+                                                learnCategory(updated)
                                                 transaction = updated
                                                 snackbarMessage(transactionUpdatedMessage)
                                             } else {
@@ -387,7 +413,7 @@ private fun TransactionDetails(
     onPickCategory: () -> Unit,
     onDuplicate: () -> Unit
 ) {
-    val extended = MaterialTheme.extendedColors
+    val isExpense = transaction.type == TransactionType.EXPENSE
     val context = androidx.compose.ui.platform.LocalContext.current
     val shareText = remember(transaction) {
         listOfNotNull(
@@ -396,8 +422,6 @@ private fun TransactionDetails(
             transaction.date.format(DateTimeFormatter.ofPattern("d MMM yyyy"))
         ).joinToString(" · ")
     }
-    val isExpense = transaction.type == TransactionType.EXPENSE
-    val amountColor = if (isExpense) extended.expenseAmount else extended.incomeAmount
     val dateFormatter = remember { DateTimeFormatter.ofPattern("EEEE, d MMM yyyy · h:mm a") }
 
     Column(
@@ -408,7 +432,7 @@ private fun TransactionDetails(
     ) {
         Spacer(modifier = Modifier.height(AuraSpacing.md))
 
-        AuraCard(style = AuraCardStyle.Tonal, modifier = Modifier.fillMaxWidth()) {
+        AuraCard(style = AuraCardStyle.Hero, modifier = Modifier.fillMaxWidth()) {
             // The category is the one field people correct most; tapping the
             // hero opens the picker instead of the full editor.
             Row(
@@ -428,12 +452,12 @@ private fun TransactionDetails(
                     Text(
                         category?.name ?: stringResource(R.string.txn_detail_uncategorized),
                         style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.onSurface
+                        color = AuraGradients.onAurora
                     )
                     Text(
                         if (isExpense) stringResource(R.string.txn_detail_type_expense) else stringResource(R.string.txn_detail_type_income),
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = AuraGradients.onAurora.copy(alpha = 0.78f)
                     )
                 }
             }
@@ -441,14 +465,14 @@ private fun TransactionDetails(
             AnimatedMoney(
                 amount = if (isExpense) -transaction.amount else transaction.amount,
                 style = AuraType.moneyHero,
-                color = amountColor,
+                color = AuraGradients.onAurora,
                 signed = true
             )
             Spacer(modifier = Modifier.height(AuraSpacing.xs))
             Text(
                 transaction.date.atZone(ZoneId.systemDefault()).format(dateFormatter),
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = AuraGradients.onAurora.copy(alpha = 0.78f)
             )
         }
 

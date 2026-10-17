@@ -352,7 +352,7 @@ private fun KeypadKey(
         } else {
             Text(
                 label,
-                style = MaterialTheme.typography.headlineSmall,
+                style = AuraType.keypadDigit,
                 color = MaterialTheme.colorScheme.onSurface,
                 textAlign = TextAlign.Center
             )
@@ -374,7 +374,7 @@ private fun CategoryChip(
     AuraCard(
         modifier = Modifier.width(96.dp),
         style = if (selected) AuraCardStyle.Tonal else AuraCardStyle.Filled,
-        shape = CircleShape,
+        shape = RoundedCornerShape(20.dp),
         contentPadding = PaddingValues(0.dp),
         onClick = onClick
     ) {

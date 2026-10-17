@@ -2,11 +2,14 @@
 <resources>
     <!--
       Pre-Compose window colors only. The live Aurora palette lives in
-      ui/theme/Color.kt; keep these in sync with AuroraBackground (light/dark).
+      ui/theme/Color.kt; keep these in sync with the terracotta values
+      (LightBackground #FCF7F2, DarkBackground #17110D, LightPrimary #A64B2A).
+      colorAccent also tints system dialogs (e.g. the notification permission
+      prompt), so a stale value shows the old brand outside the app's own UI.
     -->
-    <color name="aura_window_background">#FAF7FD</color>
-    <color name="aura_window_background_dark">#14101C</color>
-    <color name="aura_primary">#5E3A8B</color>
+    <color name="aura_window_background">#FCF7F2</color>
+    <color name="aura_window_background_dark">#17110D</color>
+    <color name="aura_primary">#A64B2A</color>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
 </resources>
