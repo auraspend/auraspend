@@ -24,11 +24,17 @@ later.
 It has the recommended title, short description, a 3,270-character long
 description, the ASO rationale and the remaining gaps.
 
-| Field | Recommended | Current Play Console (0.1.1) |
+| Field | Current Play Console | Notes |
 |---|---|---|
-| Title (30) | `AuraSpend: SMS Expense Tracker` (30) | `AuraSpend: Expense Tracker` (26) |
-| Short (80) | `Offline expense tracker: budgets, subscriptions, insights. No ads, no tracking.` (79) | same |
-| Full (4000) | 3,270 chars in `play-listing-en-US.md` | 2,355 chars, **not versioned in this repo** |
+| Title (30) | `AuraSpend: SMS Expense Tracker` (30) | Updated 2026-10-17 from the 26-char brand title |
+| Short (80) | `Offline expense tracker: budgets, subscriptions, insights. No ads, no tracking.` (79) | unchanged |
+| Full (4000) | 2,355 chars, **not versioned in this repo** | paste the 3,270-char copy from `play-listing-en-US.md` |
+
+Play's public API exposes the title, short/full description and video only
+([`edits.listings`](https://developers.google.com/android-publisher/api-ref/rest/v3/edits.listings));
+the store **tags** are a Play Console field and are not exposed by the API.
+Set them manually (suggested: Budgeting, Expense tracking, Personal finance,
+Money management, SMS).
 
 The 0.1.1 full description was composed directly in the Play Console (handoff
 0017) and never copied back. Until the copy in

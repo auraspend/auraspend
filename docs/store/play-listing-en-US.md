@@ -8,7 +8,9 @@ the Play listing.
 **Last updated:** 2026-10-17
 
 **Release status:** `v0.1.6` (versionCode 8) is uploaded to Play closed testing
-(`alpha`) and sent for review. The first upload (versionCode 7) included the
+(`alpha`) and sent for review. The en-US **title is live** as
+`AuraSpend: SMS Expense Tracker` (30/30); the store **tags** remain a Play
+Console-only field. The first upload (versionCode 7) included the
 terracotta UI and was superseded before production. The tag workflow uploads the
 signed AAB and the `docs/store/whatsnew/` notes, but it does **not** upload the
 listing text below — paste the title, short and full description into the Play

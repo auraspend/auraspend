@@ -3,14 +3,19 @@
 > Read this file and the latest file in `docs/handoffs/` before touching anything.
 > Update both (plus `CLAUDE.md` / `memory/` when you learn something durable) before ending a session.
 >
-> Latest: `docs/handoffs/0053-release-0.1.6-recut.md` — **0.1.6 was re-cut
+> Latest: `docs/handoffs/0054-play-listing-title.md` — the en-US Play title is
+> now `AuraSpend: SMS Expense Tracker` (30/30), updated through the Play API.
+> Play store **tags are not exposed by the public API** (only title/short/full/
+> video and contact details), so they remain a manual Play Console step. No
+> credential, account identity or project name is recorded; the one-off
+> dispatch tooling was removed. The canonical copy remains
+> `docs/store/play-listing-en-US.md`.
+> Before: `docs/handoffs/0053-release-0.1.6-recut.md` — **0.1.6 was re-cut
 > without the terracotta UI**: versionCode 8, tag `v0.1.6` on `8ac8445`, run
 > 39031663532 green; Play alpha + GitHub release (AAB/APK/SHA256SUMS) done.
 > 616 tests; the release APK packages only Plus Jakarta Sans. The app and the
 > store visuals are both pre-terracotta and match. 0052's first 0.1.6 (terracotta,
-> versionCode 7) is superseded. The canonical Play copy is
-> `docs/store/play-listing-en-US.md`; the tag uploads only the AAB + What's New
-> notes, so the listing text still has to be pasted into the Console.
+> versionCode 7) is superseded.
 > Before: `docs/handoffs/0052-release-0.1.6.md` — the superseded first 0.1.6:
 > versionCode 7, tag on `8e87515`, terracotta UI included by mistake. Do not use
 > its artifacts.
