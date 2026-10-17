@@ -155,4 +155,4 @@ object SmsIngestor {
  * filter is a rule worth pinning in a unit test without a ContentResolver.
  */
 internal fun isIngestable(sms: SmsInfo): Boolean =
-    !SmsAutoClassifier.isOtpOrAlertMessage(sms.body)
+    !SmsAutoClassifier.isOtpOrAlertMessage(sms.body, sms.address)

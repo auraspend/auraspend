@@ -93,7 +93,7 @@ class KeywordMapGuardTest {
         // ("NETFLIX SUBSCRIPTION" would resolve to cat_subscription in this table
         // too — "subscription" is the longer key — so the bare service name is the
         // case that shows the divergence.)
-        assertEquals("cat_entertainment", keywordCategoryFor("NETFLIX"))
+        assertEquals("cat_subscription", keywordCategoryFor("NETFLIX"))
         assertEquals("cat_subscription", CategoryKeywordMap.resolve("Netflix", isExpense = true))
         assertEquals("cat_subscription", AiSignalFusion.fuse(
             BankMessageParser.parse("INR 649 debited for NETFLIX SUBSCRIPTION"),

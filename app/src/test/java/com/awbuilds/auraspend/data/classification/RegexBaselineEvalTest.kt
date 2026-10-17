@@ -1,6 +1,7 @@
 package com.awbuilds.auraspend.data.classification
 
 import com.awbuilds.auraspend.data.ai.ClassificationEval
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -22,13 +23,20 @@ import org.junit.Test
  *
  * The corpus also grew 72 → 82 with the families that shipped as phantoms or
  * went uncategorised (reward points, fund NAV notices, card offers, SIP debits,
- * person-to-person transfers). Measured after both changes: **26/82 (31.7 %)
- * exact, type 95.1 %, category 53.7 %, zero false vetoes**.
+ * person-to-person transfers).
  *
- * Exact match is a deliberately harsh metric here: two of the five scored fields
- * (amount, date) are not even in the model's schema, because the regex layer owns
- * them. The per-field breakdown is the readable signal; see
- * [ClassificationEval.Report.format].
+ * **Re-measured 2026-10-17 after the classification audit.** Exact match now
+ * covers **seven** fields, including amount and date; a correct rejection is a
+ * scored pass, not a null miss; merchants compare case-insensitively; and the
+ * production category resolver runs. Result: **80/82 (97.6 %) exact, type 98.8 %,
+ * category 100 %, merchant 98.8 %, amount 98.8 %, date 100 %, one accepted false
+ * veto** (`canara_debit_10000`, the documented phishing trade-off). The two
+ * non-exact cases are that trade-off and a flight-booking merchant that is a
+ * destination, not a payee.
+ *
+ * The floors below are deliberately close to the measurement. A wrong amount is
+ * the most expensive parse error in the app, so it cannot sit outside the score.
+ * See [ClassificationEval.Report.format].
  */
 class RegexBaselineEvalTest {
 
@@ -43,13 +51,29 @@ class RegexBaselineEvalTest {
     @Test
     fun `regex layer does not regress below its measured floor`() {
         assertTrue(
-            "regex-only exact match regressed: ${report.exactMatchPercent}% (floor 30.0%)",
-            report.exactMatchPercent >= 30.0
+            "regex-only exact match regressed: ${report.exactMatchPercent}% (floor 97.0%)",
+            report.exactMatchPercent >= 97.0
         )
         // The fields the regex layer is genuinely responsible for must hold up.
         assertTrue(
-            "type accuracy regressed: ${report.fieldRate("type")}% (floor 92%)",
-            report.fieldRate("type")!! >= 92.0
+            "type accuracy regressed: ${report.fieldRate("type")}% (floor 98%)",
+            report.fieldRate("type")!! >= 98.0
+        )
+        assertTrue(
+            "category accuracy regressed: ${report.fieldRate("category")}% (floor 99%)",
+            report.fieldRate("category")!! >= 99.0
+        )
+        assertTrue(
+            "merchant accuracy regressed: ${report.fieldRate("merchant")}% (floor 98%)",
+            report.fieldRate("merchant")!! >= 98.0
+        )
+        assertTrue(
+            "amount accuracy regressed: ${report.fieldRate("amount")}% (floor 98%)",
+            report.fieldRate("amount")!! >= 98.0
+        )
+        assertTrue(
+            "date accuracy regressed: ${report.fieldRate("date")}% (floor 99%)",
+            report.fieldRate("date")!! >= 99.0
         )
     }
 
@@ -65,26 +89,30 @@ class RegexBaselineEvalTest {
     }
 
     @Test
-    fun `the OTP branch does not drop a real transaction that merely mentions a code`() {
-        // Found by this harness: a genuine debit followed by "Your OTP for this
-        // transaction is ..." was being discarded, because the OTP branch of
-        // isOtpOrAlertMessage returned true unconditionally. The user silently
-        // lost a real transaction.
-        val dropped = report.results.filter { result ->
-            result.case.isTransaction &&
-                result.predicted == null &&
-                RegexBaselineEval.classify(result.case.body).skip ==
-                RegexBaselineEval.SkipReason.ALERT_FILTER &&
-                !RegexBaselineEval.isFraudLineVeto(result.case.body)
-        }
-        if (dropped.isNotEmpty()) {
-            println("Real transactions dropped by the OTP branch (${dropped.size}):")
-            dropped.forEach { println("  - [${it.case.id}] ${it.case.body.take(70)}") }
-        }
+    fun `a correct rejection is scored as a pass, not a null miss`() {
+        val negatives = report.results.filter { !it.case.isTransaction }
+        val wrong = negatives.filter { !it.exactMatch }
         assertTrue(
-            "the OTP branch dropped ${dropped.size} real transactions: " +
-                dropped.map { it.case.id },
-            dropped.isEmpty()
+            "correctly rejected non-transactions were scored as misses: " +
+                wrong.map { it.case.id },
+            wrong.isEmpty()
+        )
+    }
+
+    @Test
+    fun `the alert filter drops no real transaction except the documented phishing trade-off`() {
+        val dropped = report.results.filter {
+            it.case.isTransaction &&
+                it.rejection == ClassificationEval.Rejection.ALERT_FILTER
+        }
+        // The Canara phishing lure is deliberately indistinguishable from a
+        // genuine debit carrying the same "if not done by you" tail. Every other
+        // real transaction must survive the filter — this is the counter the old
+        // `falseVetoes()` could not see because a skip returns null.
+        assertEquals(
+            "real transactions dropped by the alert filter",
+            setOf("canara_debit_10000"),
+            dropped.map { it.case.id }.toSet()
         )
     }
 
@@ -101,8 +129,7 @@ class RegexBaselineEvalTest {
                 ?: error("corpus case $id disappeared")
             assertTrue(
                 "$id should be blocked by the hard veto",
-                RegexBaselineEval.classify(result.case.body).skip ==
-                    RegexBaselineEval.SkipReason.ALERT_FILTER
+                result.rejection == ClassificationEval.Rejection.ALERT_FILTER
             )
         }
     }
@@ -144,9 +171,13 @@ class RegexBaselineEvalTest {
         val otp = RegexBaselineEval.classify("Your OTP is 482913")
         assertTrue(RegexBaselineEval.SkipReason.ALERT_FILTER == otp.skip)
 
-        val noType = RegexBaselineEval.classify("INR 150 debited at SWIGGY and INR 200 credited")
+        // Two amounts with no movement verb: the parser cannot choose a
+        // direction, so this is the unresolved-fields gate, not the alert filter.
+        // (A two-movement SMS with debited/credited now books the first movement;
+        // see TransferAndInvestmentCategoryTest.)
+        val noType = RegexBaselineEval.classify("INR 150 at SWIGGY and INR 200 at ZOMATO")
         assertTrue(
-            "a two-movement SMS should fail the type gate, not the alert filter",
+            "an amount-only SMS should fail the type gate, not the alert filter",
             RegexBaselineEval.SkipReason.UNRESOLVED_FIELDS == noType.skip
         )
 

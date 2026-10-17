@@ -443,11 +443,11 @@ class BankMessageParserTest {
     }
 
     @Test
-    fun `netflix maps to entertainment`() {
+    fun `netflix maps to subscriptions`() {
         val parsed = BankMessageParser.parse(
             "INR 649.00 spent on Credit Card XX5678 at NETFLIX.COM on 23/08/26"
         )
-        assertEquals("cat_entertainment", parsed.categoryId)
+        assertEquals("cat_subscription", parsed.categoryId)
     }
 
     @Test
@@ -491,5 +491,107 @@ class BankMessageParserTest {
         assertEquals(299.0, parsed.amount!!, 0.001)
         assertEquals("Zomato", parsed.merchant)
         assertEquals(TransactionType.EXPENSE, parsed.type)
+    }
+
+    @Test
+    fun `compact day-month-year date parses`() {
+        // HDFC/PNB UPI messages write "12Mar26" with no separators. The
+        // separator-based patterns returned null and the row then fell back to
+        // the save clock, which is the bug handoff 0029 fixed for dashed dates.
+        val parsed = BankMessageParser.parse(
+            "Dear UPI user A/C X1234 debited by Rs.200.00 on 12Mar26 trf to SURESH MENON"
+        )
+        assertEquals(LocalDate.of(2026, 3, 12), parsed.date?.toLocalDate())
+    }
+
+    // ─── Merchant extraction gaps found by the 2026-10-17 audit ───────────────
+
+    @Test
+    fun `merchant with digits survives`() {
+        // The blanket `\d{3,}` rejection treated "SHOP 123" as an account
+        // fragment. Digits are only suspect when they look like a reference.
+        assertEquals("SHOP 123", BankMessageParser.parse("INR 300 debited at SHOP 123").merchant)
+    }
+
+    @Test
+    fun `a bank clause is not a merchant`() {
+        assertNull(
+            BankMessageParser.parse(
+                "Rs.20.00 is credited to Kotak Bank a/c no. 8584 on 20-08-26 as a reversal."
+            ).merchant
+        )
+    }
+
+    @Test
+    fun `salary NEFT names the employer after the rail`() {
+        val merchant = BankMessageParser.parse(
+            "Rs 45000 salary credited to A/c XX1234 NEFT ACME CORP"
+        ).merchant
+        assertTrue("expected ACME CORP, got $merchant", merchant.equals("ACME CORP", ignoreCase = true))
+    }
+
+    @Test
+    fun `refund names the merchant before the order noun`() {
+        assertEquals(
+            "Zomato",
+            BankMessageParser.parse("Rs 999 refunded for cancelled Zomato order").merchant
+        )
+    }
+
+    @Test
+    fun `autopay names the service`() {
+        assertTrue(
+            BankMessageParser.parse("AutoPay of Rs 499 NETFLIX e-mandate successful")
+                .merchant.equals("Netflix", ignoreCase = true)
+        )
+    }
+
+    @Test
+    fun `subscription services are named even without a merchant preposition`() {
+        assertTrue(
+            BankMessageParser.parse("Rs 119 debited for Spotify auto-debit")
+                .merchant.equals("Spotify", ignoreCase = true)
+        )
+        assertTrue(
+            BankMessageParser.parse("Rs 299 charged for Amazon Prime renewal")
+                .merchant.equals("Amazon Prime", ignoreCase = true)
+        )
+        assertTrue(
+            BankMessageParser.parse("Rs 149 charged for iCloud storage")
+                .merchant.equals("iCloud", ignoreCase = true)
+        )
+    }
+
+    @Test
+    fun `insurance product suffix is not part of the merchant`() {
+        assertTrue(
+            BankMessageParser.parse("Rs 4500 debited towards LIC insurance premium")
+                .merchant.equals("LIC", ignoreCase = true)
+        )
+    }
+
+    @Test
+    fun `a masked account is not the merchant on a NEFT credit`() {
+        val parsed = BankMessageParser.parse(
+            "An amount of INR 46,800.00 has been credited to XXXX6021 on 28/06/2026 " +
+                "towards NEFT by Sender ACME SOLUTIONS LIMITED, IFSC HDFC0000240, " +
+                "Sender A/c XXXX1134, HDFC BANK, MUMBAI"
+        )
+        assertEquals("ACME SOLUTIONS LIMITED", parsed.merchant)
+    }
+
+    @Test
+    fun `a foreign-currency spend is not booked as rupees`() {
+        // The parser has no per-transaction currency field yet. Booking USD 10
+        // as INR 10 is worse than leaving the row unread; the pipeline records
+        // it as unrecognized so the user can see it.
+        val body = "USD 10.00 spent using ICICI Bank Card XX8001 on 12-Sep-26 at GOOGLE"
+        assertNull(BankMessageParser.parse(body).amount)
+        assertTrue(SmsAutoClassifier.looksLikeTransaction(body))
+    }
+
+    @Test
+    fun `an account clause is not a merchant`() {
+        assertNull(BankMessageParser.parse("Rs 500 debited from A/c 1234").merchant)
     }
 }

@@ -85,4 +85,36 @@ class TransferAndInvestmentCategoryTest {
         assertEquals("cat_investment", p.categoryId)
         assertNull("a NAV clause must not become the merchant", p.merchant)
     }
+
+    @Test
+    fun `an own-account transfer from one bank to another is not dropped`() {
+        // "transferred from" was missing from the debit lexicon, so the message
+        // came back typeless and the pipeline skipped it even though the money
+        // moved between the user's own accounts.
+        val p = BankMessageParser.parse("Rs 5000 transferred from SBI to your own HDFC account")
+        assertEquals(TransactionType.EXPENSE, p.type)
+        assertEquals("cat_transfer", p.categoryId)
+        assertNull(p.merchant)
+    }
+
+    @Test
+    fun `two movements in one SMS book the first one instead of dropping both`() {
+        // Banks occasionally batch a debit and a credit into one message. The old
+        // ambiguity rule returned null for the whole body; the first movement is
+        // the primary one and is better than losing the spend entirely.
+        val p = BankMessageParser.parse("INR 150 debited at SWIGGY and INR 200 credited as refund")
+        assertEquals(TransactionType.EXPENSE, p.type)
+        assertEquals(150.0, p.amount ?: Double.NaN, 0.001)
+        assertEquals("SWIGGY", p.merchant)
+    }
+
+    @Test
+    fun `a normal debit from your own account is not a transfer`() {
+        // "your own account" is ordinary bank boilerplate on a card/account
+        // debit. Only a transfer verb or an explicit from-to shape makes it a
+        // transfer; otherwise excluding it from spending would hide a purchase.
+        val p = BankMessageParser.parse("Rs 500 debited from your own account at AMAZON")
+        assertEquals(TransactionType.EXPENSE, p.type)
+        org.junit.Assert.assertNotEquals("cat_transfer", p.categoryId)
+    }
 }

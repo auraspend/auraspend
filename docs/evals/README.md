@@ -44,6 +44,18 @@ offers, SIP debits, person-to-person transfers). Measured: **26/82 (31.7 %) exac
 type 95.1 %, category 53.7 %, merchant 64.6 %, zero false vetoes** — the fidelity
 fix is most of the jump, and the classification win is the four rail cases plus
 the restored person-to-person one.
+
+**2026-10-17 — the floor was rebuilt after the classification audit.** The old
+number was not parse accuracy: correct rejections were scored as misses, amount
+and date were absent from the corpus, and `falseVetoes()` could not see a
+skipped row. The evaluator now scores seven fields, treats a correct skip as a
+pass, compares merchants case-insensitively, and applies the production category
+resolver. Measured: **80/82 (97.6 %) exact, type 98.8 %, category 100 %,
+merchant 98.8 %, amount 98.8 %, date 100 %, one accepted false veto** — the
+Canara phishing trade-off. The two non-exact cases are that trade-off and a
+flight-booking merchant that is a destination ("Dubai"), deliberately left null.
+The parser fixes behind the move are in handoff 0050.
+
 and `FusedAiEvalTest` print their blocks). The fused rows keep their dated
 measurements: the shipped report carries no verdicts for the newer cases, which
 therefore run model-less in CI.

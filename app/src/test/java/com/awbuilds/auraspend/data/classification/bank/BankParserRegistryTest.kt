@@ -108,9 +108,9 @@ class BankParserRegistryTest {
     private fun assertTrue(message: String, condition: Boolean) =
         org.junit.Assert.assertTrue(message, condition)
 
-    /** The corpus does not carry an expected amount; derive it from the body. */
+    /** The corpus amount is ground truth; the body fallback is for legacy cases. */
     private fun ClassificationEval.Case.amountForTest(): Double? =
-        Regex("""(?:INR|Rs\.?)\s*([0-9,]+(?:\.\d{1,2})?)""", RegexOption.IGNORE_CASE)
+        amount ?: Regex("""(?:INR|Rs\.?)\s*([0-9,]+(?:\.\d{1,2})?)""", RegexOption.IGNORE_CASE)
             .find(body)
             ?.groupValues?.get(1)
             ?.replace(",", "")

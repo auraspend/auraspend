@@ -70,7 +70,11 @@ interface TransactionDao {
     @Query("SELECT * FROM transactions WHERE type = :type ORDER BY dateTimestamp DESC")
     fun getTransactionsByType(type: String): Flow<List<TransactionEntity>>
 
-    @Query("SELECT SUM(amount) FROM transactions WHERE type = :type AND dateTimestamp BETWEEN :start AND :end")
+    @Query(
+        "SELECT SUM(amount) FROM transactions " +
+            "WHERE type = :type AND dateTimestamp BETWEEN :start AND :end " +
+            "AND categoryId != 'cat_transfer'"
+    )
     fun getTotalByTypeInRange(type: String, start: Long, end: Long): Flow<Double?>
 
     // ─── SQL aggregates (dashboard / activity summaries) ─────────────────────
@@ -83,11 +87,15 @@ interface TransactionDao {
                SUM(CASE WHEN type = 'EXPENSE' THEN 1 ELSE 0 END) AS expenseCount
         FROM transactions
         WHERE dateTimestamp BETWEEN :start AND :end
+          AND categoryId != 'cat_transfer'
         """
     )
     fun observeSummary(start: Long, end: Long): Flow<TransactionSummaryRow>
 
-    @Query("SELECT COALESCE(SUM(CASE WHEN type = 'INCOME' THEN amount ELSE -amount END), 0) FROM transactions")
+    @Query(
+        "SELECT COALESCE(SUM(CASE WHEN type = 'INCOME' THEN amount ELSE -amount END), 0) " +
+            "FROM transactions WHERE categoryId != 'cat_transfer'"
+    )
     fun observeBalance(): Flow<Double>
 
     @Query(
@@ -95,6 +103,7 @@ interface TransactionDao {
         SELECT categoryId, SUM(amount) AS total
         FROM transactions
         WHERE type = 'EXPENSE' AND dateTimestamp BETWEEN :start AND :end
+          AND categoryId != 'cat_transfer'
         GROUP BY categoryId
         """
     )
@@ -105,6 +114,7 @@ interface TransactionDao {
         SELECT date(dateTimestamp / 1000, 'unixepoch', 'localtime') AS day, SUM(amount) AS total
         FROM transactions
         WHERE type = 'EXPENSE' AND dateTimestamp BETWEEN :start AND :end
+          AND categoryId != 'cat_transfer'
         GROUP BY day
         """
     )

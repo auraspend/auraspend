@@ -2,6 +2,7 @@ package com.awbuilds.auraspend.data.classification
 
 import android.content.Context
 import android.provider.Telephony
+import com.awbuilds.auraspend.data.classification.bank.BankParserRegistry
 import com.awbuilds.auraspend.domain.model.ParsedBankMessage
 import com.awbuilds.auraspend.domain.model.Transaction
 import com.awbuilds.auraspend.domain.model.TransactionType
@@ -54,11 +55,32 @@ fun skippedInbox(messages: List<ClassifiedSms>): List<ClassifiedSms> =
 
 object SmsAutoClassifier {
 
-    private val bankKeywords = listOf(
+    internal val bankKeywords = listOf(
         "HDFC", "ICICI", "SBI", "Axis", "Kotak", "Yes Bank",
         "PNB", "Canara", "BOB", "UPI", "credited", "debited",
         "A/c", "account", "transaction", "spent", "paid",
-        "INR", "Rs.", "withdrawal", "deposit", "balance"
+        "INR", "Rs.", "withdrawal", "deposit", "balance",
+        // Recall markers the old 22-word allowlist missed. A rupee-only
+        // message ("₹500 sent to …"), a ledger suffix ("Dr."/"Cr."), a
+        // transfer phrased with "sent/received/transferred", and a foreign
+        // currency all identify a bank message without containing "Rs.".
+        "₹", "Dr.", "Cr.", "sent", "received", "transferred",
+        "USD", "EUR", "GBP", "AED", "SGD"
+    )
+
+    /**
+     * Coarse sender markers for the provider query. The registry still does the
+     * exact routing; this only lets a message from a known bank enter the scan
+     * even when its wording contains none of the body markers above.
+     */
+    internal val bankSenderKeywords = listOf(
+        "HDFC", "ICICI", "SBI", "AXIS", "KOTAK", "CANARA", "PNB", "BARB",
+        "IDFC", "INDUS", "FEDERAL", "YESB", "AUBANK", "BANDHAN", "UNION",
+        "CENTRAL", "SOUTH", "BOI", "INDIAN", "IDBI", "UCO", "KARNATAKA",
+        "CITYUNION", "DHANLAXMI", "DOP", "EQUITAS", "PUNJAB", "UTKARSH",
+        "JK", "HSBC", "AMEX", "ONECARD", "SLICE", "CRED", "LAZYPAY",
+        "JUPITER", "JIOPAY", "AIRTEL", "NSDL", "PLUXEE", "JUSPAY",
+        "CASHFREE", "SARASWAT", "KERALA", "DBS", "IPPB", "JANA"
     )
 
     // Patterns to filter out OTP messages. Structural: an OTP keyword plus a
@@ -244,6 +266,36 @@ object SmsAutoClassifier {
     )
 
     /**
+     * A known bank's own alarm tail: "If not you, call your bank." / "If not done
+     * by you, call 1800…/SMS BLOCK…". The conditional framing is otherwise a hard
+     * veto, but a bank appends this to genuine debits (HDFC's UPI shape is the
+     * corpus case), and the sender ID is the context that separates it from a
+     * phishing lure. The rescue is deliberately narrow: it needs a known sender,
+     * a completed debit, and an instruction (call/SMS/report/block/contact/visit)
+     * **after** the conditional phrase. The Canara phishing case has "report"
+     * before "if not done by you", so it stays vetoed.
+     */
+    private val bankOwnedAlarmTail = Regex(
+        "(?i)\\bif\\s+(?:not\\s+you|not\\s+(?:done\\s+)?by\\s+you|you\\s+(?:have\\s+)?" +
+            "not\\s+(?:done|authorised|initiated))\\b[\\s\\S]{0,100}?" +
+            "\\b(?:call|sms|report|block|contact|visit)\\b"
+    )
+
+    /**
+     * True when [sender] is a bank this app knows, so its own boilerplate is not
+     * treated as an unknown sender's phishing lure. [looksLikeBankSender] covers
+     * the big DLT prefixes; the registry covers the long tail of 54 parsers.
+     */
+    private fun isKnownBankSender(sender: String?): Boolean =
+        !sender.isNullOrBlank() &&
+            (looksLikeBankSender(sender) || BankParserRegistry.parserFor(sender) != null)
+
+    private fun isBankOwnedAlarmTail(message: String, sender: String?): Boolean =
+        isKnownBankSender(sender) &&
+            BankMessageParser.hasDebitVerb(message) &&
+            bankOwnedAlarmTail.containsMatchIn(message)
+
+    /**
      * Converts a parsed message into a savable transaction. All ingestion flows through the
      * persistent Room queue (SmsIngestor -> sms_messages -> SmsPipelineProcessor), which takes
      * messages one at a time — never parse the inbox directly.
@@ -310,8 +362,14 @@ object SmsAutoClassifier {
             Telephony.Sms.Inbox.DATE
         )
 
+        val bodyClause = bankKeywords.joinToString(" OR ") {
+            "${Telephony.Sms.Inbox.BODY} LIKE '%$it%'"
+        }
+        val senderClause = bankSenderKeywords.joinToString(" OR ") {
+            "${Telephony.Sms.Inbox.ADDRESS} LIKE '%$it%'"
+        }
         val selection = buildString {
-            append("(${bankKeywords.joinToString(" OR ") { "${Telephony.Sms.Inbox.BODY} LIKE '%$it%'" }})")
+            append("(($bodyClause) OR ($senderClause))")
             if (sinceTimestamp > 0L) {
                 append(" AND ${Telephony.Sms.Inbox.DATE} > $sinceTimestamp")
             }
@@ -338,6 +396,7 @@ object SmsAutoClassifier {
                 val date = if (dateIdx >= 0) c.getLong(dateIdx) else 0L
 
                 if (looksLikeBankSender(addr) ||
+                    bankSenderKeywords.any { addr.contains(it, ignoreCase = true) } ||
                     bankKeywords.any { body.contains(it, ignoreCase = true) }
                 ) {
                     messages.add(SmsInfo(id = id, address = addr, body = body, timestamp = date))
@@ -361,7 +420,10 @@ object SmsAutoClassifier {
         address.isNotBlank() && bankSenderRegex.containsMatchIn(address.trim())
 
     /** A currency amount written the way banks write it. */
-    private val amountMarker = Regex("""(?:Rs\.?|INR|₹)\s*\d|₹\s*\d|\d+\s*(?:Rs|INR)""")
+    private val amountMarker = Regex(
+        """(?i)(?:Rs\.?|INR|₹|USD|EUR|GBP|AED|SGD|AUD|CAD|JPY|CHF|THB|NPR|LKR|BDT)\s*\d""" +
+            """|\d+\s*(?:Rs|INR|USD|EUR|GBP|AED)"""
+    )
 
     /**
      * True when the message states both an amount and a movement — i.e. it is a
@@ -377,7 +439,7 @@ object SmsAutoClassifier {
     fun looksLikeTransaction(message: String): Boolean =
         amountMarker.containsMatchIn(message) && BankMessageParser.hasMovementVerb(message)
 
-    fun isOtpOrAlertMessage(message: String): Boolean {
+    fun isOtpOrAlertMessage(message: String, sender: String? = null): Boolean {
         // OTPs are skipped — unless the message is really a debit that happens to
         // end in an OTP code. "Spent INR 149 at SWIGGY. Your OTP for this
         // transaction is 445122." is a real transaction, and dropping it silently
@@ -402,7 +464,8 @@ object SmsAutoClassifier {
         // branch below, which keeps its amount+verb rescue.
         if (conditionalFramingPattern.containsMatchIn(message) &&
             !bankAlarmTailPattern.containsMatchIn(message) &&
-            !forwardAndReportTailPattern.containsMatchIn(message)
+            !forwardAndReportTailPattern.containsMatchIn(message) &&
+            !isBankOwnedAlarmTail(message, sender)
         ) {
             return true
         }

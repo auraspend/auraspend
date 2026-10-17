@@ -23,6 +23,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ClipEntry
 import androidx.compose.ui.platform.LocalClipboard
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.res.stringResource
@@ -30,12 +31,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.awbuilds.auraspend.AuraSpendApp
 import com.awbuilds.auraspend.R
 import com.awbuilds.auraspend.core.AuraLog
 import com.awbuilds.auraspend.core.boundary
 import com.awbuilds.auraspend.core.boundaryOrNull
 import com.awbuilds.auraspend.data.classification.BankMessageParser
 import com.awbuilds.auraspend.data.local.SmsMessageLookup
+import com.awbuilds.auraspend.data.local.entities.ClassificationMemoryEntity
 import com.awbuilds.auraspend.data.local.entities.SmsMessageEntity
 import com.awbuilds.auraspend.domain.model.Category
 import com.awbuilds.auraspend.domain.model.Transaction
@@ -53,6 +56,7 @@ import com.awbuilds.auraspend.ui.designsystem.AuraType
 import com.awbuilds.auraspend.ui.designsystem.AnimatedMoney
 import com.awbuilds.auraspend.ui.designsystem.CategoryAvatar
 import com.awbuilds.auraspend.ui.designsystem.formatMoney
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.time.Instant
@@ -75,6 +79,24 @@ fun TransactionDetailScreen(
     onOpenTransaction: (String) -> Unit = {}
 ) {
     val scope = rememberCoroutineScope()
+    val context = LocalContext.current
+    // A category correction on a saved row is the strongest user signal in the
+    // app, and it used to be ignored: only triage saves fed the classifier. Learn
+    // it here so the next message from the same merchant starts in the right
+    // category.
+    val learnCategory: (Transaction) -> Unit = { transaction ->
+        val app = context.applicationContext as? AuraSpendApp
+        if (app != null) {
+            scope.launch(Dispatchers.IO) {
+                runCatching {
+                    app.classificationMemory.learn(
+                        transaction,
+                        ClassificationMemoryEntity.SOURCE_USER_SAVE
+                    )
+                }
+            }
+        }
+    }
     val snackbarHostState = remember { SnackbarHostState() }
     val transactionUpdatedMessage = stringResource(R.string.txn_detail_updated)
     val duplicatedMessage = stringResource(R.string.txn_detail_duplicated)
@@ -200,6 +222,9 @@ fun TransactionDetailScreen(
                                 true
                             }
                             if (saved) {
+                                if (updated.categoryId != current.categoryId) {
+                                    learnCategory(updated)
+                                }
                                 transaction = updated
                                 editing = false
                                 snackbarMessage(transactionUpdatedMessage)
@@ -331,6 +356,7 @@ fun TransactionDetailScreen(
                                                 true
                                             }
                                             if (saved) {
+                                                learnCategory(updated)
                                                 transaction = updated
                                                 snackbarMessage(transactionUpdatedMessage)
                                             } else {

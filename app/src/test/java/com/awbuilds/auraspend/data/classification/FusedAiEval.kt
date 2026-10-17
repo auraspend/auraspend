@@ -54,8 +54,6 @@ object FusedAiEval {
 
     private val PROBABILITY_SEMANTICS = setOf(SEMANTICS_P_TRANSACTION, SEMANTICS_VERDICT_CONFIDENCE)
 
-    private val FIELDS = listOf("isTransaction", "type", "category", "merchant", "subscription")
-
     data class Outcome(
         val runtimeId: String,
         val total: Int,
@@ -99,9 +97,8 @@ object FusedAiEval {
         val destroyed = mutableListOf<String>()
         val rescued = mutableListOf<String>()
         val dropped = mutableMapOf<String, Int>()
-        val outcomes = mutableListOf<Triple<String, String, Boolean>>() // field, expected, ok
 
-        corpus.forEach { case ->
+        val results = corpus.map { case ->
             val ai = aiByCaseId[case.id]
             val fused = RegexBaselineEval.classify(case.body, ai, case.sender)
 
@@ -119,30 +116,20 @@ object FusedAiEval {
                 dropped[key] = (dropped[key] ?: 0) + 1
             }
 
-            val p = fused.extraction
-            FIELDS.forEach { field ->
-                val exp = expected(case, field)
-                val act = p?.let { actual(it, field) }
-                outcomes += Triple(field, exp ?: "\u0000null", exp == act)
-            }
+            RegexBaselineEval.score(case, fused)
         }
 
-        val perField = FIELDS.map { f ->
-            val rows = outcomes.filter { it.first == f }
+        val perField = RegexBaselineEval.FIELDS.map { f ->
+            val rows = results.flatMap { it.fields }
+                .filter { it.field == f && it.applicable }
             ClassificationEval.FieldAccuracy(
                 field = f,
-                correct = rows.count { it.third },
+                correct = rows.count { ClassificationEval.same(it.field, it.expected, it.actual) },
                 total = rows.size
             )
         }
 
-        // Exact match, recomputed per case rather than accumulated per field.
-        var exact = 0
-        corpus.forEach { case ->
-            val fused = RegexBaselineEval.classify(case.body, aiByCaseId[case.id], case.sender)
-            val p = fused.extraction
-            if (FIELDS.all { expected(case, it) == (p?.let { s -> actual(s, it) }) }) exact++
-        }
+        val exact = results.count { it.exactMatch }
 
         return Outcome(
             runtimeId = runtimeId,
@@ -218,21 +205,4 @@ object FusedAiEval {
         )
     }
 
-    private fun expected(case: ClassificationEval.Case, field: String): String? = when (field) {
-        "isTransaction" -> case.isTransaction.toString()
-        "type" -> case.type?.name
-        "category" -> case.category
-        "merchant" -> case.merchant
-        "subscription" -> case.subscription.toString()
-        else -> null
-    }
-
-    private fun actual(p: SmsExtraction, field: String): String? = when (field) {
-        "isTransaction" -> p.isTransaction.toString()
-        "type" -> p.type?.name
-        "category" -> ClassificationEval.savedCategory(p.category)
-        "merchant" -> p.merchant
-        "subscription" -> p.isSubscription.toString()
-        else -> null
-    }
 }

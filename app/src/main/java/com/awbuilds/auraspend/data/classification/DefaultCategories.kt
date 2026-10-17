@@ -229,18 +229,21 @@ val categoryKeywordMap: Map<String, String> = mapOf(
     "maintenance" to "cat_bills",
 
     // Entertainment
-    "netflix" to "cat_entertainment",
-    "prime video" to "cat_entertainment",
-    "amazon prime" to "cat_entertainment",
-    "hotstar" to "cat_entertainment",
-    "disney" to "cat_entertainment",
-    "sony liv" to "cat_entertainment",
-    "sonyliv" to "cat_entertainment",
-    "zee5" to "cat_entertainment",
+    // Streaming services are subscriptions by identity; the same keys in
+    // CategoryKeywordMap already said so. Keeping them Entertainment here made
+    // the final category depend on which layer filled it first.
+    "netflix" to "cat_subscription",
+    "prime video" to "cat_subscription",
+    "amazon prime" to "cat_subscription",
+    "hotstar" to "cat_subscription",
+    "disney" to "cat_subscription",
+    "sony liv" to "cat_subscription",
+    "sonyliv" to "cat_subscription",
+    "zee5" to "cat_subscription",
     "youtube" to "cat_entertainment",
-    "spotify" to "cat_entertainment",
-    "gaana" to "cat_entertainment",
-    "jiocinema" to "cat_entertainment",
+    "spotify" to "cat_subscription",
+    "gaana" to "cat_subscription",
+    "jiocinema" to "cat_subscription",
     "bookmyshow" to "cat_entertainment",
     "pvr" to "cat_entertainment",
     "inox" to "cat_entertainment",

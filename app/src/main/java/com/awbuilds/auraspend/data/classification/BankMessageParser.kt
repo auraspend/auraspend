@@ -245,6 +245,14 @@ object BankMessageParser {
      * The integer part is optional on purpose — banks do print "Rs..6 Credited"
      * and "₹ .50", and skipping those let a later balance figure win the pick.
      */
+    /** A non-INR ISO currency amount. The parser has no per-transaction currency. */
+    private val foreignCurrencyAmount = Regex(
+        """(?i)\b(?:USD|EUR|GBP|AED|SGD|AUD|CAD|JPY|CHF|THB|NPR|LKR|BDT)\s*[0-9]"""
+    )
+
+    /** The rupee markers. If none precedes a foreign amount, do not guess INR. */
+    private val inrCurrencyMarker = Regex("""(?:₹|\brs\.?\b|\binr\b)""", RegexOption.IGNORE_CASE)
+
     private val prefixedAmount =
         Regex("""(?<![A-Za-z0-9])(?:₹|\brs\.?|\binr\b)\s*((?:[0-9][0-9,]*(?:\.[0-9]{1,2})?|\.\d{1,2}))""", RegexOption.IGNORE_CASE)
 
@@ -346,6 +354,16 @@ object BankMessageParser {
         Regex("""\bNEFT-[A-Za-z0-9]{6,}-([A-Za-z][A-Za-z .]{1,38}?)(?=[.,]|$)""", RegexOption.IGNORE_CASE),
         // "... towards BIG BAZAAR bangalore ..."
         Regex("""\btowards\s+([A-Za-z][A-Za-z0-9&.'\- ]{1,38}?)(?=\s+(?:on|ref|no|dated|has|is|for)\b|[/.,]|$)""", RegexOption.IGNORE_CASE),
+        // Salary credit: "... salary credited ... NEFT ACME CORP". The existing
+        // NEFT patterns only cover the "Cr-"/"NEFT-<ref>-" shapes.
+        Regex(
+            """(?i)\bNEFT\s+(?!(?:by\s+sender|Cr-|credit|debit|of|inr|rs)\b)""" +
+                """([A-Za-z][A-Za-z0-9&.'\- ]{2,40}?)(?=\s*(?:$|[.,]))"""
+        ),
+        // Refund: "Rs 999 refunded for cancelled Zomato order".
+        Regex(
+            """(?i)\brefunded\s+for\s+(?:cancelled\s+)?([A-Za-z][A-Za-z0-9&.'\- ]{1,38}?)(?=\s+order\b|\s*[.,]|$)"""
+        ),
         // explicit labels: "merchant: ZOMATO", "at merchant SWIGGY"
         Regex("""(?:merchant|merchants?)\s*[:\-]?\s+([A-Za-z][A-Za-z0-9&.'\- ]{1,38}?)(?=\s+[A-Z]|\s+ref\b|[.,]|$)""")
     )
@@ -364,7 +382,11 @@ object BankMessageParser {
         // Boilerplate fragments observed leaking into production data.
         "enjoy", "uninterrupted", "pay your", "bill pay", "installment", "scheme",
         "investor", "report", "fraud", "cyber", "scam", "phishing", "statement",
-        "due", "overdue", "reminder", "offer", "win", "download", "subscribe"
+        "due", "overdue", "reminder", "offer", "win", "download", "subscribe",
+        // Generic descriptors are not merchant identities. Without these the
+        // "towards" pattern returned "school fees", "house rent", "general
+        // store" and "donation" as merchants, which then hijacked the category.
+        "school fees", "house rent", "general store", "donation"
     )
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -375,6 +397,14 @@ object BankMessageParser {
         // ISO first so "2026-08-23T14:35" is never misread by the numeric pattern below.
         Regex("""\b(\d{4}-\d{2}-\d{2})(?:[T ](\d{1,2}:\d{2}(?::\d{2})?)\s*([AaPp][Mm])?)?\b"""),
         Regex("""(?<![0-9/.-])(\d{1,2}[/.-]\d{1,2}[/.-]\d{2,4})(?:\s+(\d{1,2}:\d{2}(?::\d{2})?)\s*([AaPp][Mm])?)?(?![0-9])"""),
+        // Compact day-month-year ("12Mar26") with no separators. HDFC/PNB
+        // UPI messages use it; without this the date was lost and the row fell
+        // back to the save clock.
+        Regex(
+            """\b(\d{1,2}(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\d{2,4})""" +
+                """(?:\s+(\d{1,2}:\d{2}(?::\d{2})?)\s*([AaPp][Mm])?)?\b""",
+            RegexOption.IGNORE_CASE
+        ),
         // NOTE the separator classes: `[ ,-]` (dash LAST) — the original `[ -,]`
         // was a character RANGE (space through comma), so a literal dash could
         // never match the year separator, "21-JUL-26" was never extracted, and
@@ -398,7 +428,7 @@ object BankMessageParser {
         // duplicate window collapsed onto the save hour (found on the owner's
         // device, 2026-10-13: two ICICI card payments were skipped as "duplicates"
         // of an unrelated credit saved minutes earlier).
-        "dd-MMM-yy", "d-MMM-yy",
+        "dd-MMM-yy", "d-MMM-yy", "dMMMyy", "dMMMyyyy",
         "d MMM yyyy", "d MMM yy", "d MMMM yyyy", "dd-MMM-yyyy",
         // Month-first ordering ("Jul 22 2026"). parseDate strips commas before
         // matching, so "JUL 22, 2026" lands here too.
@@ -444,6 +474,25 @@ object BankMessageParser {
     internal fun detectBank(message: String): String? =
         bankPatterns.firstOrNull { it.first.containsMatchIn(message) }?.second
 
+    /**
+     * Money moving between the user's own accounts. It is not spending and not
+     * income; the app has no TRANSFER type, so it is booked as an EXPENSE with
+     * the Transfer category and excluded from the totals (see `Daos.kt`).
+     * "transferred from" is deliberately not in the debit lexicon: on a credit
+     * message the same words can describe an incoming transfer.
+     */
+    private val ownTransferPattern = Regex(
+        // A transfer verb + an own/self destination: "transfer to self",
+        // "transferred to your own account".
+        """(?i)\b(?:transfer|transferred|sent)\s+(?:to|into)\s+(?:your\s+)?(?:own|self|linked)\b|""" +
+            // The from-one-bank-to-another shape: "from SBI to your own HDFC account".
+            """\bfrom\s+[A-Za-z][A-Za-z &.]{1,30}\s+to\s+(?:your\s+)?own\s+""" +
+            """[A-Za-z][A-Za-z &.]{1,30}\s+account\b|""" +
+            """\bself[-\s]?transfer\b|""" +
+            // An explicit own-account transfer label.
+            """\b(?:own|self|linked)\s+(?:account|a/c)\s+transfer\b"""
+    )
+
     internal fun detectType(message: String): TransactionType? {
         if (failureRegex.containsMatchIn(message)) return null
 
@@ -474,9 +523,27 @@ object BankMessageParser {
         val creditScore = creditRegexes.count { it.containsMatchIn(scored) } +
             (if (crSuffix.containsMatchIn(scored)) 1 else 0)
 
+        if (debitScore == 0 && creditScore == 0) {
+            // A transfer between the user's own accounts often states no
+            // debit/credit verb at all ("transferred from SBI to your own HDFC
+            // account"). Default the outgoing leg to EXPENSE; the Transfer
+            // category keeps it out of the spending totals.
+            return if (ownTransferPattern.containsMatchIn(scored)) TransactionType.EXPENSE else null
+        }
+        if (debitScore > 0 && creditScore == 0) return TransactionType.EXPENSE
+        if (creditScore > 0 && debitScore == 0) return TransactionType.INCOME
+
+        // Both directions in one SMS ("INR 150 debited at SWIGGY and INR 200
+        // credited as refund"). Return the type of the first completed movement
+        // instead of null; a null made the whole row disappear, losing the
+        // primary spend. The full body is still stored as the note.
+        val firstDebit = debitRegexes.mapNotNull { it.find(scored)?.range?.first }.minOrNull()
+        val firstCredit = creditRegexes.mapNotNull { it.find(scored)?.range?.first }.minOrNull()
         return when {
-            debitScore > 0 && creditScore == 0 -> TransactionType.EXPENSE
-            creditScore > 0 && debitScore == 0 -> TransactionType.INCOME
+            firstDebit != null && (firstCredit == null || firstDebit < firstCredit) ->
+                TransactionType.EXPENSE
+            firstCredit != null && (firstDebit == null || firstCredit < firstDebit) ->
+                TransactionType.INCOME
             else -> null
         }
     }
@@ -488,6 +555,14 @@ object BankMessageParser {
 
         // Blank out credit/available-limit clauses first — see [creditLimitClause].
         val searchable = maskOut(message, creditLimitClause)
+
+        // No per-transaction currency yet: a foreign amount must not be booked
+        // with the rupee symbol. The pipeline will surface it as unrecognized.
+        // If an INR marker appears first (a conversion line), the normal path
+        // can still read that figure.
+        val foreign = foreignCurrencyAmount.find(searchable)
+        val inr = inrCurrencyMarker.find(searchable)
+        if (foreign != null && (inr == null || foreign.range.first < inr.range.first)) return null
 
         fun collect(regex: Regex) {
             for (m in regex.findAll(searchable)) {
@@ -542,6 +617,11 @@ object BankMessageParser {
     }
 
     internal fun detectMerchant(message: String): String? {
+        // An own-account transfer has no merchant. The generic "from X to Y"
+        // pattern used to return the whole clause ("SBI to your own HDFC
+        // account"), which is not a payee.
+        if (ownTransferPattern.containsMatchIn(message)) return null
+
         // 1. UPI VPA wins outright — most precise identity in the message.
         vpaPattern.find(message)?.let { vpa ->
             val handle = vpa.groupValues[1]
@@ -591,6 +671,12 @@ object BankMessageParser {
             val name = cleanMerchant(match.groupValues[1]) ?: continue
             if (name.length in 2..40 && looksLikeMerchant(name)) return name
         }
+
+        // A known subscription service is a merchant even when the bank's
+        // phrasing has no "at/to/for" the generic patterns can use:
+        // "AutoPay of Rs 499 NETFLIX e-mandate successful". This also gives the
+        // Subscriptions screen a real service name instead of null.
+        SubscriptionCatalog.match(message)?.let { return it }
 
         // The rail itself is the only identity some messages carry: "…debited
         // for INR 6440 towards IMPS/12345678901." Rail names are stop-words for
@@ -697,6 +783,21 @@ object BankMessageParser {
     private val merchantTimeSuffix = Regex("""\s+at\s+\d{1,2}:\d{2}.*$""", RegexOption.IGNORE_CASE)
     /** "UPI-<ref>-CORN" — the merchant is the tail, not the UPI reference. */
     private val merchantUpiRefPrefix = Regex("""^UPI-\d+-""", RegexOption.IGNORE_CASE)
+    /**
+     * A second movement in the same SMS ("INR 150 debited at SWIGGY and INR 200
+     * credited as refund") must not become part of the first merchant name.
+     */
+    private val merchantSecondMovement = Regex(
+        """\s+and\s+(?:Rs\.?|INR|₹|\d).*$""",
+        RegexOption.IGNORE_CASE
+    )
+    /** "mobile x111" -> "x111"; the channel label is not part of the counterparty. */
+    private val merchantMobilePrefix = Regex("""(?i)^mobile\s+(?=[x*]?\d)""")
+    /** "LIC insurance premium" -> "LIC"; the product is not the payee. */
+    private val merchantInsuranceSuffix = Regex(
+        """\s+(?:insurance\s+)?premium$""",
+        RegexOption.IGNORE_CASE
+    )
     private val merchantTrailingParens = Regex("""\s*\([^()]*\)\s*$""")
     private val merchantPvtLtd = Regex("""\s+(?:PVT\.?\s+LTD\.?|PRIVATE\s+LIMITED)$""", RegexOption.IGNORE_CASE)
 
@@ -709,6 +810,9 @@ object BankMessageParser {
             .replace(merchantUpiSuffix, "")
             .replace(merchantTimeSuffix, "")
             .replace(merchantUpiRefPrefix, "")
+            .replace(merchantSecondMovement, "")
+            .replace(merchantMobilePrefix, "")
+            .replace(merchantInsuranceSuffix, "")
             .replace(merchantTrailingParens, "")
             .replace(merchantPvtLtd, "")
             .trim(' ', '.', ',', '-', ':')
@@ -716,7 +820,13 @@ object BankMessageParser {
         if (s.isEmpty()) return null
 
         val lower = s.lowercase(Locale.ENGLISH)
-        if (merchantStopPhrases.any { lower.startsWith(it) }) return null
+        val tokens = lower.split(Regex("[^a-z0-9&]+")).filter { it.isNotBlank() }
+        // Token-aware: "Kotak Bank a" used to survive because the old check only
+        // looked at the string prefix, so "bank" in the middle was invisible.
+        if (merchantStopPhrases.any { phrase ->
+                if (phrase.contains(' ')) lower.contains(phrase) else phrase in tokens
+            }
+        ) return null
         return s
     }
 
@@ -724,8 +834,15 @@ object BankMessageParser {
         if (name.isBlank()) return false
         if (name.none { it.isLetter() }) return false
         if (Regex("^\\d+$").containsMatchIn(name)) return false
-        // Reject reference/account-number fragments and address tails.
-        if (Regex("""\d{3,}""").containsMatchIn(name)) return false
+        // Reject reference/account-number fragments, not ordinary digits in a
+        // merchant name: "SHOP 123" and "Cafe 100" are real names. Six or more
+        // consecutive digits are the reference/account shape.
+        if (Regex("""\d{6,}""").containsMatchIn(name)) return false
+        // Masked account/card fragments ("XXXX6021", "XX4821") are not payees;
+        // the "credited to XXXX6021 ... by Sender ACME" shape used to return
+        // the account as the merchant before the by-Sender pattern was reached.
+        if (Regex("""(?i)\b[x*]{2,}\d{3,}\b""").containsMatchIn(name)) return false
+        if (Regex("""(?i)^[x*]+$""").containsMatchIn(name)) return false
         // Reject hash-like identifiers ("9f3a1c7b2d8e4f60..." leaked into prod data).
         if (Regex("""(?i)[0-9a-f]{10,}""").containsMatchIn(name)) return false
         // Reject date fragments like "23 08" or "15 Aug".
@@ -803,19 +920,59 @@ object BankMessageParser {
 
     /** Category resolution shared by manual paste flow and auto pipeline. */
     internal fun categoryIdFor(message: String, merchant: String?, type: TransactionType?): String? {
-        // 1. Curated merchant-database lookup (highest precision).
+        // Own-account movement is a Transfer regardless of what the merchant
+        // keyword scan would find in the bank's boilerplate.
+        if (ownTransferPattern.containsMatchIn(message)) return "cat_transfer"
+
+        // Income and expense use different tables. The expense map says
+        // "rent" -> Bills, which turned "rent received from tenant" into a
+        // bill; an income must never inherit an expense category from a word in
+        // the bank's boilerplate.
+        if (type == TransactionType.INCOME) {
+            incomeCategoryIdFor(message, merchant)?.let { return it }
+            if (isPersonTransfer(message, merchant, type)) return "cat_transfer"
+            return null
+        }
+
+        // Expense: curated merchant database first, then the message keywords.
         if (merchant != null) {
             getCategoryIdForKeyword(merchant)?.let { return it }
         }
-        // 2. Keyword scan over the message body.
         messageKeywordCategory(message)?.let { return it }
-        // 3. Person-to-person transfer: a payment rail plus a person-shaped
-        //    counterparty, with no merchant keyword to say otherwise. The category
-        //    is Transfer; the *type* comes from the direction lexicon, which is the
-        //    owner's rule — received is income, sent is expense (2026-10-16). Rails
-        //    alone are not category cues any more: `upi` in a Swiggy payment used
-        //    to file the row under Transfer and lose the merchant's category.
-        if (type != null && merchant != null && railTokenPattern.containsMatchIn(message) &&
+        if (isPersonTransfer(message, merchant, type)) return "cat_transfer"
+        return null
+    }
+
+    /**
+     * Income categories, resolved by direction rather than by the expense map.
+     *
+     * A refund keeps the original merchant's category (a Zomato refund is still
+     * Food). Salary is explicit. Rent received is not a household bill; it is
+     * Other until the app has a rental-income category. Everything else stays
+     * uncategorised rather than borrowing a spending bucket from a word in the
+     * message.
+     */
+    private fun incomeCategoryIdFor(message: String, merchant: String?): String? {
+        val lower = message.lowercase(Locale.ENGLISH)
+        if (Regex("""\b(?:salary|payroll|wages)\b""").containsMatchIn(lower)) return "cat_salary"
+        if (Regex("""\b(?:rent|rental)\b[\s\S]{0,24}?\b(?:received|credited|income)\b""")
+                .containsMatchIn(lower)
+        ) return "cat_other"
+        if (Regex("""\b(?:refund|refunded|reversal|reversed|cashback|cash\s+back)\b""")
+                .containsMatchIn(lower)
+        ) {
+            return merchant?.let { getCategoryIdForKeyword(it) } ?: "cat_other"
+        }
+        return null
+    }
+
+    /** A payment rail plus a person-shaped counterparty, in either direction. */
+    private fun isPersonTransfer(
+        message: String,
+        merchant: String?,
+        type: TransactionType?
+    ): Boolean =
+        type != null && merchant != null && railTokenPattern.containsMatchIn(message) &&
             looksLikePersonName(
                 merchant,
                 // A UPI handle is a payment address, so a one-token payee derived
@@ -824,15 +981,6 @@ object BankMessageParser {
                 // case that defines the owner's rule — had no category at all.
                 allowSingleToken = vpaPattern.containsMatchIn(message)
             )
-        ) {
-            return "cat_transfer"
-        }
-        // 4. Income without stronger signals defaults to salary only when clearly payroll.
-        if (type == TransactionType.INCOME &&
-            Regex("""salary|payroll|wages""", RegexOption.IGNORE_CASE).containsMatchIn(message)
-        ) return "cat_salary"
-        return null
-    }
 
     /** Payment rails: routing metadata, never a category by themselves. */
     private val railTokenPattern = Regex("""(?i)\b(?:upi|neft|imps|rtgs|trf|transfer)\b""")
