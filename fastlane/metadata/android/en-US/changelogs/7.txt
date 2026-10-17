@@ -1,7 +1,7 @@
 What's new in 0.1.6
 
-• Fewer wrong entries: reward-point, offer and fund notices are no longer saved as transactions.
-• UPI/NEFT payments keep their real category instead of "Transfer".
-• Money received from a person is income; money sent is an expense.
-• SIP and mutual-fund debits are filed under Investments.
-• Payee names show up again when the bank writes "Refno" without a space.
+• A fresh terracotta look with softer shapes and new type.
+• Smarter SMS classification: fewer wrong entries, better merchant names, and HDFC "if not you" debits are no longer dropped.
+• Own-account transfers no longer count as spending; batched debit/credit messages book the primary movement.
+• SIP and mutual-fund debits are investments, and corrections now teach future messages.
+• Broader SMS scanning, with a safety guard for foreign-currency messages.

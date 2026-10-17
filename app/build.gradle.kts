@@ -30,11 +30,10 @@ android {
         applicationId = "com.awbuilds.auraspend"
         minSdk = 30
         targetSdk = 37
-        // 0.1.6 — a correctness release for SMS classification, from a closed
-        // tester's export: informational messages (reward points, fund notices,
-        // card offers) stop being saved as transactions, rails stop deciding the
-        // category, and person-to-person transfers follow direction (handoff
-        // 0047). No feature or schema change.
+        // 0.1.6 — a visual refresh plus a classification-correctness release:
+        // the terracotta UI (handoff 0048) and the SMS audit fixes (handoffs
+        // 0047 and 0050). No schema change; existing rows and the encrypted
+        // database carry over unchanged.
         // versionCode must strictly increase for every store upload; Play
         // rejects an update that reuses one, so it is not optional the way
         // the name is.

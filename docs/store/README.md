@@ -1,10 +1,10 @@
 # Play Store assets — AuraSpend
 
 Everything here is what is uploaded to Google Play for the default (en-US) store
-listing. The authoritative listing is the one saved in the Play Console; as of
-2026-10-17, 0.1.4 is on Play closed testing (`alpha`), not in production. This
-directory is the versioned source so assets can be changed and re-uploaded
-later.
+listing. The authoritative listing is the one saved in the Play Console. As of
+2026-10-17, 0.1.6 is the release being tagged; the last completed Play upload is
+0.1.4 on closed testing (`alpha`), not production. This directory is the
+versioned source so assets can be changed and re-uploaded later.
 
 | File | Used for | Play requirements |
 |---|---|---|
@@ -40,7 +40,9 @@ build; do not paste it into the Play listing.
 ## Release notes ("What's new")
 
 Per-release notes for the Play Console's *What's new* field (500 characters per
-language). Latest: `play-release-notes-0.1.3.md`.
+language). The tag workflow uploads `whatsnew/whatsnew-en-US` and
+`whatsnew/whatsnew-hi-IN` directly; the same text is in the F-Droid/Play
+`fastlane/.../changelogs/7.txt` entries. Latest: 0.1.6.
 
 ## Regenerating the feature graphic
 
@@ -57,8 +59,9 @@ language). Latest: `play-release-notes-0.1.3.md`.
 The committed icon, feature graphic and seven screenshots were captured on
 2026-10-10, **before** the 2026-10-17 terracotta revamp (handoff 0048). They
 still show the purple Aurora brand and Plus Jakarta Sans. They are valid Play
-sizes, but they no longer match the app; regenerate all of them from the
-current build before publishing. See 0048's follow-ups.
+sizes, but they no longer match the app. **Owner decision for 0.1.6: ship with
+these pre-terracotta visuals anyway**; regenerate them from the current build in
+a later release.
 
 ## Screenshot provenance
 

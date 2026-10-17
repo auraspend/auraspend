@@ -110,20 +110,18 @@ Console before saving).
    description is 2,355/4,000 chars and lives only in the Console. The repo
    cannot review or diff it. Paste the text above into the Console (or copy the
    Console text back here) so there is one source of truth.
-2. **Visuals are pre-terracotta.** `docs/store/screenshots/01..07`,
-   `feature-1024x500.png` and the icon were captured on 2026-10-10, before the
-   0048 UI revamp. They still show the purple Aurora brand and Plus Jakarta
-   Sans. A store page whose screenshots do not match the installed app loses
-   trust and conversion. Regenerate icon, feature graphic and all seven
-   screenshots from the terracotta build.
+2. **Visuals are pre-terracotta — accepted for 0.1.6.** The icon, feature
+   graphic and seven screenshots were captured on 2026-10-10, before the 0048
+   UI revamp. They still show the purple Aurora brand and Plus Jakarta Sans. The
+   owner chose to ship 0.1.6 with them anyway; regenerate from the terracotta
+   build in a later release.
 3. **Hindi copy is F-Droid copy.** `fastlane/metadata/android/hi-IN/` also says
    Drive backup is unavailable. The Play `hi-IN` listing needs a Play-specific
    translation of the copy above; keep the F-Droid copy separate.
 4. **The `fastlane/` tree is not the Play listing.** It describes the no-GMS
    build. Either mark it explicitly as F-Droid metadata or move Play copy under
    `docs/store/play/` and keep `fastlane/` for the F-Droid build.
-5. **Release-notes and screenshots should be refreshed for 0.1.5/0.1.6.**
-   The latest store notes in `docs/store/play-release-notes-0.1.3.md` are
-   behind the app.
+5. **Release notes are refreshed for 0.1.6.** The tag workflow reads
+   `docs/store/whatsnew/`; the old 0.1.3 notes file was removed.
 6. **No ratings/social proof yet.** The long description cannot claim ratings
    before the closed test converts. Revisit after production.
