@@ -30,14 +30,16 @@ android {
         applicationId = "com.awbuilds.auraspend"
         minSdk = 30
         targetSdk = 37
-        // 0.1.5 — the two privacy features: an optional app lock (PIN +
-        // biometric) and the database encrypted at rest, upgraded in place on
-        // existing installs (handoff 0046).
+        // 0.1.6 — a correctness release for SMS classification, from a closed
+        // tester's export: informational messages (reward points, fund notices,
+        // card offers) stop being saved as transactions, rails stop deciding the
+        // category, and person-to-person transfers follow direction (handoff
+        // 0047). No feature or schema change.
         // versionCode must strictly increase for every store upload; Play
         // rejects an update that reuses one, so it is not optional the way
         // the name is.
-        versionCode = 6
-        versionName = "0.1.5"
+        versionCode = 7
+        versionName = "0.1.6"
 
         // True in dev/prod; the `fdroid` flavor flips it to false (ADR 0012).
         // Screens read it to hide the Drive entry points rather than offer

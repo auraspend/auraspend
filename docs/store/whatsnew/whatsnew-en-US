@@ -1,7 +1,7 @@
-What's new in 0.1.5
+What's new in 0.1.6
 
-• Optional app lock: a 4-digit PIN, with fingerprint or face unlock.
-• The database is now encrypted at rest — unreadable without your device.
-• "Forgot PIN" erases everything, so a lost PIN never locks you out.
-• Turn it on in Settings → Security; change the PIN there too.
-• Existing records carry over unchanged when you update.
+• Fewer wrong entries: reward-point, offer and fund notices are no longer saved as transactions.
+• UPI/NEFT payments keep their real category instead of "Transfer".
+• Money received from a person is income; money sent is an expense.
+• SIP and mutual-fund debits are filed under Investments.
+• Payee names show up again when the bank writes "Refno" without a space.
