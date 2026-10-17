@@ -10,6 +10,34 @@ internal APIs.
 
 ## [Unreleased]
 
+## [0.1.6] — 2026-10-17
+
+A correctness release for SMS classification, prompted by a closed tester's
+export (handoff 0047). Nothing else changed: no new features, no schema
+changes, and no change to the encrypted database.
+
+### Fixed
+
+- **Informational messages are no longer saved as transactions.** Reward and
+  loyalty points, mutual-fund NAV notices, card offers and expiry reminders all
+  carried an amount plus a word the movement lexicon knows ("points have been
+  credited"), so the amount+verb rescue kept them — several were booked as
+  income. They are vetoed now, with the load-bearing rule that **a completed
+  debit outranks every informational phrase**: a purchase that merely earns
+  points or mentions an offer stays a purchase.
+- **Payment rails are not categories.** `upi`, `neft`, `imps`, `rtgs` and
+  `transfer` were category cues, which filed 43 % of that export under
+  "Transfer" — including payments to shops whose category was perfectly
+  readable. A rail decides nothing by itself now; a rail with a person-shaped
+  counterparty is a person-to-person transfer, where **money received is income
+  and money sent is an expense**.
+- **Mutual-fund and SIP debits are investments**, and a fund's NAV can no longer
+  become the merchant.
+- **Payee names survive the compact "Refno" form** (as well as RRN and UTR),
+  which used to leave a digit run that was rejected as an account-number
+  fragment — taking the counterparty with it.
+
+
 ## [0.1.5] — 2026-10-15
 
 A privacy release: the top two items of the improvement list, as separate PRs
