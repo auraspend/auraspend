@@ -10,6 +10,20 @@ internal APIs.
 
 ## [Unreleased]
 
+## [0.1.7] — 2026-10-17
+
+A Play-distribution release. No database, data-model or classification change.
+
+### Added
+
+- **Play-only in-app updates.** Settings → About now has **Check for updates**
+  in the Play build. It asks Play whether an update is available, starts a
+  flexible download, and turns into **Update ready — tap to restart** when the
+  download finishes. There is no forced update and no update prompt on launch.
+- The F-Droid build has no Play Core dependency and no update row; F-Droid
+  handles updates there (ADR 0013). The dev build also hides the row.
+
+
 ## [0.1.6] — 2026-10-17
 
 A classification-correctness release, prompted by a closed tester's export

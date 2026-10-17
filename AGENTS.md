@@ -753,15 +753,15 @@ application id): `:benchmark:connectedDevBenchmarkAndroidTest` — see README.
 - **The `dev`/`prod` flavors are feature-identical.** No feature may live in a
   flavor source set that is absent from `app/src/main/`; only configuration
   (application-id suffix, label, signing) may differ. The **`fdroid`** flavor is
-  the single documented exception (ADR 0012): it omits the non-free Google Play
-  Services dependency, so Drive backup — and only Drive backup — is absent
+  the documented exception (ADR 0012/0013): it omits the non-free Google Play
+  dependencies, so Drive backup and the Play in-app update check are absent
   there. **Neither build may carry
   analytics, ads or any telemetry** — the app's on-screen claim is that bank SMS
   never leaves the device, and an SDK in one build would make that claim false
   and the store listing self-contradictory. There is no paywall and no in-app
   purchase; every feature ships in every build. Do not reintroduce premium
   gating (ADR 0007), and do not add a Play-only capability without superseding
-  ADR 0010 (the fdroid Drive exception is ADR 0012).
+  ADR 0010 (the fdroid exceptions are ADR 0012/0013).
 - **A model may never delete a transaction on a bare boolean.** A model "not a
   transaction" verdict nulls `amount` and `type` in `AiSignalFusion`, and the
   pipeline's unresolved-fields gate then drops the row — so a false veto

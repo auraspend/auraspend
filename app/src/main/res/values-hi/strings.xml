@@ -226,6 +226,13 @@
     <string name="settings_about_version">संस्करण %1$s · AGPL-3.0</string>
     <string name="settings_about_made_by">AW Builds द्वारा ❤️ से निर्मित</string>
     <string name="settings_view_github">GitHub पर देखें</string>
+    <string name="settings_update_title">अपडेट जाँचें</string>
+    <string name="settings_update_subtitle">Google Play से</string>
+    <string name="settings_update_checking">जाँच हो रही है…</string>
+    <string name="settings_update_up_to_date">आप नवीनतम संस्करण पर हैं</string>
+    <string name="settings_update_downloading">अपडेट डाउनलोड हो रहा है…</string>
+    <string name="settings_update_ready">अपडेट तैयार — रीस्टार्ट करने के लिए टैप करें</string>
+    <string name="settings_update_failed">अपडेट की जाँच नहीं हो सकी</string>
     <string name="settings_licenses">ओपन-सोर्स लाइसेंस</string>
     <string name="settings_licenses_subtitle">लाइसेंस और तृतीय-पक्ष श्रेणियाँ</string>
     <string name="license_title">ओपन-सोर्स लाइसेंस</string>

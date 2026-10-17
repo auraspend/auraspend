@@ -28,6 +28,7 @@ okhttp = "4.12.0"
 playServicesAuth = "21.6.0"
 googleApiClient = "2.9.0"
 googleApiServicesDrive = "v3-rev20230822-2.0.0"
+playAppUpdate = "2.1.0"
 googleHttpClientGson = "1.44.2"
 
 # Wired: Room's PagingSource integration plus collectAsLazyPagingItems back the
@@ -98,6 +99,7 @@ google-api-services-drive = { group = "com.google.apis", name = "google-api-serv
 google-api-client = { group = "com.google.api-client", name = "google-api-client", version.ref = "googleApiClient" }
 google-api-client-android = { group = "com.google.api-client", name = "google-api-client-android", version.ref = "googleApiClient" }
 google-http-client-gson = { group = "com.google.http-client", name = "google-http-client-gson", version.ref = "googleHttpClientGson" }
+play-app-update = { group = "com.google.android.play", name = "app-update", version.ref = "playAppUpdate" }
 # Guava is on the classpath transitively (google-api-client / google-http-client
 # require it) and is attributed on that basis — no direct declaration, because
 # nothing in app/src imports com.google.common.

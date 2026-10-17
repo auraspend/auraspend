@@ -15,6 +15,7 @@ as a table in the [`README`](../README.md).
 | `MIT-ONNX-Runtime.txt` | ONNX Runtime for Android (native inference, Maven AAR) | MIT |
 | `SQLCipher-Community.txt` | SQLCipher Community Edition (encrypted database, Maven AAR) | BSD-3-Clause |
 | `Apache-2.0.txt` | AndroidX (Room, Compose, Lifecycle, Work, Navigation, Paging, ProfileInstaller), Google API Client, Google Drive API, play-services-auth, OkHttp, Guava, google-http-client-gson | Apache-2.0 |
+| [Play Core SDK Terms](https://developer.android.com/guide/playcore/license) | Google Play In-App Updates (`app-update`, dev/prod only; absent from the F-Droid build) | Play Core SDK Terms |
 
 ## Components linked inside SQLCipher
 

@@ -1,0 +1,6 @@
+What's new in 0.1.7
+
+• Google Play build: Settings → About now has "Check for updates".
+• It checks Play, downloads in the background, and offers a restart when ready.
+• No forced updates; F-Droid builds keep updating through F-Droid.
+• No changes to your data or SMS classification.

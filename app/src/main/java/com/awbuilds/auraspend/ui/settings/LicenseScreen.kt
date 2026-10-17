@@ -107,6 +107,12 @@ private val THIRD_PARTY = listOf(
         url = "https://developers.google.com/drive"
     ),
     ThirdPartyComponent(
+        name = "Google Play In-App Updates (Play Core)",
+        license = "Play Core SDK Terms",
+        role = ThirdPartyRole.BUNDLED,
+        url = "https://developer.android.com/guide/playcore/license"
+    ),
+    ThirdPartyComponent(
         name = "OkHttp, Guava, google-http-client-gson",
         license = "Apache-2.0",
         role = ThirdPartyRole.BUNDLED,

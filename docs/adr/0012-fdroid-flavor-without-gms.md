@@ -1,6 +1,7 @@
 # ADR 0012 — an F-Droid flavor that drops Google Drive backup
 
-**Status:** Accepted · 2026-10-14 · **Decision:** add a `fdroid` product flavor
+**Status:** Accepted · 2026-10-14 · **Amended by ADR 0013 (Play-only in-app updates)**
+**Decision:** add a `fdroid` product flavor
 built without the non-free Google dependencies
 
 ## Context
@@ -35,7 +36,9 @@ fails.
 - changes nothing else: every other feature, resource and string is shared.
 
 This is a deliberate, documented exception to the "flavors change configuration
-only" rule (ADR 0010). Drive backup is the *only* difference.
+only" rule (ADR 0010). At the time of this ADR, Drive backup was the only
+difference; ADR 0013 adds a second Play-only surface, the in-app update check,
+and the f-droid build omits that Play Core dependency too.
 
 ## Consequences
 

@@ -41,9 +41,11 @@ import androidx.compose.material.icons.filled.FileUpload
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Sms
 import androidx.compose.material.icons.filled.Subscriptions
+import androidx.compose.material.icons.filled.SystemUpdate
 import androidx.compose.material3.*
 import androidx.core.content.ContextCompat
 import androidx.compose.runtime.*
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.semantics
@@ -61,6 +63,8 @@ import com.awbuilds.auraspend.BuildConfig
 import com.awbuilds.auraspend.R
 import com.awbuilds.auraspend.data.ai.AiModelState
 import com.awbuilds.auraspend.data.classification.SmsNotifications
+import com.awbuilds.auraspend.data.update.AppUpdateState
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import com.awbuilds.auraspend.ui.designsystem.AuraCard
 import com.awbuilds.auraspend.ui.designsystem.AuraCardStyle
@@ -110,6 +114,30 @@ fun SettingsScreen(
     snackbarHostState: SnackbarHostState = remember { SnackbarHostState() }
 ) {
     val context = LocalContext.current
+    val appUpdateController = remember(context) {
+        if (BuildConfig.IN_APP_UPDATES) {
+            (context.applicationContext as? AuraSpendApp)?.appUpdateController
+        } else {
+            null
+        }
+    }
+    val fallbackUpdateState = remember { MutableStateFlow<AppUpdateState>(AppUpdateState.Idle) }
+    val appUpdateState by (appUpdateController?.state ?: fallbackUpdateState)
+        .collectAsStateWithLifecycle()
+    val updateLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.StartIntentSenderForResult()
+    ) { result ->
+        appUpdateController?.onUpdateFlowResult(result.resultCode)
+    }
+    val updateSubtitle = when (appUpdateState) {
+        AppUpdateState.Checking -> stringResource(R.string.settings_update_checking)
+        AppUpdateState.UpToDate -> stringResource(R.string.settings_update_up_to_date)
+        AppUpdateState.Downloading -> stringResource(R.string.settings_update_downloading)
+        AppUpdateState.Downloaded -> stringResource(R.string.settings_update_ready)
+        AppUpdateState.Failed -> stringResource(R.string.settings_update_failed)
+        AppUpdateState.Idle, AppUpdateState.Unsupported ->
+            stringResource(R.string.settings_update_subtitle)
+    }
     var showDeleteDialog by remember { mutableStateOf(false) }
     var showRestoreDialog by remember { mutableStateOf(false) }
     var showCurrencySheet by remember { mutableStateOf(false) }
@@ -553,6 +581,25 @@ fun SettingsScreen(
 
         SettingsSectionHeader(stringResource(R.string.settings_about))
         SettingsCard {
+            if (BuildConfig.IN_APP_UPDATES && appUpdateController?.isAvailable == true) {
+                SettingsRow(
+                    icon = Icons.Default.SystemUpdate,
+                    title = stringResource(R.string.settings_update_title),
+                    subtitle = updateSubtitle,
+                    busy = appUpdateState == AppUpdateState.Checking ||
+                        appUpdateState == AppUpdateState.Downloading,
+                    onClick = {
+                        when (appUpdateState) {
+                            AppUpdateState.Downloaded -> appUpdateController.completeUpdate()
+                            AppUpdateState.Checking, AppUpdateState.Downloading -> Unit
+                            else -> appUpdateController.checkForUpdate(updateLauncher)
+                        }
+                    }
+                )
+                Spacer(modifier = Modifier.height(AuraSpacing.sm))
+                DividerSpacer()
+                Spacer(modifier = Modifier.height(AuraSpacing.sm))
+            }
             SettingsRow(
                 icon = Icons.Default.Gavel,
                 title = stringResource(R.string.settings_licenses),

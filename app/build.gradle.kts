@@ -30,19 +30,23 @@ android {
         applicationId = "com.awbuilds.auraspend"
         minSdk = 30
         targetSdk = 37
-        // 0.1.6 — a classification-correctness release (handoffs 0047 and
-        // 0050). No UI, feature or schema change; existing rows and the
-        // encrypted database carry over unchanged.
-        // versionCode 8: the first 0.1.6 upload (versionCode 7) contained the
-        // unshipped terracotta UI and was replaced before any production
-        // rollout. Play requires a strictly higher code for the re-cut.
-        versionCode = 8
-        versionName = "0.1.6"
+        // 0.1.7 — Play-only in-app updates (ADR 0013). The Play build checks
+        // for updates from Settings → About; the fdroid build carries no Play
+        // Core and updates through F-Droid. No data, schema or classification
+        // change.
+        // versionCode must strictly increase for every store upload; Play
+        // rejects an update that reuses one.
+        versionCode = 9
+        versionName = "0.1.7"
 
         // True in dev/prod; the `fdroid` flavor flips it to false (ADR 0012).
         // Screens read it to hide the Drive entry points rather than offer
         // buttons that lead nowhere.
         buildConfigField("boolean", "DRIVE_BACKUP", "true")
+        // Play In-App Updates only: the Play Core SDK is absent from the fdroid
+        // flavor, and dev builds are not installed by Play. The Settings row is
+        // hidden unless this is true.
+        buildConfigField("boolean", "IN_APP_UPDATES", "false")
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
@@ -85,6 +89,7 @@ android {
         }
         create("prod") {
             dimension = "env"
+            buildConfigField("boolean", "IN_APP_UPDATES", "true")
         }
         create("fdroid") {
             dimension = "env"
@@ -260,6 +265,10 @@ dependencies {
     "prodImplementation"(libs.google.api.client.android)
     "devImplementation"(libs.google.http.client.gson)
     "prodImplementation"(libs.google.http.client.gson)
+    // Play In-App Updates — dev/prod only; fdroid compiles a no-op controller
+    // (ADR 0013). The Play Core SDK is not in the F-Droid build at all.
+    "devImplementation"(libs.play.app.update)
+    "prodImplementation"(libs.play.app.update)
     // Guava arrives transitively through google-api-client / google-http-client
     // and is attributed on that basis (LicenseScreen, docs/licenses). It was
     // declared directly here with no com.google.common import anywhere in

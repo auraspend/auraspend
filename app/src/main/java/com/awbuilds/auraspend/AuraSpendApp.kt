@@ -11,6 +11,8 @@ import com.awbuilds.auraspend.core.boundary
 import com.awbuilds.auraspend.data.classification.SmsIngestor
 import com.awbuilds.auraspend.data.local.BackupData
 import com.awbuilds.auraspend.data.security.AppLockManager
+import com.awbuilds.auraspend.data.update.AppUpdateController
+import com.awbuilds.auraspend.data.update.createAppUpdateController
 import com.awbuilds.auraspend.data.security.DbPassphrase
 import net.zetetic.database.sqlcipher.SupportOpenHelperFactory
 import com.awbuilds.auraspend.data.ai.ModelDownloadManager
@@ -87,6 +89,12 @@ open class AuraSpendApp : Application() {
 
     /** The optional PIN/biometric gate; stores only a salted PIN hash. */
     val appLockManager: AppLockManager by lazy { AppLockManager(this) }
+
+    /**
+     * Play-only In-App Updates (ADR 0013). Lazily created: dev/fdroid have a
+     * no-op, and tests that never open Settings never touch Play Core.
+     */
+    val appUpdateController: AppUpdateController by lazy { createAppUpdateController(this) }
 
     private val applicationScope = CoroutineScope(Dispatchers.IO)
 
