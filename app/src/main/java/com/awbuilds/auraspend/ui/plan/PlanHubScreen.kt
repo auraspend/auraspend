@@ -2,6 +2,7 @@ package com.awbuilds.auraspend.ui.plan
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.AccountBalance
@@ -17,6 +18,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -33,6 +35,7 @@ import com.awbuilds.auraspend.domain.model.RecurringCost
 import com.awbuilds.auraspend.domain.repository.TransactionRepository
 import com.awbuilds.auraspend.ui.designsystem.AuraCard
 import com.awbuilds.auraspend.ui.designsystem.AuraCardStyle
+import com.awbuilds.auraspend.ui.designsystem.AuraGradients
 import com.awbuilds.auraspend.ui.designsystem.AuraProgressRing
 import com.awbuilds.auraspend.ui.designsystem.AuraSpacing
 import com.awbuilds.auraspend.ui.designsystem.AuraType
@@ -135,31 +138,32 @@ fun PlanHubScreen(
         Spacer(modifier = Modifier.height(AuraSpacing.md))
 
         // ── Budget health hero
-        AuraCard(style = AuraCardStyle.Tonal, modifier = Modifier.fillMaxWidth()) {
+        AuraCard(style = AuraCardStyle.Hero, modifier = Modifier.fillMaxWidth()) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
                         stringResource(R.string.plan_budgets_month),
                         style = AuraType.metricLabel,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = AuraGradients.onAurora.copy(alpha = 0.82f)
                     )
                     Spacer(modifier = Modifier.height(AuraSpacing.xs))
                     Text(
                         stringResource(R.string.plan_budget_of, formatMoney(totalSpent), formatMoney(totalLimit)),
                         style = AuraType.moneyMedium,
-                        color = MaterialTheme.colorScheme.onSurface
+                        color = AuraGradients.onAurora
                     )
                     Spacer(modifier = Modifier.height(AuraSpacing.xs))
                     Text(
                         if (totalLimit > 0) stringResource(R.string.plan_budget_percent_used, (budgetProgress * 100).toInt())
                         else stringResource(R.string.plan_no_budgets),
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.extendedColors.textLight
+                        color = AuraGradients.onAurora.copy(alpha = 0.8f)
                     )
                 }
                 AuraProgressRing(
                     progress = budgetProgress,
-                    color = MaterialTheme.colorScheme.primary,
+                    color = AuraGradients.onAurora,
+                    trackColor = AuraGradients.onAurora.copy(alpha = 0.25f),
                     modifier = Modifier.size(64.dp),
                     stroke = 6.dp
                 ) {
@@ -167,7 +171,7 @@ fun PlanHubScreen(
                         stringResource(R.string.common_percent, (budgetProgress * 100).toInt()),
                         style = MaterialTheme.typography.bodySmall,
                         fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onSurface
+                        color = AuraGradients.onAurora
                     )
                 }
             }
@@ -259,13 +263,15 @@ private fun PlanRow(
         Row(verticalAlignment = Alignment.CenterVertically) {
             Box(
                 modifier = Modifier
-                    .size(42.dp),
+                    .size(44.dp)
+                    .clip(RoundedCornerShape(15.dp))
+                    .background(MaterialTheme.colorScheme.primaryContainer),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
                     icon,
                     contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary,
+                    tint = MaterialTheme.colorScheme.onPrimaryContainer,
                     modifier = Modifier.size(22.dp)
                 )
             }

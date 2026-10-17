@@ -26,6 +26,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -129,43 +130,59 @@ fun DashboardScreen(
 
             item {
                 Box(modifier = Modifier.padding(horizontal = AuraSpacing.gutter, vertical = AuraSpacing.md)) {
-                    Column(
+                    Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clip(RoundedCornerShape(32.dp))
-                            .background(AuraGradients.auroraSoft)
-                            .padding(AuraSpacing.xl)
+                            .clip(RoundedCornerShape(28.dp))
+                            .background(AuraGradients.aurora)
                     ) {
-                        Text(
-                            stringResource(R.string.home_total_balance),
-                            style = AuraType.metricLabel,
-                            color = AuraGradients.onAurora.copy(alpha = 0.82f)
+                        // Illustrated watermark: the terracotta mark sits inside the
+                        // hero at low opacity, so the brand object appears on the
+                        // screen's one gradient moment without competing with the
+                        // balance.
+                        AuraMark(
+                            modifier = Modifier
+                                .align(Alignment.BottomEnd)
+                                .padding(end = AuraSpacing.md, bottom = AuraSpacing.sm)
+                                .size(112.dp)
+                                .graphicsLayer { alpha = 0.22f }
                         )
-                        Spacer(modifier = Modifier.height(AuraSpacing.xs))
-                        if (hideAmounts) {
-                            Text(stringResource(R.string.state_hidden_amount), style = AuraType.moneyHero, color = AuraGradients.onAurora)
-                        } else {
-                            AnimatedMoney(
-                                amount = state.totalBalance,
-                                style = AuraType.moneyHero,
-                                color = AuraGradients.onAurora
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(AuraSpacing.xl)
+                        ) {
+                            Text(
+                                stringResource(R.string.home_total_balance),
+                                style = AuraType.metricLabel,
+                                color = AuraGradients.onAurora.copy(alpha = 0.82f)
                             )
-                        }
-                        Spacer(modifier = Modifier.height(AuraSpacing.xl))
-                        Row(horizontalArrangement = Arrangement.spacedBy(AuraSpacing.sm)) {
-                            HeroStat(
-                                label = stringResource(R.string.home_in_this_month),
-                                value = if (hideAmounts) stringResource(R.string.state_hidden_amount)
-                                else stringResource(R.string.common_amount_plus, formatMoney(state.monthlyIncome)),
-                                onClick = onNavigateToAnalytics
-                            )
-                            HeroDivider()
-                            HeroStat(
-                                label = stringResource(R.string.home_out_this_month),
-                                value = if (hideAmounts) stringResource(R.string.state_hidden_amount)
-                                else stringResource(R.string.common_amount_minus, formatMoney(state.monthlyExpense)),
-                                onClick = onNavigateToAnalytics
-                            )
+                            Spacer(modifier = Modifier.height(AuraSpacing.xs))
+                            if (hideAmounts) {
+                                Text(stringResource(R.string.state_hidden_amount), style = AuraType.moneyHero, color = AuraGradients.onAurora)
+                            } else {
+                                AnimatedMoney(
+                                    amount = state.totalBalance,
+                                    style = AuraType.moneyHero,
+                                    color = AuraGradients.onAurora
+                                )
+                            }
+                            Spacer(modifier = Modifier.height(AuraSpacing.xl))
+                            Row(horizontalArrangement = Arrangement.spacedBy(AuraSpacing.sm)) {
+                                HeroStat(
+                                    label = stringResource(R.string.home_in_this_month),
+                                    value = if (hideAmounts) stringResource(R.string.state_hidden_amount)
+                                    else stringResource(R.string.common_amount_plus, formatMoney(state.monthlyIncome)),
+                                    onClick = onNavigateToAnalytics
+                                )
+                                HeroDivider()
+                                HeroStat(
+                                    label = stringResource(R.string.home_out_this_month),
+                                    value = if (hideAmounts) stringResource(R.string.state_hidden_amount)
+                                    else stringResource(R.string.common_amount_minus, formatMoney(state.monthlyExpense)),
+                                    onClick = onNavigateToAnalytics
+                                )
+                            }
                         }
                     }
                 }
@@ -304,14 +321,14 @@ fun DashboardScreen(
                                 Box(
                                     modifier = Modifier
                                         .size(44.dp)
-                                        .clip(CircleShape)
-                                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.14f)),
+                                        .clip(RoundedCornerShape(15.dp))
+                                        .background(MaterialTheme.colorScheme.primaryContainer),
                                     contentAlignment = Alignment.Center
                                 ) {
                                     Icon(
                                         Icons.Default.Subscriptions,
                                         contentDescription = null,
-                                        tint = MaterialTheme.colorScheme.primary,
+                                        tint = MaterialTheme.colorScheme.onPrimaryContainer,
                                         modifier = Modifier.size(22.dp)
                                     )
                                 }
@@ -443,15 +460,15 @@ private fun QuickAction(
     ) {
         Box(
             modifier = Modifier
-                .size(42.dp)
-                .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)),
+                .size(44.dp)
+                .clip(RoundedCornerShape(15.dp))
+                .background(MaterialTheme.colorScheme.primaryContainer),
             contentAlignment = Alignment.Center
         ) {
             Icon(
                 icon,
                 contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary,
+                tint = MaterialTheme.colorScheme.onPrimaryContainer,
                 modifier = Modifier.size(20.dp)
             )
         }

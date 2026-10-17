@@ -1,11 +1,10 @@
 package com.awbuilds.auraspend.ui.designsystem
 
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ReceiptLong
 import androidx.compose.material.icons.filled.AccountBalance
@@ -25,9 +24,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -73,8 +71,11 @@ fun categoryIconGlyph(icon: String?): String? {
 private val FallbackVector = Icons.Default.Category
 
 /**
- * Circular category badge. Known Material icon names render as vectors tinted
- * with the category color; emoji (user-created categories) render as text.
+ * Category badge. Known Material icon names render as vectors tinted with the
+ * category colour; emoji (user-created categories) render as text.
+ *
+ * The badge is a soft rounded square rather than a circle — one of the small
+ * shape decisions that separates the terracotta identity from the old look.
  */
 @Composable
 fun CategoryAvatar(
@@ -85,24 +86,32 @@ fun CategoryAvatar(
     showRing: Boolean = false,
     ringStroke: Dp = 1.5.dp
 ) {
+    val shape = RoundedCornerShape(size * 0.30f)
     Box(
         modifier = modifier
             .size(size)
-            .clip(CircleShape)
-            .background(color.copy(alpha = 0.14f)),
+            .clip(shape)
+            .background(
+                Brush.linearGradient(
+                    listOf(
+                        color.copy(alpha = 0.20f),
+                        color.copy(alpha = 0.09f)
+                    )
+                )
+            )
+            .then(
+                if (showRing) {
+                    Modifier.border(
+                        width = ringStroke,
+                        color = color.copy(alpha = 0.45f),
+                        shape = shape
+                    )
+                } else {
+                    Modifier
+                }
+            ),
         contentAlignment = Alignment.Center
     ) {
-        if (showRing) {
-            Canvas(modifier = Modifier.fillMaxSize()) {
-                val strokePx = ringStroke.toPx()
-                drawCircle(
-                    color = color.copy(alpha = 0.45f),
-                    radius = this.size.minDimension / 2 - strokePx / 2,
-                    style = Stroke(width = strokePx, cap = StrokeCap.Round)
-                )
-            }
-        }
-
         val vector = categoryIconVector(icon) ?: FallbackVector
         val isEmoji = categoryIconVector(icon) == null && !icon.isNullOrBlank() &&
             icon.any { it.code > 127 }

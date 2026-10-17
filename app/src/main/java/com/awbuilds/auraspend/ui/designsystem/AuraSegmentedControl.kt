@@ -3,7 +3,6 @@ package com.awbuilds.auraspend.ui.designsystem
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -54,9 +53,9 @@ fun AuraSegmentedControl(
             // heightIn, not height: these boxes hold the option labels, and a fixed
             // 44dp clipped them at the largest system font scale on every screen
             // that uses this control. The 44dp floor keeps 100% identical.
-            .heightIn(min = 44.dp)
+            .heightIn(min = 46.dp)
             .clip(CircleShape)
-            .background(scheme.surfaceContainer)
+            .background(scheme.surfaceContainerHigh)
     ) {
         val segmentWidth = maxWidth / options.size
         val indicatorX by animateDpAsState(
@@ -78,15 +77,16 @@ fun AuraSegmentedControl(
                 .width(segmentWidth - AuraSpacing.sm)
                 .fillMaxHeight()
                 .clip(CircleShape)
-                .background(scheme.surface)
-                .border(1.dp, scheme.outlineVariant.copy(alpha = 0.45f), CircleShape)
+                // The selected segment is the terracotta moment of the control:
+                // a solid brand fill instead of a white pill on a light track.
+                .background(AuraGradients.aurora)
         )
 
         Row(modifier = Modifier.fillMaxWidth()) {
             options.forEachIndexed { index, label ->
                 val selected = index == selectedIndex
                 val textColor by animateColorAsState(
-                    targetValue = if (selected) scheme.onSurface else scheme.onSurfaceVariant,
+                    targetValue = if (selected) AuraGradients.onAurora else scheme.onSurfaceVariant,
                     animationSpec = AuraMotion.standard(),
                     label = "segmentedText"
                 )

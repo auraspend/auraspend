@@ -500,6 +500,13 @@ private fun StickyGroupHeader(label: String, netAmount: Double) {
             .padding(top = AuraSpacing.md, bottom = AuraSpacing.xs),
         verticalAlignment = Alignment.CenterVertically
     ) {
+        Box(
+            modifier = Modifier
+                .padding(end = AuraSpacing.sm)
+                .size(width = 3.dp, height = 14.dp)
+                .clip(RoundedCornerShape(2.dp))
+                .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.65f))
+        )
         Text(
             label,
             style = MaterialTheme.typography.bodySmall,
@@ -531,7 +538,7 @@ private fun TransactionListSkeleton(modifier: Modifier = Modifier) {
                     .padding(vertical = AuraSpacing.sm),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                AuraSkeleton(modifier = Modifier.size(46.dp), shape = CircleShape)
+                AuraSkeleton(modifier = Modifier.size(46.dp), shape = RoundedCornerShape(14.dp))
                 Spacer(modifier = Modifier.width(AuraSpacing.md))
                 Column(modifier = Modifier.weight(1f)) {
                     AuraSkeleton(
@@ -607,7 +614,7 @@ private fun SummaryPill(
 ) {
     Column(
         modifier = modifier
-            .clip(RoundedCornerShape(16.dp))
+            .clip(RoundedCornerShape(18.dp))
             .background(MaterialTheme.colorScheme.surfaceContainer)
             .padding(horizontal = AuraSpacing.md, vertical = AuraSpacing.sm)
     ) {

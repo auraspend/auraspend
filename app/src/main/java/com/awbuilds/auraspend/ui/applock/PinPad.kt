@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Backspace
 import androidx.compose.material3.Icon
@@ -22,7 +23,9 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.awbuilds.auraspend.R
+import com.awbuilds.auraspend.ui.designsystem.AuraGradients
 import com.awbuilds.auraspend.ui.designsystem.AuraSpacing
+import com.awbuilds.auraspend.ui.designsystem.AuraType
 
 private val KeySize = 72.dp
 
@@ -33,11 +36,14 @@ fun PinDots(length: Int, filled: Int, modifier: Modifier = Modifier) {
         repeat(length) { index ->
             Box(
                 modifier = Modifier
-                    .size(14.dp)
+                    .size(if (index < filled) 15.dp else 13.dp)
                     .clip(CircleShape)
-                    .background(
-                        if (index < filled) MaterialTheme.colorScheme.primary
-                        else MaterialTheme.colorScheme.outlineVariant
+                    .then(
+                        if (index < filled) {
+                            Modifier.background(AuraGradients.aurora)
+                        } else {
+                            Modifier.background(MaterialTheme.colorScheme.outlineVariant)
+                        }
                     )
             )
         }
@@ -46,7 +52,8 @@ fun PinDots(length: Int, filled: Int, modifier: Modifier = Modifier) {
 
 /**
  * The shared 0-9 PIN pad (lock screen + setup dialogs). [bottomLeft] slots a
- * biometric button or stays empty; every key is a ≥72dp circular target.
+ * biometric button or stays empty; every key is a ≥72dp target on a soft
+ * rounded-square keycap.
  */
 @Composable
 fun PinKeypad(
@@ -55,14 +62,14 @@ fun PinKeypad(
     modifier: Modifier = Modifier,
     bottomLeft: @Composable () -> Unit = {}
 ) {
-    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(AuraSpacing.xs)) {
+    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(AuraSpacing.sm)) {
         listOf(listOf(1, 2, 3), listOf(4, 5, 6), listOf(7, 8, 9)).forEach { row ->
-            Row(horizontalArrangement = Arrangement.spacedBy(AuraSpacing.xl)) {
+            Row(horizontalArrangement = Arrangement.spacedBy(AuraSpacing.lg)) {
                 row.forEach { digit -> PinDigit(digit, onDigit) }
             }
         }
         Row(
-            horizontalArrangement = Arrangement.spacedBy(AuraSpacing.xl),
+            horizontalArrangement = Arrangement.spacedBy(AuraSpacing.lg),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Box(modifier = Modifier.size(KeySize)) { bottomLeft() }
@@ -86,15 +93,16 @@ private fun PinDigit(digit: Int, onDigit: (Int) -> Unit) {
     Box(
         modifier = Modifier
             .size(KeySize)
-            .clip(CircleShape)
+            .clip(RoundedCornerShape(24.dp))
+            .background(MaterialTheme.colorScheme.surfaceContainerHigh)
             .clickable { onDigit(digit) }
             .testTag("lock-digit-$digit"),
         contentAlignment = Alignment.Center
     ) {
         Text(
             text = "$digit",
-            style = MaterialTheme.typography.headlineSmall,
-            color = MaterialTheme.colorScheme.onBackground
+            style = AuraType.keypadDigit,
+            color = MaterialTheme.colorScheme.onSurface
         )
     }
 }

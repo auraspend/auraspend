@@ -11,7 +11,8 @@ as a table in the [`README`](../README.md).
 
 | File | Component | Licence |
 |---|---|---|
-| `OFL-PlusJakartaSans.txt` | Plus Jakarta Sans (bundled font, `app/src/main/res/font/`) | SIL Open Font License 1.1 |
+| `OFL-Manrope.txt` | Manrope (bundled UI font, `app/src/main/res/font/`) | SIL Open Font License 1.1 |
+| `OFL-Fraunces.txt` | Fraunces (bundled display font, `app/src/main/res/font/`) | SIL Open Font License 1.1 |
 | `MIT-ONNX-Runtime.txt` | ONNX Runtime for Android (native inference, Maven AAR) | MIT |
 | `SQLCipher-Community.txt` | SQLCipher Community Edition (encrypted database, Maven AAR) | BSD-3-Clause |
 | `Apache-2.0.txt` | AndroidX (Room, Compose, Lifecycle, Work, Navigation, Paging, ProfileInstaller), Google API Client, Google Drive API, play-services-auth, OkHttp, Guava, google-http-client-gson | Apache-2.0 |

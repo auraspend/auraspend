@@ -27,12 +27,12 @@ import com.awbuilds.auraspend.domain.model.Budget
 import com.awbuilds.auraspend.domain.model.BudgetPeriod
 import com.awbuilds.auraspend.ui.designsystem.AuraCard
 import com.awbuilds.auraspend.ui.designsystem.AuraCardStyle
+import com.awbuilds.auraspend.ui.designsystem.AuraGradients
 import com.awbuilds.auraspend.ui.designsystem.AuraEmptyState
 import com.awbuilds.auraspend.ui.designsystem.AuraErrorBanner
 import com.awbuilds.auraspend.ui.designsystem.AuraErrorState
 import com.awbuilds.auraspend.ui.designsystem.AuraProgressRing
 import com.awbuilds.auraspend.ui.designsystem.AuraSpacing
-import com.awbuilds.auraspend.ui.designsystem.AuraStatTile
 import com.awbuilds.auraspend.ui.designsystem.AuraType
 import com.awbuilds.auraspend.ui.designsystem.LocalCurrencyStyle
 import com.awbuilds.auraspend.ui.designsystem.formatMoney
@@ -129,38 +129,44 @@ fun BudgetScreen(
                     val overall = if (totalLimit > 0) (totalSpent / totalLimit).toFloat() else 0f
                     val today = java.time.LocalDate.now()
                     val daysLeft = today.lengthOfMonth() - today.dayOfMonth + 1
-                    val overallColor = when {
-                        overall >= 1f -> MaterialTheme.colorScheme.error
-                        overall >= 0.8f -> MaterialTheme.colorScheme.tertiary
-                        else -> MaterialTheme.colorScheme.primary
-                    }
                     AuraCard(
                         modifier = Modifier.fillMaxWidth(),
-                        style = AuraCardStyle.Tonal
+                        style = AuraCardStyle.Hero
                     ) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            // `contained = false`: this tile already lives inside a
-                            // Tonal AuraCard, so it must not draw a second container.
-                            AuraStatTile(
-                                label = stringResource(R.string.budget_all),
-                                value = stringResource(
-                                    R.string.budget_spent_of,
-                                    formatMoney(totalSpent),
-                                    formatMoney(totalLimit)
-                                ),
-                                supporting = pluralStringResource(
-                                    R.plurals.budget_days_left, daysLeft, daysLeft
-                                ),
-                                contained = false,
-                                modifier = Modifier.weight(1f)
-                            )
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    stringResource(R.string.budget_all),
+                                    style = AuraType.metricLabel,
+                                    color = AuraGradients.onAurora.copy(alpha = 0.82f)
+                                )
+                                Spacer(modifier = Modifier.height(AuraSpacing.xs))
+                                Text(
+                                    stringResource(
+                                        R.string.budget_spent_of,
+                                        formatMoney(totalSpent),
+                                        formatMoney(totalLimit)
+                                    ),
+                                    style = AuraType.moneyMedium,
+                                    color = AuraGradients.onAurora
+                                )
+                                Spacer(modifier = Modifier.height(AuraSpacing.xs))
+                                Text(
+                                    pluralStringResource(
+                                        R.plurals.budget_days_left, daysLeft, daysLeft
+                                    ),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = AuraGradients.onAurora.copy(alpha = 0.8f)
+                                )
+                            }
                             Spacer(modifier = Modifier.width(AuraSpacing.lg))
                             AuraProgressRing(
                                 progress = overall.coerceIn(0f, 1f),
-                                color = overallColor,
+                                color = AuraGradients.onAurora,
+                                trackColor = AuraGradients.onAurora.copy(alpha = 0.25f),
                                 modifier = Modifier.size(72.dp),
                                 stroke = 7.dp
                             ) {
@@ -168,7 +174,7 @@ fun BudgetScreen(
                                     stringResource(R.string.common_percent, (overall.coerceIn(0f, 1f) * 100).toInt()),
                                     style = MaterialTheme.typography.labelMedium,
                                     fontWeight = FontWeight.SemiBold,
-                                    color = MaterialTheme.colorScheme.onSurface
+                                    color = AuraGradients.onAurora
                                 )
                             }
                         }

@@ -9,8 +9,10 @@ import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
@@ -18,11 +20,12 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.unit.dp
 
 /**
- * Aurora card styles.
+ * Terracotta card styles.
  *
  * Content never uses drop shadows — depth comes from tonal surfaces and 1dp
  * hairline borders (cheaper to render and visually calmer). Glass is reserved
- * for floating chrome over imagery.
+ * for floating chrome over imagery. Hero is the one sanctioned gradient surface:
+ * it is the single "moment" a screen gets, and it sets its own content colour.
  */
 enum class AuraCardStyle {
     /** Plain surface: reads as the base canvas. */
@@ -35,7 +38,10 @@ enum class AuraCardStyle {
     Outlined,
 
     /** Translucent surface used by floating chrome. */
-    Glass
+    Glass,
+
+    /** Terracotta gradient hero surface. One per screen, maximum. */
+    Hero
 }
 
 /**
@@ -46,13 +52,13 @@ enum class AuraCardStyle {
 fun AuraCard(
     modifier: Modifier = Modifier,
     style: AuraCardStyle = AuraCardStyle.Outlined,
-    shape: Shape = RoundedCornerShape(20.dp),
+    shape: Shape = RoundedCornerShape(22.dp),
     contentPadding: PaddingValues = PaddingValues(AuraSpacing.lg),
     onClick: (() -> Unit)? = null,
     content: @Composable ColumnScope.() -> Unit
 ) {
     val scheme = MaterialTheme.colorScheme
-    val container: Color
+    val container: Color?
     val border: BorderStroke?
 
     when (style) {
@@ -66,27 +72,43 @@ fun AuraCard(
         }
         AuraCardStyle.Outlined -> {
             container = scheme.surface
-            border = BorderStroke(1.dp, scheme.outlineVariant.copy(alpha = 0.55f))
+            border = BorderStroke(1.dp, scheme.outlineVariant.copy(alpha = 0.6f))
         }
         AuraCardStyle.Glass -> {
             container = scheme.surface.copy(alpha = 0.78f)
             border = BorderStroke(1.dp, scheme.outlineVariant.copy(alpha = 0.35f))
         }
+        AuraCardStyle.Hero -> {
+            container = null
+            border = null
+        }
     }
 
-    Column(
-        modifier = modifier
-            .clip(shape)
-            .background(container)
-            .then(if (border != null) Modifier.border(border, shape) else Modifier)
-            .then(
-                if (onClick != null) {
-                    Modifier.clickable(role = androidx.compose.ui.semantics.Role.Button) { onClick() }
-                } else {
-                    Modifier
-                }
-            )
-            .padding(contentPadding),
-        content = content
-    )
+    val surfaceModifier = modifier
+        .clip(shape)
+        .then(
+            when {
+                container != null -> Modifier.background(container)
+                else -> Modifier.background(AuraGradients.aurora)
+            }
+        )
+        .then(if (border != null) Modifier.border(border, shape) else Modifier)
+        .then(
+            if (onClick != null) {
+                Modifier.clickable(role = androidx.compose.ui.semantics.Role.Button) { onClick() }
+            } else {
+                Modifier
+            }
+        )
+        .padding(contentPadding)
+
+    val contentColor = if (style == AuraCardStyle.Hero) {
+        AuraGradients.onAurora
+    } else {
+        LocalContentColor.current
+    }
+
+    CompositionLocalProvider(LocalContentColor provides contentColor) {
+        Column(modifier = surfaceModifier, content = content)
+    }
 }
