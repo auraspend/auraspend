@@ -300,7 +300,7 @@ dependencies {
     // ViewModel coverage at all, not because the logic is untestable but because
     // there was no way to own the main dispatcher.
     testImplementation(libs.kotlinx.coroutines.test)
-    testImplementation("org.json:json:20240303")
+    testImplementation("org.json:json:20260814")
     androidTestImplementation(libs.androidx.test.ext.junit)
     // Compose assertions for the instrumented suite: the app lock's end-to-end
     // test drives the real MainActivity's UI, which only exists on a device.
