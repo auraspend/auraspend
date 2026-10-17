@@ -1,9 +1,10 @@
 # Play Store assets — AuraSpend
 
 Everything here is what is uploaded to Google Play for the default (en-US) store
-listing. The authoritative listing is the one saved in the Play Console — staged
-but not published, as of 2026-10-11; this directory is the versioned source so
-assets can be changed and re-uploaded later.
+listing. The authoritative listing is the one saved in the Play Console; as of
+2026-10-17, 0.1.4 is on Play closed testing (`alpha`), not in production. This
+directory is the versioned source so assets can be changed and re-uploaded
+later.
 
 | File | Used for | Play requirements |
 |---|---|---|
@@ -16,25 +17,25 @@ assets can be changed and re-uploaded later.
 
 ## Listing text (en-US)
 
-These are the exact strings saved on Play (also kept here so they can be
-diffed/updated):
+**Canonical Play copy (2026-10-17): [`play-listing-en-US.md`](play-listing-en-US.md).**
+It has the recommended title, short description, a 3,270-character long
+description, the ASO rationale and the remaining gaps.
 
-**Title** (30 max):
+| Field | Recommended | Current Play Console (0.1.1) |
+|---|---|---|
+| Title (30) | `AuraSpend: SMS Expense Tracker` (30) | `AuraSpend: Expense Tracker` (26) |
+| Short (80) | `Offline expense tracker: budgets, subscriptions, insights. No ads, no tracking.` (79) | same |
+| Full (4000) | 3,270 chars in `play-listing-en-US.md` | 2,355 chars, **not versioned in this repo** |
 
-```
-AuraSpend: Expense Tracker
-```
+The 0.1.1 full description was composed directly in the Play Console (handoff
+0017) and never copied back. Until the copy in
+[`play-listing-en-US.md`](play-listing-en-US.md) is pasted into the Console,
+the repo and the live listing are not the same text — that is the main
+process gap this file now closes.
 
-**Short description** (80 max):
-
-```
-Offline expense tracker: budgets, subscriptions, insights. No ads, no tracking.
-```
-
-**Full description** (4000 max): see `../../docs/handoffs/0017-play-console-setup.md`
-— the text was composed for the 0.1.1 listing and lives in the Play Console's
-store listing editor. If it is edited there, copy the new text back here in the
-next handoff.
+**Not Play copy:** `fastlane/metadata/android/en-US/` describes the
+**no-Google-Play-Services** build (no Drive backup). Keep it with the `fdroid`
+build; do not paste it into the Play listing.
 
 ## Release notes ("What's new")
 
@@ -50,6 +51,14 @@ language). Latest: `play-release-notes-0.1.3.md`.
   --screenshot=docs/store/feature-1024x500.png \
   "file://$PWD/docs/store/feature-graphic.html"
 ```
+
+## Visuals are pre-terracotta
+
+The committed icon, feature graphic and seven screenshots were captured on
+2026-10-10, **before** the 2026-10-17 terracotta revamp (handoff 0048). They
+still show the purple Aurora brand and Plus Jakarta Sans. They are valid Play
+sizes, but they no longer match the app; regenerate all of them from the
+current build before publishing. See 0048's follow-ups.
 
 ## Screenshot provenance
 
