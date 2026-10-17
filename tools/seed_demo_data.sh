@@ -52,6 +52,7 @@ fi
 echo "==> seeding"
 RESULT=$(adb shell am instrument -w -r \
   -e class "$SEEDER_CLASS" \
+  -e seedDemoData true \
   "$TEST_PKG/androidx.test.runner.AndroidJUnitRunner" 2>&1)
 
 if grep -q "OK (1 test)" <<<"$RESULT"; then
