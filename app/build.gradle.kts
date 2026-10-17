@@ -30,14 +30,14 @@ android {
         applicationId = "com.awbuilds.auraspend"
         minSdk = 30
         targetSdk = 37
-        // 0.1.7 — Play-only in-app updates (ADR 0013). The Play build checks
-        // for updates from Settings → About; the fdroid build carries no Play
-        // Core and updates through F-Droid. No data, schema or classification
-        // change.
+        // 0.1.71 — UI-correctness patch from a full on-device walk (handoff
+        // 0056): the Quick Add category chip, honest budget percentages, the
+        // Insights saving minus, and Plan-hub scrolling. No data, schema or
+        // classification change.
         // versionCode must strictly increase for every store upload; Play
         // rejects an update that reuses one.
-        versionCode = 9
-        versionName = "0.1.7"
+        versionCode = 10
+        versionName = "0.1.71"
 
         // True in dev/prod; the `fdroid` flavor flips it to false (ADR 0012).
         // Screens read it to hide the Drive entry points rather than offer

@@ -392,10 +392,10 @@ PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
 You should have received a copy of the GNU Affero General Public License along
 with this program. If not, see <https://www.gnu.org/licenses/>.
 
-AuraSpend is on Google Play **closed testing**: 0.1.7 is the current alpha
+AuraSpend is on Google Play **closed testing**: 0.1.71 is the current alpha
 build, sent for review, and is not in production yet. Signed APKs are published
 on [GitHub Releases](https://github.com/auraspend/auraspend/releases) — the
-latest is v0.1.7 — and you can always
+latest is v0.1.71 — and you can always
 [build the app from source](#building-a-release).
 The full license text is in [`LICENSE`](LICENSE) and is readable in the app
 under **Settings → About → Open-source licenses**.

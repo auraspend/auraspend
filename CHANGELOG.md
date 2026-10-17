@@ -10,6 +10,27 @@ internal APIs.
 
 ## [Unreleased]
 
+## [0.1.71] — 2026-10-17
+
+A UI-correctness patch from a full on-device walk (handoff 0056). No database,
+data-model or classification change.
+
+### Fixed
+
+- **Quick Add's category picker** now uses the app's standard chip — an M3
+  `FilterChip` with the category avatar inline, the same control as the
+  Activity filter row and the transaction editor. The tile it replaces had
+  labels overflowing a fixed 96 dp pill and an invisible selected state.
+- **Budget percentages no longer clamp at 100 %.** The Plan hub said "100 %
+  used" next to ₹33,467 of ₹26,000, with a purple ring; it now reads **128 %**
+  with an error-coloured ring and **"Over by ₹7,467"**. Both budget rings show
+  the true number too.
+- **The Insights saving badge** takes its minus from the shared money helper
+  (U+2212) instead of the platform hyphen, matching the net amount beside it.
+- **The Plan hub scrolls** at very large font scales instead of clipping its
+  last rows; the header stays pinned.
+- Home's budget chip announces the true percent to screen readers.
+
 ## [0.1.7] — 2026-10-17
 
 A Play-distribution release. No database, data-model or classification change.

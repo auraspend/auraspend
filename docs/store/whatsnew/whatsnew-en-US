@@ -1,6 +1,6 @@
-What's new in 0.1.7
+What's new in 0.1.71
 
-• Google Play build: Settings → About now has "Check for updates".
-• It checks Play, downloads in the background, and offers a restart when ready.
-• No forced updates; F-Droid builds keep updating through F-Droid.
-• No changes to your data or SMS classification.
+• Quick Add's category chips now match the rest of the app — labels are no longer cut off and the selected category is clearly highlighted.
+• Budget cards stop saying "100%" when you are over: the Plan hub and Budgets show the real percentage and how far over you are.
+• The saving percentage now uses a proper minus sign, matching the amount beside it.
+• The Plan screen scrolls properly with very large text.

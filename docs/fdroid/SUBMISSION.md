@@ -7,11 +7,11 @@ account — so it is an owner step.
 
 ## 0. Prerequisite — cut the next release
 
-fdroiddata builds from a **tag**. The `Builds:` entry points at `v0.1.7`
+fdroiddata builds from a **tag**. The `Builds:` entry points at `v0.1.71`
 (adjust the three values if the version is different):
 
 ```
-dev → main PR, then: git tag v0.1.7 && git push origin v0.1.7
+dev → main PR, then: git tag v0.1.71 && git push origin v0.1.71
 ```
 
 Then check `app/build.gradle.kts` — `versionName` / `versionCode` must match
