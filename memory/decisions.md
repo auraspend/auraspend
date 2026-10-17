@@ -2,6 +2,34 @@
 
 Durable decisions with context. Latest first.
 
+## D22 — The design language is terracotta clay; the `Aurora*` names stay (2026-10-17)
+Full visual revamp, UI layer only: clay `#A64B2A` → ember `#D2764A` → sand
+`#F2D8BC`, olive-sage secondary, ochre tertiary, warm cream `#FCF7F2` and warm
+near-black `#17110D` canvases; shape scale 10/14/20/26/32; a new illustrated
+`AuraMark` (clay pot + coin, Compose `Canvas`); `AuraCardStyle.Hero` for the one
+gradient surface per screen. Three rules worth keeping:
+
+- **Symbol names stay `Aurora*`.** Renaming a token across 40 files buys nothing
+  and breaks every diff; "Aurora" is the design-system name, terracotta is its
+  palette. `docs/design/aurora.md` states this at the top so nobody "fixes" it.
+- **Fraunces is display-only; money is always Manrope.** Fraunces has no `tnum`,
+  and animated money that jitters is a correctness bug here — `AuraType.money*`
+  all pin Manrope + `tabular figures`. Keypad digits are Manrope too
+  (`AuraType.keypadDigit`): the display serif uses old-style figures, which makes
+  a 0–9 pad uneven.
+- **Default category colours were retuned** (`DefaultCategories.kt`) from the
+  2014-era Material 500s to the same hue families muted ~30 %. These are *seed*
+  values only — `missingDefaultCategories` never rewrites an existing row — so
+  the change reaches new installs and leaves stored user categories alone.
+
+The session also re-taught D21 the cheap way: the full JVM suite, lint and both
+shell gates passed while (a) the selected bottom-nav *label* was white-on-cream
+(the gradient pill only wraps the icon), (b) the keypad digits rendered in the
+display serif, and (c) the notification-permission dialog still wore the old
+purple because `res/values/colors.xml` (`android:colorAccent`) had not been
+recoloured. None of those is reachable from a unit test — they were found by
+installing the build and looking at it.
+
 ## D21 — A device-only path gets run on the emulator before it is called verified (2026-10-15)
 PR #77 passed 549 unit tests, lint, the licence and privacy gates, the native
 audit and the R8 gate — and still shipped three release-blocking defects, all

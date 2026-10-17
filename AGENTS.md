@@ -3,7 +3,36 @@
 > Read this file and the latest file in `docs/handoffs/` before touching anything.
 > Update both (plus `CLAUDE.md` / `memory/` when you learn something durable) before ending a session.
 >
-> Latest: `docs/handoffs/0046-app-lock-and-encrypted-database.md` — the two
+> Latest: `docs/handoffs/0048-terracotta-ui-revamp.md` — the app has a new visual
+> identity and **nothing but the UI changed**: terracotta clay replaces the purple
+> brand (`#A64B2A` → `#D2764A` → `#F2D8BC`), warm cream/near-black canvases,
+> softer shapes, an illustrated clay-pot mark (`AuraMark`) and a one-per-screen
+> gradient hero (`AuraCardStyle.Hero`). Type is now **Manrope** (all UI + all
+> money — it has `tnum`) plus **Fraunces** for display/headline/titleLarge only,
+> with Plus Jakarta Sans gone and its OFL attribution swapped in nine files at
+> once. **The `Aurora*` symbol names stay on purpose** — don't "fix" them.
+> 584/584 tests, lint clean, licence + privacy checks green; captured in light
+> and dark on the arm64 AVD. Looking at it on a device found four things the whole
+> JVM suite had passed: the selected nav *label* was white-on-cream (the gradient
+> pill only wraps the icon), keypad digits were rendering in the display serif
+> (Fraunces has old-style figures — now `AuraType.keypadDigit`), the
+> notification-permission dialog still wore the old purple because
+> `res/values/colors.xml` (`android:colorAccent`) was never recoloured, and
+> `tools/seed_demo_data.sh` had **silently never seeded anything** (the seeder is
+> opt-in and the script never passed `-e seedDemoData true`; a skipped test still
+> reports OK). Default category colours were retuned for new installs only. **Not
+> committed** — the owner asked for the working tree. Launcher icon, website and
+> store assets still carry the old brand (follow-ups in the handoff).
+> Before: `docs/handoffs/0047-classification-informational-and-rails.md` — a tester's
+> CSV export showed three misclassification families; the fixes were an
+> informational veto set (points/marketing/NAV/expiry) with the load-bearing rule
+> that **a completed debit outranks every informational phrase**, the removal of
+> rail tokens (`upi`/`neft`/`imps`/`rtgs`) as *categories* so a UPI payment keeps
+> its real category, Investments as a keyword target, and `Refno`/`RRN`/`UTR` as
+> reference suffixes. Corpus 72 → 82 with the floor re-measured at 26/82 exact
+> (31.7 %), type 95.1 %, category 53.7 %; most of the jump was a metric-fidelity
+> fix. PR #78, 584/584 tests.
+> Before: `docs/handoffs/0046-app-lock-and-encrypted-database.md` — the two
 > privacy features from the improvement list are implemented as separate PRs:
 > **#76 an optional app lock** (4-digit PIN as a salted PBKDF2 hash, biometric
 > shortcut, locks on cold start and after >60 s backgrounded, "forgot PIN"
