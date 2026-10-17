@@ -3,7 +3,22 @@
 > Read this file and the latest file in `docs/handoffs/` before touching anything.
 > Update both (plus `CLAUDE.md` / `memory/` when you learn something durable) before ending a session.
 >
-> Latest: `docs/handoffs/0055-play-in-app-updates.md` — **0.1.7 is released**:
+> Latest: `docs/handoffs/0056-ui-walk-fixes.md` — the on-device UI walk on
+> `dev`: Quick Add's category picker is now the app's standard chip (M3
+> `FilterChip` + inline `CategoryAvatar`, same as the Activity filter row and
+> the editor). The hand-rolled tile before it had labels overflowing a fixed
+> 96 dp pill and an invisible selected state, and a first replacement attempt
+> (tall avatar-over-label ovals) was worse — do not rebuild either. Budget
+> percentages stop lying: the Plan hub and both budget rings show the true
+> number ("128 % used", arc capped, error colour, "Over by ₹7,467") where
+> "100 % used" used to sit next to ₹33,467 of ₹26,000; the Insights saving
+> badge takes its minus from the shared money helper (U+2212, not the platform
+> hyphen); the Plan hub scrolls instead of clipping at 200 % font scale.
+> 616 tests. **No release.** Two device readings were refuted and belong
+> nowhere near a "fix": "Subscriptions under the nav bar" (the bar is a
+> sibling of the content, the still was a mid-scroll cut) and the wide `−`
+> (it is Plus Jakarta Sans's own U+2212 — do not swap the character).
+> Before: `docs/handoffs/0055-play-in-app-updates.md` — **0.1.7 is released**:
 > versionCode 9, tag `v0.1.7` on `dad3e44`, run 39034678870 green; Play alpha +
 > GitHub release. Adds **Settings → About → Check for updates** in the Play build
 > only (flexible download, restart prompt, no forced update); the fdroid build
@@ -615,6 +630,7 @@ application id): `:benchmark:connectedDevBenchmarkAndroidTest` — see README.
 | Card | `AuraCard` (`Filled` / `Tonal` / `Outlined` / `Glass`) |
 | Money text (animated) | `AnimatedMoney` + `AuraType.money*` |
 | Category badge | `CategoryAvatar` |
+| Category picker | M3 `FilterChip` + `CategoryAvatar` leading icon (Quick Add, Activity filter, the editor — one control in all three) |
 | Filter/range selector | `AuraSegmentedControl` |
 | Progress / donut / area | `AuraProgressRing`, `AuraDonutChart`, `AuraAreaChart` |
 | Loading placeholder | `AuraSkeleton` |

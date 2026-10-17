@@ -11,7 +11,6 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -21,6 +20,7 @@ import androidx.compose.material.icons.filled.Event
 import androidx.compose.material.icons.filled.EditNote
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
@@ -35,7 +35,6 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -44,13 +43,13 @@ import com.awbuilds.auraspend.R
 import com.awbuilds.auraspend.domain.model.Category
 import com.awbuilds.auraspend.domain.model.TransactionType
 import com.awbuilds.auraspend.ui.core.UiError
-import com.awbuilds.auraspend.ui.designsystem.AuraCard
 import com.awbuilds.auraspend.ui.designsystem.AuraCardStyle
 import com.awbuilds.auraspend.ui.designsystem.AuraErrorBanner
 import com.awbuilds.auraspend.ui.designsystem.AuraSegmentedControl
 import com.awbuilds.auraspend.ui.designsystem.AuraSpacing
 import com.awbuilds.auraspend.ui.designsystem.AuraType
 import com.awbuilds.auraspend.ui.designsystem.CategoryAvatar
+import com.awbuilds.auraspend.ui.designsystem.categoryColor
 import com.awbuilds.auraspend.ui.designsystem.formatMoney
 import com.awbuilds.auraspend.ui.theme.extendedColors
 import androidx.compose.material.icons.filled.Event
@@ -210,18 +209,31 @@ fun QuickAddSheet(
             Spacer(modifier = Modifier.height(AuraSpacing.md))
 
             // ── Category chips
+            // Same control as the Activity filter row and the transaction editor:
+            // an M3 chip that sizes to its label, with the category avatar inline.
+            // (A hand-rolled tile lived here once — a fixed 96dp box under a
+            // CircleShape, with a second background painted over AuraCard's own
+            // selected state. On the device its labels overflowed the pill and a
+            // selected chip was indistinguishable from an unselected one.)
             LazyRow(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(AuraSpacing.sm)
             ) {
                 items(categories, key = { it.id }) { category ->
-                    CategoryChip(
-                        category = category,
+                    FilterChip(
                         selected = category.id == selectedCategoryId,
                         onClick = {
                             haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                             selectedCategoryId = category.id
-                        }
+                        },
+                        leadingIcon = {
+                            CategoryAvatar(
+                                icon = category.icon,
+                                color = categoryColor(category.color),
+                                size = 22.dp
+                            )
+                        },
+                        label = { Text(category.name, maxLines = 1) }
                     )
                 }
             }
@@ -360,44 +372,3 @@ private fun KeypadKey(
     }
 }
 
-@Composable
-private fun CategoryChip(
-    category: Category,
-    selected: Boolean,
-    onClick: () -> Unit
-) {
-    val container by animateColorAsState(
-        targetValue = if (selected) MaterialTheme.colorScheme.primary.copy(alpha = 0.16f)
-        else MaterialTheme.colorScheme.surfaceContainerHigh,
-        label = "chipContainer"
-    )
-    AuraCard(
-        modifier = Modifier.width(96.dp),
-        style = if (selected) AuraCardStyle.Tonal else AuraCardStyle.Filled,
-        shape = CircleShape,
-        contentPadding = PaddingValues(0.dp),
-        onClick = onClick
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(container)
-                .padding(vertical = AuraSpacing.sm),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            CategoryAvatar(
-                icon = category.icon,
-                color = androidx.compose.ui.graphics.Color(category.color.toLong()),
-                size = 32.dp
-            )
-            Spacer(modifier = Modifier.height(AuraSpacing.xs))
-            Text(
-                category.name,
-                style = MaterialTheme.typography.labelSmall,
-                fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium,
-                color = MaterialTheme.colorScheme.onSurface,
-                maxLines = 1
-            )
-        }
-    }
-}

@@ -270,7 +270,7 @@
     <string name="analytics_expense">Expense</string>
     <string name="analytics_income">Income</string>
     <string name="analytics_net_period">Net %1$s</string>
-    <string name="analytics_saving_percent">Saving %1$d%%</string>
+    <string name="analytics_saving_percent">Saving %1$s%%</string>
     <string name="analytics_delta_up">↑ %1$d%% vs last month</string>
     <string name="analytics_delta_down">↓ %1$d%% vs last month</string>
     <string name="analytics_spending_by_category">Spending by category</string>
