@@ -121,7 +121,7 @@ Console before saving).
    Console text back here) so there is one source of truth.
 2. **Visuals are pre-terracotta — and now match the app.** The icon, feature
    graphic and seven screenshots show the purple Aurora brand and Plus Jakarta
-   Sans, which is the design shipped in 0.1.6. Regenerate them only when the
+   Sans, which is the design shipped in 0.1.7. Regenerate them only when the
    terracotta design ships.
 3. **Hindi copy is F-Droid copy.** `fastlane/metadata/android/hi-IN/` also says
    Drive backup is unavailable. The Play `hi-IN` listing needs a Play-specific
@@ -129,7 +129,7 @@ Console before saving).
 4. **The `fastlane/` tree is not the Play listing.** It describes the no-GMS
    build. Either mark it explicitly as F-Droid metadata or move Play copy under
    `docs/store/play/` and keep `fastlane/` for the F-Droid build.
-5. **Release notes are refreshed for 0.1.6.** The tag workflow reads
+5. **Release notes are refreshed for 0.1.7.** The tag workflow reads
    `docs/store/whatsnew/`; the old 0.1.3 notes file was removed.
 6. **No ratings/social proof yet.** The long description cannot claim ratings
    before the closed test converts. Revisit after production.

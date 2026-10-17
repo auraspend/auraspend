@@ -2,12 +2,10 @@
 
 Everything here is what is uploaded to Google Play for the default (en-US) store
 listing. The authoritative listing is the one saved in the Play Console. As of
-2026-10-17, **0.1.6 (versionCode 8) is uploaded to Play closed testing
-(`alpha`) and sent for review** by the corrected `v0.1.6` tag run. The first
-versionCode 7 upload (terracotta UI) was superseded before production. GitHub
-release: <https://github.com/auraspend/auraspend/releases/tag/v0.1.6>. This
-directory is the versioned source so assets can be changed and re-uploaded
-later.
+2026-10-17, **0.1.7 (versionCode 9) is uploaded to Play closed testing
+(`alpha`) and sent for review** by the `v0.1.7` tag run. GitHub release:
+<https://github.com/auraspend/auraspend/releases/tag/v0.1.7>. This directory is
+the versioned source so assets can be changed and re-uploaded later.
 
 | File | Used for | Play requirements |
 |---|---|---|
@@ -51,7 +49,7 @@ build; do not paste it into the Play listing.
 Per-release notes for the Play Console's *What's new* field (500 characters per
 language). The tag workflow uploads `whatsnew/whatsnew-en-US` and
 `whatsnew/whatsnew-hi-IN` directly; the same text is in the F-Droid/Play
-`fastlane/.../changelogs/7.txt` entries. Latest: 0.1.6.
+`fastlane/.../changelogs/9.txt` entries. Latest: 0.1.7.
 
 ## Regenerating the feature graphic
 
@@ -67,8 +65,8 @@ language). The tag workflow uploads `whatsnew/whatsnew-en-US` and
 
 The committed icon, feature graphic and seven screenshots were captured on
 2026-10-10 and show the purple Aurora brand and Plus Jakarta Sans. **They match
-the final 0.1.6 build**, which deliberately does not include the terracotta UI
-(handoff 0048 was reverted before release). Regenerate them only when the
+the current 0.1.7 build**, which deliberately does not include the terracotta
+UI (handoff 0048 was reverted before release). Regenerate them only when the
 terracotta design actually ships.
 
 ## Screenshot provenance

@@ -3,7 +3,13 @@
 > Read this file and the latest file in `docs/handoffs/` before touching anything.
 > Update both (plus `CLAUDE.md` / `memory/` when you learn something durable) before ending a session.
 >
-> Latest: `docs/handoffs/0054-play-listing-title.md` — the en-US Play title is
+> Latest: `docs/handoffs/0055-play-in-app-updates.md` — **0.1.7 is released**:
+> versionCode 9, tag `v0.1.7` on `dad3e44`, run 39034678870 green; Play alpha +
+> GitHub release. Adds **Settings → About → Check for updates** in the Play build
+> only (flexible download, restart prompt, no forced update); the fdroid build
+> carries no Play Core and updates through F-Droid (ADR 0013). 616 tests. The
+> actual update flow still needs a Play-installed device.
+> Before: `docs/handoffs/0054-play-listing-title.md` — the en-US Play title is
 > now `AuraSpend: SMS Expense Tracker` (30/30), updated through the Play API.
 > Play store **tags are not exposed by the public API** (only title/short/full/
 > video and contact details), so they remain a manual Play Console step. No
@@ -495,8 +501,8 @@ ANDROID_SERIAL=emulator-5554 ./gradlew :app:connectedDevDebugAndroidTest
 
 Flavors: `dev` (development — `.dev` application id, "AuraSpend Dev" label),
 `prod` (the Play build and the GitHub-release APK) and `fdroid` (F-Droid — no
-Google Play Services, so no Drive backup: ADR 0012, the one documented feature
-exception). dev/prod are feature-identical; see ADR 0010.
+Google Play Services, so no Drive backup and no Play in-app update check:
+ADR 0012/0013). dev/prod are feature-identical; see ADR 0010.
 The Play paywall was removed in Phase 0 — do not reintroduce premium gating.
 
 **Signed releases:** keystore credentials live in `secrets.properties`
