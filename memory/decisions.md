@@ -2,6 +2,16 @@
 
 Durable decisions with context. Latest first.
 
+## D24 — 0.1.6 ships with pre-terracotta store visuals (2026-10-17)
+
+The app UI is terracotta (0048), but the owner chose to release 0.1.6 with the
+existing purple icon, feature graphic and screenshots rather than regenerate
+them. This is an accepted mismatch for one release, not an oversight. The
+canonical Play copy is `docs/store/play-listing-en-US.md`; the tag workflow
+uploads the AAB and `docs/store/whatsnew/` notes only, not the listing text, so
+the title/short/full description still need to be pasted into the Play Console.
+Regenerate the visuals from the terracotta build in a later release.
+
 ## D23 — The classification floor is not parse accuracy; routing replaces instead of specializing (2026-10-17)
 
 Read-only audit; the full report is

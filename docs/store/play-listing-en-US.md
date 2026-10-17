@@ -7,6 +7,12 @@ the Play listing.
 
 **Last updated:** 2026-10-17
 
+**Release status:** `v0.1.6` is tagged and the tag workflow uploaded the signed
+AAB and the `docs/store/whatsnew/` notes to Play closed testing (`alpha`). The
+tag workflow does **not** upload the listing text below — paste the title,
+short and full description into the Play Console. The store visuals remain
+pre-terracotta by owner decision for this release.
+
 ---
 
 ## Title (30 max)

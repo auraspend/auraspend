@@ -3,12 +3,17 @@
 > Read this file and the latest file in `docs/handoffs/` before touching anything.
 > Update both (plus `CLAUDE.md` / `memory/` when you learn something durable) before ending a session.
 >
-> Latest: `docs/handoffs/0051-play-listing-aso.md` — the Play long description was
+> Latest: `docs/handoffs/0052-release-0.1.6.md` — **0.1.6 is released**:
+> versionCode 7, tag `v0.1.6` on `8e87515`, PR #81, release run 39027254519
+> green; Play alpha upload + GitHub release (AAB/APK/SHA256SUMS) done. 616 tests.
+> The store visuals are deliberately **pre-terracotta** by owner decision; the
+> canonical Play copy is `docs/store/play-listing-en-US.md` and still has to be
+> pasted into the Console (the tag uploads only the AAB + What's New notes).
+> F-Droid metadata now points at 0.1.6; the fdroiddata MR remains an owner step.
+> Before: `docs/handoffs/0051-play-listing-aso.md` — the Play long description was
 > not in the repo and the only checked-in copy was 786-char F-Droid text; the
 > canonical Play copy is now `docs/store/play-listing-en-US.md` (title 30/30,
-> short 79/80, full 3,270/4,000). The screenshots/icon/feature graphic still show
-> the pre-terracotta brand and must be regenerated; the Hindi listing is also
-> F-Droid copy and needs a Play-specific pass.
+> short 79/80, full 3,270/4,000).
 > Before: `docs/handoffs/0050-classification-fixes.md` — the audit's defects are
 > fixed: the eval scores amount/date and correct rejections (80/82 exact, 97.6 %,
 > type 98.8, category 100, merchant 98.8, amount 98.8), sender-aware bank tails

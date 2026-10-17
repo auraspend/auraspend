@@ -2,9 +2,10 @@
 
 Everything here is what is uploaded to Google Play for the default (en-US) store
 listing. The authoritative listing is the one saved in the Play Console. As of
-2026-10-17, 0.1.6 is the release being tagged; the last completed Play upload is
-0.1.4 on closed testing (`alpha`), not production. This directory is the
-versioned source so assets can be changed and re-uploaded later.
+2026-10-17, **0.1.6 is uploaded to Play closed testing (`alpha`) and sent for
+review** by the `v0.1.6` tag run; it is not in production. The GitHub release is
+<https://github.com/auraspend/auraspend/releases/tag/v0.1.6>. This directory is
+the versioned source so assets can be changed and re-uploaded later.
 
 | File | Used for | Play requirements |
 |---|---|---|
