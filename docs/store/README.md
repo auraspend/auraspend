@@ -2,10 +2,10 @@
 
 Everything here is what is uploaded to Google Play for the default (en-US) store
 listing. The authoritative listing is the one saved in the Play Console. As of
-2026-10-17, **0.1.6 is uploaded to Play closed testing (`alpha`) and sent for
-review** by the `v0.1.6` tag run; it is not in production. The GitHub release is
-<https://github.com/auraspend/auraspend/releases/tag/v0.1.6>. This directory is
-the versioned source so assets can be changed and re-uploaded later.
+2026-10-17, **0.1.6 is being re-cut without the terracotta UI (versionCode 8)**;
+the first `v0.1.6` upload (versionCode 7, terracotta) was superseded before any
+production rollout. This directory is the versioned source so assets can be
+changed and re-uploaded later.
 
 | File | Used for | Play requirements |
 |---|---|---|
@@ -58,11 +58,10 @@ language). The tag workflow uploads `whatsnew/whatsnew-en-US` and
 ## Visuals are pre-terracotta
 
 The committed icon, feature graphic and seven screenshots were captured on
-2026-10-10, **before** the 2026-10-17 terracotta revamp (handoff 0048). They
-still show the purple Aurora brand and Plus Jakarta Sans. They are valid Play
-sizes, but they no longer match the app. **Owner decision for 0.1.6: ship with
-these pre-terracotta visuals anyway**; regenerate them from the current build in
-a later release.
+2026-10-10 and show the purple Aurora brand and Plus Jakarta Sans. **They match
+the final 0.1.6 build**, which deliberately does not include the terracotta UI
+(handoff 0048 was reverted before release). Regenerate them only when the
+terracotta design actually ships.
 
 ## Screenshot provenance
 

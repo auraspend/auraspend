@@ -2,15 +2,26 @@
 
 Durable decisions with context. Latest first.
 
-## D24 — 0.1.6 ships with pre-terracotta store visuals (2026-10-17)
+## D25 — 0.1.6 was re-cut without the terracotta UI (2026-10-17)
 
-The app UI is terracotta (0048), but the owner chose to release 0.1.6 with the
-existing purple icon, feature graphic and screenshots rather than regenerate
-them. This is an accepted mismatch for one release, not an oversight. The
-canonical Play copy is `docs/store/play-listing-en-US.md`; the tag workflow
-uploads the AAB and `docs/store/whatsnew/` notes only, not the listing text, so
-the title/short/full description still need to be pasted into the Play Console.
-Regenerate the visuals from the terracotta build in a later release.
+The first `v0.1.6` tag included handoff 0048 (terracotta UI). That was a
+release mistake: the owner only wanted the classification code changes and the
+work that predates the UI revamp. The UI commit was reverted, the tag was moved,
+and `v0.1.6` was re-cut as **versionCode 8** (versionCode 7 was already on Play
+alpha, so Play requires a higher code). The corrected build is the pre-terracotta
+purple/Aurora app plus the 0047/0050 classification fixes. The store visuals
+were already pre-terracotta, so they now match the app; regenerate them only
+when the terracotta design actually ships.
+
+## D24 — 0.1.6 store visuals stay pre-terracotta (2026-10-17)
+
+The owner chose to release 0.1.6 with the existing purple icon, feature graphic
+and screenshots rather than regenerate them. After the re-cut (D25) the app is
+pre-terracotta too, so this is no longer a mismatch — the visuals match the
+shipped design. The canonical Play copy is
+`docs/store/play-listing-en-US.md`; the tag workflow uploads the AAB and
+`docs/store/whatsnew/` notes only, not the listing text, so the
+title/short/full description still need to be pasted into the Play Console.
 
 ## D23 — The classification floor is not parse accuracy; routing replaces instead of specializing (2026-10-17)
 

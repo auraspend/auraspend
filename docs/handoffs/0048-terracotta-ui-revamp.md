@@ -1,3 +1,7 @@
+> **Not shipped in 0.1.6.** The terracotta UI was reverted before the final
+> 0.1.6 cut; only the classification changes ship. This handoff is kept as a
+> design exploration, not as a description of the released app.
+
 # 0048 — Terracotta UI revamp (the app looks like a new app)
 
 **Date:** 2026-10-17

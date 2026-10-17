@@ -1,3 +1,8 @@
+> **Superseded by [0053](0053-release-0.1.6-recut.md).** The first `v0.1.6`
+> tag included the terracotta UI, which should not have shipped. It was
+> reverted and `v0.1.6` was re-cut as versionCode 8. The AAB/APK and run
+> recorded below are obsolete; do not use them.
+
 # 0052 — AuraSpend 0.1.6: terracotta UI + classification audit released
 
 **Date:** 2026-10-17

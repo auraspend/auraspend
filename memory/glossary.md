@@ -5,9 +5,9 @@ Full decoder ring for AuraSpend. Promote frequently used terms to `CLAUDE.md`.
 ## Design
 | Term | Meaning |
 |------|---------|
-| Aurora | AuraSpend's design language. Name kept, palette replaced 2026-10-17: **terracotta clay** — `#A64B2A` clay → `#D2764A` ember → `#F2D8BC` sand, olive-sage secondary, ochre tertiary, warm cream/near-black canvases. Manrope everywhere, Fraunces for display type. Hairline borders, tonal depth |
+| Aurora | AuraSpend's design language: deep violet + lavender + aurora teal, Plus Jakarta Sans with tabular figures, hairline borders and tonal depth. The 2026-10-17 terracotta exploration was reverted before the 0.1.6 release and is not shipped |
 | Aurora tokens | `ui/designsystem/AuraTokens.kt`: `AuraSpacing`, `AuraMotion`, `AuraGradients`, `AuraType` |
-| Hero moment | Any surface using the full terracotta gradient — now `AuraCardStyle.Hero`, one per screen |
+| Hero moment | Any surface using the full Aurora gradient — now `AuraCardStyle.Hero`, one per screen |
 | The mark | `AuraMark`: the illustrated clay pot + coin, drawn with Compose `Canvas`; `AuraMarkMedallion` puts it on a tonal wash for empty states/onboarding |
 | Glass | Translucent surface style for floating chrome only (`AuraCardStyle.Glass`) |
 | Micro-label | Small uppercase `AuraType.metricLabel` caption above a metric |

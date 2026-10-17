@@ -7,11 +7,13 @@ the Play listing.
 
 **Last updated:** 2026-10-17
 
-**Release status:** `v0.1.6` is tagged and the tag workflow uploaded the signed
-AAB and the `docs/store/whatsnew/` notes to Play closed testing (`alpha`). The
-tag workflow does **not** upload the listing text below — paste the title,
-short and full description into the Play Console. The store visuals remain
-pre-terracotta by owner decision for this release.
+**Release status:** `v0.1.6` is being re-cut as versionCode 8 **without the
+terracotta UI**; the first upload (versionCode 7) was superseded before
+production. The tag workflow uploads the signed AAB and the
+`docs/store/whatsnew/` notes to Play closed testing (`alpha`), but it does
+**not** upload the listing text below — paste the title, short and full
+description into the Play Console. The pre-terracotta store visuals now match
+the app.
 
 ---
 
@@ -116,11 +118,10 @@ Console before saving).
    description is 2,355/4,000 chars and lives only in the Console. The repo
    cannot review or diff it. Paste the text above into the Console (or copy the
    Console text back here) so there is one source of truth.
-2. **Visuals are pre-terracotta — accepted for 0.1.6.** The icon, feature
-   graphic and seven screenshots were captured on 2026-10-10, before the 0048
-   UI revamp. They still show the purple Aurora brand and Plus Jakarta Sans. The
-   owner chose to ship 0.1.6 with them anyway; regenerate from the terracotta
-   build in a later release.
+2. **Visuals are pre-terracotta — and now match the app.** The icon, feature
+   graphic and seven screenshots show the purple Aurora brand and Plus Jakarta
+   Sans, which is the design shipped in 0.1.6. Regenerate them only when the
+   terracotta design ships.
 3. **Hindi copy is F-Droid copy.** `fastlane/metadata/android/hi-IN/` also says
    Drive backup is unavailable. The Play `hi-IN` listing needs a Play-specific
    translation of the copy above; keep the F-Droid copy separate.

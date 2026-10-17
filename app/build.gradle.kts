@@ -30,14 +30,13 @@ android {
         applicationId = "com.awbuilds.auraspend"
         minSdk = 30
         targetSdk = 37
-        // 0.1.6 — a visual refresh plus a classification-correctness release:
-        // the terracotta UI (handoff 0048) and the SMS audit fixes (handoffs
-        // 0047 and 0050). No schema change; existing rows and the encrypted
-        // database carry over unchanged.
-        // versionCode must strictly increase for every store upload; Play
-        // rejects an update that reuses one, so it is not optional the way
-        // the name is.
-        versionCode = 7
+        // 0.1.6 — a classification-correctness release (handoffs 0047 and
+        // 0050). No UI, feature or schema change; existing rows and the
+        // encrypted database carry over unchanged.
+        // versionCode 8: the first 0.1.6 upload (versionCode 7) contained the
+        // unshipped terracotta UI and was replaced before any production
+        // rollout. Play requires a strictly higher code for the re-cut.
+        versionCode = 8
         versionName = "0.1.6"
 
         // True in dev/prod; the `fdroid` flavor flips it to false (ADR 0012).

@@ -13,8 +13,8 @@ Repo: https://github.com/auraspend/auraspend.git
 
 Builds:
   - versionName: '0.1.6'
-    versionCode: 7
-    commit: 8e8751541edfa6a07a70a6e901c5c870827a4a32
+    versionCode: 8
+    commit: v0.1.6
     subdir: app
     gradle:
       - fdroid
@@ -23,4 +23,4 @@ Builds:
 AutoUpdateMode: Version
 UpdateCheckMode: Tags ^v[0-9]+\.[0-9]+\.[0-9]+$
 CurrentVersion: '0.1.6'
-CurrentVersionCode: 7
+CurrentVersionCode: 8

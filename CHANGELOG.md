@@ -12,19 +12,17 @@ internal APIs.
 
 ## [0.1.6] — 2026-10-17
 
-A visual refresh plus a classification-correctness release. No schema change and
-no change to the encrypted database — existing rows carry over unchanged.
+A classification-correctness release, prompted by a closed tester's export
+(handoffs 0047 and 0050). No visual redesign, no new feature, no schema change,
+and no change to the encrypted database — existing rows carry over unchanged.
 
 ### Changed
 
-- **Terracotta visual identity** — warm clay palette, Manrope/Fraunces type,
-  softer shapes, an illustrated clay-pot mark and one gradient hero per screen.
-  UI only: no behaviour, data flow, schema or navigation change (handoff 0048).
 - **Classification accuracy re-measured honestly** — the golden corpus now
   scores amount and date and counts correct rejections as passes. Measured:
   **80/82 exact (97.6 %), type 98.8 %, category 100 %, merchant 98.8 %,
   amount 98.8 %, date 100 %**. The one accepted false veto is the documented
-  Canara phishing trade-off. 616 tests (handoff 0050).
+  Canara phishing trade-off.
 
 ### Fixed
 
@@ -70,10 +68,9 @@ no change to the encrypted database — existing rows carry over unchanged.
 
 ### Notes
 
-- The release-store screenshots/icon/feature graphic still carry the pre-0.1.6
-  purple brand by owner decision; the app itself uses the terracotta UI.
 - No database migration. The encrypted database and every existing row are
   untouched.
+- The terracotta UI work (handoff 0048) is **not** part of this release.
 
 ## [0.1.5] — 2026-10-15
 
