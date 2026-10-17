@@ -2,10 +2,12 @@
 
 Everything here is what is uploaded to Google Play for the default (en-US) store
 listing. The authoritative listing is the one saved in the Play Console. As of
-2026-10-17, **0.1.6 is being re-cut without the terracotta UI (versionCode 8)**;
-the first `v0.1.6` upload (versionCode 7, terracotta) was superseded before any
-production rollout. This directory is the versioned source so assets can be
-changed and re-uploaded later.
+2026-10-17, **0.1.6 (versionCode 8) is uploaded to Play closed testing
+(`alpha`) and sent for review** by the corrected `v0.1.6` tag run. The first
+versionCode 7 upload (terracotta UI) was superseded before production. GitHub
+release: <https://github.com/auraspend/auraspend/releases/tag/v0.1.6>. This
+directory is the versioned source so assets can be changed and re-uploaded
+later.
 
 | File | Used for | Play requirements |
 |---|---|---|

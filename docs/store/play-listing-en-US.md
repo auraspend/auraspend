@@ -7,13 +7,12 @@ the Play listing.
 
 **Last updated:** 2026-10-17
 
-**Release status:** `v0.1.6` is being re-cut as versionCode 8 **without the
-terracotta UI**; the first upload (versionCode 7) was superseded before
-production. The tag workflow uploads the signed AAB and the
-`docs/store/whatsnew/` notes to Play closed testing (`alpha`), but it does
-**not** upload the listing text below — paste the title, short and full
-description into the Play Console. The pre-terracotta store visuals now match
-the app.
+**Release status:** `v0.1.6` (versionCode 8) is uploaded to Play closed testing
+(`alpha`) and sent for review. The first upload (versionCode 7) included the
+terracotta UI and was superseded before production. The tag workflow uploads the
+signed AAB and the `docs/store/whatsnew/` notes, but it does **not** upload the
+listing text below — paste the title, short and full description into the Play
+Console. The pre-terracotta store visuals match the app.
 
 ---
 
