@@ -32,6 +32,7 @@ import com.awbuilds.auraspend.domain.model.TransactionType
 import com.awbuilds.auraspend.ui.designsystem.*
 import com.awbuilds.auraspend.ui.theme.extendedColors
 import java.time.LocalDate
+import java.util.Locale
 import java.time.format.DateTimeFormatter
 
 /**
@@ -77,6 +78,20 @@ fun DashboardScreen(
     val overBudget = remember(state.budgets) {
         state.budgets.filter { it.limitAmount > 0 && it.spentAmount > it.limitAmount }
             .sortedByDescending { it.spentAmount - it.limitAmount }
+    }
+    // ── The seven-day strip. A quiet day used to leave Home with nothing below
+    // the budgets card but an empty "Today", so the strip carries the week even
+    // when today has no rows. Values are normalised to the week's own maximum,
+    // which is what AuraSparkColumns expects.
+    val weekStrip = remember(state.dailySpend) {
+        val max = state.dailySpend.maxOrNull() ?: 0.0
+        state.dailySpend.map { if (max > 0.0) (it / max).toFloat() else 0f }
+    }
+    val weekTotal = remember(state.dailySpend) { state.dailySpend.sum() }
+    val weekLabels = remember(state.dailySpend) {
+        val formatter = DateTimeFormatter.ofPattern("d MMM", Locale.getDefault())
+        val today = LocalDate.now()
+        listOf(6, 3, 0).map { back -> today.minusDays(back.toLong()).format(formatter) }
     }
     val budgetLimit = remember(state.budgets) { state.budgets.sumOf { it.limitAmount } }
     val budgetSpent = remember(state.budgets) { state.budgets.sumOf { it.spentAmount } }
@@ -192,6 +207,50 @@ fun DashboardScreen(
                         budgetCount = state.budgets.size,
                         onClick = onNavigateToPlan
                     )
+                }
+            }
+
+            // ── The last seven days, so a quiet day is not a blank screen
+            if (state.dailySpend.any { it > 0.0 }) {
+                item {
+                    AuraSectionHeader(
+                        title = stringResource(R.string.home_last_seven_days),
+                        modifier = Modifier.padding(top = AuraSpacing.section),
+                        trailing = {
+                            Text(
+                                formatMoney(weekTotal, fractionDigits = 0),
+                                style = AuraType.rankPercent,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    )
+                }
+                item {
+                    Box(modifier = Modifier.padding(horizontal = AuraSpacing.gutter)) {
+                        AuraCard(style = AuraCardStyle.Outlined, modifier = Modifier.fillMaxWidth()) {
+                            Spacer(modifier = Modifier.height(AuraSpacing.lg))
+                            AuraSparkColumns(
+                                values = weekStrip,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(56.dp),
+                                contentDescription = stringResource(R.string.home_last_seven_days)
+                            )
+                            Spacer(modifier = Modifier.height(AuraSpacing.sm))
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                weekLabels.forEach { label ->
+                                    Text(
+                                        label,
+                                        style = AuraType.axisLabel,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            }
+                        }
+                    }
                 }
             }
 

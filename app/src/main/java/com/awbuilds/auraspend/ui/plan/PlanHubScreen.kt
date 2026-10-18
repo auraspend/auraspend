@@ -46,9 +46,13 @@ import com.awbuilds.auraspend.ui.designsystem.AuraSpacing
 import com.awbuilds.auraspend.ui.designsystem.AuraType
 import com.awbuilds.auraspend.ui.designsystem.MoneyConfig
 import com.awbuilds.auraspend.ui.designsystem.SettingsAvatarButton
+import androidx.compose.ui.platform.LocalContext
 import com.awbuilds.auraspend.ui.designsystem.formatMoney
+import androidx.compose.ui.platform.LocalContext
 import com.awbuilds.auraspend.ui.designsystem.formatMoneyCompact
 import com.awbuilds.auraspend.ui.designsystem.rememberMonthName
+import com.awbuilds.auraspend.ui.recurring.SuggestionDismissals
+import com.awbuilds.auraspend.ui.recurring.detectedSubscriptions
 import com.awbuilds.auraspend.ui.theme.extendedColors
 import java.time.LocalDateTime
 import kotlin.math.roundToInt
@@ -85,6 +89,21 @@ fun PlanHubScreen(
 ) {
     val storedBudgets by repository.getAllBudgets().collectAsState(initial = emptyList())
     val subscriptions by repository.getActiveSubscriptions().collectAsState(initial = emptyList())
+    // The Subscriptions screen shows tracked rows **and** the recurring payments
+    // the classifier flagged. Counting only the first made this hub say "0 active
+    // subscriptions" above a screen listing four of them (owner report,
+    // 2026-10-18). Both lists are read here, with the same dismissals the screen
+    // applies, so the number can never contradict what the tap reveals.
+    val recurringPayments by repository.getRecurringTransactions().collectAsState(initial = emptyList())
+    val context = LocalContext.current
+    val dismissedSuggestions = remember { SuggestionDismissals.load(context) }
+    val detected = remember(recurringPayments, subscriptions, dismissedSuggestions) {
+        detectedSubscriptions(
+            recurringPayments,
+            trackedNames = subscriptions.map { it.name },
+            dismissedNames = dismissedSuggestions
+        )
+    }
     val goals by repository.getAllSavingsGoals().collectAsState(initial = emptyList())
     val categories by repository.getAllCategories().collectAsState(initial = emptyList())
 
@@ -384,11 +403,20 @@ fun PlanHubScreen(
                 LinkRow(
                     icon = Icons.Default.Subscriptions,
                     title = stringResource(R.string.plan_subscriptions),
-                    subtitle = pluralStringResource(
-                        R.plurals.plan_active_subscriptions,
-                        subscriptions.size,
-                        subscriptions.size
-                    ),
+                    subtitle = if (detected.isEmpty()) {
+                        pluralStringResource(
+                            R.plurals.plan_active_subscriptions,
+                            subscriptions.size,
+                            subscriptions.size
+                        )
+                    } else {
+                        pluralStringResource(
+                            R.plurals.plan_subscriptions_and_detected,
+                            detected.size,
+                            subscriptions.size,
+                            detected.size
+                        )
+                    },
                     onClick = onOpenSubscriptions,
                     trailing = if (subscriptions.isEmpty()) {
                         null

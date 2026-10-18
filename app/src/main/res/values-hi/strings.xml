@@ -280,6 +280,10 @@
         <item quantity="one">%1$d सक्रिय सदस्यता</item>
         <item quantity="other">%1$d सक्रिय सदस्यताएँ</item>
     </plurals>
+    <plurals name="plan_subscriptions_and_detected">
+        <item quantity="one">%1$d सक्रिय · %2$d पहचाने गए</item>
+        <item quantity="other">%1$d सक्रिय · %2$d पहचाने गए</item>
+    </plurals>
     <string name="plan_budgets">बजट</string>
     <string name="plan_subscriptions">सदस्यताएँ</string>
     <string name="plan_savings_goals">बचत लक्ष्य</string>
@@ -641,6 +645,7 @@
     <string name="home_out_short">खर्च</string>
     <string name="home_in_short">आय</string>
     <string name="home_budgets_month">%1$s बजट</string>
+    <string name="home_last_seven_days">पिछले 7 दिन</string>
     <plurals name="home_budgets_over">
         <item quantity="one">%2$d में से %1$d बजट ओवर</item>
         <item quantity="other">%2$d में से %1$d बजट ओवर</item>

@@ -9,6 +9,7 @@ import com.awbuilds.auraspend.data.local.UnrecognizedSmsRepository
 import com.awbuilds.auraspend.domain.model.Budget
 import com.awbuilds.auraspend.domain.model.BudgetPeriod
 import com.awbuilds.auraspend.domain.model.Category
+import com.awbuilds.auraspend.domain.model.DayTotal
 import com.awbuilds.auraspend.domain.model.Transaction
 import com.awbuilds.auraspend.domain.model.TransactionSummary
 import com.awbuilds.auraspend.domain.repository.TransactionRepository
@@ -16,6 +17,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.time.DayOfWeek
+import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.ZoneId
@@ -89,18 +91,24 @@ class DashboardViewModel(
         val (monthStart, monthEnd) = periodRange(BudgetPeriod.MONTHLY, now)
         val (weekStart, weekEnd) = periodRange(BudgetPeriod.WEEKLY, now)
         val (yearStart, yearEnd) = periodRange(BudgetPeriod.YEARLY, now)
+        // Seven days ending today, not a calendar week: a Monday-to-Sunday window
+        // reads empty every Monday (handoff 0043).
+        val week7Start = now.toLocalDate().minusDays(6).atStartOfDay()
+        val week7End = now.toLocalDate().plusDays(1).atStartOfDay()
 
         val aggregates = combine(
             repository.observeSummary(epoch(monthStart), epoch(monthEnd)),
             repository.observeBalance(),
             repository.observeExpenseByCategory(epoch(monthStart), epoch(monthEnd)),
-            repository.observeExpenseByCategory(epoch(weekStart), epoch(weekEnd))
-        ) { summary, balance, monthCats, weekCats ->
+            repository.observeExpenseByCategory(epoch(weekStart), epoch(weekEnd)),
+            repository.observeDailyExpense(epoch(week7Start), epoch(week7End))
+        ) { summary, balance, monthCats, weekCats, dailyWeek ->
             Aggregates(
                 summary = summary,
                 balance = balance,
                 monthlyByCategory = monthCats.associate { it.categoryId to it.amount },
-                weeklyByCategory = weekCats.associate { it.categoryId to it.amount }
+                weeklyByCategory = weekCats.associate { it.categoryId to it.amount },
+                dailyWeek = dailyWeek
             )
         }
 
@@ -142,6 +150,12 @@ class DashboardViewModel(
             budget.copy(spentAmount = totals[budget.categoryId] ?: 0.0)
         }
 
+        // Oldest first, today last, with the quiet days present as zeroes so the
+        // strip keeps its seven columns.
+        val today = LocalDate.now()
+        val byDay = agg.dailyWeek.associate { it.date to it.amount }
+        val dailySpend = (6 downTo 0).map { back -> byDay[today.minusDays(back.toLong())] ?: 0.0 }
+
         val categoryTotals = agg.monthlyByCategory.entries
             .map { it.key to it.value }
             .sortedByDescending { it.second }
@@ -157,6 +171,7 @@ class DashboardViewModel(
                 categories = sup.categories,
                 budgets = budgets,
                 categoryMonthTotals = categoryTotals,
+                dailySpend = dailySpend,
                 isLoading = false,
                 error = null
             )
@@ -182,7 +197,8 @@ class DashboardViewModel(
         val summary: TransactionSummary,
         val balance: Double,
         val monthlyByCategory: Map<String, Double>,
-        val weeklyByCategory: Map<String, Double>
+        val weeklyByCategory: Map<String, Double>,
+        val dailyWeek: List<DayTotal>
     )
 
     private data class Supporting(

@@ -282,6 +282,10 @@
         <item quantity="one">%1$d active subscription</item>
         <item quantity="other">%1$d active subscriptions</item>
     </plurals>
+    <plurals name="plan_subscriptions_and_detected">
+        <item quantity="one">%1$d active · %2$d detected</item>
+        <item quantity="other">%1$d active · %2$d detected</item>
+    </plurals>
     <string name="plan_budgets">Budgets</string>
     <string name="plan_subscriptions">Subscriptions</string>
     <string name="plan_savings_goals">Savings goals</string>
@@ -648,6 +652,7 @@
     <string name="home_out_short">out</string>
     <string name="home_in_short">in</string>
     <string name="home_budgets_month">%1$s budgets</string>
+    <string name="home_last_seven_days">Last 7 days</string>
     <plurals name="home_budgets_over">
         <item quantity="one">%1$d of %2$d budget over</item>
         <item quantity="other">%1$d of %2$d budgets over</item>

@@ -3,7 +3,22 @@
 > Read this file and the latest file in `docs/handoffs/` before touching anything.
 > Update both (plus `CLAUDE.md` / `memory/` when you learn something durable) before ending a session.
 >
-> Latest: `docs/handoffs/0064-onnx-jni-crash.md` — **0.1.8 crashed on every
+> Latest: `docs/handoffs/0065-plan-subscription-count-and-home-week.md` — Plan
+> said "0 active subscriptions" above a screen listing four: the hub read only
+> `getActiveSubscriptions()` while the Subscriptions screen also shows the
+> classifier's **detected** recurring payments. The number was not wrong about
+> the data, it was wrong about **the screen it links to** — the failure mode to
+> watch for is a count whose source is narrower than the list behind it. The hub
+> now reads both, applies the same `SuggestionDismissals`, and shows
+> "N active · M detected". Home also regained a **seven-day strip**
+> (`AuraSparkColumns`, the same component Insights uses, today's column in ink)
+> because below the budgets card a quiet day left the screen empty; the window
+> ends today rather than on a calendar week (0043). One candidate left for the
+> owner: Activity's header total is a month SQL aggregate that does not follow
+> the category chip or the search box. **The per-screen device walk is still
+> owed** — the Moto runs 0.1.71 (pre-redesign) and the vivo's notification shade
+> held focus all session.
+> Before: `docs/handoffs/0064-onnx-jni-crash.md` — **0.1.8 crashed on every
 > categorised message** and 0.1.9 fixes it. R8 stripped
 > `ai.onnxruntime.TensorInfo` and `OnnxJavaType`: the runtime's C++ constructs
 > them by literal name at inference time (`FindClass` + a `GetMethodID` whose
