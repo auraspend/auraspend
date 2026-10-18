@@ -14,7 +14,7 @@ import org.junit.runner.RunWith
  * Cold-start budget for AuraSpend.
  *
  * Run on a release-like build:
- * `./gradlew :benchmark:connectedFreeBenchmarkAndroidTest`
+ * `./gradlew :benchmark:connectedDevBenchmarkAndroidTest`
  *
  * Target (Pixel 6a class): time-to-initial-display < 700 ms.
  */
@@ -38,6 +38,15 @@ class StartupBenchmark {
     }
 
     companion object {
-        const val PACKAGE = "com.awbuilds.auraspend"
+        /**
+         * The app under test, declared per flavor in `benchmark/build.gradle.kts`.
+         *
+         * It cannot be read from the instrumentation: this module is
+         * *self-instrumenting*, so `targetContext` is the benchmark itself, and
+         * asking for it made the macrobenchmark library force-stop its own
+         * process. It also must not be a single literal — the old value was the
+         * prod id, so the README's dev-flavor command profiled the wrong package.
+         */
+        val PACKAGE: String = BuildConfig.TARGET_PACKAGE
     }
 }

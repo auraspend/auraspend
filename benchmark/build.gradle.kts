@@ -29,10 +29,29 @@ android {
     }
 
     // Match the app's flavor dimension.
+    //
+    // Each flavor declares the application id it benchmarks. This module is
+    // *self-instrumenting*, so `InstrumentationRegistry.targetContext` is the
+    // benchmark itself, not the app under test: asking it for the package made
+    // the macrobenchmark library force-stop the benchmark process, and the run
+    // died with "Process crashed" before producing a single sample. Before that
+    // the id was a hardcoded `com.awbuilds.auraspend` — the *prod* id — so the
+    // README's dev-flavor command profiled the wrong package (on the
+    // maintainer's phone, the signed Play install).
     flavorDimensions += "env"
     productFlavors {
-        create("dev") { dimension = "env" }
-        create("prod") { dimension = "env" }
+        create("dev") {
+            dimension = "env"
+            buildConfigField("String", "TARGET_PACKAGE", "\"com.awbuilds.auraspend.dev\"")
+        }
+        create("prod") {
+            dimension = "env"
+            buildConfigField("String", "TARGET_PACKAGE", "\"com.awbuilds.auraspend\"")
+        }
+    }
+
+    buildFeatures {
+        buildConfig = true
     }
 
     buildTypes {
