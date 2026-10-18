@@ -33,19 +33,23 @@ import org.junit.runner.RunWith
  *
  * ## Why the numbers are chosen, not arbitrary
  *
- * The data is deliberately shaped to stress the things a finance UI gets wrong:
+ * The data describes a **healthy month** — income above spending, every budget
+ * under its limit — because it is also what the Play screenshots are shot from;
+ * an ad that shows "over budget" and a negative balance sells the opposite of
+ * the product. It still stresses the things a finance UI gets wrong:
  *
- * - **Lakh/crore grouping.** A ₹1,25,000 salary and a ₹2,40,000 rent payment
- *   exist specifically so `formatMoney`'s hand-rolled Indian grouping is
- *   visible. `NumberFormat` gets this wrong on `en_IN`, which is the whole
- *   reason that formatter is hand-written.
+ * - **Lakh/crore grouping.** A ₹1,25,000 salary exists specifically so
+ *   `formatMoney`'s hand-rolled Indian grouping is visible. `NumberFormat` gets
+ *   this wrong on `en_IN`, which is the whole reason that formatter is
+ *   hand-written.
  * - **Long content.** "South Indian Expressways Authority" and
  *   "Reliance Digital Store — Brigade Road" are wider than most merchant names,
  *   to show ellipsis and wrapping rather than assuming short labels.
  * - **Every one of the 12 default categories** has at least one transaction, so
  *   the category breakdown and donut chart are fully populated.
- * - **Budgets both over and under**, so the progress ring is seen in both
- *   states, and one at 99% to check the near-limit rendering.
+ * - **Budgets all under, one at 93 %**, so the near-limit rendering is still
+ *   exercised. The over-limit paths are covered by unit tests rather than by
+ *   data that would look alarming in a screenshot.
  * - **Mix of income and expense**, with a mid-month salary so the dashboard's
  *   balance figure is not simply "all expenses".
  */
@@ -114,7 +118,7 @@ class DemoDataSeeder {
             bankName = "HDFC Bank", dateTimestamp = daysAgo(54), type = "INCOME"
         )
         tx += TransactionEntity(
-            id = "tx-freelance", amount = 32_500.0, categoryId = "cat_salary",
+            id = "tx-freelance", amount = 72_500.0, categoryId = "cat_salary",
             note = "Consulting invoice", merchant = "Razorpay Payments",
             bankName = "HDFC Bank", dateTimestamp = daysAgo(11), type = "INCOME"
         )
@@ -142,8 +146,11 @@ class DemoDataSeeder {
         expense("tx-s2", 2_399.0, "cat_shopping", "Running shoes", "Decathlon", 10)
         expense("tx-s3", 1_899.0, "cat_shopping", "Winter jacket", "Westside", 16)
 
-        // Bills & Utilities — the ₹2.4L rent line is the crore/lakh stress case.
-        expense("tx-b1", 2_40_000.0, "cat_bills", "Rent", "South Indian Expressways Authority", 25)
+        // Bills & Utilities. The rent is deliberately ordinary: this dataset is
+        // what the Play screenshots are shot from, so nothing here is allowed to
+        // produce a negative balance or an over-budget row. The lakh-scale
+        // grouping case is carried by the salary (income) instead.
+        expense("tx-b1", 42_000.0, "cat_bills", "Rent", "South Indian Expressways Authority", 25)
         expense("tx-b2", 2_180.0, "cat_bills", "Electricity", "BESCOM", 5)
         expense("tx-b3", 1_299.0, "cat_bills", "Broadband", "ACT Fibernet", 6)
         expense("tx-b4", 799.0, "cat_bills", "Mobile postpaid", "Airtel", 7)
@@ -170,18 +177,22 @@ class DemoDataSeeder {
 
         db.transactionDao().insertTransactions(tx)
 
-        // Budgets: one comfortably under, one just under the limit, one blown.
+        // Budgets: all under the limit on purpose. This data is also what the
+        // store screenshots show, and an ad that says "over budget" sells the
+        // opposite of the product. Shopping sits at 93 % so the near-limit
+        // rendering is still exercised; the over-limit paths are covered by
+        // unit tests, not by demo data.
         db.budgetDao().insertBudget(
             BudgetEntity("bg-food", "cat_food", 8_000.0, 0.0, "MONTHLY")
         )
         db.budgetDao().insertBudget(
-            BudgetEntity("bg-grocery", "cat_grocery", 6_000.0, 0.0, "MONTHLY")
+            BudgetEntity("bg-grocery", "cat_grocery", 9_000.0, 0.0, "MONTHLY")
         )
         db.budgetDao().insertBudget(
             BudgetEntity("bg-transport", "cat_transport", 5_000.0, 0.0, "MONTHLY")
         )
         db.budgetDao().insertBudget(
-            BudgetEntity("bg-shopping", "cat_shopping", 3_000.0, 0.0, "MONTHLY")
+            BudgetEntity("bg-shopping", "cat_shopping", 18_000.0, 0.0, "MONTHLY")
         )
         db.budgetDao().insertBudget(
             BudgetEntity("bg-entertainment", "cat_entertainment", 4_000.0, 0.0, "MONTHLY")
