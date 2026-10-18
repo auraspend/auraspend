@@ -1,30 +1,43 @@
 # AuraSpend R8 rules (full mode is the AGP 9 default)
 
 # ─── Native (JNI) runtime ────────────────────────────────────────────────────
-# There is deliberately NO local rule for the on-device runtime. ONNX Runtime's
-# AAR ships no consumer rules of its own, and its native methods are registered
-# dynamically at JNI_OnLoad with `RegisterNatives` rather than by the
-# `Java_com_microsoft_onnxruntime_*` naming convention — which reads like a
-# guaranteed rename-breaking crash. It is not one: AGP's default
-# proguard-android-optimize.txt already carries
+# ONNX Runtime's AAR ships no consumer rules of its own, and the library's JNI
+# reaches back into Java in two different ways:
 #
-#   -keepclasseswithmembernames,includedescriptorclasses class * { native <methods>; }
+#   1. JNI_OnLoad → RegisterNatives finds the class that declares the native
+#      methods (OrtSession). AGP's default
+#      `-keepclasseswithmembernames,includedescriptorclasses class * { native <methods>; }`
+#      covers this, which is why FindClass() at load time resolves.
 #
-# which keeps any class declaring a native method, names included, so
-# FindClass() at JNI_OnLoad still resolves. Verified in the merged
-# configuration.txt and by R8's keep-radius analysis: that rule pins 40 items
-# (DONT_OBFUSCATE + DONT_OPTIMIZE).
+#   2. **At inference time the C++ constructs Java objects by literal name:**
+#      FindClass("ai/onnxruntime/TensorInfo"), then a GetMethodID whose signature
+#      is `(Lai/onnxruntime/OnnxJavaType;[J)V`. Rule 1 does not cover these — they
+#      declare no native methods — so R8 shrank them away.
 #
-# So do NOT add `-keep class com.microsoft.onnxruntime.** { *; }`. It is
-# unnecessary, and it would suppress the obfuscation score for nothing. The
-# thing to protect instead is AGP's default file: swapping it for
-# proguard-android.txt is the change that would actually break inference, and
-# AGP 9 rejects that file outright.
+# That gap shipped in 0.1.8 and crashed the production build the moment a message
+# was categorised:
 #
+#   Abort message: 'JNI DETECTED ERROR IN APPLICATION: java_class == null
+#       in call to GetMethodID
+#       from boolean[] ai.onnxruntime.OrtSession.run(...)'
+#     #06 convertToTensorInfo+628
+#
+# The debug flavour never showed it (debug builds are not minified), and the R8
+# gate checked only the three classes JNI_OnLoad touches (handoff 0064).
+#
+# So this rule is load-bearing: it keeps the package's names *and* its members,
+# including the synthesized constructor `TensorInfo(OnnxJavaType, long[])` the
+# JNI calls. It is deliberately the whole package rather than a list — the list
+# is whatever classes the shipped .so asks for, and that changes with the next
+# ORT bump. `tools/verify_r8_release.sh` now derives the expected set from the
+# native library itself, so a bump that adds a class fails the gate instead of
+# shipping.
+-keep class ai.onnxruntime.** { *; }
+
 # This block previously held `-keep class com.arm.aichat.** { *; }` for the
 # vendored llama.cpp library, deleted in handoff 0013. It matched nothing and
 # was the only native-runtime rule in the file, which made the JNI story look
-# handled locally when it is handled by AGP.
+# handled locally when it was handled by AGP.
 
 # ─── Enums persisted as strings ──────────────────────────────────────────────
 # TransactionType / SmsMessageStatus / BudgetPeriod values round-trip through Room as names,

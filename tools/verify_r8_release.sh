@@ -80,36 +80,69 @@ else
 fi
 
 note "4. JNI classes R8 must not rename"
-# ONNX Runtime registers its natives in JNI_OnLoad via RegisterNatives, so
-# FindClass() resolves them by name at load time. A rename is a release-only
-# UnsatisfiedLinkError. The AAR ships no consumer rules, so this is covered
-# solely by AGP's default:
-#   -keepclasseswithmembernames,includedescriptorclasses class * { native <methods>; }
-# Note the package is ai.onnxruntime, not com.microsoft.onnxruntime.
+# ONNX Runtime reaches back into Java two ways, and only the first is covered by
+# AGP's default `-keepclasseswithmembernames,includedescriptorclasses`:
 #
-# SQLCipher is the same shape — JNI_OnLoad + RegisterNatives — and unlike ONNX it
-# *does* ship consumer rules (`-keep class net.zetetic.database.** { *; }` plus a
-# native-method keep). They are checked here anyway rather than trusted: a
-# renamed SQLiteConnection would make the encrypted database impossible to open
-# in a release build, which is the worst possible failure for this app, and the
-# check costs one grep.
+#   - JNI_OnLoad → RegisterNatives needs the class declaring the native methods.
+#   - **At inference time the C++ constructs Java objects by literal name** —
+#     FindClass("ai/onnxruntime/TensorInfo") and a GetMethodID whose signature
+#     names OnnxJavaType. Those classes declare no native methods, so R8 shrank
+#     them, and 0.1.8 aborted with `JNI DETECTED ERROR: java_class == null` the
+#     moment a message was categorised (handoff 0064).
+#
+# So the expected set is *derived from the shipped .so* rather than maintained by
+# hand: every `ai/onnxruntime/X` string the native library asks for must exist in
+# the mapping with its name intact. An ORT bump that introduces a class the keep
+# rules miss then fails here instead of on a user's phone.
+# No `mapfile` here: macOS ships bash 3.2 and this script runs there too.
+SO_NAMES="$(
+  find app/build/intermediates/merged_native_libs -name 'libonnxruntime4j_jni.so' 2>/dev/null |
+    head -1 |
+    xargs -I{} strings {} 2>/dev/null |
+    grep -oE '^ai/onnxruntime/[A-Za-z]+$' |
+    sort -u
+)"
+if [[ -z "$SO_NAMES" ]]; then
+  bad "could not read class names from libonnxruntime4j_jni.so"
+elif [[ ! -f "$MAPPING" ]]; then
+  bad "no mapping file at $MAPPING"
+else
+  missing=0
+  count=0
+  while IFS= read -r path; do
+    [[ -z "$path" ]] && continue
+    count=$((count + 1))
+    cls="${path//\//.}"
+    line="$(grep -m1 -E "^${cls} ->" "$MAPPING")"
+    if [[ -z "$line" ]]; then
+      bad "$cls is missing from the release build — the JNI will FindClass() null"
+      missing=1
+    elif [[ "${line%% -> *}" != "$(sed 's/.* -> //; s/:$//' <<<"$line")" ]]; then
+      bad "$cls was RENAMED — inference will abort: $line"
+      missing=1
+    fi
+  done <<< "$SO_NAMES"
+  [[ $missing -eq 0 ]] && good "all $count classes the JNI resolves by name survived un-renamed"
+fi
+
+# SQLCipher is the same shape — JNI_OnLoad + RegisterNatives — but unlike ONNX it
+# ships consumer rules, and a renamed SQLiteConnection would make the encrypted
+# database impossible to open in a release build, so it is checked rather than
+# trusted.
 if [[ -f "$MAPPING" ]]; then
-  for cls in ai.onnxruntime.OrtEnvironment ai.onnxruntime.OrtSession ai.onnxruntime.OnnxTensor \
-             net.zetetic.database.sqlcipher.SQLiteConnection net.zetetic.database.sqlcipher.SupportOpenHelperFactory; do
+  for cls in net.zetetic.database.sqlcipher.SQLiteConnection net.zetetic.database.sqlcipher.SupportOpenHelperFactory; do
     line="$(grep -m1 -E "^${cls} ->" "$MAPPING")"
     if [[ -z "$line" ]]; then
       bad "$cls is missing from the release build entirely"
     elif [[ "${line%% -> *}" == "$(sed 's/.* -> //; s/:$//' <<<"$line")" ]]; then
       good "$cls kept un-renamed"
     else
-      bad "$cls was RENAMED — JNI_OnLoad will fail to resolve it: $line"
+      bad "$cls was RENAMED — the database cannot open: $line"
     fi
   done
   if grep -q "com.arm.aichat" "$MAPPING"; then
     bad "llama.cpp classes are still in the release build; handoff 0013 removed them"
   fi
-else
-  bad "no mapping file at $MAPPING"
 fi
 
 note "Result"
