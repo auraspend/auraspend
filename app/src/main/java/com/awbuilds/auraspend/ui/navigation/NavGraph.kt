@@ -3,6 +3,7 @@ package com.awbuilds.auraspend.ui.navigation
 import android.content.Context
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.core.tween
@@ -22,6 +23,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -130,17 +132,34 @@ private inline fun <reified VM : ViewModel> factoryOf(
     initializer { create() }
 }
 
-/** Premium-feeling screen transition: subtle horizontal push + fade. */
-private const val TRANSITION_MS = 260
+/**
+ * Screen transitions.
+ *
+ * **A tab switch is instant**, which is what Material's bottom navigation does
+ * and what makes the app feel quick. A cross-fade between two full screens puts
+ * *each* into its own alpha layer for the whole animation, and that fill rate is
+ * what the mid-range phones this app targets do not have to spare — it was
+ * showing up as 37 % janky frames on a transition (handoff 0064).
+ *
+ * Pushed screens keep a subtle push. The fade is gone from the entering and
+ * popping screens so those animations translate one opaque surface instead of
+ * compositing two with alpha.
+ */
+private const val TRANSITION_MS = 200
 private val pushEnter: EnterTransition =
-    fadeIn(tween(TRANSITION_MS)) + slideInHorizontally(tween(TRANSITION_MS)) { it / 8 }
+    slideInHorizontally(tween(TRANSITION_MS)) { it / 8 }
 
 private val pushExit: ExitTransition = fadeOut(tween(TRANSITION_MS / 2))
 
 private val popEnter: EnterTransition = fadeIn(tween(TRANSITION_MS))
 
 private val popExit: ExitTransition =
-    fadeOut(tween(TRANSITION_MS)) + slideOutHorizontally(tween(TRANSITION_MS)) { it / 8 }
+    slideOutHorizontally(tween(TRANSITION_MS)) { it / 8 }
+
+/** Both ends of this transition are top-level tabs, so it is a tab switch. */
+private fun AnimatedContentTransitionScope<NavBackStackEntry>.isTabSwitch(): Boolean =
+    initialState.destination.route in Routes.topLevel &&
+        targetState.destination.route in Routes.topLevel
 
 private fun NavHostController.navigateToTab(route: String) {
     navigate(route) {
@@ -192,8 +211,10 @@ fun AuraSpendNavHost(
             navController = navController,
             startDestination = Routes.SPLASH,
             modifier = Modifier.fillMaxSize(),
-            enterTransition = { fadeIn(tween(220)) },
-            exitTransition = { fadeOut(tween(160)) }
+            enterTransition = { if (isTabSwitch()) EnterTransition.None else pushEnter },
+            exitTransition = { if (isTabSwitch()) ExitTransition.None else pushExit },
+            popEnterTransition = { if (isTabSwitch()) EnterTransition.None else popEnter },
+            popExitTransition = { if (isTabSwitch()) ExitTransition.None else popExit }
         ) {
             composable(Routes.SPLASH) {
                 SplashScreen(

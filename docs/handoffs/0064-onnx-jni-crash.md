@@ -81,7 +81,46 @@ Play-signed builds, so a sideload cannot go over them):
 Verdict: the crash path is fixed on a minified build, proven by the path that
 killed 0.1.8.
 
-## Page-transition lag — not fixed, not yet measured
+## Page-transition lag — measured, and the measurement says the UI thread is not the problem
+
+Measured with `dumpsys gfxinfo <pkg> framestats` on the **minified prodRelease**
+build with real data, splitting the UI-thread portion (`DrawStart -
+HandleInputStart`, which is Compose + layout + recording) from the total, because
+the emulator renders in software and its totals are GPU-bound:
+
+| Sequence | frames | UI p50 | UI p95 | UI max |
+|---|---|---|---|---|
+| 8 tab switches, crossfade | 41–43 | 1.9–2.3 ms | 9.7–10.5 ms | **16.1–17.4 ms** |
+| 8 tab switches, instant | 41 | 1.5–1.6 ms | 5.3–8.9 ms | **12.3–14.3 ms** |
+| detail push/pop ×3 | 61 | 2.3 ms | 12.8 ms | 13.9 ms |
+
+So the app's composition work is **cheap** — p50 ~2 ms, and the worst tab frame
+with the crossfade is 17.4 ms, i.e. just *over* the 16.7 ms budget. That is the
+only over-budget frame found, and it is the crossfade: two full screens each need
+their own alpha layer for the animation.
+
+Change: **tab switches are now instant** (Material's own bottom-navigation
+convention — `enterTransition`/`exitTransition` = `None` when both ends are in
+`Routes.topLevel`), and the push/pop animations lost their alpha fades so they
+translate one opaque surface instead of compositing two. Worst tab frame 17.4 →
+14.3 ms, back inside the budget. Pushed screens keep a 200 ms slide.
+
+**What this does not prove.** The emulator cannot stand in for the device: it is
+fill-rate bound (GPU p50 14.1 ms against a 16.7 ms budget), so its *total* frame
+times are meaningless, and the 61 ms outlier in the first mixed run did not
+reproduce in either path afterwards (a cold-start artefact). The vivo — the
+device the owner reported it on — **crashes within seconds of launch on 0.1.8**,
+which is exactly why nothing could be measured there:
+
+```
+10-18 20:00:24  F DEBUG : Abort message: 'JNI DETECTED ERROR … GetMethodID
+                             from boolean[] ai.onnxruntime.OrtSession.run(...)'
+```
+
+So the remaining question — whether the vivo's lag is this transition or
+something draw-bound that only that device shows — needs 0.1.9 installed there and
+the same measurement taken with `SurfaceFlinger --latency` (gfxinfo reports no
+frames on that vivo, handoff 0038).
 
 0.1.8 **does** contain the 0061 composition fix, and the vivo's install is
 `[status=speed-profile]` (the baseline profile is applied — so the "profile never
