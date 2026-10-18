@@ -32,12 +32,23 @@ recommended: the title is the strongest ASO field.
 ## Short description (80 max)
 
 ```
-Offline expense tracker: budgets, subscriptions, insights. No ads, no tracking.
+Offline expense tracker: budgets, subscriptions, insights. On-device.
 ```
 
-79/80 characters. Keep this one: it carries the primary keyword, the offline
-differentiator, three feature nouns and the privacy promise. If the title takes
-`SMS`, the short description does not need to repeat it.
+69/80 characters. It carries the primary keyword, the offline differentiator,
+three feature nouns and the privacy signal. If the title takes `SMS`, the short
+description does not need to repeat it.
+
+**"No ads, no tracking" was removed on 2026-10-18** because Play flagged the
+listing: *"Your app may not be promoted on Google Play because your short
+description does not meet the following guidelines: should not use keywords that
+indicate price or promotion."* A pricing claim ("no ads") in the short
+description is a promotion keyword even when it is true. "On-device" makes the
+same point as a technical fact, and the long description still carries the full
+no-ads / no-tracking promise where the policy allows it.
+
+Do not put "free", "no ads", "no tracking" or similar back in this field — Play
+will suppress promotion of the app listing.
 
 ## Full description (4000 max)
 

@@ -36,7 +36,7 @@ description, the ASO rationale and the remaining gaps.
 | Field | Current Play Console | Notes |
 |---|---|---|
 | Title (30) | `AuraSpend: SMS Expense Tracker` (30) | Updated 2026-10-17 from the 26-char brand title |
-| Short (80) | `Offline expense tracker: budgets, subscriptions, insights. No ads, no tracking.` (79) | unchanged |
+| Short (80) | `Offline expense tracker: budgets, subscriptions, insights. On-device.` (69) | **changed 2026-10-18** — Play rejected "No ads, no tracking" as a price/promotion keyword |
 | Full (4000) | 2,355 chars, **not versioned in this repo** | paste the 3,270-char copy from `play-listing-en-US.md` |
 
 Play's public API exposes the title, short/full description and video only
