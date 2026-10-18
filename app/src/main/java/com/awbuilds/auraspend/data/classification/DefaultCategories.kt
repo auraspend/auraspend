@@ -5,19 +5,19 @@ import com.awbuilds.auraspend.ui.theme.*
 import java.util.Locale
 
 val defaultCategories = listOf(
-    Category(id = "cat_food", name = "Food & Dining", icon = "restaurant", color = 0xFFE53935.toInt(), isDefault = true),
-    Category(id = "cat_transport", name = "Transport", icon = "directions_car", color = 0xFF1E88E5.toInt(), isDefault = true),
-    Category(id = "cat_shopping", name = "Shopping", icon = "shopping_bag", color = 0xFF8E24AA.toInt(), isDefault = true),
-    Category(id = "cat_bills", name = "Bills & Utilities", icon = "receipt_long", color = 0xFFFF8F00.toInt(), isDefault = true),
-    Category(id = "cat_entertainment", name = "Entertainment", icon = "movie", color = 0xFF00ACC1.toInt(), isDefault = true),
-    Category(id = "cat_healthcare", name = "Healthcare", icon = "local_hospital", color = 0xFFE53935.toInt(), isDefault = true),
-    Category(id = "cat_education", name = "Education", icon = "school", color = 0xFF5E35B1.toInt(), isDefault = true),
-    Category(id = "cat_salary", name = "Salary", icon = "account_balance", color = 0xFF43A047.toInt(), isDefault = true),
-    Category(id = "cat_investment", name = "Investments", icon = "account_balance", color = 0xFF00897B.toInt(), isDefault = true),
-    Category(id = "cat_subscription", name = "Subscriptions", icon = "subscriptions", color = 0xFF6D4C41.toInt(), isDefault = true),
-    Category(id = "cat_transfer", name = "Transfer", icon = "swap_horiz", color = 0xFF546E7A.toInt(), isDefault = true),
-    Category(id = "cat_grocery", name = "Grocery", icon = "local_grocery_store", color = 0xFF2E7D32.toInt(), isDefault = true),
-    Category(id = "cat_other", name = "Other", icon = "category", color = 0xFF757575.toInt(), isDefault = true)
+    Category(id = "cat_food", name = "Food & Dining", icon = "restaurant", color = 0xFFD0574C.toInt(), isDefault = true),
+    Category(id = "cat_transport", name = "Transport", icon = "directions_car", color = 0xFF3D7EBF.toInt(), isDefault = true),
+    Category(id = "cat_shopping", name = "Shopping", icon = "shopping_bag", color = 0xFF9B5CB8.toInt(), isDefault = true),
+    Category(id = "cat_bills", name = "Bills & Utilities", icon = "receipt_long", color = 0xFFBE7A2E.toInt(), isDefault = true),
+    Category(id = "cat_entertainment", name = "Entertainment", icon = "movie", color = 0xFF19909A.toInt(), isDefault = true),
+    Category(id = "cat_healthcare", name = "Healthcare", icon = "local_hospital", color = 0xFFC0556B.toInt(), isDefault = true),
+    Category(id = "cat_education", name = "Education", icon = "school", color = 0xFF6C6BA8.toInt(), isDefault = true),
+    Category(id = "cat_salary", name = "Salary", icon = "account_balance", color = 0xFF3E9159.toInt(), isDefault = true),
+    Category(id = "cat_investment", name = "Investments", icon = "account_balance", color = 0xFF14907E.toInt(), isDefault = true),
+    Category(id = "cat_subscription", name = "Subscriptions", icon = "subscriptions", color = 0xFF8A6250.toInt(), isDefault = true),
+    Category(id = "cat_transfer", name = "Transfer", icon = "swap_horiz", color = 0xFF6B7684.toInt(), isDefault = true),
+    Category(id = "cat_grocery", name = "Grocery", icon = "local_grocery_store", color = 0xFF3E9159.toInt(), isDefault = true),
+    Category(id = "cat_other", name = "Other", icon = "category", color = 0xFF6B7684.toInt(), isDefault = true)
 )
 
 /**

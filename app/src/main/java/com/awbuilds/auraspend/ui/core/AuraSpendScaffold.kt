@@ -7,15 +7,14 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.border
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ListAlt
+import androidx.compose.material.icons.automirrored.outlined.ListAlt
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.BarChart
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Savings
+import androidx.compose.material.icons.outlined.Adjust
+import androidx.compose.material.icons.outlined.BarChart
+import androidx.compose.material.icons.outlined.Home
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationRail
@@ -33,13 +32,15 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.annotation.StringRes
 import com.awbuilds.auraspend.R
-import com.awbuilds.auraspend.ui.designsystem.AuraGradients
 import com.awbuilds.auraspend.ui.designsystem.AuraMotion
 import com.awbuilds.auraspend.ui.designsystem.AuraSpacing
+import com.awbuilds.auraspend.ui.designsystem.AuraType
 import com.awbuilds.auraspend.ui.designsystem.softShadow
+import com.awbuilds.auraspend.ui.theme.extendedColors
 
 /**
  * Top-level destinations shown in the app chrome.
@@ -56,18 +57,33 @@ enum class TopLevelDestination(
     @param:StringRes val labelRes: Int,
     val icon: ImageVector
 ) {
-    HOME("home", R.string.home_title, Icons.Filled.Home),
-    ACTIVITY("activity", R.string.activity_title, Icons.AutoMirrored.Filled.ListAlt),
-    PLAN("plan", R.string.plan_title, Icons.Filled.Savings),
-    INSIGHTS("insights", R.string.insights_title, Icons.Filled.BarChart)
+    HOME("home", R.string.home_title, Icons.Outlined.Home),
+    ACTIVITY("activity", R.string.activity_title, Icons.AutoMirrored.Outlined.ListAlt),
+    PLAN("plan", R.string.plan_title, Icons.Outlined.Adjust),
+    INSIGHTS("insights", R.string.insights_title, Icons.Outlined.BarChart)
 }
 
 /**
- * Aurora app frame.
+ * Quiet Ledger app frame.
  *
- * Compact widths get a bottom navigation bar with a center add button; medium
- * and expanded widths get a navigation rail so tablets and foldables feel
- * native instead of stretched. Chrome is only shown on top-level destinations.
+ * Compact widths get a flat bottom bar with a hairline top edge and a centre
+ * add button; medium and expanded widths get a navigation rail so tablets and
+ * foldables feel native instead of stretched. Chrome is only shown on top-level
+ * destinations.
+ *
+ * The bar used to be a floating rounded pill on a tonal surface, which read as a
+ * second card stacked under the content. A hairline edge separates the chrome
+ * from the page without competing with the cards above it.
+ *
+ * **`content()` has exactly one call site, and that is load-bearing.** It used to
+ * be called from three branches (no chrome / rail / bottom bar), which meant that
+ * every navigation between a top-level screen and a detail screen — Activity →
+ * a transaction, and the back out of it — moved the whole `NavHost` subtree to a
+ * different position in the composition. Compose disposes a subtree whose
+ * position changes and rebuilds it from scratch, so every such crossing tore down
+ * and recreated the entire navigation host, mid-transition. That is the hitch the
+ * owner reported when going "deeper and deeper, mainly when returning back". The
+ * chrome is now a sibling that appears or disappears around a stable slot.
  */
 @Composable
 fun AuraAppChrome(
@@ -80,13 +96,8 @@ fun AuraAppChrome(
     BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
         val expanded = maxWidth >= 600.dp
 
-        if (!showChrome) {
-            content()
-            return@BoxWithConstraints
-        }
-
-        if (expanded) {
-            Row(modifier = Modifier.fillMaxSize()) {
+        Row(modifier = Modifier.fillMaxSize()) {
+            if (expanded && showChrome) {
                 NavigationRail(
                     containerColor = MaterialTheme.colorScheme.surfaceContainer,
                     header = {
@@ -109,16 +120,17 @@ fun AuraAppChrome(
                     }
                     Spacer(modifier = Modifier.weight(1f))
                 }
-                Box(modifier = Modifier.weight(1f)) { content() }
             }
-        } else {
-            Column(modifier = Modifier.fillMaxSize()) {
+            Column(modifier = Modifier.weight(1f)) {
+                // The one and only `content()` call site.
                 Box(modifier = Modifier.weight(1f)) { content() }
-                AuraBottomBar(
-                    currentRoute = currentRoute,
-                    onNavigate = onNavigate,
-                    onAddClick = onAddClick
-                )
+                if (!expanded && showChrome) {
+                    AuraBottomBar(
+                        currentRoute = currentRoute,
+                        onNavigate = onNavigate,
+                        onAddClick = onAddClick
+                    )
+                }
             }
         }
     }
@@ -135,20 +147,19 @@ private fun AuraBottomBar(
         color = MaterialTheme.colorScheme.background,
         tonalElevation = 0.dp
     ) {
-        Box(modifier = Modifier.fillMaxWidth()) {
+        Column {
+            // A hairline, not a shadow: the same edge the cards use, so the bar
+            // reads as part of the page rather than a slab floating over it.
+            HorizontalDivider(
+                thickness = 1.dp,
+                color = MaterialTheme.colorScheme.outlineVariant
+            )
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .navigationBarsPadding()
-                    .padding(horizontal = AuraSpacing.sm, vertical = AuraSpacing.sm)
-                    .heightIn(min = 64.dp)
-                    .clip(RoundedCornerShape(28.dp))
-                    .background(MaterialTheme.colorScheme.surfaceContainer)
-                    .border(
-                        1.dp,
-                        MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.45f),
-                        RoundedCornerShape(28.dp)
-                    ),
+                    .padding(horizontal = 10.dp, vertical = AuraSpacing.sm)
+                    .heightIn(min = 62.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 NavItem(
@@ -194,6 +205,9 @@ private fun AddButton(
         animationSpec = AuraMotion.snappy(),
         label = "addButtonScale"
     )
+    // Ink, not a brand sweep. The add button is the one control on every screen;
+    // it should read as the darkest object on the page, not as decoration.
+    val shape = RoundedCornerShape(19.dp)
 
     Box(modifier = modifier, contentAlignment = Alignment.Center) {
         Box(
@@ -202,10 +216,10 @@ private fun AddButton(
                     scaleX = scale
                     scaleY = scale
                 }
-                .softShadow(CircleShape, elevation = 8.dp)
+                .softShadow(shape, elevation = 8.dp)
                 .size(54.dp)
-                .clip(CircleShape)
-                .background(AuraGradients.aurora)
+                .clip(shape)
+                .background(MaterialTheme.colorScheme.onBackground)
                 .clickable(
                     interactionSource = interactionSource,
                     indication = null
@@ -218,8 +232,8 @@ private fun AddButton(
             Icon(
                 Icons.Default.Add,
                 contentDescription = stringResource(R.string.action_add_transaction),
-                tint = MaterialTheme.colorScheme.onPrimary,
-                modifier = Modifier.size(30.dp)
+                tint = MaterialTheme.colorScheme.background,
+                modifier = Modifier.size(26.dp)
             )
         }
     }
@@ -234,15 +248,10 @@ private fun NavItem(
 ) {
     val haptics = LocalHapticFeedback.current
     val tint by animateColorAsState(
-        targetValue = if (selected) MaterialTheme.colorScheme.primary
-        else MaterialTheme.colorScheme.onSurfaceVariant,
+        targetValue = if (selected) MaterialTheme.colorScheme.onBackground
+        else MaterialTheme.extendedColors.faint,
         animationSpec = AuraMotion.standard(),
         label = "navTint"
-    )
-    val pillAlpha by animateFloatAsState(
-        targetValue = if (selected) 1f else 0f,
-        animationSpec = AuraMotion.standard(),
-        label = "navPill"
     )
     val label = stringResource(destination.labelRes)
 
@@ -262,21 +271,19 @@ private fun NavItem(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Box(
-            modifier = Modifier
-                .clip(RoundedCornerShape(50))
-                .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.12f * pillAlpha))
-                .padding(horizontal = 14.dp, vertical = 4.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(destination.icon, contentDescription = label, tint = tint, modifier = Modifier.size(22.dp))
-        }
+        Icon(
+            destination.icon,
+            contentDescription = label,
+            tint = tint,
+            modifier = Modifier.size(22.dp)
+        )
         Spacer(modifier = Modifier.height(AuraSpacing.xs))
         Text(
             label,
-            style = MaterialTheme.typography.labelSmall,
+            style = AuraType.navLabel,
             color = tint,
-            maxLines = 1
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
         )
     }
 }

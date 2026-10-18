@@ -224,7 +224,12 @@ fun AuraSpendNavHost(
 
             composable(Routes.HOME) {
                 val dashboardViewModel = viewModel<DashboardViewModel>(
-                    factory = factoryOf { DashboardViewModel(repository) }
+                    factory = factoryOf {
+                        DashboardViewModel(
+                            repository = repository,
+                            unrecognizedSms = (context.applicationContext as? AuraSpendApp)?.unrecognizedSms
+                        )
+                    }
                 )
                 DashboardScreen(
                     viewModel = dashboardViewModel,
@@ -233,11 +238,11 @@ fun AuraSpendNavHost(
                         quickAddType = type
                         showQuickAdd = true
                     },
-                    onOpenSmartAdd = { navController.navigate(Routes.CLASSIFICATION) },
                     onNavigateToAnalytics = { navController.navigateToTab(Routes.INSIGHTS) },
                     onNavigateToPlan = { navController.navigateToTab(Routes.PLAN) },
                     onOpenSettings = { navController.navigate(Routes.SETTINGS) },
-                    onOpenTransaction = { id -> navController.navigate(Routes.transactionDetail(id)) }
+                    onOpenTransaction = { id -> navController.navigate(Routes.transactionDetail(id)) },
+                    onOpenReviewQueue = { navController.navigate(Routes.UNRECOGNIZED_SMS) }
                 )
             }
 
@@ -669,6 +674,11 @@ private fun SettingsDestination(
     val driveSyncManager = app.driveSyncManager
     val backupCreateManager = app.backupCreateManager
 
+    // The review-queue row's count — the same flow the Home rail and the queue
+    // screen itself observe.
+    val reviewQueueCount by app.unrecognizedSms.observeCount()
+        .collectAsState(initial = 0)
+
     // Messages are resolved in composition so they follow the locale.
     val backupDoneMessage = stringResource(R.string.settings_drive_backup_success)
     val backupFailedMessage = stringResource(R.string.settings_drive_backup_failed)
@@ -857,6 +867,8 @@ private fun SettingsDestination(
         onManageSubscriptions = { navController.navigate(Routes.SUBSCRIPTIONS) },
         onManageBudgets = { navController.navigate(Routes.BUDGETS) },
         onOpenLicenses = { navController.navigate(Routes.LICENSES) },
+        reviewQueueCount = reviewQueueCount,
+        onOpenReviewQueue = { navController.navigate(Routes.UNRECOGNIZED_SMS) },
         aiModelState = aiModelState,
         onDownloadModel = {
             // Downloading from Settings is itself the consent.

@@ -27,6 +27,7 @@ import com.awbuilds.auraspend.domain.model.Budget
 import com.awbuilds.auraspend.domain.model.BudgetPeriod
 import com.awbuilds.auraspend.ui.designsystem.AuraCard
 import com.awbuilds.auraspend.ui.designsystem.AuraCardStyle
+import com.awbuilds.auraspend.ui.designsystem.AuraChip
 import com.awbuilds.auraspend.ui.designsystem.AuraEmptyState
 import com.awbuilds.auraspend.ui.designsystem.AuraErrorBanner
 import com.awbuilds.auraspend.ui.designsystem.AuraErrorState
@@ -384,23 +385,11 @@ fun BudgetScreen(
                     } else {
                         state.categories.take(6).forEach { cat ->
                             val catColor = Color(cat.color.toLong())
-                            FilterChip(
+                            AuraChip(
+                                label = cat.name,
                                 selected = state.selectedCategoryId == cat.id,
+                                dotColor = catColor,
                                 onClick = { viewModel.handleIntent(BudgetViewIntent.SelectCategory(cat.id)) },
-                                label = {
-                                    Row(
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.spacedBy(AuraSpacing.sm)
-                                    ) {
-                                        Box(
-                                            modifier = Modifier
-                                                .size(8.dp)
-                                                .clip(CircleShape)
-                                                .background(catColor)
-                                        )
-                                        Text(cat.name, style = MaterialTheme.typography.labelSmall)
-                                    }
-                                },
                                 modifier = Modifier.fillMaxWidth()
                             )
                         }
@@ -432,15 +421,10 @@ fun BudgetScreen(
                         horizontalArrangement = Arrangement.spacedBy(AuraSpacing.sm)
                     ) {
                         BudgetPeriod.entries.forEach { period ->
-                            FilterChip(
+                            AuraChip(
+                                label = stringResource(period.labelRes()),
                                 selected = state.selectedPeriod == period,
                                 onClick = { viewModel.handleIntent(BudgetViewIntent.PeriodChanged(period)) },
-                                label = {
-                                    Text(
-                                        stringResource(period.labelRes()),
-                                        style = MaterialTheme.typography.labelSmall
-                                    )
-                                },
                                 modifier = Modifier.weight(1f)
                             )
                         }

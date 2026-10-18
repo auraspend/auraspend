@@ -423,7 +423,7 @@ private fun TransactionDetails(
         ).joinToString(" · ")
     }
     val isExpense = transaction.type == TransactionType.EXPENSE
-    val amountColor = if (isExpense) extended.expenseAmount else extended.incomeAmount
+    val amountColor = if (isExpense) MaterialTheme.colorScheme.onSurface else extended.incomeAmount
     val dateFormatter = remember { DateTimeFormatter.ofPattern("EEEE, d MMM yyyy · h:mm a") }
 
     Column(

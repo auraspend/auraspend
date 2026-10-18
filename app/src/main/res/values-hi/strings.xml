@@ -13,7 +13,6 @@
     <string name="action_close">बंद करें</string>
     <string name="action_back">वापस</string>
     <string name="action_edit">संपादित करें</string>
-    <string name="action_search">खोजें</string>
     <string name="action_clear">साफ़ करें</string>
     <string name="action_done">हो गया</string>
     <string name="action_ok">ठीक है</string>
@@ -29,8 +28,6 @@
 
     <!-- Shared formats -->
     <string name="common_percent">%1$d%%</string>
-    <string name="common_amount_plus">+%1$s</string>
-    <string name="common_amount_minus">−%1$s</string>
 
     <!-- States -->
     <string name="state_offline">आप ऑफ़लाइन हैं — बदलाव डिवाइस पर सहेजे गए हैं</string>
@@ -41,34 +38,22 @@
     <string name="classification_step_review">समीक्षा</string>
     <string name="classification_analyzing_title">संदेश का विश्लेषण हो रहा है…</string>
     <string name="classification_analyzing_message">डिवाइस पर ही राशि, व्यापारी और श्रेणी निकाली जा रही है।</string>
-    <string name="state_hidden_amount">•••</string>
 
     <!-- Home dashboard -->
     <string name="home_greeting_morning">सुप्रभात</string>
     <string name="home_greeting_afternoon">नमस्कार</string>
     <string name="home_greeting_evening">शुभ संध्या</string>
     <string name="home_total_balance">कुल शेष</string>
-    <string name="home_in_this_month">इस महीने की आय</string>
-    <string name="home_out_this_month">इस महीने का खर्च</string>
-    <string name="home_quick_expense">खर्च</string>
-    <string name="home_quick_income">आय</string>
-    <string name="home_quick_smart_add">स्मार्ट ऐड</string>
-    <string name="home_quick_stats">आंकड़े</string>
-    <string name="home_cash_flow">नकदी प्रवाह</string>
-    <string name="home_spending_last_7_days">पिछले 7 दिनों का खर्च</string>
-    <string name="home_no_spending_last_7_days">पिछले 7 दिनों में कोई खर्च दर्ज नहीं है</string>
-    <string name="home_budgets">बजट</string>
-    <string name="home_manage">प्रबंधित करें</string>
     <string name="home_unknown_category">अज्ञात</string>
-    <string name="home_budget_percent_used">%1$s बजट %2$d प्रतिशत उपयोग</string>
     <string name="home_budget_of">%1$s में से</string>
-    <string name="home_subscriptions">सदस्यताएँ</string>
-    <plurals name="home_subscriptions_active">
-        <item quantity="one">%1$d सक्रिय</item>
-        <item quantity="other">%1$d सक्रिय</item>
+    <string name="home_nothing_today">आज कुछ दर्ज नहीं</string>
+    <string name="home_budget_is_over">%1$s बजट से बाहर है</string>
+    <string name="home_over_your_budget">%2$s बजट से %1$s ज़्यादा</string>
+    <plurals name="home_review_queue">
+        <item quantity="one">%1$d संदेश समीक्षा के लिए</item>
+        <item quantity="other">%1$d संदेश समीक्षा के लिए</item>
     </plurals>
-    <string name="home_subscription_monthly">%1$s/माह</string>
-    <string name="home_recent">हाल के</string>
+    <string name="home_review_queue_detail">पता नहीं ये कहाँ जाएँ</string>
     <string name="home_view_all">सभी देखें</string>
     <string name="home_empty_title">अभी कोई लेन-देन नहीं</string>
     <string name="home_empty_message">अपना पहला लेन-देन जोड़ें और AuraSpend आपकी तस्वीर बनाना शुरू कर देगा।</string>
@@ -77,6 +62,7 @@
 
     <!-- Activity (transaction list) -->
     <string name="activity_title">गतिविधि</string>
+    <string name="activity_month_out">%1$s · %2$s खर्च</string>
     <string name="activity_previous_month">पिछला महीना</string>
     <string name="activity_sort_newest_first">नवीनतम पहले</string>
     <string name="activity_sort_oldest_first">पुराने पहले</string>
@@ -86,17 +72,6 @@
     <string name="activity_filter_incoming">आवक</string>
     <string name="activity_search_hint">व्यापारी या नोट खोजें</string>
     <string name="activity_transaction_deleted">लेन-देन हटाया गया</string>
-    <plurals name="activity_records">
-        <item quantity="one">%1$d रिकॉर्ड</item>
-        <item quantity="other">%1$d रिकॉर्ड</item>
-    </plurals>
-    <plurals name="activity_records_more">
-        <item quantity="one">%1$d+ रिकॉर्ड</item>
-        <item quantity="other">%1$d+ रिकॉर्ड</item>
-    </plurals>
-    <string name="activity_summary_in">अंदर</string>
-    <string name="activity_summary_out">बाहर</string>
-    <string name="activity_summary_net">शुद्ध</string>
     <string name="activity_empty_title">अभी कोई लेन-देन नहीं</string>
     <string name="activity_empty_title_filtered">कोई मेल खाता लेन-देन नहीं</string>
     <string name="activity_empty_message_filtered">अपनी खोज या फ़िल्टर बदलकर देखें।</string>
@@ -167,7 +142,13 @@
     <string name="settings_theme_amoled">AMOLED</string>
     <string name="settings_dynamic_color">डायनामिक रंग</string>
     <string name="settings_dynamic_color_subtitle">अपने वॉलपेपर से मिलाएँ (Android 12+)</string>
-    <string name="settings_intelligent_features">स्मार्ट श्रेणियाँ</string>
+    <string name="settings_money">पैसा</string>
+    <string name="settings_messages">संदेश</string>
+    <string name="settings_review_queue">समीक्षा सूची</string>
+    <plurals name="settings_review_queue_waiting">
+        <item quantity="one">%1$d संदेश समीक्षा के लिए</item>
+        <item quantity="other">%1$d संदेश समीक्षा के लिए</item>
+    </plurals>
     <string name="settings_data">डेटा</string>
     <string name="settings_export_csv">CSV में निर्यात करें</string>
     <string name="settings_export_csv_subtitle">लेन-देन को CSV फ़ाइल में सहेजें</string>
@@ -182,7 +163,6 @@
     <string name="settings_drive_restore_confirm_title">Google Drive से रिस्टोर करें?</string>
     <string name="settings_drive_restore_confirm_message">यह इस डिवाइस के सभी लेन-देन, बजट, सदस्यताएँ, लक्ष्य और श्रेणियाँ Google Drive में मौजूद बैकअप से बदल देगा। इसे पूर्ववत नहीं किया जा सकता।</string>
     <string name="action_restore">रिस्टोर करें</string>
-    <string name="settings_finance">वित्त</string>
     <string name="settings_currency">मुद्रा</string>
     <string name="settings_currency_device_default">आपके डिवाइस के अनुसार</string>
     <string name="currency_picker_device_default">मेरे डिवाइस के अनुसार रखें</string>
@@ -197,7 +177,6 @@
     <string name="settings_notifications_subtitle">संदेशों के वर्गीकरण के दौरान प्रगति दिखाएँ।</string>
     <string name="settings_delete_data">सारा डेटा हटाएँ</string>
     <string name="settings_delete_data_subtitle">इस डिवाइस से हर रिकॉर्ड और संदेश हटाएँ</string>
-    <string name="settings_security">सुरक्षा</string>
     <string name="settings_app_lock">ऐप लॉक</string>
     <string name="settings_app_lock_subtitle">ऐप खोलने पर हर बार PIN माँगें</string>
     <string name="settings_app_lock_change">PIN बदलें</string>
@@ -265,15 +244,18 @@
     <string name="analytics_period_this_month">इस महीने</string>
     <string name="analytics_period_last_30">30 दिन</string>
     <string name="analytics_period_all_time">अब तक</string>
-    <string name="analytics_expense">खर्च</string>
-    <string name="analytics_income">आय</string>
-    <string name="analytics_net_period">शुद्ध %1$s</string>
-    <string name="analytics_saving_percent">बचत %1$s%%</string>
+    <string name="analytics_daily_spending">रोज़ का खर्च</string>
+    <plurals name="analytics_daily_days">
+        <item quantity="one">%1$d दिन</item>
+        <item quantity="other">%1$d दिन</item>
+    </plurals>
+    <plurals name="analytics_more_categories">
+        <item quantity="one">%1$d और श्रेणी</item>
+        <item quantity="other">%1$d और श्रेणियाँ</item>
+    </plurals>
     <string name="analytics_delta_up">↑ पिछले महीने से %1$d%% अधिक</string>
     <string name="analytics_delta_down">↓ पिछले महीने से %1$d%% कम</string>
-    <string name="analytics_spending_by_category">श्रेणी अनुसार खर्च</string>
-    <string name="analytics_spending_by_category_desc">श्रेणी अनुसार खर्च, कुल %1$s</string>
-    <string name="analytics_total">कुल</string>
+    <string name="analytics_spending_by_category">खर्च कहाँ गया</string>
     <string name="analytics_top_merchants">शीर्ष व्यापारी</string>
     <string name="analytics_unlabelled">बिना लेबल</string>
     <plurals name="analytics_txn_count">
@@ -286,26 +268,22 @@
 
     <!-- Plan hub -->
     <string name="plan_title">योजना</string>
-    <string name="plan_budgets_month">इस महीने के बजट</string>
-    <string name="plan_budget_of">%1$s / %2$s</string>
     <string name="plan_budget_percent_used">%1$d%% उपयोग</string>
     <string name="plan_no_budgets">अभी कोई बजट नहीं</string>
-    <string name="plan_recurring_monthly">मासिक आवर्ती</string>
+    <plurals name="plan_over_categories">
+        <item quantity="one">%1$d श्रेणी बजट से बाहर है — %2$s</item>
+        <item quantity="other">%1$d श्रेणियाँ बजट से बाहर हैं — %2$s</item>
+    </plurals>
+    <string name="plan_goal_to_go">%1$s बाकी</string>
     <string name="plan_monthly_recurring">%1$s/माह</string>
     <plurals name="plan_active_subscriptions">
         <item quantity="one">%1$d सक्रिय सदस्यता</item>
         <item quantity="other">%1$d सक्रिय सदस्यताएँ</item>
     </plurals>
     <string name="plan_budgets">बजट</string>
-    <string name="plan_budgets_subtitle">प्रत्येक श्रेणी के लिए खर्च सीमा</string>
     <string name="plan_subscriptions">सदस्यताएँ</string>
-    <string name="plan_subscriptions_subtitle">आवर्ती शुल्क और नवीनीकरण</string>
     <string name="plan_savings_goals">बचत लक्ष्य</string>
     <string name="plan_savings_goals_empty_subtitle">लक्ष्य तय करें और उन्हें पूरा होते देखें</string>
-    <plurals name="plan_goals_saved">
-        <item quantity="one">%1$d लक्ष्य · %2$s बचाया</item>
-        <item quantity="other">%1$d लक्ष्य · %2$s बचाया</item>
-    </plurals>
     <string name="plan_categories">श्रेणियाँ</string>
     <string name="plan_categories_subtitle">पैसे के वर्गीकरण को व्यवस्थित करें</string>
 
@@ -541,8 +519,6 @@
     <string name="csv_import_all_duplicates">कुछ भी आयात नहीं हुआ — सभी पंक्तियाँ पहले से मौजूद हैं।</string>
 
     <!-- Accessibility labels -->
-    <string name="a11y_show_amounts">राशि दिखाएँ</string>
-    <string name="a11y_hide_amounts">राशि छिपाएँ</string>
 
     <!-- Error messages -->
     <string name="error_load_failed_detail">आपका स्थानीय डेटा पढ़ा नहीं जा सका। कुछ भी नहीं खोया है। पुनः प्रयास करें।</string>
@@ -565,12 +541,6 @@
     <string name="insights_title">विश्लेषण</string>
     <string name="action_add_transaction">लेन-देन जोड़ें</string>
     <string name="action_settings">सेटिंग्स</string>
-
-    <!-- Relative dates in transaction rows (#18). -->
-    <plurals name="activity_days_ago">
-        <item quantity="one">%1$d दिन पहले</item>
-        <item quantity="other">%1$d दिन पहले</item>
-    </plurals>
 
     <!-- Enum names must never reach the screen (#21). -->
     <string name="txn_type_expense">खर्च</string>
@@ -667,4 +637,24 @@
     <string name="category_leaf_bonus">बोनस</string>
     <string name="category_leaf_freelance_income">फ़्रीलांस आय</string>
     <string name="category_leaf_investment_returns">निवेश पर प्रतिफल</string>
+    <!-- Quiet Ledger -->
+    <string name="home_out_short">खर्च</string>
+    <string name="home_in_short">आय</string>
+    <string name="home_budgets_month">%1$s बजट</string>
+    <plurals name="home_budgets_over">
+        <item quantity="one">%2$d में से %1$d बजट ओवर</item>
+        <item quantity="other">%2$d में से %1$d बजट ओवर</item>
+    </plurals>
+    <string name="home_left">%1$s शेष</string>
+    <string name="home_over">%1$s ज़्यादा</string>
+    <string name="home_all_budgets">सभी बजट</string>
+    <string name="home_all_activity">सभी गतिविधि</string>
+    <plurals name="plan_across_budgets">
+        <item quantity="one">%2$d बजट में %1$s</item>
+        <item quantity="other">%2$d बजट में %1$s</item>
+    </plurals>
+    <string name="analytics_spent_period">%1$s का खर्च</string>
+    <string name="analytics_more_than_last">%1$s अधिक</string>
+    <string name="plan_spent_against">बजट के मुकाबले खर्च</string>
+    <string name="analytics_less_than_last">%1$s कम</string>
 </resources>

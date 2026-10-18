@@ -30,6 +30,7 @@ import com.awbuilds.auraspend.domain.repository.TransactionRepository
 import com.awbuilds.auraspend.ui.core.UiError
 import com.awbuilds.auraspend.ui.designsystem.AuraCard
 import com.awbuilds.auraspend.ui.designsystem.AuraCardStyle
+import com.awbuilds.auraspend.ui.designsystem.AuraChip
 import com.awbuilds.auraspend.ui.designsystem.AuraEmptyState
 import com.awbuilds.auraspend.ui.designsystem.AuraErrorBanner
 import com.awbuilds.auraspend.ui.designsystem.AuraSpacing
@@ -478,15 +479,10 @@ fun RecurringScreen(
                         horizontalArrangement = Arrangement.spacedBy(AuraSpacing.sm)
                     ) {
                         RecurrenceFrequency.entries.forEach { cycle ->
-                            FilterChip(
+                            AuraChip(
+                                label = stringResource(cycle.labelRes()),
                                 selected = subscriptionCycle == cycle,
                                 onClick = { subscriptionCycle = cycle },
-                                label = {
-                                    Text(
-                                        stringResource(cycle.labelRes()),
-                                        style = MaterialTheme.typography.labelSmall
-                                    )
-                                },
                                 modifier = Modifier.weight(1f)
                             )
                         }
@@ -513,23 +509,11 @@ fun RecurringScreen(
                         ) {
                             categories.forEach { cat ->
                                 val catColor = Color(cat.color.toLong())
-                                FilterChip(
+                                AuraChip(
+                                    label = cat.name,
                                     selected = subscriptionCategory == cat.id,
-                                    onClick = { subscriptionCategory = cat.id },
-                                    label = {
-                                        Row(
-                                            verticalAlignment = Alignment.CenterVertically,
-                                            horizontalArrangement = Arrangement.spacedBy(AuraSpacing.xs + AuraSpacing.xxs)
-                                        ) {
-                                            Box(
-                                                modifier = Modifier
-                                                    .size(8.dp)
-                                                    .clip(CircleShape)
-                                                    .background(catColor)
-                                            )
-                                            Text(cat.name, style = MaterialTheme.typography.labelSmall)
-                                        }
-                                    }
+                                    dotColor = catColor,
+                                    onClick = { subscriptionCategory = cat.id }
                                 )
                             }
                         }

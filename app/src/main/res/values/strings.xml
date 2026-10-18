@@ -12,7 +12,6 @@
     <string name="action_close">Close</string>
     <string name="action_back">Back</string>
     <string name="action_edit">Edit</string>
-    <string name="action_search">Search</string>
     <string name="action_clear">Clear</string>
     <string name="action_done">Done</string>
     <string name="action_ok">OK</string>
@@ -28,8 +27,6 @@
 
     <!-- Shared formats -->
     <string name="common_percent">%1$d%%</string>
-    <string name="common_amount_plus">+%1$s</string>
-    <string name="common_amount_minus">−%1$s</string>
 
     <!-- States -->
     <string name="state_offline">You\'re offline — changes are saved on device</string>
@@ -40,34 +37,22 @@
     <string name="classification_step_review">Review</string>
     <string name="classification_analyzing_title">Analyzing message…</string>
     <string name="classification_analyzing_message">Extracting amount, merchant and category on-device.</string>
-    <string name="state_hidden_amount">•••</string>
 
     <!-- Home dashboard -->
     <string name="home_greeting_morning">Good morning</string>
     <string name="home_greeting_afternoon">Good afternoon</string>
     <string name="home_greeting_evening">Good evening</string>
     <string name="home_total_balance">Total balance</string>
-    <string name="home_in_this_month">In this month</string>
-    <string name="home_out_this_month">Out this month</string>
-    <string name="home_quick_expense">Expense</string>
-    <string name="home_quick_income">Income</string>
-    <string name="home_quick_smart_add">Smart Add</string>
-    <string name="home_quick_stats">Stats</string>
-    <string name="home_cash_flow">Cash flow</string>
-    <string name="home_spending_last_7_days">Spending in the last 7 days</string>
-    <string name="home_no_spending_last_7_days">No spending in the last 7 days</string>
-    <string name="home_budgets">Budgets</string>
-    <string name="home_manage">Manage</string>
     <string name="home_unknown_category">Unknown</string>
-    <string name="home_budget_percent_used">%1$s budget %2$d percent used</string>
     <string name="home_budget_of">of %1$s</string>
-    <string name="home_subscriptions">Subscriptions</string>
-    <plurals name="home_subscriptions_active">
-        <item quantity="one">%1$d active</item>
-        <item quantity="other">%1$d active</item>
+    <string name="home_nothing_today">Nothing recorded today</string>
+    <string name="home_budget_is_over">%1$s is over</string>
+    <string name="home_over_your_budget">%1$s over your %2$s budget</string>
+    <plurals name="home_review_queue">
+        <item quantity="one">%1$d message to review</item>
+        <item quantity="other">%1$d messages to review</item>
     </plurals>
-    <string name="home_subscription_monthly">%1$s/mo</string>
-    <string name="home_recent">Recent</string>
+    <string name="home_review_queue_detail">Not sure where they belong</string>
     <string name="home_view_all">View all</string>
     <string name="home_empty_title">No transactions yet</string>
     <string name="home_empty_message">Add your first transaction and AuraSpend will start building your picture.</string>
@@ -76,6 +61,7 @@
 
     <!-- Activity (transaction list) -->
     <string name="activity_title">Activity</string>
+    <string name="activity_month_out">%1$s · %2$s out</string>
     <string name="activity_previous_month">Previous month</string>
     <string name="activity_sort_newest_first">Newest first</string>
     <string name="activity_sort_oldest_first">Oldest first</string>
@@ -85,17 +71,6 @@
     <string name="activity_filter_incoming">Incoming</string>
     <string name="activity_search_hint">Search merchant or note</string>
     <string name="activity_transaction_deleted">Transaction deleted</string>
-    <plurals name="activity_records">
-        <item quantity="one">%1$d record</item>
-        <item quantity="other">%1$d records</item>
-    </plurals>
-    <plurals name="activity_records_more">
-        <item quantity="one">%1$d+ record</item>
-        <item quantity="other">%1$d+ records</item>
-    </plurals>
-    <string name="activity_summary_in">In</string>
-    <string name="activity_summary_out">Out</string>
-    <string name="activity_summary_net">Net</string>
     <string name="activity_empty_title">No transactions yet</string>
     <string name="activity_empty_title_filtered">No matching transactions</string>
     <string name="activity_empty_message_filtered">Try adjusting your search or filters.</string>
@@ -169,7 +144,12 @@
     <string name="settings_theme_amoled">AMOLED</string>
     <string name="settings_dynamic_color">Dynamic color</string>
     <string name="settings_dynamic_color_subtitle">Match your wallpaper (Android 12+)</string>
-    <string name="settings_intelligent_features">Smart categories</string>
+    <string name="settings_messages">Messages</string>
+    <string name="settings_review_queue">Review queue</string>
+    <plurals name="settings_review_queue_waiting">
+        <item quantity="one">%1$d waiting</item>
+        <item quantity="other">%1$d waiting</item>
+    </plurals>
     <string name="settings_data">Data</string>
     <string name="settings_export_csv">Export to CSV</string>
     <string name="settings_export_csv_subtitle">Save transactions to a CSV file</string>
@@ -184,7 +164,7 @@
     <string name="settings_drive_restore_confirm_title">Restore from Google Drive?</string>
     <string name="settings_drive_restore_confirm_message">This replaces all transactions, budgets, subscriptions, goals and categories on this device with the backup in your Google Drive. This cannot be undone.</string>
     <string name="action_restore">Restore</string>
-    <string name="settings_finance">Finance</string>
+    <string name="settings_money">Money</string>
     <string name="settings_currency">Currency</string>
     <string name="settings_currency_device_default">Matching your device</string>
     <string name="currency_picker_device_default">Match my device</string>
@@ -199,7 +179,6 @@
     <string name="settings_notifications_subtitle">Show progress while messages are being categorised.</string>
     <string name="settings_delete_data">Delete all data</string>
     <string name="settings_delete_data_subtitle">Remove every record and message from this device</string>
-    <string name="settings_security">Security</string>
     <string name="settings_app_lock">App lock</string>
     <string name="settings_app_lock_subtitle">Require a PIN whenever the app is opened</string>
     <string name="settings_app_lock_change">Change PIN</string>
@@ -264,18 +243,21 @@
 
     <!-- Analytics -->
     <string name="analytics_title">Insights</string>
-    <string name="analytics_period_this_month">This Month</string>
-    <string name="analytics_period_last_30">30 Days</string>
-    <string name="analytics_period_all_time">All Time</string>
-    <string name="analytics_expense">Expense</string>
-    <string name="analytics_income">Income</string>
-    <string name="analytics_net_period">Net %1$s</string>
-    <string name="analytics_saving_percent">Saving %1$s%%</string>
+    <string name="analytics_period_this_month">This month</string>
+    <string name="analytics_period_last_30">Last 30 days</string>
+    <string name="analytics_period_all_time">All time</string>
+    <string name="analytics_daily_spending">Daily spending</string>
+    <plurals name="analytics_daily_days">
+        <item quantity="one">%1$d day</item>
+        <item quantity="other">%1$d days</item>
+    </plurals>
+    <plurals name="analytics_more_categories">
+        <item quantity="one">%1$d more category</item>
+        <item quantity="other">%1$d more categories</item>
+    </plurals>
     <string name="analytics_delta_up">↑ %1$d%% vs last month</string>
     <string name="analytics_delta_down">↓ %1$d%% vs last month</string>
-    <string name="analytics_spending_by_category">Spending by category</string>
-    <string name="analytics_spending_by_category_desc">Spending by category, total %1$s</string>
-    <string name="analytics_total">Total</string>
+    <string name="analytics_spending_by_category">Where it went</string>
     <string name="analytics_top_merchants">Top merchants</string>
     <string name="analytics_unlabelled">Unlabelled</string>
     <plurals name="analytics_txn_count">
@@ -288,26 +270,22 @@
 
     <!-- Plan hub -->
     <string name="plan_title">Plan</string>
-    <string name="plan_budgets_month">This month\'s budgets</string>
-    <string name="plan_budget_of">%1$s of %2$s</string>
     <string name="plan_budget_percent_used">%1$d%% used</string>
     <string name="plan_no_budgets">No budgets yet</string>
-    <string name="plan_recurring_monthly">Recurring monthly</string>
+    <plurals name="plan_over_categories">
+        <item quantity="one">%1$d category is over — %2$s</item>
+        <item quantity="other">%1$d categories are over — %2$s</item>
+    </plurals>
+    <string name="plan_goal_to_go">%1$s to go</string>
     <string name="plan_monthly_recurring">%1$s/mo</string>
     <plurals name="plan_active_subscriptions">
         <item quantity="one">%1$d active subscription</item>
         <item quantity="other">%1$d active subscriptions</item>
     </plurals>
     <string name="plan_budgets">Budgets</string>
-    <string name="plan_budgets_subtitle">Spending limits per category</string>
     <string name="plan_subscriptions">Subscriptions</string>
-    <string name="plan_subscriptions_subtitle">Recurring charges and renewals</string>
     <string name="plan_savings_goals">Savings goals</string>
     <string name="plan_savings_goals_empty_subtitle">Set targets and watch them fill up</string>
-    <plurals name="plan_goals_saved">
-        <item quantity="one">%1$d goal · %2$s saved</item>
-        <item quantity="other">%1$d goals · %2$s saved</item>
-    </plurals>
     <string name="plan_categories">Categories</string>
     <string name="plan_categories_subtitle">Organize how money is grouped</string>
 
@@ -547,8 +525,6 @@
     <string name="category_selector_ai_suggestion">AI suggests: %1$s (%2$d%% confident)</string>
 
     <!-- Accessibility labels -->
-    <string name="a11y_show_amounts">Show amounts</string>
-    <string name="a11y_hide_amounts">Hide amounts</string>
 
     <!-- Error messages (see UiError) -->
     <string name="error_load_failed_detail">We couldn\'t read your local data. Nothing has been lost. Try again.</string>
@@ -570,14 +546,6 @@
     <string name="insights_title">Insights</string>
     <string name="action_add_transaction">Add transaction</string>
     <string name="action_settings">Settings</string>
-
-    <!-- Relative dates in transaction rows (#18): "Today" / "Yesterday" reuse
-         activity_group_*, and this covers the 2–6 day window that used to be a
-         hardcoded "3d ago" inside the design system. -->
-    <plurals name="activity_days_ago">
-        <item quantity="one">%1$dd ago</item>
-        <item quantity="other">%1$dd ago</item>
-    </plurals>
 
     <!-- Enum names must never reach the screen (#21). -->
     <string name="txn_type_expense">Expense</string>
@@ -676,4 +644,24 @@
     <string name="category_leaf_bonus">Bonus</string>
     <string name="category_leaf_freelance_income">Freelance Income</string>
     <string name="category_leaf_investment_returns">Investment Returns</string>
+    <!-- Quiet Ledger: labels the design needs that had no equivalent -->
+    <string name="home_out_short">out</string>
+    <string name="home_in_short">in</string>
+    <string name="home_budgets_month">%1$s budgets</string>
+    <plurals name="home_budgets_over">
+        <item quantity="one">%1$d of %2$d budget over</item>
+        <item quantity="other">%1$d of %2$d budgets over</item>
+    </plurals>
+    <string name="home_left">%1$s left</string>
+    <string name="home_over">%1$s over</string>
+    <string name="home_all_budgets">All budgets</string>
+    <string name="home_all_activity">All activity</string>
+    <plurals name="plan_across_budgets">
+        <item quantity="one">%1$s across %2$d budget</item>
+        <item quantity="other">%1$s across %2$d budgets</item>
+    </plurals>
+    <string name="analytics_spent_period">Spent %1$s</string>
+    <string name="analytics_more_than_last">%1$s more</string>
+    <string name="plan_spent_against">Spent against budgets</string>
+    <string name="analytics_less_than_last">%1$s less</string>
 </resources>

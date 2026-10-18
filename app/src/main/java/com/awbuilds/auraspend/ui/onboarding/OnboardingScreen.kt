@@ -7,17 +7,20 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AutoAwesome
-import androidx.compose.material.icons.filled.CloudDownload
-import androidx.compose.material.icons.filled.Payments
-import androidx.compose.material.icons.filled.Savings
-import androidx.compose.material.icons.filled.Wallet
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.outlined.AutoAwesome
+import androidx.compose.material.icons.outlined.CloudDownload
+import androidx.compose.material.icons.outlined.Payments
+import androidx.compose.material.icons.outlined.Savings
+import androidx.compose.material.icons.outlined.Wallet
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -37,9 +40,10 @@ import com.awbuilds.auraspend.R
 import com.awbuilds.auraspend.ui.designsystem.AuraCard
 import com.awbuilds.auraspend.ui.designsystem.AuraCardStyle
 import androidx.compose.ui.platform.LocalConfiguration
-import com.awbuilds.auraspend.ui.designsystem.AuraGradients
 import com.awbuilds.auraspend.ui.designsystem.CurrencyPickerList
 import com.awbuilds.auraspend.ui.designsystem.AuraSpacing
+import com.awbuilds.auraspend.ui.designsystem.AuraType
+import com.awbuilds.auraspend.ui.theme.extendedColors
 import kotlinx.coroutines.launch
 import kotlin.math.abs
 
@@ -53,17 +57,17 @@ private val onboardingPages = listOf(
     OnboardingPage(
         R.string.onboarding_page1_title,
         R.string.onboarding_page1_description,
-        Icons.Default.Wallet
+        Icons.Outlined.Wallet
     ),
     OnboardingPage(
         R.string.onboarding_page2_title,
         R.string.onboarding_page2_description,
-        Icons.Default.AutoAwesome
+        Icons.Outlined.AutoAwesome
     ),
     OnboardingPage(
         R.string.onboarding_page3_title,
         R.string.onboarding_page3_description,
-        Icons.Default.Savings
+        Icons.Outlined.Savings
     ),
     // Last, and interactive: the user should know what the app will do before
     // granting SMS access on the button below, and currency is the one setting
@@ -71,7 +75,7 @@ private val onboardingPages = listOf(
     OnboardingPage(
         R.string.onboarding_page4_title,
         R.string.onboarding_page4_description,
-        Icons.Default.Payments
+        Icons.Outlined.Payments
     )
 )
 
@@ -130,10 +134,23 @@ fun OnboardingScreen(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = AuraSpacing.sm),
                 horizontalArrangement = Arrangement.End
             ) {
-                TextButton(onClick = onFinished, enabled = !isRestoring) { Text(stringResource(R.string.action_skip)) }
+                // The concept's `.link`: 12sp/600 in the one accent, on a 48dp
+                // target. It is the only violet on the page — everything else is
+                // ink, paper and hairlines.
+                Text(
+                    stringResource(R.string.action_skip),
+                    style = AuraType.sectionAction,
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier
+                        .clip(CircleShape)
+                        .clickable(enabled = !isRestoring, onClick = onFinished)
+                        .padding(horizontal = AuraSpacing.md, vertical = AuraSpacing.lg)
+                )
             }
 
             HorizontalPager(
@@ -180,7 +197,17 @@ fun OnboardingScreen(
                     }
                 },
                 enabled = !isRestoring,
-                shape = CircleShape,
+                // The concept's `.btn-primary`, and the only filled button in the
+                // app: ink, 16dp radius, paper label. It was a violet pill, which
+                // spent the accent on the one thing that did not need marking —
+                // and left nothing to mark "Skip" with.
+                shape = RoundedCornerShape(16.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.onBackground,
+                    contentColor = MaterialTheme.colorScheme.background,
+                    disabledContainerColor = MaterialTheme.extendedColors.track,
+                    disabledContentColor = MaterialTheme.extendedColors.faint
+                ),
                 modifier = Modifier
                     .fillMaxWidth()
                     // heightIn, not height: a fixed 52dp clips the label at 200% font scale.
@@ -189,8 +216,7 @@ fun OnboardingScreen(
                 Text(
                     if (pagerState.currentPage == onboardingPages.size - 1) stringResource(R.string.action_get_started)
                     else stringResource(R.string.action_continue),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold
+                    style = AuraType.buttonPrimary
                 )
             }
 
@@ -201,33 +227,56 @@ fun OnboardingScreen(
                 AuraCard(
                     style = AuraCardStyle.Outlined,
                     modifier = Modifier.fillMaxWidth(),
-                    contentPadding = PaddingValues(AuraSpacing.lg),
+                    contentPadding = PaddingValues(
+                        horizontal = AuraSpacing.lg,
+                        vertical = 14.dp
+                    ),
                     onClick = { if (!isRestoring) onRestoreFromDrive() }
                 ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        if (isRestoring) {
-                            CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
-                        } else {
-                            Icon(
-                                Icons.Default.CloudDownload,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.primary
-                            )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(AuraSpacing.md)
+                    ) {
+                        // The concept's `.rowlink-ic`: a 32dp rounded-square tile at
+                        // 6 % ink with a 16dp glyph. It was a bare violet glyph,
+                        // which spent the accent on a row that already reads as
+                        // tappable from its chevron.
+                        Box(
+                            modifier = Modifier
+                                .size(32.dp)
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(MaterialTheme.colorScheme.onBackground.copy(alpha = 0.06f)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            if (isRestoring) {
+                                CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
+                            } else {
+                                Icon(
+                                    Icons.Outlined.CloudDownload,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.extendedColors.inkSoft,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                            }
                         }
-                        Spacer(modifier = Modifier.width(AuraSpacing.md))
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
                                 stringResource(R.string.onboarding_restore_title),
-                                style = MaterialTheme.typography.titleSmall,
-                                fontWeight = FontWeight.SemiBold,
+                                style = AuraType.rowLinkTitle,
                                 color = MaterialTheme.colorScheme.onSurface
                             )
                             Text(
                                 stringResource(R.string.onboarding_restore_subtitle),
-                                style = MaterialTheme.typography.bodySmall,
+                                style = AuraType.rowLinkMeta,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
+                        Icon(
+                            Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                            contentDescription = null,
+                            tint = MaterialTheme.extendedColors.faint,
+                            modifier = Modifier.size(16.dp)
+                        )
                     }
                 }
             }
@@ -264,24 +313,19 @@ private fun OnboardingPageContent(
     interactive: Boolean = false,
     extra: @Composable () -> Unit = {}
 ) {
+    // Alpha only. The page used to scale and translate as well, which is a
+    // second and third animation on top of the pager's own slide — three
+    // graphics layers per page for one gesture, and a zoom the concept's motion
+    // rules do not have ("220ms content", no overshoot, nothing decorative).
     val alpha by animateFloatAsState(
         targetValue = (1f - abs(pageOffset) * 0.6f).coerceIn(0f, 1f),
         label = "pageAlpha"
-    )
-    val scale by animateFloatAsState(
-        targetValue = (1f - abs(pageOffset) * 0.08f).coerceIn(0.85f, 1f),
-        label = "pageScale"
     )
 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .graphicsLayer {
-                this.alpha = alpha
-                scaleX = scale
-                scaleY = scale
-                translationX = pageOffset * 120f
-            },
+            .graphicsLayer { this.alpha = alpha },
         horizontalAlignment = Alignment.CenterHorizontally,
         // The interactive page lays out from the top: it has to hand the picker
         // the remaining height so the list scrolls instead of being clipped.
@@ -289,43 +333,46 @@ private fun OnboardingPageContent(
     ) {
         if (interactive) Spacer(modifier = Modifier.height(AuraSpacing.md))
 
-        // A smaller badge on the interactive page, to leave the 30 rows room.
-        val badgeSize = if (interactive) 72.dp else 148.dp
-        val iconSize = if (interactive) 32.dp else 60.dp
+        // The concept's badge, scaled up: a tonal disc with an ink glyph
+        // (`.alert-ico`, `.rowlink-ic`), never the brand sweep. The gradient
+        // medallion was the loudest thing in the app and it meant nothing — the
+        // glyph says which page you are on, the disc only has to hold it.
+        // A smaller disc on the interactive page, to leave the 30 rows room.
+        val badgeSize = if (interactive) 64.dp else 120.dp
+        val iconSize = if (interactive) 26.dp else 44.dp
         Box(
             modifier = Modifier
                 .size(badgeSize)
                 .clip(CircleShape)
-                .background(AuraGradients.aurora),
+                .background(MaterialTheme.colorScheme.onBackground.copy(alpha = 0.06f)),
             contentAlignment = Alignment.Center
         ) {
             Icon(
                 page.icon,
                 contentDescription = null,
-                tint = AuraGradients.onAurora,
+                tint = MaterialTheme.colorScheme.onBackground,
                 modifier = Modifier.size(iconSize)
             )
         }
 
-        Spacer(modifier = Modifier.height(if (interactive) AuraSpacing.lg else AuraSpacing.xxxl))
+        Spacer(modifier = Modifier.height(if (interactive) AuraSpacing.lg else AuraSpacing.section))
 
         Text(
             stringResource(page.titleRes),
-            style = MaterialTheme.typography.headlineMedium,
-            fontWeight = FontWeight.Bold,
+            style = AuraType.screenTitle,
             textAlign = TextAlign.Center,
             color = MaterialTheme.colorScheme.onBackground,
             modifier = Modifier.semantics { heading() }
         )
 
-        Spacer(modifier = Modifier.height(AuraSpacing.md))
+        Spacer(modifier = Modifier.height(10.dp))
 
         Text(
             stringResource(page.descriptionRes),
-            style = MaterialTheme.typography.bodyLarge,
+            style = AuraType.bodyCopy,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center,
-            modifier = Modifier.padding(horizontal = AuraSpacing.lg)
+            modifier = Modifier.padding(horizontal = AuraSpacing.sm)
         )
 
         if (interactive) {
@@ -350,9 +397,12 @@ private fun PageIndicator(currentPage: Int, totalPages: Int) {
                 modifier = Modifier
                     .height(8.dp)
                     .width(width)
+                    // Ink, not violet: violet is the accent for the one thing you
+                    // can act on, and a progress dot is not actionable. The same
+                    // rule the chips and the segmented control follow.
                     .clip(CircleShape)
                     .background(
-                        if (selected) MaterialTheme.colorScheme.primary
+                        if (selected) MaterialTheme.colorScheme.onBackground
                         else MaterialTheme.colorScheme.outlineVariant
                     )
             )

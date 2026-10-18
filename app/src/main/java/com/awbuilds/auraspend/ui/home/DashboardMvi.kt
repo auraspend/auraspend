@@ -4,7 +4,6 @@ import com.awbuilds.auraspend.ui.core.UiError
 
 import com.awbuilds.auraspend.domain.model.Budget
 import com.awbuilds.auraspend.domain.model.Category
-import com.awbuilds.auraspend.domain.model.Subscription
 import com.awbuilds.auraspend.domain.model.Transaction
 
 data class DashboardViewState(
@@ -16,9 +15,11 @@ data class DashboardViewState(
     val recentTransactions: List<Transaction> = emptyList(),
     val categories: List<Category> = emptyList(),
     val budgets: List<Budget> = emptyList(),
-    val activeSubscriptions: List<Subscription> = emptyList(),
-    val totalSubscriptionCost: Double = 0.0,
-    val dailySpending: List<Pair<Long, Double>> = emptyList(),
+    /**
+     * Messages the categoriser could not place — the "needs you" rail's second
+     * card, and the one screen that can answer them.
+     */
+    val reviewQueueCount: Int = 0,
     val categoryMonthTotals: List<Pair<String, Double>> = emptyList(),
     val isLoading: Boolean = false,
     val error: UiError? = null

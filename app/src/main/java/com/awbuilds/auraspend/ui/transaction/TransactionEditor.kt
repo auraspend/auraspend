@@ -20,9 +20,9 @@ import com.awbuilds.auraspend.R
 import com.awbuilds.auraspend.domain.model.Category
 import com.awbuilds.auraspend.domain.model.Transaction
 import com.awbuilds.auraspend.domain.model.TransactionType
+import com.awbuilds.auraspend.ui.designsystem.AuraChip
 import com.awbuilds.auraspend.ui.designsystem.AuraSegmentedControl
 import com.awbuilds.auraspend.ui.designsystem.AuraSpacing
-import com.awbuilds.auraspend.ui.designsystem.CategoryAvatar
 import com.awbuilds.auraspend.ui.designsystem.LocalCurrencyStyle
 import java.time.Instant
 import java.time.LocalDateTime
@@ -147,18 +147,11 @@ fun TransactionEditor(
         ) {
             categories.forEach { category ->
                 val selected = category.id == categoryId
-                FilterChip(
+                AuraChip(
+                    label = category.name,
                     selected = selected,
-                    onClick = { categoryId = category.id },
-                    shape = RoundedCornerShape(50),
-                    leadingIcon = {
-                        CategoryAvatar(
-                            icon = category.icon,
-                            color = androidx.compose.ui.graphics.Color(category.color.toLong()),
-                            size = 24.dp
-                        )
-                    },
-                    label = { Text(category.name, maxLines = 1) }
+                    dotColor = androidx.compose.ui.graphics.Color(category.color.toLong()),
+                    onClick = { categoryId = category.id }
                 )
             }
         }

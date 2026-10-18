@@ -44,13 +44,13 @@ import com.awbuilds.auraspend.ui.core.rememberNotificationPermissionLauncher
 import com.awbuilds.auraspend.ui.designsystem.AnimatedMoney
 import com.awbuilds.auraspend.ui.designsystem.AuraCard
 import com.awbuilds.auraspend.ui.designsystem.AuraErrorBanner
+import com.awbuilds.auraspend.ui.designsystem.AuraChip
 import com.awbuilds.auraspend.ui.designsystem.AuraCardStyle
 import com.awbuilds.auraspend.ui.designsystem.AuraEmptyState
 import com.awbuilds.auraspend.ui.designsystem.AuraSegmentedControl
 import com.awbuilds.auraspend.ui.designsystem.AuraSkeleton
 import com.awbuilds.auraspend.ui.designsystem.AuraSpacing
 import com.awbuilds.auraspend.ui.designsystem.AuraType
-import com.awbuilds.auraspend.ui.designsystem.CategoryAvatar
 import com.awbuilds.auraspend.ui.designsystem.LocalCurrencyStyle
 import com.awbuilds.auraspend.ui.theme.extendedColors
 import java.text.SimpleDateFormat
@@ -500,24 +500,11 @@ internal fun CategorySelector(
         verticalArrangement = Arrangement.spacedBy(AuraSpacing.sm)
     ) {
         categories.forEach { category ->
-            FilterChip(
+            AuraChip(
+                label = category.name,
                 selected = selectedCategoryId == category.id,
-                onClick = { onCategorySelected(category.id) },
-                label = {
-                    Text(
-                        category.name,
-                        style = MaterialTheme.typography.labelSmall,
-                        maxLines = 1
-                    )
-                },
-                leadingIcon = {
-                    CategoryAvatar(
-                        icon = category.icon,
-                        color = Color(category.color.toLong()),
-                        size = 22.dp
-                    )
-                },
-                shape = RoundedCornerShape(50)
+                dotColor = Color(category.color.toLong()),
+                onClick = { onCategorySelected(category.id) }
             )
         }
     }
@@ -546,18 +533,16 @@ internal fun ManualEntryFields(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(AuraSpacing.md)
         ) {
-            FilterChip(
+            AuraChip(
+                label = stringResource(R.string.classification_manual_expense),
                 selected = state.manualType == TransactionType.EXPENSE,
                 onClick = { viewModel.handleIntent(ClassificationViewIntent.TypeChanged(TransactionType.EXPENSE)) },
-                label = { Text(stringResource(R.string.classification_manual_expense)) },
-                shape = RoundedCornerShape(50),
                 modifier = Modifier.weight(1f)
             )
-            FilterChip(
+            AuraChip(
+                label = stringResource(R.string.classification_manual_income),
                 selected = state.manualType == TransactionType.INCOME,
                 onClick = { viewModel.handleIntent(ClassificationViewIntent.TypeChanged(TransactionType.INCOME)) },
-                label = { Text(stringResource(R.string.classification_manual_income)) },
-                shape = RoundedCornerShape(50),
                 modifier = Modifier.weight(1f)
             )
         }
