@@ -1,6 +1,4 @@
-What's new in 0.1.8
+What's new in 0.1.9
 
-• A new look: warm paper and ink, and one accent colour instead of gradients. Easier to read at a glance.
-• Home now shows what needs you — a budget that is over, or messages waiting to be sorted — instead of a chart.
-• Insiders: activity rows show the time, Insights ranks your top categories and merchants, and Plan says how far over you are and on what.
-• The first-run screens match the new look.
+• Fixes a crash when a bank message was categorised on the device. If 0.1.8 closed itself while reading your messages, this is that fix.
+• Nothing else changed: same screens, same data, same behaviour.

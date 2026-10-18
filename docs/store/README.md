@@ -21,10 +21,11 @@ the versioned source so assets can be changed and re-uploaded later.
 | `variants/` | Every deck variation that has been composed, with its frame source | — |
 | `raw/` | **The website's** captures (1080×2400), *not* the deck's | still pre-concept; see below |
 
-**These assets are not on Play yet.** The screenshots and feature graphic here
-were rebuilt on 2026-10-18 against the Quiet Ledger UI; the live listing still
-shows the old Aurora set until someone uploads them (Play Console, or the Play
-API for the text fields only — images are a manual Console step).
+**These assets are live on the listing.** The seven screenshots and the feature
+graphic were uploaded on 2026-10-18, replacing the old Aurora set. Note that the
+tag workflow uploads the *bundle* and the release notes only, never images — so
+if you change `screenshots/` or the banner here, the listing does not follow on
+its own.
 
 ## Listing text (en-US)
 

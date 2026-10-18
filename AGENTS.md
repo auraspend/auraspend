@@ -3,7 +3,26 @@
 > Read this file and the latest file in `docs/handoffs/` before touching anything.
 > Update both (plus `CLAUDE.md` / `memory/` when you learn something durable) before ending a session.
 >
-> Latest: `docs/handoffs/0063-play-store-screenshots.md` — the Play listing's
+> Latest: `docs/handoffs/0064-onnx-jni-crash.md` — **0.1.8 crashed on every
+> categorised message** and 0.1.9 fixes it. R8 stripped
+> `ai.onnxruntime.TensorInfo` and `OnnxJavaType`: the runtime's C++ constructs
+> them by literal name at inference time (`FindClass` + a `GetMethodID` whose
+> signature names `OnnxJavaType`), and those classes declare no native methods, so
+> AGP's `keepclasseswithmembernames` rule — the one the keep file argued was
+> sufficient — never covered them. The VM aborts (`SIGABRT`), so the `try/catch`
+> around the classifier cannot catch it and nothing is logged. Every earlier
+> on-device check passed because **debug builds are not minified**: the encoder
+> had never run in a minified build. Fix: `-keep class ai.onnxruntime.** { *; }`.
+> The R8 gate now **derives the class list from the shipped
+> `libonnxruntime4j_jni.so`** instead of three hand-picked names, so an ORT bump
+> that adds a class fails the gate. Verified on the minified APK by downloading
+> the model, sending a bank SMS through `adb emu sms send`, and watching the
+> enricher call `extract()` — classifier ready, transaction saved, no abort.
+> **Page-transition lag is still open**: 0.1.8 has the 0061 fix and the vivo is
+> `status=speed-profile`, so the profile was not the cause; the device dropped off
+> wireless debugging before it could be measured with SurfaceFlinger `--latency`.
+> 0.1.8 stays on alpha and is broken; 0.1.9 supersedes it.
+> Before: `docs/handoffs/0063-play-store-screenshots.md` — the Play listing's
 > screenshots were composed ads built against the old purple Aurora UI, so the
 > deck is rebuilt on the concept. The owner rejected the first device and the
 > deck now shows an **iPhone front**: the skill template's `public/mockup.png`

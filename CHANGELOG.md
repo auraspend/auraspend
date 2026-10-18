@@ -10,6 +10,40 @@ internal APIs.
 
 ## [Unreleased]
 
+## [0.1.9] — 2026-10-18
+
+A **release-only crash fix**. 0.1.8 aborted the moment the on-device categoriser
+ran, which is to say the moment a bank message was classified. Nothing changed in
+what the app does, only in what R8 is allowed to remove.
+
+### Fixed
+
+- **The production build crashed while categorising a message.** R8 had stripped
+  `ai.onnxruntime.TensorInfo` and `OnnxJavaType`; the runtime's JNI constructs
+  them by literal name (`FindClass("ai/onnxruntime/TensorInfo")` plus a
+  `GetMethodID` whose signature names `OnnxJavaType`), so the lookup returned
+  null and the VM aborted:
+
+  ```
+  JNI DETECTED ERROR IN APPLICATION: java_class == null
+      in call to GetMethodID
+      from boolean[] ai.onnxruntime.OrtSession.run(...)
+    #06 convertToTensorInfo
+  ```
+
+  A JNI abort cannot be caught by the `try/catch` around the classifier, so the
+  whole app died — and `Log.w("On-device categorisation crashed…")` never
+  printed. Debug builds are not minified, which is why every on-device check so
+  far passed: **the encoder had never run in a minified build.** Fixed with a
+  keep rule for the package.
+
+### Changed
+
+- `tools/verify_r8_release.sh` now derives the classes the JNI needs **from the
+  shipped `libonnxruntime4j_jni.so`** instead of a hand-written list of three.
+  The old check looked only at the classes `JNI_OnLoad` resolves, which is a
+  different set from the ones the runtime constructs while running inference.
+
 ## [0.1.8] — 2026-10-18
 
 The **Quiet Ledger** interface: the app redrawn on the interface concept

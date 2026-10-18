@@ -30,15 +30,15 @@ android {
         applicationId = "com.awbuilds.auraspend"
         minSdk = 30
         targetSdk = 37
-        // 0.1.8 — the Quiet Ledger interface (handoffs 0058–0062): the whole app
-        // restyled on the concept's paper/ink palette with one violet accent and
-        // type instead of gradients, a first-run that matches it, and the
-        // composition fix behind the slow screen transitions. No data, schema or
-        // classification change.
+        // 0.1.9 — release-only crash fix (handoff 0064): R8 had stripped the
+        // ONNX Runtime classes its JNI constructs by name, so the production
+        // build aborted the moment a message was categorised. Keep rules added
+        // and the R8 gate now derives the expected classes from the shipped .so.
+        // No data, schema or classification change.
         // versionCode must strictly increase for every store upload; Play
         // rejects an update that reuses one.
-        versionCode = 11
-        versionName = "0.1.8"
+        versionCode = 12
+        versionName = "0.1.9"
 
         // True in dev/prod; the `fdroid` flavor flips it to false (ADR 0012).
         // Screens read it to hide the Drive entry points rather than offer
