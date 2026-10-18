@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -23,7 +24,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.awbuilds.auraspend.R
 import java.util.Locale
@@ -64,9 +64,9 @@ fun CurrencyPickerList(
         // tree while the list and the button were fine. Do not move it below.
         Text(
             text = stringResource(R.string.currency_picker_note),
-            style = MaterialTheme.typography.bodySmall,
+            style = AuraType.rowLinkMeta,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(horizontal = AuraSpacing.xs, vertical = AuraSpacing.sm)
+            modifier = Modifier.padding(horizontal = AuraSpacing.xxs, vertical = AuraSpacing.sm)
         )
         LazyColumn(
             modifier = Modifier.fillMaxWidth(),
@@ -99,28 +99,30 @@ private fun CurrencyRow(
             .heightIn(min = 48.dp)
             .clickable(role = Role.RadioButton, onClick = onClick)
             .semantics { this.selected = selected }
-            .padding(horizontal = AuraSpacing.xs, vertical = AuraSpacing.sm),
+            // The concept's settings row: 14dp of vertical padding, a 12dp gap.
+            .padding(horizontal = AuraSpacing.xxs, vertical = 14.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(AuraSpacing.md)
     ) {
         // The symbol is the fastest way to recognise a currency; the code is the
-        // unambiguous one. Show both, name in between.
+        // unambiguous one. Show both, name in between. Ink, not the accent: a
+        // currency symbol is a label, and the accent is spent on what you can act
+        // on — the row's own selection is carried by the check.
         Text(
             text = symbol,
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.primary,
+            style = AuraType.settingsRowTitle,
+            color = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier.width(40.dp)
         )
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = name,
-                style = MaterialTheme.typography.bodyLarge,
-                fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
+                style = AuraType.settingsRowTitle,
                 color = MaterialTheme.colorScheme.onSurface
             )
             Text(
                 text = currency.code,
-                style = MaterialTheme.typography.labelMedium,
+                style = AuraType.settingsRowValue,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
@@ -130,7 +132,8 @@ private fun CurrencyRow(
                 // The row already announces its state through `selected`; a
                 // content description here would make TalkBack say it twice.
                 contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary
+                tint = MaterialTheme.colorScheme.onBackground,
+                modifier = Modifier.size(18.dp)
             )
         }
     }

@@ -4,9 +4,9 @@
       Pre-Compose window colors only. The live Aurora palette lives in
       ui/theme/Color.kt; keep these in sync with AuroraBackground (light/dark).
     -->
-    <color name="aura_window_background">#FAF7FD</color>
-    <color name="aura_window_background_dark">#14101C</color>
-    <color name="aura_primary">#5E3A8B</color>
+    <color name="aura_window_background">#F7F5F0</color>
+    <color name="aura_window_background_dark">#0F0F0D</color>
+    <color name="aura_primary">#4A2E7A</color>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
 </resources>

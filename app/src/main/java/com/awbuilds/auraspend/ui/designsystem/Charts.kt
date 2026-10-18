@@ -4,8 +4,13 @@ import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -13,6 +18,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
@@ -24,8 +31,11 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.semantics.ProgressBarRangeInfo
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.progressBarRangeInfo
 import androidx.compose.ui.semantics.semantics
+import com.awbuilds.auraspend.ui.theme.extendedColors
 
 /** A single donut slice. Kept tiny and allocation-free at draw time. */
 data class AuraSlice(
@@ -33,6 +43,93 @@ data class AuraSlice(
     val value: Double,
     val color: Color
 )
+
+/**
+ * Horizontal progress bar — the app's comparison primitive.
+ *
+ * A ring asks you to estimate an arc against a circle; a bar asks you to compare
+ * two lengths. Stacked budgets and ranked spending both need the second, so this
+ * is the shape the design system reaches for wherever several values are read
+ * against each other. [progress] is not clamped here: the caller decides whether
+ * an over-budget value should read as a full bar, and the arc/label honesty rule
+ * still applies — the number beside it must be the real one.
+ */
+@Composable
+fun AuraProgressBar(
+    progress: Float,
+    modifier: Modifier = Modifier,
+    color: Color = MaterialTheme.colorScheme.onBackground,
+    trackColor: Color = MaterialTheme.extendedColors.track,
+    height: Dp = 5.dp,
+    contentDescription: String? = null
+) {
+    val animated by animateFloatAsState(
+        targetValue = progress.coerceIn(0f, 1f),
+        animationSpec = AuraMotion.standard(),
+        label = "progressBar"
+    )
+
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(height)
+            .clip(CircleShape)
+            .background(trackColor)
+            .semantics {
+                if (contentDescription != null) this.contentDescription = contentDescription
+                progressBarRangeInfo = ProgressBarRangeInfo(animated, 0f..1f)
+            }
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth(animated)
+                .fillMaxHeight()
+                .clip(CircleShape)
+                .background(color)
+        )
+    }
+}
+
+/**
+ * Daily column strip: one thin bar per day, the most recent in ink, the rest in
+ * the track colour. [values] are normalised to 0..1; the strip is decoration
+ * around a number the screen also states, so it carries one description rather
+ * than a focusable node per bar.
+ */
+@Composable
+fun AuraSparkColumns(
+    values: List<Float>,
+    modifier: Modifier = Modifier,
+    highlightLast: Boolean = true,
+    contentDescription: String? = null
+) {
+    val trackColor = MaterialTheme.colorScheme.surfaceContainerHighest
+    val lastColor = MaterialTheme.colorScheme.onBackground
+
+    Canvas(
+        modifier = modifier.semantics {
+            if (contentDescription != null) this.contentDescription = contentDescription
+        }
+    ) {
+        if (values.isEmpty()) return@Canvas
+        val gap = 3.dp.toPx()
+        val barWidth = ((size.width - gap * (values.size - 1)) / values.size).coerceAtLeast(1f)
+        val radius = CornerRadius(3.dp.toPx())
+        val minHeight = 2.dp.toPx()
+        values.forEachIndexed { index, value ->
+            val barHeight = (value.coerceIn(0f, 1f) * size.height).coerceAtLeast(minHeight)
+            drawRoundRect(
+                color = if (highlightLast && index == values.lastIndex) lastColor else trackColor,
+                topLeft = Offset(
+                    x = index * (barWidth + gap),
+                    y = size.height - barHeight
+                ),
+                size = Size(barWidth, barHeight),
+                cornerRadius = radius
+            )
+        }
+    }
+}
 
 /**
  * Progress ring that animates to [progress] with a spring. Use for budgets and

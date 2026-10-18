@@ -10,68 +10,56 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.res.pluralStringResource
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.awbuilds.auraspend.R
 import com.awbuilds.auraspend.domain.model.Transaction
 import com.awbuilds.auraspend.domain.model.TransactionType
 import com.awbuilds.auraspend.ui.theme.extendedColors
-import java.text.SimpleDateFormat
-import java.time.ZoneId
-import java.util.Date
-import java.util.Locale
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
+import java.time.format.FormatStyle
 
 /** Brand color for a stored category ARGB value. */
 fun categoryColor(colorInt: Int?): Color =
     Color(colorInt?.toLong() ?: 0xFF757575L)
 
-/** One day in milliseconds, named so the day boundaries below stay readable. */
-private const val DAY_MILLIS = 24 * 60 * 60 * 1000L
-
 /**
- * Human date for a transaction timestamp.
+ * Time of day for a transaction, in the user's locale — "8:42 pm".
  *
- * Resolves through resources, because this feeds the date line of every row in
- * Home and Activity — the two highest-traffic lists in the app. It used to return
- * literal `"Today"` / `"Yesterday"` / `"3d ago"` from inside the shared design
- * system, so those lists read English in every locale. Dates older than a week
- * keep the locale-aware `dd MMM` format.
+ * The row used to print a relative day ("Today", "2d ago"), which duplicated the
+ * group header directly above it in Activity ("Today" under "TODAY") while saying
+ * nothing about the row itself. The header carries the day; the row carries the
+ * time, which is the question a statement reader actually has. It resolves
+ * through the locale so the time formatting follows the device, not this file.
  */
 @Composable
-fun formatRelativeDate(timestamp: Long): String {
-    val diff = System.currentTimeMillis() - timestamp
-    val days = (diff / DAY_MILLIS).toInt()
-    return when {
-        diff < DAY_MILLIS -> stringResource(R.string.activity_group_today)
-        diff < 2 * DAY_MILLIS -> stringResource(R.string.activity_group_yesterday)
-        diff < 7 * DAY_MILLIS -> pluralStringResource(R.plurals.activity_days_ago, days, days)
-        else -> {
-            // LocalConfiguration rather than Locale.getDefault(): this is a
-            // composable, and the default locale is not observable, so the month
-            // name would keep the language the screen was first composed in
-            // (lint's NonObservableLocale). Same reasoning as `Money.kt`.
-            val locale = LocalConfiguration.current.locales[0]
-            SimpleDateFormat("dd MMM", locale).format(Date(timestamp))
-        }
+private fun rowTime(date: LocalDateTime): String {
+    val locale = LocalConfiguration.current.locales[0]
+    return remember(date, locale) {
+        DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT).withLocale(locale).format(date)
     }
 }
 
 /**
  * The transaction row used by Home and Activity. Merges semantics so TalkBack
  * reads merchant, category, date and amount as a single item.
+ *
+ * **Outgoing amounts are ink, not red.** Red used to mark every expense, which
+ * made a list of thirty rows a wall of alarm and left nothing to distinguish a
+ * real problem (an over-budget category, a failed write). The minus sign already
+ * says "out"; green is reserved for money arriving, and red for status.
  */
 @Composable
 fun TransactionEntryRow(
@@ -80,14 +68,14 @@ fun TransactionEntryRow(
     categoryColor: Color,
     categoryEmoji: String?,
     modifier: Modifier = Modifier,
+    divider: Boolean = true,
     onClick: (() -> Unit)? = null
 ) {
     val extended = MaterialTheme.extendedColors
     val amountColor =
-        if (transaction.type == TransactionType.EXPENSE) extended.expenseAmount
+        if (transaction.type == TransactionType.EXPENSE) MaterialTheme.colorScheme.onSurface
         else extended.incomeAmount
-
-    Row(
+    Column(
         modifier = modifier
             .fillMaxWidth()
             // Opaque on purpose, and not a style choice.
@@ -112,47 +100,61 @@ fun TransactionEntryRow(
                     Modifier
                 }
             )
-            .padding(horizontal = AuraSpacing.gutter, vertical = AuraSpacing.sm + AuraSpacing.xxs),
-        verticalAlignment = Alignment.CenterVertically
+            .padding(horizontal = AuraSpacing.gutter)
     ) {
-        CategoryAvatar(
-            icon = categoryEmoji,
-            color = categoryColor,
-            size = 46.dp,
-            showRing = true,
-            ringStroke = 1.5.dp
-        )
-        Spacer(modifier = Modifier.width(AuraSpacing.md))
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                transaction.merchant ?: transaction.note.ifBlank { categoryName },
-                style = MaterialTheme.typography.titleSmall,
-                color = MaterialTheme.colorScheme.onSurface,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                // 11dp, the concept's row rhythm: 36dp avatar + 11 top and
+                // bottom = the 58dp row the transaction lists are built on.
+                .padding(vertical = 11.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            CategoryAvatar(
+                icon = categoryEmoji,
+                color = categoryColor,
+                size = 36.dp,
+                showRing = false
             )
-            Spacer(modifier = Modifier.height(1.dp))
-            // Read outside the string template: stringResource is @Composable, and
-            // an explicit local keeps the subtitling obvious at a glance.
-            val relativeDate = formatRelativeDate(
-                transaction.date.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
-            )
+            Spacer(modifier = Modifier.width(AuraSpacing.md))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    transaction.merchant ?: transaction.note.ifBlank { categoryName },
+                    style = AuraType.rowTitle,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Spacer(modifier = Modifier.height(1.dp))
+                // Read outside the string template: rowTime is @Composable, and
+                // an explicit local keeps the subtitling obvious at a glance.
+                val time = rowTime(transaction.date)
+                Text(
+                    "$categoryName · $time",
+                    style = AuraType.rowMeta,
+                    color = extended.textLight,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+            Spacer(modifier = Modifier.width(AuraSpacing.sm))
             Text(
-                "$categoryName · $relativeDate",
-                style = MaterialTheme.typography.bodySmall,
-                color = extended.textLight,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
+                formatSignedMoney(
+                    if (transaction.type == TransactionType.EXPENSE) -transaction.amount
+                    else transaction.amount
+                ),
+                style = AuraType.rowMoney,
+                color = amountColor
             )
         }
-        Spacer(modifier = Modifier.width(AuraSpacing.sm))
-        Text(
-            formatSignedMoney(
-                if (transaction.type == TransactionType.EXPENSE) -transaction.amount
-                else transaction.amount
-            ),
-            style = AuraType.moneySmall,
-            color = amountColor
-        )
+        if (divider) {
+            HorizontalDivider(
+                thickness = 1.dp,
+                // The concept's inner hairline (`--line-2`), a shade lighter than
+                // a card's own border: thirty dividers at border weight turn a
+                // list into a grid.
+                color = MaterialTheme.extendedColors.lineSoft
+            )
+        }
     }
 }

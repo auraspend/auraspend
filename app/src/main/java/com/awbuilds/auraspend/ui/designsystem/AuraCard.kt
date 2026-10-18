@@ -66,7 +66,10 @@ fun AuraCard(
         }
         AuraCardStyle.Outlined -> {
             container = scheme.surface
-            border = BorderStroke(1.dp, scheme.outlineVariant.copy(alpha = 0.55f))
+            // Full opacity: the hairline *is* the card's edge in this language.
+            // Fading it to 55 % made cards read as tinted rectangles on paper and
+            // put them below the 3:1 non-text contrast floor.
+            border = BorderStroke(1.dp, scheme.outlineVariant)
         }
         AuraCardStyle.Glass -> {
             container = scheme.surface.copy(alpha = 0.78f)

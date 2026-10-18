@@ -20,6 +20,7 @@ import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontVariation
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import androidx.core.view.WindowCompat
@@ -51,17 +52,29 @@ data class ExtendedColors(
     val overdue: Color,
     val warningOrange: Color,
     val textLight: Color,
-    val canvasContainer: Color
+    val canvasContainer: Color,
+    /** Row hairline inside a card — lighter than the card's own border. */
+    val lineSoft: Color,
+    /** Progress-bar / spark-column track. */
+    val track: Color,
+    /** Eyebrow, axis and rank-percentage grey. */
+    val faint: Color,
+    /** Chip label and secondary ink — between `muted` and `onSurface`. */
+    val inkSoft: Color
 )
 
 val LightExtendedColors = ExtendedColors(
     incomeAmount = IncomeGreenLight,
     expenseAmount = ExpenseRedLight,
-    upcoming = UpcomingBlue,
-    overdue = OverdueIndigo,
+    upcoming = UpcomingBlueLight,
+    overdue = OverdueIndigoLight,
     warningOrange = WarningOrangeLight,
     textLight = LightOnSurfaceVariant,
-    canvasContainer = LightSurfContainerHighest
+    canvasContainer = LightSurfContainerHighest,
+    lineSoft = LineSoftLight,
+    track = TrackLight,
+    faint = FaintLight,
+    inkSoft = InkSoftLight
 )
 
 val DarkExtendedColors = ExtendedColors(
@@ -71,7 +84,11 @@ val DarkExtendedColors = ExtendedColors(
     overdue = OverdueIndigoDark,
     warningOrange = WarningOrangeDark,
     textLight = DarkOnSurfaceVariant,
-    canvasContainer = DarkSurfaceVariant
+    canvasContainer = DarkSurfaceVariant,
+    lineSoft = LineSoftDark,
+    track = TrackDark,
+    faint = FaintDark,
+    inkSoft = InkSoftDark
 )
 
 /** AMOLED needs its own semantic set — see the note in `Color.kt`. */
@@ -82,7 +99,11 @@ val AmoledExtendedColors = ExtendedColors(
     overdue = OverdueIndigoAmoled,
     warningOrange = WarningOrangeAmoled,
     textLight = DarkOnSurfaceVariant,
-    canvasContainer = AmoledSurfContainerHigh
+    canvasContainer = AmoledSurfContainerHigh,
+    lineSoft = LineSoftDark,
+    track = TrackDark,
+    faint = FaintDark,
+    inkSoft = InkSoftDark
 )
 
 val LocalExtendedColors = staticCompositionLocalOf { LightExtendedColors }
@@ -93,14 +114,27 @@ val MaterialTheme.extendedColors: ExtendedColors
 // ─── Typography ───────────────────────────────────────────────────────────────
 // Plus Jakarta Sans (variable, OFL) — a geometric humanist face with confident
 // numerals. `tnum` keeps money columns from jittering while they animate.
+//
+// The family is a *variable* font: one file carries every weight on its `wght`
+// axis. Registering that one file six times under six `weight`s — which is what
+// this did — only tells Compose which entry to *match*; the renderer still draws
+// the file's default instance, so every 700 in the app was drawn at regular
+// weight and every screen read lighter and narrower than the design. The axis
+// has to be set explicitly, per weight.
+
+private fun jakarta(weight: Int) = Font(
+    R.font.plus_jakarta_sans,
+    weight = FontWeight(weight),
+    variationSettings = FontVariation.Settings(FontVariation.weight(weight))
+)
 
 val PlusJakartaSans = FontFamily(
-    Font(R.font.plus_jakarta_sans, weight = FontWeight.Light),
-    Font(R.font.plus_jakarta_sans, weight = FontWeight.Normal),
-    Font(R.font.plus_jakarta_sans, weight = FontWeight.Medium),
-    Font(R.font.plus_jakarta_sans, weight = FontWeight.SemiBold),
-    Font(R.font.plus_jakarta_sans, weight = FontWeight.Bold),
-    Font(R.font.plus_jakarta_sans, weight = FontWeight.ExtraBold)
+    jakarta(300),
+    jakarta(400),
+    jakarta(500),
+    jakarta(600),
+    jakarta(700),
+    jakarta(800)
 )
 
 private const val NUMERIC_FEATURES = "tnum"
@@ -126,7 +160,7 @@ private val AuraSpendTypography = Typography(
     displaySmall = auraStyle(FontWeight.SemiBold, 34, 42, -0.3, numeric = true),
     headlineLarge = auraStyle(FontWeight.Bold, 30, 38, -0.2, numeric = true),
     headlineMedium = auraStyle(FontWeight.SemiBold, 26, 34, -0.1, numeric = true),
-    headlineSmall = auraStyle(FontWeight.SemiBold, 22, 30, numeric = true),
+    headlineSmall = auraStyle(FontWeight.Bold, 23, 29, -0.5, numeric = true),
     titleLarge = auraStyle(FontWeight.SemiBold, 20, 26),
     titleMedium = auraStyle(FontWeight.SemiBold, 16, 22, 0.1),
     titleSmall = auraStyle(FontWeight.Medium, 14, 20, 0.1),
@@ -163,6 +197,8 @@ private val LightColorScheme = lightColorScheme(
     outlineVariant = LightOutlineVariant,
     error = LightError,
     onError = LightOnError,
+    errorContainer = LightErrorContainer,
+    onErrorContainer = LightOnErrorContainer,
     surfaceContainerLowest = LightSurfContainerLowest,
     surfaceContainerLow = LightSurfContainerLow,
     surfaceContainer = LightSurfContainer,
@@ -193,6 +229,8 @@ private val DarkColorScheme = darkColorScheme(
     outlineVariant = DarkOutlineVariant,
     error = DarkError,
     onError = DarkOnError,
+    errorContainer = DarkErrorContainer,
+    onErrorContainer = DarkOnErrorContainer,
     surfaceContainerLowest = DarkSurfContainerLowest,
     surfaceContainerLow = DarkSurfContainerLow,
     surfaceContainer = DarkSurfContainer,
@@ -223,6 +261,8 @@ private val AmoledColorScheme = darkColorScheme(
     outlineVariant = AmoledOutlineVariant,
     error = AmoledError,
     onError = AmoledOnError,
+    errorContainer = AmoledErrorContainer,
+    onErrorContainer = AmoledOnErrorContainer,
     surfaceContainerLowest = AmoledSurfContainerLowest,
     surfaceContainerLow = AmoledSurfContainerLow,
     surfaceContainer = AmoledSurfContainer,

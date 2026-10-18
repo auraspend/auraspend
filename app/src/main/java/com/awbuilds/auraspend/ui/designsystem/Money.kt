@@ -145,7 +145,13 @@ fun formatMoney(
         minimumFractionDigits = digits
         maximumFractionDigits = digits
     }
-    return format.format(value)
+    // The sign is prepended from [MINUS_SIGN] rather than left to the platform:
+    // `NumberFormat` emits a hyphen-minus (and, in several locales, accounting
+    // parentheses). The app's rule is one minus character everywhere, and the
+    // Indian path above already obeys it — a rupee amount must not change glyph
+    // because the device is set to en-US.
+    val sign = if (value < 0) MINUS_SIGN else ""
+    return sign + format.format(abs(value))
 }
 
 /**

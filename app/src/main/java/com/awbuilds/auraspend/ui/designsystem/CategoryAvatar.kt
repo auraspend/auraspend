@@ -7,18 +7,18 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ReceiptLong
-import androidx.compose.material.icons.filled.AccountBalance
-import androidx.compose.material.icons.filled.Category
-import androidx.compose.material.icons.filled.DirectionsCar
-import androidx.compose.material.icons.filled.LocalGroceryStore
-import androidx.compose.material.icons.filled.LocalHospital
-import androidx.compose.material.icons.filled.Movie
-import androidx.compose.material.icons.filled.Restaurant
-import androidx.compose.material.icons.filled.School
-import androidx.compose.material.icons.filled.ShoppingBag
-import androidx.compose.material.icons.filled.Subscriptions
-import androidx.compose.material.icons.filled.SwapHoriz
+import androidx.compose.material.icons.automirrored.outlined.ReceiptLong
+import androidx.compose.material.icons.outlined.AccountBalance
+import androidx.compose.material.icons.outlined.Category
+import androidx.compose.material.icons.outlined.DirectionsCar
+import androidx.compose.material.icons.outlined.LocalGroceryStore
+import androidx.compose.material.icons.outlined.LocalHospital
+import androidx.compose.material.icons.outlined.Movie
+import androidx.compose.material.icons.outlined.Restaurant
+import androidx.compose.material.icons.outlined.School
+import androidx.compose.material.icons.outlined.ShoppingBag
+import androidx.compose.material.icons.outlined.Subscriptions
+import androidx.compose.material.icons.outlined.SwapHoriz
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -38,18 +38,18 @@ import androidx.compose.ui.unit.sp
  * User-created categories can still use emoji.
  */
 private val knownCategoryIcons: Map<String, ImageVector> = mapOf(
-    "restaurant" to Icons.Default.Restaurant,
-    "directions_car" to Icons.Default.DirectionsCar,
-    "shopping_bag" to Icons.Default.ShoppingBag,
-    "receipt_long" to Icons.AutoMirrored.Filled.ReceiptLong,
-    "movie" to Icons.Default.Movie,
-    "local_hospital" to Icons.Default.LocalHospital,
-    "school" to Icons.Default.School,
-    "account_balance" to Icons.Default.AccountBalance,
-    "subscriptions" to Icons.Default.Subscriptions,
-    "swap_horiz" to Icons.Default.SwapHoriz,
-    "local_grocery_store" to Icons.Default.LocalGroceryStore,
-    "category" to Icons.Default.Category
+    "restaurant" to Icons.Outlined.Restaurant,
+    "directions_car" to Icons.Outlined.DirectionsCar,
+    "shopping_bag" to Icons.Outlined.ShoppingBag,
+    "receipt_long" to Icons.AutoMirrored.Outlined.ReceiptLong,
+    "movie" to Icons.Outlined.Movie,
+    "local_hospital" to Icons.Outlined.LocalHospital,
+    "school" to Icons.Outlined.School,
+    "account_balance" to Icons.Outlined.AccountBalance,
+    "subscriptions" to Icons.Outlined.Subscriptions,
+    "swap_horiz" to Icons.Outlined.SwapHoriz,
+    "local_grocery_store" to Icons.Outlined.LocalGroceryStore,
+    "category" to Icons.Outlined.Category
 )
 
 fun categoryIconVector(icon: String?): ImageVector? = knownCategoryIcons[icon]
@@ -70,7 +70,7 @@ fun categoryIconGlyph(icon: String?): String? {
 }
 
 /** Vector shown when a category has no usable icon. */
-private val FallbackVector = Icons.Default.Category
+private val FallbackVector = Icons.Outlined.Category
 
 /**
  * Circular category badge. Known Material icon names render as vectors tinted

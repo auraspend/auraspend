@@ -71,10 +71,12 @@ class MoneyFormattingTest {
 
     @Test
     fun `negative amounts keep their sign`() {
-        assertTrue(
-            "negative amount lost its sign: " + formatMoney(-500.0, inr, Locale.US),
-            formatMoney(-500.0, inr, Locale.US).contains("-")
-        )
+        // MINUS_SIGN (U+2212), not the platform's hyphen-minus: the app draws one
+        // minus glyph everywhere, and `NumberFormat` emits a hyphen (or accounting
+        // parentheses) in the non-Indian grouping path.
+        val formatted = formatMoney(-500.0, inr, Locale.US)
+        assertTrue("negative amount lost its sign: $formatted", formatted.contains(MINUS_SIGN))
+        assertTrue("expected the typographic minus: $formatted", !formatted.contains("-"))
     }
 
     @Test

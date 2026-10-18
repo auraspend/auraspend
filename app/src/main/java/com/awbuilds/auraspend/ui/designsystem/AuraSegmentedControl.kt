@@ -3,8 +3,6 @@ package com.awbuilds.auraspend.ui.designsystem
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Row
@@ -14,8 +12,9 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.selection.selectable
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -26,14 +25,17 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 
 /**
- * Aurora segmented control — the app-wide replacement for `TabRow` and
- * hand-rolled "sliding selectors".
+ * The Quiet Ledger segmented control — a quiet range selector, not a second
+ * navigation bar.
+ *
+ * It changes *data*, never the screen, so it is drawn as a recessed track with a
+ * raised white pill rather than as tabs: a 12 dp track on a 6 % ink wash, a 9 dp
+ * pill on `surface` with a hairline shadow, and the same 12 sp/600 label as
+ * [AuraChip] so the two controls read as siblings.
  *
  * The indicator glides with an expressive spring and taps give a light haptic
  * tick, so switching ranges or filters feels physical.
@@ -47,16 +49,17 @@ fun AuraSegmentedControl(
 ) {
     val haptics = LocalHapticFeedback.current
     val scheme = MaterialTheme.colorScheme
+    val trackShape = RoundedCornerShape(12.dp)
+    val pillShape = RoundedCornerShape(9.dp)
 
     BoxWithConstraints(
         modifier = modifier
             .fillMaxWidth()
-            // heightIn, not height: these boxes hold the option labels, and a fixed
-            // 44dp clipped them at the largest system font scale on every screen
-            // that uses this control. The 44dp floor keeps 100% identical.
-            .heightIn(min = 44.dp)
-            .clip(CircleShape)
-            .background(scheme.surfaceContainer)
+            .clip(trackShape)
+            // color-mix(in srgb, var(--ink) 6%, transparent) over the page: an
+            // alpha wash, so it sits correctly on paper and on a card alike.
+            .background(scheme.onBackground.copy(alpha = 0.06f))
+            .padding(3.dp)
     ) {
         val segmentWidth = maxWidth / options.size
         val indicatorX by animateDpAsState(
@@ -65,22 +68,27 @@ fun AuraSegmentedControl(
             label = "segmentedIndicator"
         )
 
+        // `matchParentSize` reports the track's resolved height without
+        // influencing it, but it also hands the child *fixed* constraints — and a
+        // fixed width silently wins over `.width()`, which made the pill paint the
+        // whole track instead of one segment. `wrapContentSize` loosens the
+        // minimums again while keeping the maximums, so the pill can be one
+        // segment wide and still be as tall as the labels resolved to.
         Box(
             modifier = Modifier
-                // matchParentSize, not fillMaxHeight: the indicator then takes the
-                // height the labels resolved (so it grows with them) without
-                // influencing that measurement. A size-determining fillMaxHeight
-                // here would balloon the control to whatever height the parent
-                // offers.
                 .matchParentSize()
-                .offset(x = indicatorX)
-                .padding(AuraSpacing.xs)
-                .width(segmentWidth - AuraSpacing.sm)
-                .fillMaxHeight()
-                .clip(CircleShape)
-                .background(scheme.surface)
-                .border(1.dp, scheme.outlineVariant.copy(alpha = 0.45f), CircleShape)
-        )
+                .wrapContentSize(Alignment.TopStart)
+        ) {
+            Box(
+                modifier = Modifier
+                    .offset(x = indicatorX)
+                    .width(segmentWidth)
+                    .fillMaxHeight()
+                    .softShadow(pillShape, elevation = 2.dp)
+                    .clip(pillShape)
+                    .background(scheme.surface)
+            )
+        }
 
         Row(modifier = Modifier.fillMaxWidth()) {
             options.forEachIndexed { index, label ->
@@ -93,9 +101,10 @@ fun AuraSegmentedControl(
                 Box(
                     modifier = Modifier
                         .weight(1f)
-                        // The label decides the height; the floor keeps the touch
-                        // target at the token size.
-                        .heightIn(min = 44.dp)
+                        // heightIn, not height: these boxes hold the option labels,
+                        // and a fixed height clips them at the largest system font
+                        // scale. 32 dp is the concept's pill and the floor here.
+                        .heightIn(min = 32.dp)
                         .selectable(
                             selected = selected,
                             role = Role.Tab,
@@ -110,8 +119,7 @@ fun AuraSegmentedControl(
                 ) {
                     Text(
                         text = label,
-                        style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium,
+                        style = AuraType.chipLabel,
                         color = textColor,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis

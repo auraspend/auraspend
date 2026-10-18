@@ -47,3 +47,16 @@ tools/__pycache__/
 
 # Kilo tool state (local session data).
 /.kilo/
+
+# WorkBuddy tool state (local agent memory).
+/.workbuddy-ai/
+
+# Parked screenshot deck variations (docs/store/variant.sh). Kept on disk
+# deliberately — they are alternatives, not the shipping deck — so they stay out
+# of released history. The live deck's own frame source is tracked.
+docs/store/variants/
+
+# Session captures of the implemented UI. The concept itself — index.html and
+# board.png — is tracked; these are working shots and go stale the moment the
+# screens change.
+docs/design/interface-concept/implemented/
