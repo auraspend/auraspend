@@ -1,6 +1,6 @@
-What's new in 0.1.71
+What's new in 0.1.8
 
-• Quick Add's category chips now match the rest of the app — labels are no longer cut off and the selected category is clearly highlighted.
-• Budget cards stop saying "100%" when you are over: the Plan hub and Budgets show the real percentage and how far over you are.
-• The saving percentage now uses a proper minus sign, matching the amount beside it.
-• The Plan screen scrolls properly with very large text.
+• A new look: warm paper and ink, and one accent colour instead of gradients. Easier to read at a glance.
+• Home now shows what needs you — a budget that is over, or messages waiting to be sorted — instead of a chart.
+• Insiders: activity rows show the time, Insights ranks your top categories and merchants, and Plan says how far over you are and on what.
+• The first-run screens match the new look.

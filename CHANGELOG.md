@@ -10,6 +10,53 @@ internal APIs.
 
 ## [Unreleased]
 
+## [0.1.8] — 2026-10-18
+
+The **Quiet Ledger** interface: the app redrawn on the interface concept
+(handoffs 0057–0062). Monochrome chrome with colour only in the data, a
+typographic hero instead of the gradient, bars instead of rings and donuts, and
+a first-run that speaks the same language. **No data, schema or classification
+change** — the SMS pipeline, the money arithmetic and the stored data are
+untouched.
+
+### Changed
+
+- **A new look, app-wide.** The old purple Aurora brand is gone: warm paper and
+  ink with a single violet accent, red demoted to a status colour, and Plus
+  Jakarta Sans carrying the hierarchy at its real weights (every 700 had been
+  rendering at regular weight — one variable font registered six times).
+- **Home is a glance, not a dashboard.** Balance, a flow bar, a "needs you" rail
+  (an over-budget sentence or the review queue), one budget aggregate, recent
+  activity and cash flow. The spending chart moved to Insights as a daily strip.
+- **Activity** gained a month + total sub-line, one filter row on the app's
+  standard chip, and row metadata that is the time of day — the sticky header
+  already names the day. **Insights** ranks categories and merchants, capped at
+  six rows with a summed tail.
+- **Plan** states how far over you are and on what; over-budget rows show the
+  true percentage instead of clamping at 100 %.
+- **Settings** regrouped into Money / Messages / Appearance / Data / About, with
+  the theme behind a sheet and a live review-queue count.
+- **First-run** redrawn to match (handoff 0062): a tonal disc instead of a violet
+  gradient medallion, the concept's ink button, and Skip as the one violet link.
+- **Quick Add** follows the concept's order and opens expanded, so Save is never
+  below the fold. One `AuraChip` control is now shared by Activity, Quick Add,
+  the editor, classification, budgets and subscriptions.
+- **Default category colours** retuned to the concept's palette (new installs and
+  the category picker; existing rows keep whatever the user chose).
+- **Money's minus sign** is one glyph (U+2212) in every locale, instead of the
+  platform's hyphen in the non-Indian grouping path.
+
+### Fixed
+
+- **Screen transitions no longer rebuild the app.** `AuraAppChrome` called
+  `content()` from three branches, so every top-level ↔ detail crossing moved the
+  whole `NavHost` subtree in the composition; it is one stable slot now. Home's
+  `LaunchedEffect(Unit)` also re-ran its whole load on every return, cancelling a
+  live Room subscription to re-run four aggregate queries.
+- **A fresh baseline profile** (the old one knew none of the current screens).
+  Worst UI-thread frame on Activity → detail → back, release build: 66 ms → 33 ms
+  with the new profile in place.
+
 ## [0.1.71] — 2026-10-17
 
 A UI-correctness patch from a full on-device walk (handoff 0056). No database,
