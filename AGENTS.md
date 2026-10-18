@@ -18,9 +18,15 @@
 > that adds a class fails the gate. Verified on the minified APK by downloading
 > the model, sending a bank SMS through `adb emu sms send`, and watching the
 > enricher call `extract()` — classifier ready, transaction saved, no abort.
-> **Page-transition lag is still open**: 0.1.8 has the 0061 fix and the vivo is
-> `status=speed-profile`, so the profile was not the cause; the device dropped off
-> wireless debugging before it could be measured with SurfaceFlinger `--latency`.
+> **Page-transition lag**: measured on the minified build with `gfxinfo
+> framestats` — the **UI thread is cheap** (p50 ~2 ms), so the jank is not
+> composition. The only over-budget frame was the tab crossfade (17.4 ms against
+> 16.7), where two full screens each need an alpha layer; tab switches are now
+> **instant** (Material's convention, `None` when both ends are in
+> `Routes.topLevel`) and push/pop lost their alpha, worst tab frame 17.4 → 14.3 ms.
+> Not verified on the vivo: 0.1.8 crashes within seconds there, so the device
+> measurement still needs 0.1.9 installed (the emulator is fill-rate bound and its
+> totals are meaningless).
 > 0.1.8 stays on alpha and is broken; 0.1.9 supersedes it.
 > Before: `docs/handoffs/0063-play-store-screenshots.md` — the Play listing's
 > screenshots were composed ads built against the old purple Aurora UI, so the
