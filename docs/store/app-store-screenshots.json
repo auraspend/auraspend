@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
   "appName": "AuraSpend",
-  "themeId": "aurora",
+  "themeId": "quiet-ledger",
   "connectedCanvas": false,
   "locales": [
     "en"
@@ -14,178 +14,275 @@
     "iphone": [],
     "android": [
       {
-        "id": "aurora-01-hero",
+        "id": "ql-01-hero",
         "layout": "hero",
         "label": {
-          "en": "AURASPEND"
+          "en": "SMS expense tracker"
         },
         "headline": {
-          "en": "Your money.\nNobody else's."
+          "en": "Track expenses\nautomatically."
         },
-        "screenshot": "/screenshots/android/phone/en/home-dark.png",
+        "screenshot": "/screenshots/android/phone/en/home-light.png",
         "transforms": {
+          "caption": {
+            "x": 90,
+            "y": 128,
+            "width": 900,
+            "height": 300
+          },
           "device": {
-            "x": 190,
-            "y": 530,
-            "width": 700,
-            "height": 1556,
-            "rotation": 0,
+            "x": 210,
+            "y": 546,
+            "width": 660,
+            "height": 1345,
             "zIndex": 3
           }
         }
       },
       {
-        "id": "aurora-02-sms",
+        "id": "ql-02-activity",
         "layout": "device-bottom",
+        "inverted": true,
         "label": {
-          "en": "BANK SMS"
+          "en": "Automatic"
         },
         "headline": {
-          "en": "Spending tracked\nautomatically."
+          "en": "Every payment,\ncategorised."
         },
-        "screenshot": "/screenshots/android/phone/en/activity.png",
+        "screenshot": "/screenshots/android/phone/en/activity-dark.png",
         "transforms": {
+          "caption": {
+            "x": 90,
+            "y": 150,
+            "width": 900,
+            "height": 400
+          },
           "device": {
-            "x": 250,
-            "y": 581,
-            "width": 580,
-            "height": 1289,
-            "rotation": 0,
+            "x": 240,
+            "y": 638,
+            "width": 600,
+            "height": 1222,
             "zIndex": 3
           }
         }
       },
       {
-        "id": "aurora-03-insights",
+        "id": "ql-03-plan",
         "layout": "device-top",
         "label": {
-          "en": "INSIGHTS"
+          "en": "Budgets"
+        },
+        "headline": {
+          "en": "A budget for\nevery category."
+        },
+        "screenshot": "/screenshots/android/phone/en/plan-light.png",
+        "transforms": {
+          "caption": {
+            "x": 90,
+            "y": 1410,
+            "width": 900,
+            "height": 330
+          },
+          "device": {
+            "x": 214.51233842538193,
+            "y": 25.123384253819047,
+            "width": 660,
+            "height": 1345,
+            "rotation": 0,
+            "zIndex": 3
+          }
+        }
+      },
+      {
+        "id": "ql-04-insights",
+        "layout": "device-bottom",
+        "inverted": true,
+        "label": {
+          "en": "Insights"
         },
         "headline": {
           "en": "See where\nit all goes."
         },
-        "screenshot": "/screenshots/android/phone/en/insights.png",
-        "inverted": true,
+        "screenshot": "/screenshots/android/phone/en/insights-dark.png",
         "transforms": {
-          "device": {
-            "x": 260,
-            "y": 40,
-            "width": 560,
-            "height": 1244,
-            "rotation": 0,
-            "zIndex": 3
-          },
           "caption": {
-            "x": 86,
-            "y": 1300,
-            "width": 907,
-            "height": 480
+            "x": 90,
+            "y": 140,
+            "width": 900,
+            "height": 300
+          },
+          "device": {
+            "x": 230,
+            "y": 602,
+            "width": 620,
+            "height": 1263,
+            "zIndex": 3
           }
         }
       },
       {
-        "id": "aurora-04-themes",
+        "id": "ql-05-quickadd",
         "layout": "two-devices",
         "label": {
-          "en": "THEMES"
+          "en": "Add manually"
         },
         "headline": {
-          "en": "Dark or light.\nYour call."
+          "en": "Add an expense\nin seconds."
         },
-        "screenshot": "/screenshots/android/phone/en/home-dark.png",
+        "screenshot": "/screenshots/android/phone/en/quick-add-light.png",
         "screenshotSecondary": "/screenshots/android/phone/en/home-light.png",
         "transforms": {
+          "caption": {
+            "x": 90,
+            "y": 120,
+            "width": 900,
+            "height": 300
+          },
           "deviceSecondary": {
-            "x": 55,
-            "y": 720,
-            "width": 430,
-            "height": 956,
-            "rotation": 0,
+            "x": -10,
+            "y": 968,
+            "width": 440,
+            "height": 896,
             "zIndex": 2
           },
           "device": {
-            "x": 530,
-            "y": 830,
-            "width": 470,
-            "height": 1044,
-            "rotation": 0,
+            "x": 470,
+            "y": 520,
+            "width": 660,
+            "height": 1345,
             "zIndex": 3
           }
         }
       },
       {
-        "id": "aurora-05-plan",
-        "layout": "device-bottom",
+        "id": "ql-06-subscriptions",
+        "layout": "device-top",
+        "inverted": true,
         "label": {
-          "en": "PLAN"
+          "en": "Subscriptions"
         },
         "headline": {
-          "en": "Budgets, bills,\nall in one place."
+          "en": "Every recurring\npayment,\ncounted."
         },
-        "screenshot": "/screenshots/android/phone/en/plan.png",
+        "screenshot": "/screenshots/android/phone/en/subscriptions-dark.png",
         "transforms": {
+          "caption": {
+            "x": 94.5123384253819,
+            "y": 1433.8425381903653,
+            "width": 900,
+            "height": 440,
+            "rotation": 0,
+            "zIndex": 4
+          },
           "device": {
-            "x": 250,
-            "y": 581,
-            "width": 580,
-            "height": 1289,
+            "x": 210,
+            "y": 49.941245593419495,
+            "width": 660,
+            "height": 1345,
             "rotation": 0,
             "zIndex": 3
           }
         }
       },
       {
-        "id": "aurora-06-quickadd",
-        "layout": "hero",
-        "label": {
-          "en": "QUICK ADD"
-        },
-        "headline": {
-          "en": "Log a spend\nin seconds."
-        },
-        "screenshot": "/screenshots/android/phone/en/quick-add.png",
-        "transforms": {
-          "device": {
-            "x": 190,
-            "y": 530,
-            "width": 700,
-            "height": 1556,
-            "rotation": 0,
-            "zIndex": 3
-          }
-        }
-      },
-      {
-        "id": "aurora-07-open",
+        "id": "ql-07-trust",
         "layout": "no-device",
+        "inverted": true,
         "label": {
-          "en": "OPEN SOURCE · AGPL-3.0"
+          "en": "Open source · No subscriptions"
         },
         "headline": {
-          "en": "No ads.\nNo accounts.\nNo tracking."
+          "en": "Offline.\nEncrypted.\nNo ads."
         },
-        "screenshot": ""
+        "screenshot": "",
+        "transforms": {
+          "caption": {
+            "x": 90,
+            "y": 500,
+            "width": 900,
+            "height": 620
+          }
+        },
+        "textElements": [
+          {
+            "id": "trust-1",
+            "text": {
+              "en": "—  Bank SMS is read on-device."
+            },
+            "transform": {
+              "x": 90,
+              "y": 1120,
+              "width": 900,
+              "height": 70
+            },
+            "fontSize": 34,
+            "color": "#9C978A",
+            "align": "center"
+          },
+          {
+            "id": "trust-2",
+            "text": {
+              "en": "—  Nothing is uploaded unless you start a backup."
+            },
+            "transform": {
+              "x": 90,
+              "y": 1222,
+              "width": 900,
+              "height": 70
+            },
+            "fontSize": 34,
+            "color": "#9C978A",
+            "align": "center"
+          },
+          {
+            "id": "trust-3",
+            "text": {
+              "en": "—  No ads. No trackers. No accounts."
+            },
+            "transform": {
+              "x": 90,
+              "y": 1324,
+              "width": 900,
+              "height": 70
+            },
+            "fontSize": 34,
+            "color": "#9C978A",
+            "align": "center"
+          },
+          {
+            "id": "trust-4",
+            "text": {
+              "en": "—  Database encrypted at rest"
+            },
+            "transform": {
+              "x": 90,
+              "y": 1426,
+              "width": 900,
+              "height": 70
+            },
+            "fontSize": 34,
+            "color": "#9C978A",
+            "align": "center"
+          },
+          {
+            "id": "trust-5",
+            "text": {
+              "en": "—  Free and open source, AGPL-3.0"
+            },
+            "transform": {
+              "x": 90,
+              "y": 1528,
+              "width": 900,
+              "height": 70
+            },
+            "fontSize": 34,
+            "color": "#9C978A",
+            "align": "center"
+          }
+        ]
       }
     ],
     "ipad": [],
-    "android-7": [],
-    "android-10": [],
-    "feature-graphic": [
-      {
-        "id": "aurora-fg",
-        "layout": "feature-graphic",
-        "label": {},
-        "headline": {
-          "en": "Smart expense tracking.\nOn your device. Ad-free."
-        },
-        "screenshot": ""
-      }
-    ]
-  },
-  "crossScreenMockupsByDevice": {
-    "iphone": [],
-    "ipad": [],
-    "android": [],
     "android-7": [],
     "android-10": [],
     "feature-graphic": []

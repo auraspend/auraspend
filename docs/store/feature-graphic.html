@@ -1,92 +1,123 @@
-<!DOCTYPE html>
+<!doctype html>
 <!--
-  AuraSpend Play Store feature graphic source (1024x500).
-  Render with headless Chrome from the repo root:
+  Play Store feature graphic (1024x500).
 
-    "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" \
-      --headless=new --disable-gpu --hide-scrollbars --allow-file-access-from-files \
-      --force-device-scale-factor=1 --window-size=1024,500 \
-      --screenshot=docs/store/feature-1024x500.png \
-      "file://$PWD/docs/store/feature-graphic.html"
+  Same source of truth as the phone deck: the Quiet Ledger tokens from
+  docs/design/interface-concept/index.html, the app's own Plus Jakarta Sans, the
+  skill template's iPhone mockup (public/mockup.png), and a real capture.
 
-  Paths are relative to this file, so it keeps working after moves.
-  If the screenshot it embeds changes, point the .phonewrap img at the new file.
+  The phone reuses the deck's frame recipe: the capture is nudged down by
+  (46 - 24)px of its height so the Android status bar lands behind the drawn
+  46px bar and the Android gesture pill is cropped off the bottom; the island is
+  the concept's 104x26 inside a 390x844 screen. Keep these numbers in step with
+  src/components/editor/device-frames.tsx.
 -->
-<html>
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <style>
-  @font-face {
-    font-family: 'PlusJakarta';
-    src: url('../../app/src/main/res/font/plus_jakarta_sans.ttf');
-    font-weight: 100 900;
+  @font-face{
+    font-family:"Plus Jakarta Sans";
+    src:url("./src/app/fonts/plus-jakarta-sans.ttf") format("truetype");
+    font-weight:200 800; font-display:block;
   }
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  html, body { width: 1024px; height: 500px; overflow: hidden; }
-  body {
-    font-family: 'PlusJakarta', -apple-system, 'Helvetica Neue', sans-serif;
-    background: #0E0A16;
-    position: relative;
+  :root{
+    --stage:#EBE7DE; --ink:#17160F; --ink-2:#3B382E;
+    --muted:#6E6A5C; --violet:#4A2E7A;
+    --screen-paper:#0F0F0D;          /* the dark stage's paper, matching the capture */
+    --dev:378px;                     /* the phone's width; everything else scales off it */
+    --screen-w:calc(var(--dev) * 0.8982);
+    --screen-h:calc(var(--dev) * 2.0372 * 0.9558);
   }
-  .glow1 {
-    position: absolute; left: -140px; top: -160px; width: 620px; height: 620px;
-    background: radial-gradient(circle, rgba(139,92,246,0.55) 0%, rgba(139,92,246,0.18) 40%, rgba(139,92,246,0) 70%);
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    width:1024px;height:500px;overflow:hidden;position:relative;
+    background:var(--stage);color:var(--ink);
+    font-family:"Plus Jakarta Sans",-apple-system,system-ui,sans-serif;
+    -webkit-font-smoothing:antialiased;
   }
-  .glow2 {
-    position: absolute; right: -100px; bottom: -220px; width: 640px; height: 640px;
-    background: radial-gradient(circle, rgba(45,212,191,0.40) 0%, rgba(45,212,191,0.12) 42%, rgba(45,212,191,0) 70%);
+  .wrap{position:absolute;inset:0;display:flex;align-items:center}
+  .left{padding-left:72px;width:560px;z-index:2}
+  .brand{display:flex;align-items:center;gap:16px;margin-bottom:26px}
+  .mark{
+    width:76px;height:76px;border-radius:24px;flex:none;overflow:hidden;
+    box-shadow:0 8px 20px -8px rgba(35,30,20,.45);
   }
-  .glow3 {
-    position: absolute; left: 300px; bottom: -260px; width: 560px; height: 560px;
-    background: radial-gradient(circle, rgba(94,58,139,0.55) 0%, rgba(94,58,139,0.15) 45%, rgba(94,58,139,0) 72%);
+  .mark img{width:100%;height:100%;display:block}
+  .brand h1{font-size:44px;font-weight:800;letter-spacing:-.025em;line-height:1}
+  .brand p{font-size:16px;color:var(--muted);margin-top:8px;letter-spacing:-.005em}
+  h2{font-size:54px;font-weight:800;letter-spacing:-.032em;line-height:1.04;max-width:470px}
+  h2 em{font-style:normal;color:var(--violet)}
+  .rule{width:72px;height:4px;border-radius:99px;background:var(--ink);margin-top:30px}
+  .tags{display:flex;gap:10px;margin-top:28px}
+  .tag{
+    font-size:15px;font-weight:600;color:var(--ink-2);
+    padding:10px 16px;border-radius:99px;
+    background:color-mix(in srgb,var(--ink) 6%,transparent);
   }
-  .content { position: absolute; inset: 0; display: flex; align-items: center; }
-  .left { padding-left: 62px; width: 620px; }
-  .brandrow { display: flex; align-items: center; gap: 18px; margin-bottom: 18px; }
-  .appicon {
-    width: 76px; height: 76px; border-radius: 18px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.09);
+
+  /* The skill template's iPhone mockup, anchored by its top edge and running
+     off the bottom of the 500px banner. */
+  .device{position:absolute;right:-96px;top:52px;width:var(--dev);z-index:1}
+  .device > img{display:block;width:100%}
+  .screen{
+    position:absolute;left:5.09%;top:2.21%;width:89.82%;height:95.58%;
+    border-radius:13.7% / 6.3%;overflow:hidden;background:var(--screen-paper);
   }
-  .wordmark { font-size: 58px; font-weight: 800; letter-spacing: -1.5px; color: #FFFFFF; line-height: 1; }
-  .wordmark span { color: #C4A6E6; }
-  .tagline { font-size: 25px; font-weight: 600; color: #D9CCF0; letter-spacing: 0.1px; margin-bottom: 26px; }
-  .chips { display: flex; gap: 12px; }
-  .chip {
-    font-size: 15px; font-weight: 600; color: #E9DFF8;
-    border: 1px solid rgba(196,166,230,0.45); border-radius: 999px;
-    padding: 8px 16px; background: rgba(139,92,246,0.10);
-  }
-  .phonewrap {
-    position: absolute; right: 78px; top: 26px; width: 252px; height: 474px;
-    border-radius: 40px; background: #05030A;
-    border: 2px solid rgba(255,255,255,0.16);
-    box-shadow: 0 30px 80px rgba(0,0,0,0.65), 0 0 60px rgba(139,92,246,0.35);
-    overflow: hidden;
-  }
-  .phonewrap img {
-    position: absolute; top: -2px; left: -2px; width: 256px; display: block;
+  /* 46 - 24 = 22px of the 844pt screen: hides the Android status bar behind the
+     drawn one and crops the gesture pill off the bottom. */
+  .screen .shot{position:absolute;left:0;top:2.607%;width:100%;display:block}
+  .bar{position:absolute;top:0;left:0;width:100%;height:5.451%;z-index:2}
+  .bar svg{display:block;width:100%;height:auto}
+  .island{
+    position:absolute;top:1.303%;left:50%;transform:translateX(-50%);
+    width:26.667%;aspect-ratio:104 / 26;border-radius:999px;background:#000;z-index:3;
   }
 </style>
 </head>
 <body>
-  <div class="glow1"></div>
-  <div class="glow2"></div>
-  <div class="glow3"></div>
-  <div class="content">
+  <div class="wrap">
     <div class="left">
-      <div class="brandrow">
-        <img class="appicon" src="../../app/src/main/res/drawable/app_icon.png">
-        <div class="wordmark">Aura<span>Spend</span></div>
+      <div class="brand">
+        <div class="mark"><img src="./public/app-icon.png" alt=""></div>
+        <div>
+          <h1>AuraSpend</h1>
+          <p>SMS expense tracker</p>
+        </div>
       </div>
-      <div class="tagline">Smart expense tracking.<br>On your device. Ad-free.</div>
-      <div class="chips">
-        <div class="chip">Bank SMS → transactions</div>
-        <div class="chip">Budgets &amp; insights</div>
-        <div class="chip">Open source</div>
+      <h2>Your bank SMS<br>becomes a <em>ledger</em>.</h2>
+      <div class="rule"></div>
+      <div class="tags">
+        <div class="tag">Offline</div>
+        <div class="tag">No ads</div>
+        <div class="tag">Open source</div>
       </div>
     </div>
-    <div class="phonewrap">
-      <img src="raw/home-dark.png">
+  </div>
+
+  <div class="device">
+    <img src="./public/mockup.png" alt="">
+    <div class="screen">
+      <img class="shot" src="./public/screenshots/android/phone/en/home-dark.png" alt="">
+      <div class="bar">
+        <!-- Exactly the concept's .statusbar: 46px, padding 0 30px, 13px/700 time. -->
+        <svg viewBox="0 0 390 46" fill="none" style="background:var(--screen-paper)">
+          <text x="30" y="27.7" font-family="Plus Jakarta Sans" font-size="13" font-weight="700"
+                letter-spacing="0.13" fill="#F4F1E8">9:41</text>
+          <g transform="translate(293, 17.5)" fill="#F4F1E8">
+            <path d="M0 7h3v4H0zM4.5 5h3v6h-3zM9 2.6h3V11H9zM13.5 0h3v11h-3z"/>
+            <g transform="translate(22,0)">
+              <path d="M8 10.4 5.6 8a3.4 3.4 0 0 1 4.8 0zM8 6.2a6.6 6.6 0 0 0-4.6 1.9L1.9 6.6a9.4 9.4 0 0 1 12.2 0l-1.5 1.5A6.6 6.6 0 0 0 8 6.2z"/>
+            </g>
+            <g transform="translate(43,0)">
+              <rect x=".6" y=".6" width="19" height="9.8" rx="3" stroke="#F4F1E8" stroke-opacity=".45"/>
+              <rect x="2.4" y="2.4" width="14.4" height="6.2" rx="1.7"/>
+              <path d="M21.6 4v3" stroke="#F4F1E8" stroke-opacity=".45" stroke-width="1.4" stroke-linecap="round"/>
+            </g>
+          </g>
+        </svg>
+      </div>
+      <div class="island"></div>
     </div>
   </div>
 </body>
