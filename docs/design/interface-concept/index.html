@@ -1,0 +1,1442 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AuraSpend — Interface concept</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════════════════════════════
+   TOKENS
+   ═══════════════════════════════════════════════════════════════════ */
+:root{
+  --stage:#EBE7DE;
+  --paper:#F7F5F0;
+  --surface:#FFFFFF;
+  --ink:#17160F;
+  --ink-2:#3B382E;
+  --muted:#6E6A5C;
+  --faint:#918C7D;
+  --line:#E3DED1;
+  --line-2:#EFEBE0;
+  --track:#E8E3D6;
+  --violet:#4A2E7A;
+  --violet-soft:#EDE6F8;
+  --green:#1C6B4A;
+  --green-soft:#E2EFE7;
+  --brick:#A8402F;
+  --brick-soft:#F7E3DE;
+  --shadow:0 30px 60px -24px rgba(35,30,20,.28);
+  --bezel1:#33322D;
+  --bezel2:#141412;
+}
+[data-theme="dark"]{
+  --stage:#080807;
+  --paper:#0F0F0D;
+  --surface:#181815;
+  --ink:#F4F1E8;
+  --ink-2:#D6D2C6;
+  --muted:#9C978A;
+  --faint:#78746A;
+  --line:#2B2A25;
+  --line-2:#22211D;
+  --track:#26251F;
+  --violet:#C9B3F2;
+  --violet-soft:#241C33;
+  --green:#7BCBA2;
+  --green-soft:#15251D;
+  --brick:#E89A8A;
+  --brick-soft:#2E1C18;
+  --shadow:0 30px 70px -20px rgba(0,0,0,.75);
+  --bezel1:#3A3934;
+  --bezel2:#0A0A09;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--stage);
+  color:var(--ink);
+  font-family:"Plus Jakarta Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;
+  -webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility;
+  transition:background .25s ease,color .25s ease;
+}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
+h1,h2,h3,p{margin:0}
+
+/* ═══════════════════════════════════════════════════════════════════
+   PAGE CHROME
+   ═══════════════════════════════════════════════════════════════════ */
+.topbar{
+  position:sticky;top:0;z-index:40;
+  display:flex;align-items:center;gap:16px;
+  padding:14px 28px;
+  border-bottom:1px solid var(--line);
+  background:color-mix(in srgb,var(--stage) 88%,transparent);
+  backdrop-filter:blur(14px);
+}
+.brand{display:flex;align-items:center;gap:12px;margin-right:auto}
+.mark{
+  width:34px;height:34px;border-radius:11px;flex:none;
+  background:var(--ink);color:var(--paper);
+  display:grid;place-items:center;
+  font-weight:800;font-size:15px;letter-spacing:-.02em;
+}
+.brand h1{font-size:15px;font-weight:700;letter-spacing:-.01em}
+.brand p{font-size:11.5px;color:var(--muted);margin-top:1px}
+.seg{
+  display:flex;gap:2px;padding:3px;border-radius:11px;
+  background:color-mix(in srgb,var(--ink) 6%,transparent);
+}
+.seg button{
+  padding:7px 13px;border-radius:8px;font-size:12px;font-weight:600;
+  color:var(--muted);transition:.15s;
+}
+.seg button[aria-selected="true"]{
+  background:var(--surface);color:var(--ink);
+  box-shadow:0 1px 2px rgba(0,0,0,.08);
+}
+
+.stage{display:flex;gap:48px;align-items:flex-start;padding:44px 28px 80px;max-width:1500px;margin:0 auto}
+.stage-main{display:flex;flex-direction:column;align-items:center;gap:18px;flex:none}
+.device{
+  padding:11px;border-radius:60px;
+  background:linear-gradient(155deg,var(--bezel1),var(--bezel2));
+  box-shadow:var(--shadow),0 0 0 1px rgba(255,255,255,.06) inset;
+}
+.phone{
+  position:relative;width:390px;height:844px;border-radius:50px;
+  background:var(--paper);color:var(--ink);overflow:hidden;
+  transition:background .25s ease;
+}
+.island{
+  position:absolute;top:11px;left:50%;transform:translateX(-50%);
+  width:104px;height:26px;border-radius:14px;background:#000;z-index:30;
+}
+.statusbar{
+  height:46px;display:flex;align-items:center;justify-content:space-between;
+  padding:0 30px;font-size:13px;font-weight:700;letter-spacing:.01em;
+  position:relative;z-index:20;
+}
+.sb-right{display:flex;align-items:center;gap:5px}
+.sb-right svg{display:block}
+
+.scr{position:absolute;inset:0;display:flex;flex-direction:column}
+.scr-body{
+  flex:1;overflow-y:auto;overflow-x:hidden;
+  padding:0 20px 108px;
+  scrollbar-width:none;overscroll-behavior:contain;
+}
+.scr-body::-webkit-scrollbar{display:none}
+.fade{animation:fade .26s cubic-bezier(.2,.7,.3,1)}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+/* ═══════════════════════════════════════════════════════════════════
+   TYPOGRAPHY PRIMITIVES
+   ═══════════════════════════════════════════════════════════════════ */
+.eyebrow{
+  font-size:10.5px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--faint);
+}
+.h1{font-size:23px;font-weight:700;letter-spacing:-.025em;line-height:1.15}
+.h2{font-size:13px;font-weight:700;letter-spacing:-.005em}
+.money{
+  font-variant-numeric:tabular-nums;
+  letter-spacing:-.03em;
+  font-weight:700;
+}
+.money-hero{font-size:45px;line-height:1.02;letter-spacing:-.038em}
+.money-md{font-size:17px;font-weight:700;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.money-sm{font-size:15px;font-weight:600;letter-spacing:-.015em;font-variant-numeric:tabular-nums}
+.muted{color:var(--muted)}
+.faint{color:var(--faint)}
+
+/* ═══════════════════════════════════════════════════════════════════
+   HEADER / SECTIONS
+   ═══════════════════════════════════════════════════════════════════ */
+.head{
+  display:flex;align-items:flex-start;gap:12px;
+  padding:6px 0 22px;
+}
+.head-l{flex:1;min-width:0}
+.head .eyebrow{margin-bottom:5px}
+.backbtn{
+  width:34px;height:34px;border-radius:50%;flex:none;margin-top:2px;
+  display:grid;place-items:center;
+  background:color-mix(in srgb,var(--ink) 6%,transparent);color:var(--ink);
+}
+.avatar{
+  width:38px;height:38px;border-radius:50%;flex:none;
+  background:var(--violet-soft);color:var(--violet);
+  display:grid;place-items:center;font-weight:700;font-size:13px;
+  border:1px solid color-mix(in srgb,var(--violet) 14%,transparent);
+}
+.block{margin-top:26px}
+.block-head{
+  display:flex;align-items:baseline;justify-content:space-between;
+  margin-bottom:10px;
+}
+.link{
+  font-size:12px;font-weight:600;color:var(--violet);
+  padding:4px 0 4px 12px;
+}
+.card{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:20px;
+  overflow:hidden;
+}
+.card.pad{padding:16px}
+
+/* ═══════════════════════════════════════════════════════════════════
+   HOME — balance + flow
+   ═══════════════════════════════════════════════════════════════════ */
+.balance{padding:2px 0 0}
+.balance .eyebrow{margin-bottom:8px}
+.flow{margin-top:18px}
+.flow-bar{
+  height:7px;border-radius:99px;background:var(--track);overflow:hidden;
+}
+.flow-bar i{
+  display:block;height:100%;border-radius:99px;
+  background:var(--ink);
+  animation:grow .7s cubic-bezier(.2,.8,.2,1) both;
+}
+@keyframes grow{from{width:0 !important}}
+.flow-cap{
+  display:flex;justify-content:space-between;margin-top:9px;
+  font-size:11.5px;font-weight:600;color:var(--muted);
+}
+.flow-cap span{display:flex;align-items:center;gap:6px}
+.dot{width:6px;height:6px;border-radius:50%;flex:none;display:inline-block}
+.dot.ink{background:var(--ink)}
+.dot.green{background:var(--green)}
+
+/* alert rail */
+.rail{
+  display:flex;gap:10px;margin:22px -20px 0;padding:2px 20px 4px;
+  overflow-x:auto;scrollbar-width:none;
+  scroll-snap-type:x mandatory;
+  -webkit-mask-image:linear-gradient(to right,#000 0,#000 84%,transparent 99%);
+  mask-image:linear-gradient(to right,#000 0,#000 84%,transparent 99%);
+}
+.rail::-webkit-scrollbar{display:none}
+.alert{
+  flex:none;width:258px;scroll-snap-align:start;
+  display:flex;align-items:center;gap:11px;text-align:left;
+  padding:13px 14px;border-radius:16px;
+  background:var(--surface);border:1px solid var(--line);
+  transition:.15s;
+}
+.alert:active{transform:scale(.985)}
+.alert-ico{
+  width:30px;height:30px;border-radius:50%;flex:none;
+  display:grid;place-items:center;font-size:12px;font-weight:800;
+  background:color-mix(in srgb,var(--ink) 7%,transparent);color:var(--ink-2);
+}
+.alert-ico.warn{background:var(--brick-soft);color:var(--brick)}
+.alert-txt{display:flex;flex-direction:column;gap:2px;min-width:0}
+.alert-txt b{font-size:12.5px;font-weight:700;letter-spacing:-.01em}
+.alert-txt small{font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* budget rows */
+.brow{padding:11px 0}
+.brow + .brow{border-top:1px solid var(--line-2)}
+.brow-line{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
+.brow-name{font-size:13px;font-weight:600;letter-spacing:-.01em}
+.brow-amt{font-size:13px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.bar{height:5px;border-radius:99px;background:var(--track);margin:8px 0 6px;overflow:hidden}
+.bar i{display:block;height:100%;border-radius:99px;background:var(--ink);transition:width .5s}
+.bar i.over{background:var(--brick)}
+.brow-sub{display:flex;justify-content:space-between;font-size:11px;font-weight:500;color:var(--muted)}
+.over-txt{color:var(--brick);font-weight:600}
+
+/* ═══════════════════════════════════════════════════════════════════
+   TRANSACTION ROWS
+   ═══════════════════════════════════════════════════════════════════ */
+.day{
+  font-size:10.5px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;
+  color:var(--faint);padding:16px 0 4px;
+  background:var(--paper);
+}
+.day.sticky{position:sticky;top:0;z-index:5;padding-top:10px}
+.txn{
+  display:flex;align-items:center;gap:12px;
+  padding:11px 0;text-align:left;width:100%;
+}
+.txn + .txn{border-top:1px solid var(--line-2)}
+.txn-av{
+  width:36px;height:36px;border-radius:50%;flex:none;
+  display:grid;place-items:center;
+}
+.txn-av svg{width:16px;height:16px}
+.txn-main{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}
+.txn-t{
+  font-size:13.5px;font-weight:600;letter-spacing:-.012em;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.txn-s{font-size:11.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.txn-amt{
+  font-size:13.5px;font-weight:700;letter-spacing:-.02em;
+  font-variant-numeric:tabular-nums;flex:none;
+}
+.txn-amt.in{color:var(--green)}
+
+/* ═══════════════════════════════════════════════════════════════════
+   SEARCH + CHIPS
+   ═══════════════════════════════════════════════════════════════════ */
+.search{
+  display:flex;align-items:center;gap:9px;
+  height:42px;padding:0 14px;border-radius:99px;
+  background:color-mix(in srgb,var(--ink) 5%,transparent);
+  color:var(--faint);font-size:13px;font-weight:500;
+}
+.chips{
+  display:flex;gap:7px;margin:14px -20px 0;padding:0 20px 2px;
+  overflow-x:auto;scrollbar-width:none;
+}
+.chips::-webkit-scrollbar{display:none}
+.chip{
+  flex:none;display:flex;align-items:center;gap:6px;
+  height:32px;padding:0 13px;border-radius:99px;
+  border:1px solid var(--line);background:var(--surface);
+  font-size:12px;font-weight:600;color:var(--ink-2);
+  transition:.14s;white-space:nowrap;
+}
+.chip[aria-pressed="true"]{
+  background:var(--ink);border-color:var(--ink);color:var(--paper);
+}
+.chip .dot{width:7px;height:7px}
+.chip[aria-pressed="true"] .dot{box-shadow:0 0 0 2px color-mix(in srgb,var(--paper) 25%,transparent)}
+.chip-div{flex:none;width:1px;height:18px;background:var(--line);margin:7px 2px}
+
+/* ═══════════════════════════════════════════════════════════════════
+   SEGMENTED
+   ═══════════════════════════════════════════════════════════════════ */
+.segsm{
+  display:flex;gap:3px;padding:3px;border-radius:12px;
+  background:color-mix(in srgb,var(--ink) 6%,transparent);
+  margin-top:2px;
+}
+.segsm button{
+  flex:1;height:32px;border-radius:9px;font-size:12px;font-weight:600;
+  color:var(--muted);transition:.16s;
+}
+.segsm button[aria-selected="true"]{
+  background:var(--surface);color:var(--ink);
+  box-shadow:0 1px 3px rgba(0,0,0,.1);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   PLAN
+   ═══════════════════════════════════════════════════════════════════ */
+.plan-hero{padding:2px 0 4px}
+.plan-hero .money-hero{font-size:38px;margin-top:6px}
+.plan-meta{display:flex;align-items:baseline;gap:8px;margin-top:10px;font-size:12px;color:var(--muted)}
+.plan-meta b{color:var(--ink);font-weight:700}
+.plan-bar{height:8px;margin-top:14px}
+
+.goals{display:flex;gap:10px;margin:0 -20px;padding:0 20px 2px;overflow-x:auto;scrollbar-width:none}
+.goals::-webkit-scrollbar{display:none}
+.goal{
+  flex:none;width:196px;padding:14px;border-radius:18px;
+  background:var(--surface);border:1px solid var(--line);text-align:left;
+}
+.goal-t{font-size:12.5px;font-weight:700;letter-spacing:-.01em}
+.goal-a{font-size:15px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:-.02em;margin-top:9px}
+.goal-a small{font-size:11px;font-weight:500;color:var(--muted);letter-spacing:0}
+.goal .bar{margin:9px 0 0;height:4px}
+
+.rowlink{
+  display:flex;align-items:center;gap:12px;width:100%;
+  padding:15px 0;text-align:left;
+}
+.rowlink + .rowlink{border-top:1px solid var(--line-2)}
+.rowlink-ic{width:32px;height:32px;border-radius:10px;display:grid;place-items:center;background:color-mix(in srgb,var(--ink) 6%,transparent);color:var(--ink-2);flex:none}
+.rowlink-m{flex:1;min-width:0}
+.rowlink-t{font-size:13px;font-weight:600;letter-spacing:-.01em}
+.rowlink-s{font-size:11.5px;color:var(--muted);margin-top:1px}
+
+/* ═══════════════════════════════════════════════════════════════════
+   INSIGHTS
+   ═══════════════════════════════════════════════════════════════════ */
+.rank-row{padding:9px 0}
+.rank-line{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:6px}
+.rank-name{font-size:12.5px;font-weight:600;letter-spacing:-.01em}
+.rank-val{font-size:12.5px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.rank-pct{font-size:11px;color:var(--faint);font-weight:600;margin-left:auto;padding-left:10px}
+.rank-bar{height:6px;border-radius:99px;background:var(--track);overflow:hidden}
+.rank-bar i{display:block;height:100%;border-radius:99px}
+
+.spark{display:flex;align-items:flex-end;gap:3px;height:86px;margin-top:6px}
+.spark i{flex:1;border-radius:3px 3px 1px 1px;background:var(--track);min-height:2px}
+.spark i.on{background:var(--ink)}
+.spark-x{display:flex;justify-content:space-between;font-size:10px;color:var(--faint);margin-top:7px;font-weight:600}
+
+.delta{
+  display:inline-flex;align-items:center;gap:5px;
+  padding:5px 9px;border-radius:8px;font-size:11px;font-weight:700;
+  background:var(--brick-soft);color:var(--brick);
+}
+.delta.good{background:var(--green-soft);color:var(--green)}
+
+/* ═══════════════════════════════════════════════════════════════════
+   SETTINGS
+   ═══════════════════════════════════════════════════════════════════ */
+.group{margin-top:22px}
+.group-t{
+  font-size:10.5px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;
+  color:var(--faint);padding:0 2px 8px;
+}
+.group .card{padding:0 16px}
+.srow{display:flex;align-items:center;gap:12px;padding:14px 0;width:100%;text-align:left}
+.srow + .srow{border-top:1px solid var(--line-2)}
+.srow-t{flex:1;font-size:13px;font-weight:600;letter-spacing:-.01em}
+.srow-v{font-size:12px;color:var(--muted);font-weight:500}
+.srow svg{color:var(--faint)}
+
+/* ═══════════════════════════════════════════════════════════════════
+   BOTTOM NAV
+   ═══════════════════════════════════════════════════════════════════ */
+.nav{
+  position:absolute;left:0;right:0;bottom:0;z-index:20;
+  height:86px;padding:8px 10px 20px;
+  display:grid;grid-template-columns:repeat(5,1fr);
+  align-items:end;
+  background:color-mix(in srgb,var(--paper) 92%,transparent);
+  backdrop-filter:blur(16px);
+  border-top:1px solid var(--line);
+}
+.nav-item{
+  display:flex;flex-direction:column;align-items:center;gap:4px;
+  padding-bottom:6px;color:var(--faint);transition:color .16s;
+}
+.nav-item span{font-size:9.5px;font-weight:600;letter-spacing:.005em}
+.nav-item[aria-current="page"]{color:var(--ink)}
+.nav-item[aria-current="page"] svg{stroke-width:2.1}
+.fab{
+  justify-self:center;width:54px;height:54px;border-radius:19px;
+  background:var(--ink);color:var(--paper);
+  display:grid;place-items:center;
+  margin-bottom:8px;
+  box-shadow:0 10px 20px -8px rgba(0,0,0,.45);
+  transition:transform .16s cubic-bezier(.2,.8,.3,1);
+}
+.fab:active{transform:scale(.93)}
+
+/* ═══════════════════════════════════════════════════════════════════
+   QUICK ADD SHEET
+   ═══════════════════════════════════════════════════════════════════ */
+.scrim{
+  position:absolute;inset:0;z-index:50;
+  background:rgba(14,12,9,.46);
+  opacity:0;pointer-events:none;transition:opacity .24s;
+}
+.scrim.open{opacity:1;pointer-events:auto}
+.sheet{
+  position:absolute;left:0;right:0;bottom:0;z-index:51;
+  background:var(--surface);
+  border-radius:30px 30px 0 0;
+  padding:8px 20px 26px;
+  transform:translateY(102%);
+  transition:transform .32s cubic-bezier(.2,.85,.25,1);
+  max-height:92%;overflow-y:auto;
+}
+.sheet.open{transform:none}
+.grab{width:38px;height:4px;border-radius:99px;background:var(--line);margin:0 auto 14px}
+.sheet-type{display:flex;justify-content:center;margin-bottom:6px}
+.amt-display{
+  text-align:center;padding:14px 0 4px;
+  font-size:44px;font-weight:700;letter-spacing:-.04em;
+  font-variant-numeric:tabular-nums;
+}
+.amt-cap{text-align:center;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);font-weight:600}
+.keys{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:18px}
+.key{
+  height:50px;border-radius:14px;
+  background:color-mix(in srgb,var(--ink) 5%,transparent);
+  font-size:20px;font-weight:600;letter-spacing:-.01em;
+  display:grid;place-items:center;transition:.1s;
+}
+.key:active{transform:scale(.96);background:color-mix(in srgb,var(--ink) 11%,transparent)}
+.sheet-chips{display:flex;gap:7px;overflow-x:auto;margin:16px -20px 0;padding:0 20px 2px;scrollbar-width:none}
+.sheet-chips::-webkit-scrollbar{display:none}
+.sheet-meta{display:flex;gap:8px;margin-top:12px}
+.metabtn{
+  flex:1;height:40px;border-radius:12px;
+  border:1px solid var(--line);
+  display:flex;align-items:center;justify-content:center;gap:6px;
+  font-size:12px;font-weight:600;color:var(--muted);
+}
+.metabtn:active{background:color-mix(in srgb,var(--ink) 5%,transparent)}
+.btn-primary{
+  width:100%;height:52px;border-radius:16px;margin-top:16px;
+  background:var(--ink);color:var(--paper);
+  font-size:14px;font-weight:700;letter-spacing:-.01em;
+  transition:.15s;
+}
+.btn-primary:disabled{background:var(--track);color:var(--faint);opacity:1}
+.btn-primary:active:not(:disabled){transform:scale(.985)}
+.sheet-foot{display:flex;justify-content:center;gap:18px;margin-top:10px}
+.sheet-foot button{font-size:12px;font-weight:600;color:var(--violet);padding:6px}
+
+/* ═══════════════════════════════════════════════════════════════════
+   NOTES PANEL
+   ═══════════════════════════════════════════════════════════════════ */
+.notes{
+  flex:1;min-width:300px;max-width:430px;
+  position:sticky;top:92px;
+  max-height:calc(100vh - 130px);
+  overflow-y:auto;
+  padding-right:6px;
+}
+.notes-tabs{display:flex;gap:18px;border-bottom:1px solid var(--line);margin-bottom:20px}
+.notes-tabs button{
+  padding:0 0 11px;font-size:12px;font-weight:600;color:var(--muted);
+  border-bottom:2px solid transparent;margin-bottom:-1px;transition:.15s;
+}
+.notes-tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--ink)}
+.notes h2{font-size:24px;font-weight:700;letter-spacing:-.03em;margin-bottom:6px}
+.notes .lede{font-size:13px;line-height:1.6;color:var(--muted);margin-bottom:22px}
+.note{display:flex;gap:12px;margin-bottom:16px}
+.tag{
+  flex:none;width:58px;padding-top:2px;
+  font-size:9.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;
+}
+.tag.habit{color:var(--violet)}
+.tag.change{color:var(--brick)}
+.tag.rule{color:var(--green)}
+.note p{font-size:12.5px;line-height:1.62;color:var(--ink-2);margin:0}
+.note p b{font-weight:700;color:var(--ink)}
+.sys-h{font-size:11px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--faint);margin:26px 0 12px}
+.swatches{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.sw{border-radius:12px;overflow:hidden;border:1px solid var(--line)}
+.sw i{display:block;height:44px}
+.sw span{display:block;padding:6px 7px;font-size:9.5px;font-weight:600;color:var(--muted);background:var(--surface);letter-spacing:.01em}
+.typescale{display:flex;flex-direction:column;gap:10px}
+.ts{display:flex;align-items:baseline;gap:12px;border-bottom:1px dashed var(--line);padding-bottom:9px}
+.ts em{font-style:normal;font-size:10px;color:var(--faint);width:52px;flex:none;font-weight:600}
+.principle{display:flex;gap:10px;margin-bottom:12px;font-size:12.5px;line-height:1.55;color:var(--ink-2)}
+.principle b{color:var(--ink);font-weight:700}
+.pnum{font-size:10px;font-weight:800;color:var(--faint);width:16px;flex:none;padding-top:2px}
+
+/* ═══════════════════════════════════════════════════════════════════
+   BOARD
+   ═══════════════════════════════════════════════════════════════════ */
+.board{padding:40px 28px 90px;display:none}
+.board.on{display:block}
+.board-inner{max-width:1420px;margin:0 auto}
+.board-head{margin-bottom:34px;max-width:620px}
+.board-head h2{font-size:28px;font-weight:700;letter-spacing:-.03em;margin-bottom:8px}
+.board-head p{font-size:13px;line-height:1.65;color:var(--muted)}
+.grid{display:flex;flex-wrap:wrap;gap:34px 22px}
+.bcard{width:210px}
+.bmini{
+  width:210px;height:455px;border-radius:24px;overflow:hidden;position:relative;
+  background:var(--paper);border:1px solid var(--line);
+  box-shadow:0 16px 30px -18px rgba(0,0,0,.3);
+}
+.bmini .scrim{background:rgba(14,12,9,.16)}
+.bmini .scaler{
+  width:390px;height:844px;transform:scale(.538);transform-origin:top left;
+  position:absolute;top:0;left:0;
+}
+.blabel{margin-top:12px;display:flex;align-items:baseline;gap:8px}
+.blabel b{font-size:12.5px;font-weight:700;letter-spacing:-.01em}
+.blabel span{font-size:10px;color:var(--faint);font-weight:700;letter-spacing:.06em}
+.bcap{font-size:11px;color:var(--muted);margin-top:4px;line-height:1.45}
+
+@media (max-width:1120px){
+  .stage{flex-direction:column;align-items:center;gap:40px;padding:30px 20px 70px}
+  .notes{position:static;max-width:none;width:100%;max-height:none}
+}
+@media (max-width:460px){
+  .topbar{padding:12px 16px;gap:10px}
+  .brand p{display:none}
+  .device{padding:8px;border-radius:48px}
+  .phone{width:344px;height:744px;border-radius:42px}
+  .bmini{width:206px;height:445px}
+  .bmini .scrim{background:rgba(14,12,9,.16)}
+.bmini .scaler{transform:scale(.528)}
+  .bcard{width:206px}
+}
+
+/* ?embed=1 — the phone alone, at exactly 390×844, for pixel comparison against
+   the real build. Declared last so it beats the responsive overrides above. */
+body.embed .topbar,body.embed .notes,body.embed .board{display:none!important}
+body.embed .stage{display:block!important;padding:0!important;margin:0!important;max-width:none!important;gap:0!important}
+body.embed .stage-main{display:block!important;gap:0!important}
+body.embed .device{padding:0!important;border-radius:0!important;background:var(--paper)!important;box-shadow:none!important}
+body.embed .phone{width:390px!important;height:844px!important;border-radius:0!important;margin:0!important;box-shadow:none!important}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <div class="mark">A</div>
+    <div>
+      <h1>AuraSpend — interface concept</h1>
+      <p>Quiet Ledger · an evolution of the Aurora language</p>
+    </div>
+  </div>
+  <div class="seg" id="viewSeg">
+    <button data-view="proto" aria-selected="true">Prototype</button>
+    <button data-view="board" aria-selected="false">All screens</button>
+  </div>
+  <div class="seg" id="themeSeg">
+    <button data-theme-set="light" aria-selected="true">Light</button>
+    <button data-theme-set="dark" aria-selected="false">Dark</button>
+  </div>
+</header>
+
+<main class="stage" id="stage">
+  <div class="stage-main">
+    <div class="device">
+      <div class="phone" id="phone">
+        <div class="island"></div>
+        <div id="phoneMount" style="position:absolute;inset:0"></div>
+      </div>
+    </div>
+  </div>
+  <aside class="notes" id="notes"></aside>
+</main>
+
+<section class="board" id="board">
+  <div class="board-inner">
+    <div class="board-head">
+      <h2>Every screen, one system</h2>
+      <p>Six screens and one sheet, all built from the same nine parts: a header, a hairline card, a thin progress bar, a chip, a row, a section label, a tabular number, a colour dot, and a hairline. Nothing else is allowed.</p>
+    </div>
+    <div class="grid" id="boardGrid"></div>
+  </div>
+</section>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════════
+   DATA — mirrors the app's real categories, budgets and flows
+   ═══════════════════════════════════════════════════════════════════ */
+const CATS = {
+  food:      {name:'Food & Dining', c:'#D0574C', ic:'fork'},
+  grocery:   {name:'Grocery',       c:'#3E9159', ic:'cart'},
+  transport: {name:'Transport',     c:'#3D7EBF', ic:'car'},
+  shopping:  {name:'Shopping',      c:'#9B5CB8', ic:'bag'},
+  bills:     {name:'Bills',         c:'#BE7A2E', ic:'receipt'},
+  fun:       {name:'Entertainment', c:'#19909A', ic:'spark'},
+  subs:      {name:'Subscriptions', c:'#8A6250', ic:'receipt'},
+  invest:    {name:'Investments',   c:'#14907E', ic:'trend'},
+  salary:    {name:'Salary',        c:'#3E9159', ic:'arrowDown'},
+  rent:      {name:'Rent',          c:'#6B7684', ic:'home'},
+  transfer:  {name:'Transfer',      c:'#6B7684', ic:'swap'}
+};
+
+const TX = [
+  {g:'Today', items:[
+    {m:'Swiggy',   c:'food',      t:'8:42 pm', a:-486},
+    {m:'Blinkit',  c:'grocery',   t:'6:15 pm', a:-1248},
+    {m:'Uber',     c:'transport', t:'9:05 am', a:-212}
+  ]},
+  {g:'Yesterday', items:[
+    {m:'Salary — HDFC', c:'salary',  t:'10:02 am', a:95000},
+    {m:'Netflix',       c:'subs',    t:'7:30 pm',  a:-649},
+    {m:'Amazon',        c:'shopping',t:'1:12 pm',  a:-2340}
+  ]},
+  {g:'16 October', items:[
+    {m:'Zerodha',    c:'invest',    t:'11:40 am', a:-15000},
+    {m:'Indian Oil', c:'transport', t:'8:20 am',  a:-3000},
+    {m:'Airtel',     c:'bills',     t:'7:55 am',  a:-899}
+  ]}
+];
+
+const BUDGETS = [
+  {n:'Grocery',       s:7299, l:6000, c:'grocery'},
+  {n:'Food & Dining', s:4928, l:8000, c:'food'},
+  {n:'Shopping',      s:4120, l:3000, c:'shopping'},
+  {n:'Bills',         s:5120, l:9000, c:'bills'},
+  {n:'Transport',     s:2795, l:5000, c:'transport'},
+  {n:'Entertainment', s:3450, l:4000, c:'fun'}
+];
+
+// Sums to OUT_MONTH (70,712) exactly — the hero, the category list and the
+// flow bar on Home must never disagree.
+const SPEND = [
+  {n:'Rent',          v:28000, c:'#6B7684'},
+  {n:'Investments',   v:15000, c:'#14907E'},
+  {n:'Grocery',       v:7299,  c:'#3E9159'},
+  {n:'Bills',         v:5120,  c:'#BE7A2E'},
+  {n:'Food & Dining', v:4928,  c:'#D0574C'},
+  {n:'Shopping',      v:4120,  c:'#9B5CB8'},
+  {n:'Entertainment', v:3450,  c:'#19909A'},
+  {n:'Transport',     v:2795,  c:'#3D7EBF'}
+];
+
+const MERCHANTS = [
+  {n:'Zerodha', k:1, v:15000},
+  {n:'Blinkit', k:3, v:5386},
+  {n:'Swiggy',  k:6, v:4120}
+];
+
+const TOTAL_BALANCE = 142380;
+const IN_MONTH      = 118500;
+const OUT_MONTH     = 70712;
+
+const inr = n => '₹' + Math.round(n).toLocaleString('en-IN');
+const signed = n => (n < 0 ? '−' : '+') + inr(Math.abs(n));
+
+/* ═══════════════════════════════════════════════════════════════════
+   ICONS
+   ═══════════════════════════════════════════════════════════════════ */
+const P = {
+  home:'<path d="M4 10.6 12 3.6l8 7V20a1 1 0 0 1-1 1h-4.4v-6.3H9.4V21H5a1 1 0 0 1-1-1z"/>',
+  list:'<path d="M8.5 6h11.5M8.5 12h11.5M8.5 18h11.5"/><circle cx="4.4" cy="6" r="1.1"/><circle cx="4.4" cy="12" r="1.1"/><circle cx="4.4" cy="18" r="1.1"/>',
+  plan:'<circle cx="12" cy="12" r="8.4"/><circle cx="12" cy="12" r="4.1"/><circle cx="12" cy="12" r="1"/>',
+  chart:'<path d="M4 20V9M10 20V4M16 20v-6M22 20H2"/>',
+  plus:'<path d="M12 5.6v12.8M5.6 12h12.8"/>',
+  search:'<circle cx="11" cy="11" r="6.4"/><path d="m15.8 15.8 4.6 4.6"/>',
+  chev:'<path d="m9.5 5.5 6.5 6.5-6.5 6.5"/>',
+  chevL:'<path d="m14.5 5.5-6.5 6.5 6.5 6.5"/>',
+  fork:'<path d="M7 3.2v6.6a1.9 1.9 0 0 0 3.8 0V3.2M8.9 11.6V21M16.8 3.2c-1.6 1-2.4 2.6-2.4 4.6 0 1.6.8 2.7 2.4 3.2V21"/>',
+  cart:'<circle cx="9.6" cy="19.2" r="1.3"/><circle cx="17.8" cy="19.2" r="1.3"/><path d="M3 3.8h2.3l2.2 10.6h11.1L20.8 6.9H6.1"/>',
+  car:'<path d="M4.2 16.4h15.6M6.6 16.4v2.4M17.4 16.4v2.4"/><path d="M3.8 16.4v-3l1.7-4.5a2 2 0 0 1 1.9-1.3h8.8a2 2 0 0 1 1.9 1.3l1.7 4.5v3z"/><circle cx="8" cy="13.5" r=".9"/><circle cx="16" cy="13.5" r=".9"/>',
+  bag:'<path d="M5.2 8h13.6l-1 12.2H6.2z"/><path d="M9.1 8V6.6a2.9 2.9 0 0 1 5.8 0V8"/>',
+  receipt:'<path d="M6.2 3.2h11.6v17.6l-2.9-1.9-2.9 1.9-2.9-1.9-2.9 1.9z"/><path d="M9 8.2h6M9 12h6"/>',
+  spark:'<path d="M12 3.6 13.6 9l5.4 1.6-5.4 1.6L12 17.6l-1.6-5.4L5 10.6 10.4 9z"/>',
+  trend:'<path d="M4 16.6 9.4 11l3.4 3.4L20 7.6"/><path d="M15.2 7.6H20v4.8"/>',
+  swap:'<path d="M4 8.4h12.6l-2.8-2.8M20 15.6H7.4l2.8 2.8"/>',
+  arrowDown:'<path d="M12 4.8v14.4M6.2 13.4 12 19.2l5.8-5.8"/>',
+  user:'<circle cx="12" cy="8.4" r="3.5"/><path d="M4.9 20.2c.7-3.5 3.5-5.5 7.1-5.5s6.4 2 7.1 5.5"/>',
+  cal:'<rect x="3.6" y="5" width="16.8" height="15.4" rx="3"/><path d="M3.6 10h16.8M8 3.4v3.2M16 3.4v3.2"/>',
+  arrowUpRight:'<path d="M7 17 17 7M9.2 7H17v7.8"/>',
+  bell:'<path d="M6.6 10.2a5.4 5.4 0 0 1 10.8 0c0 3.9 1.4 5.4 1.4 5.4H5.2s1.4-1.5 1.4-5.4z"/><path d="M10 18.6a2 2 0 0 0 4 0"/>'
+};
+function ic(name, size, sw){
+  size = size || 20; sw = sw || 1.8;
+  return '<svg viewBox="0 0 24 24" width="'+size+'" height="'+size+'" fill="none" stroke="currentColor" '+
+         'stroke-width="'+sw+'" stroke-linecap="round" stroke-linejoin="round">'+(P[name]||'')+'</svg>';
+}
+function avatar(cat, size){
+  const c = CATS[cat] || CATS.transfer;
+  size = size || 36;
+  return '<span class="txn-av" style="width:'+size+'px;height:'+size+'px;background:'+c.c+'22;color:'+c.c+'">'+
+         ic(c.ic, size*0.46) + '</span>';
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   SHARED CHROME
+   ═══════════════════════════════════════════════════════════════════ */
+function statusbar(){
+  return '<div class="statusbar"><span>9:41</span><span class="sb-right">'+
+    '<svg width="17" height="11" viewBox="0 0 17 11" fill="currentColor"><rect x="0" y="7" width="3" height="4" rx="1"/><rect x="4.5" y="5" width="3" height="6" rx="1"/><rect x="9" y="2.6" width="3" height="8.4" rx="1"/><rect x="13.5" y="0" width="3" height="11" rx="1"/></svg>'+
+    '<svg width="16" height="11" viewBox="0 0 16 11" fill="currentColor"><path d="M8 10.4 5.6 8a3.4 3.4 0 0 1 4.8 0zM8 6.2a6.6 6.6 0 0 0-4.6 1.9L1.9 6.6a9.4 9.4 0 0 1 12.2 0l-1.5 1.5A6.6 6.6 0 0 0 8 6.2z"/></svg>'+
+    '<svg width="24" height="11" viewBox="0 0 24 11" fill="none"><rect x=".6" y=".6" width="19" height="9.8" rx="3" stroke="currentColor" stroke-opacity=".45"/><rect x="2.4" y="2.4" width="14.4" height="6.2" rx="1.7" fill="currentColor"/><path d="M21.6 4v3" stroke="currentColor" stroke-opacity=".45" stroke-width="1.4" stroke-linecap="round"/></svg>'+
+    '</span></div>';
+}
+
+const NAV = [
+  {k:'home',   l:'Home',     i:'home'},
+  {k:'activity',l:'Activity',i:'list'},
+  {k:'add',    l:'',         i:'plus'},
+  {k:'plan',   l:'Plan',     i:'plan'},
+  {k:'insights',l:'Insights',i:'chart'}
+];
+
+function nav(active){
+  return '<nav class="nav">' + NAV.map(function(n){
+    if (n.k === 'add') {
+      return '<button class="fab" data-open="sheet" aria-label="Add transaction">'+ic('plus',26,2.2)+'</button>';
+    }
+    const cur = (n.k === active) ? ' aria-current="page"' : '';
+    return '<button class="nav-item" data-nav="'+n.k+'"'+cur+'>'+ic(n.i,22)+'<span>'+n.l+'</span></button>';
+  }).join('') + '</nav>';
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   SCREEN: HOME
+   ═══════════════════════════════════════════════════════════════════ */
+function homeBody(){
+  const pct = Math.round(OUT_MONTH / IN_MONTH * 100);
+
+  const bLimit = BUDGETS.reduce(function(a,b){return a+b.l;},0);
+  const bSpent = BUDGETS.reduce(function(a,b){return a+b.s;},0);
+  const bPct   = Math.round(bSpent/bLimit*100);
+  const bOver  = BUDGETS.filter(function(b){return b.s>b.l;}).length;
+
+  const today = TX[0].items.map(txnRow).join('');
+
+  return '<div class="scr-body fade">'+
+
+    '<div class="head">'+
+      '<div class="head-l"><p class="eyebrow">Sunday, 18 October</p><h1 class="h1">Good evening</h1></div>'+
+      '<button class="avatar" data-nav="settings" aria-label="Settings">A</button>'+
+    '</div>'+
+
+    '<div class="balance">'+
+      '<p class="eyebrow">Total balance</p>'+
+      '<div class="money money-hero">'+inr(TOTAL_BALANCE)+'</div>'+
+      '<div class="flow">'+
+        '<div class="flow-bar"><i style="width:'+pct+'%"></i></div>'+
+        '<div class="flow-cap">'+
+          '<span><i class="dot ink"></i>'+inr(OUT_MONTH)+' out</span>'+
+          '<span><i class="dot green"></i>'+inr(IN_MONTH)+' in</span>'+
+        '</div>'+
+      '</div>'+
+    '</div>'+
+
+    '<div class="rail">'+
+      '<button class="alert" data-nav="plan">'+
+        '<span class="alert-ico warn">!</span>'+
+        '<span class="alert-txt"><b>Grocery is over</b><small>₹1,299 over your ₹6,000 budget</small></span>'+
+      '</button>'+
+      '<button class="alert" data-nav="activity">'+
+        '<span class="alert-ico">3</span>'+
+        '<span class="alert-txt"><b>3 messages to review</b><small>Not sure where they belong</small></span>'+
+      '</button>'+
+    '</div>'+
+
+    '<section class="block">'+
+      '<div class="block-head"><h2 class="h2">October budgets</h2>'+
+        '<button class="link" data-nav="plan">All budgets</button></div>'+
+      '<div class="card pad" style="padding:15px 16px">'+
+        '<div class="brow-line"><span class="brow-name">'+inr(bSpent)+' of '+inr(bLimit)+'</span>'+
+          '<span class="brow-amt">'+bPct+'%</span></div>'+
+        '<div class="bar" style="margin:10px 0 8px"><i style="width:'+Math.min(bPct,100)+'%"></i></div>'+
+        '<div class="brow-sub"><span class="'+(bOver?'over-txt':'')+'">'+bOver+' of '+BUDGETS.length+' budgets over</span>'+
+          '<span>'+inr(bLimit-bSpent)+' left</span></div>'+
+      '</div>'+
+    '</section>'+
+
+    '<section class="block">'+
+      '<div class="block-head"><h2 class="h2">Today</h2>'+
+        '<button class="link" data-nav="activity">All activity</button></div>'+
+      '<div>'+today+'</div>'+
+    '</section>'+
+
+  '</div>';
+}
+
+function txnRow(t){
+  const c = CATS[t.c] || CATS.transfer;
+  const amt = (t.a > 0 ? '+' : '−') + inr(Math.abs(t.a));
+  return '<button class="txn" data-nav="activity">'+
+    avatar(t.c)+
+    '<span class="txn-main"><span class="txn-t">'+t.m+'</span>'+
+      '<span class="txn-s">'+c.name+' · '+t.t+'</span></span>'+
+    '<span class="txn-amt'+(t.a>0?' in':'')+'">'+amt+'</span>'+
+  '</button>';
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   SCREEN: ACTIVITY
+   ═══════════════════════════════════════════════════════════════════ */
+function activityBody(){
+  const groups = TX.map(function(g, i){
+    return '<div class="day'+(i>0?' sticky':'')+'">'+g.g+'</div>'+
+           g.items.map(txnRow).join('');
+  }).join('');
+
+  const catChips = ['food','grocery','transport','shopping','bills'].map(function(k){
+    const c = CATS[k];
+    return '<button class="chip" aria-pressed="false" data-chip><i class="dot" style="background:'+c.c+'"></i>'+c.name+'</button>';
+  }).join('');
+
+  return '<div class="scr-body fade">'+
+    '<div class="head" style="padding-bottom:16px">'+
+      '<div class="head-l"><h1 class="h1">Activity</h1>'+
+        '<p class="eyebrow" style="margin-top:5px;letter-spacing:.02em;text-transform:none;font-size:11.5px">October · '+inr(OUT_MONTH)+' out</p></div>'+
+      '<button class="avatar" data-nav="settings" aria-label="Settings">A</button>'+
+    '</div>'+
+
+    '<div class="search">'+ic('search',17,1.9)+'<span>Search merchant, note or amount</span></div>'+
+
+    '<div class="chips">'+
+      '<button class="chip" aria-pressed="true" data-chip>All</button>'+
+      '<button class="chip" aria-pressed="false" data-chip>Out</button>'+
+      '<button class="chip" aria-pressed="false" data-chip>In</button>'+
+      '<i class="chip-div"></i>'+
+      catChips+
+    '</div>'+
+
+    '<div style="margin-top:4px">'+groups+'</div>'+
+  '</div>';
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   SCREEN: PLAN
+   ═══════════════════════════════════════════════════════════════════ */
+function planBody(){
+  const limit = BUDGETS.reduce(function(a,b){return a+b.l;},0);
+  const spent = BUDGETS.reduce(function(a,b){return a+b.s;},0);
+  const pct = Math.round(spent/limit*100);
+
+  const rows = BUDGETS.map(function(b){
+    const p = b.s/b.l, over = b.s > b.l;
+    return '<div class="brow">'+
+      '<div class="brow-line"><span class="brow-name">'+b.n+'</span>'+
+        '<span class="brow-amt" style="'+(over?'color:var(--brick)':'')+'">'+inr(b.s)+'</span></div>'+
+      '<div class="bar"><i class="'+(over?'over':'')+'" style="width:'+Math.min(p*100,100)+'%"></i></div>'+
+      '<div class="brow-sub"><span class="'+(over?'over-txt':'')+'">'+
+        (over?'Over by '+inr(b.s-b.l):Math.round(p*100)+'% used')+'</span>'+
+        '<span>'+(over?Math.round(p*100)+'%':'of '+inr(b.l))+'</span></div>'+
+    '</div>';
+  }).join('');
+
+  return '<div class="scr-body fade">'+
+    '<div class="head" style="padding-bottom:14px">'+
+      '<div class="head-l"><p class="eyebrow">October</p><h1 class="h1">Plan</h1></div>'+
+      '<button class="avatar" data-nav="settings" aria-label="Settings">A</button>'+
+    '</div>'+
+
+    '<div class="plan-hero">'+
+      '<p class="eyebrow">Spent against budgets</p>'+
+      '<div class="money money-hero">'+inr(spent)+'</div>'+
+      '<div class="plan-meta"><b>'+pct+'% used</b><span>·</span><span>of '+inr(limit)+' across 6 budgets</span></div>'+
+      '<div class="bar plan-bar"><i style="width:'+Math.min(pct,100)+'%"></i></div>'+
+      '<p style="font-size:11.5px;color:var(--brick);font-weight:600;margin-top:9px">Two categories are over — Grocery and Shopping</p>'+
+    '</div>'+
+
+    '<section class="block">'+
+      '<div class="block-head"><h2 class="h2">Budgets</h2>'+
+        '<button class="link" data-nav="plan">Edit</button></div>'+
+      '<div class="card pad">'+rows+'</div>'+
+    '</section>'+
+
+    '<section class="block">'+
+      '<div class="block-head"><h2 class="h2">Savings goals</h2>'+
+        '<button class="link">New</button></div>'+
+      '<div class="goals">'+
+        goal('Japan trip', 68000, 120000)+
+        goal('Emergency fund', 185000, 300000)+
+      '</div>'+
+    '</section>'+
+
+    '<section class="block">'+
+      '<div class="card pad" style="padding:14px 16px">'+
+        '<button class="rowlink" style="padding:0">'+
+          '<span class="rowlink-ic">'+ic('receipt',16)+'</span>'+
+          '<span class="rowlink-m"><span class="rowlink-t">Subscriptions</span>'+
+            '<span class="rowlink-s">7 active · next is Netflix on 24 Oct</span></span>'+
+          '<span class="money-sm">₹2,847<span class="faint" style="font-size:11px;font-weight:500">/mo</span></span>'+
+        '</button>'+
+      '</div>'+
+    '</section>'+
+  '</div>';
+}
+
+function goal(name, cur, total){
+  const p = Math.round(cur/total*100);
+  return '<div class="goal">'+
+    '<div class="goal-t">'+name+'</div>'+
+    '<div class="goal-a">'+inr(cur)+' <small>of '+inr(total)+'</small></div>'+
+    '<div class="bar"><i style="width:'+p+'%"></i></div>'+
+    '<div class="brow-sub" style="margin-top:7px"><span>'+p+'%</span><span>'+(total-cur>0?'₹'+Math.round((total-cur)/1000)+'k to go':'')+'</span></div>'+
+  '</div>';
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   SCREEN: INSIGHTS
+   ═══════════════════════════════════════════════════════════════════ */
+let period = 0;
+
+function insightsBody(){
+  const total = SPEND.reduce(function(a,b){return a+b.v;},0);
+  const max = SPEND[0].v;
+  const labels = ['This month','Last 30 days','All time'];
+
+  const shown = SPEND.slice(0,6);
+  const rest = SPEND.slice(6);
+  const restSum = rest.reduce(function(a,b){return a+b.v;},0);
+  const bars = shown.map(function(s){
+    return '<div class="rank-row">'+
+      '<div class="rank-line"><span class="rank-name">'+s.n+'</span>'+
+        '<span class="rank-pct">'+Math.round(s.v/total*100)+'%</span>'+
+        '<span class="rank-val">'+inr(s.v)+'</span></div>'+
+      '<div class="rank-bar"><i style="width:'+(s.v/max*100)+'%;background:'+s.c+'"></i></div>'+
+    '</div>';
+  }).join('') +
+  '<div class="brow-sub" style="padding-top:12px;border-top:1px solid var(--line-2);margin-top:4px">'+
+    '<span>'+rest.length+' more categories</span><span>'+inr(restSum)+'</span></div>';
+
+  const heights = [38,52,44,61,73,55,80,47,66,58,71,49,84,62,90,57,74,68];
+  const spark = heights.map(function(h,i){
+    return '<i class="'+(i===heights.length-1?'on':'')+'" style="height:'+h+'%"></i>';
+  }).join('');
+
+  const merchants = MERCHANTS.map(function(m,i){
+    return '<div class="txn">'+
+      '<span class="txn-av" style="background:color-mix(in srgb,var(--ink) 6%,transparent);color:var(--muted);font-size:11px;font-weight:800">'+(i+1)+'</span>'+
+      '<span class="txn-main"><span class="txn-t">'+m.n+'</span>'+
+        '<span class="txn-s">'+m.k+' transactions</span></span>'+
+      '<span class="txn-amt">'+inr(m.v)+'</span>'+
+    '</div>';
+  }).join('');
+
+  return '<div class="scr-body fade">'+
+    '<div class="head" style="padding-bottom:12px">'+
+      '<div class="head-l"><h1 class="h1">Insights</h1></div>'+
+      '<button class="avatar" data-nav="settings" aria-label="Settings">A</button>'+
+    '</div>'+
+
+    '<div class="segsm">'+labels.map(function(l,i){
+      return '<button aria-selected="'+(i===period)+'" data-period="'+i+'">'+l+'</button>';
+    }).join('')+'</div>'+
+
+    '<div class="plan-hero" style="margin-top:24px">'+
+      '<p class="eyebrow">Spent this month</p>'+
+      '<div class="money money-hero">'+inr(70712)+'</div>'+
+      '<div style="display:flex;align-items:center;gap:8px;margin-top:10px">'+
+        '<span class="delta">'+ic('arrowUpRight',11,2.4)+'12% vs last month</span>'+
+        '<span style="font-size:11.5px;color:var(--muted)">₹6,240 more</span>'+
+      '</div>'+
+    '</div>'+
+
+    '<section class="block">'+
+      '<div class="block-head"><h2 class="h2">Where it went</h2>'+
+        '<button class="link" data-nav="activity">View all</button></div>'+
+      '<div class="card pad">'+bars+'</div>'+
+    '</section>'+
+
+    '<section class="block">'+
+      '<div class="block-head"><h2 class="h2">Daily spending</h2>'+
+        '<span class="faint" style="font-size:11px;font-weight:600">18 days</span></div>'+
+      '<div class="card pad">'+
+        '<div class="spark">'+spark+'</div>'+
+        '<div class="spark-x"><span>1 Oct</span><span>9 Oct</span><span>18 Oct</span></div>'+
+      '</div>'+
+    '</section>'+
+
+    '<section class="block">'+
+      '<div class="block-head"><h2 class="h2">Top merchants</h2></div>'+
+      '<div>'+merchants+'</div>'+
+    '</section>'+
+  '</div>';
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   SCREEN: SETTINGS
+   ═══════════════════════════════════════════════════════════════════ */
+function settingsBody(){
+  function row(t, v, icn){
+    return '<button class="srow">'+
+      (icn ? '<span class="rowlink-ic">'+ic(icn,16)+'</span>' : '')+
+      '<span class="srow-t">'+t+'</span>'+
+      (v ? '<span class="srow-v">'+v+'</span>' : '')+
+      ic('chev',16,2)+
+    '</button>';
+  }
+  function group(title, rows){
+    return '<div class="group"><div class="group-t">'+title+'</div><div class="card">'+rows+'</div></div>';
+  }
+
+  return '<div class="scr-body fade">'+
+    '<div class="head" style="padding-bottom:18px;align-items:center;gap:14px">'+
+      '<button class="backbtn" data-nav="home" aria-label="Back">'+ic('chevL',18,2.2)+'</button>'+
+      '<div class="head-l"><h1 class="h1">Settings</h1></div>'+
+    '</div>'+
+
+    group('Money',
+      row('Currency','INR ₹','swap')+
+      row('Categories','13','list')+
+      row('Budgets','6','plan')
+    )+
+    group('Messages',
+      row('SMS import','On','bell')+
+      row('Review queue','3 waiting','list')+
+      row('Classification','Auto','spark')
+    )+
+    group('Appearance',
+      row('Theme','System','spark')+
+      row('App lock','On','user')
+    )+
+    group('Data',
+      row('Backup & export','','trend')+
+      row('Privacy','','user')
+    )+
+    group('About',
+      row('Version','0.1.7')+
+      row('Check for updates','')
+    )+
+  '</div>';
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   QUICK ADD SHEET
+   ═══════════════════════════════════════════════════════════════════ */
+let amount = '';
+
+function amountText(){
+  if (!amount) return '₹0';
+  const n = Number(amount);
+  if (isNaN(n)) return '₹0';
+  return '₹' + n.toLocaleString('en-IN', {maximumFractionDigits:2});
+}
+
+function sheetHTML(){
+  const chips = ['food','grocery','transport','shopping','bills','fun'].map(function(k,i){
+    const c = CATS[k];
+    return '<button class="chip" aria-pressed="'+(i===0)+'" data-chip><i class="dot" style="background:'+c.c+'"></i>'+c.name+'</button>';
+  }).join('');
+
+  const keys = ['1','2','3','4','5','6','7','8','9','.','0','⌫'].map(function(k){
+    return '<button class="key" data-key="'+k+'">'+k+'</button>';
+  }).join('');
+
+  return '<div class="scrim" id="scrim"></div>'+
+  '<div class="sheet" id="sheet">'+
+    '<div class="grab"></div>'+
+    '<div class="sheet-type"><div class="segsm" style="width:200px">'+
+      '<button aria-selected="true" data-type>Expense</button>'+
+      '<button aria-selected="false" data-type>Income</button>'+
+    '</div></div>'+
+    '<div class="amt-display" id="amt">'+amountText()+'</div>'+
+    '<div class="amt-cap">Expense</div>'+
+    '<div class="keys">'+keys+'</div>'+
+    '<div class="sheet-chips">'+chips+'</div>'+
+    '<div class="sheet-meta">'+
+      '<button class="metabtn">'+ic('plus',13,2.4)+'Merchant or note</button>'+
+      '<button class="metabtn">'+ic('cal',13,2)+'Today</button>'+
+    '</div>'+
+    '<button class="btn-primary" id="saveBtn" '+(amount?'':'disabled')+'>Save</button>'+
+    '<div class="sheet-foot">'+
+      '<button data-open="smart">'+ic('spark',13,2)+' Smart add</button>'+
+      '<button data-open="manual">Manual entry</button>'+
+    '</div>'+
+  '</div>';
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   RENDER
+   ═══════════════════════════════════════════════════════════════════ */
+const BODIES = {
+  home: homeBody,
+  activity: activityBody,
+  plan: planBody,
+  insights: insightsBody,
+  settings: settingsBody
+};
+const TITLES = {home:'Home', activity:'Activity', plan:'Plan', insights:'Insights', settings:'Settings'};
+
+const state = {screen:'home', view:'proto', theme:'light', notesTab:'screen', sheet:false};
+
+function renderPhone(){
+  const body = (BODIES[state.screen] || homeBody)();
+  const hasNav = state.screen !== 'settings';
+  document.getElementById('phoneMount').innerHTML =
+    '<div class="scr">'+statusbar()+body+(hasNav?nav(state.screen):'')+'</div>'+
+    sheetHTML();
+  if (state.sheet) {
+    // force reflow so the transition runs
+    const s = document.getElementById('sheet'), sc = document.getElementById('scrim');
+    void s.offsetWidth;
+    s.classList.add('open'); sc.classList.add('open');
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   NOTES
+   ═══════════════════════════════════════════════════════════════════ */
+const NOTES = {
+  home:{
+    title:'Home',
+    lede:'A money app is opened in three-second bursts, usually to answer one of two questions: can I afford this, and did that charge land? The first screen now answers both before the first scroll.',
+    items:[
+      ['habit','<b>Glance first, browse second.</b> Balance, this month’s in/out, anything over budget, and today’s rows all sit above the fold. Charts and analysis move to Insights, where people go deliberately.'],
+      ['habit','<b>One-handed reach.</b> Nothing above the fold needs a thumb stretch. The only primary action is the add button, docked at the bottom centre where the thumb rests.'],
+      ['change','<b>The gradient hero is gone.</b> White text on a violet→teal sweep had the lowest contrast exactly where the most important number lived. A large, tight-tracked numeral on plain paper is louder and calmer at once.'],
+      ['change','<b>Four quick actions became one.</b> “Add”, “Stats” and the FAB all did the same job; “Income” is a toggle inside the sheet, not a destination.'],
+      ['rule','One hero per screen. If a second element wants to be big, it belongs on another screen.']
+    ]
+  },
+  activity:{
+    title:'Activity',
+    lede:'The list people actually live in. Once an account has a few hundred rows, search — not scrolling — becomes the way in, so the field is no longer hidden behind an icon.',
+    items:[
+      ['habit','<b>Day groups with sticky headers.</b> People already read money in days, from bank statements and SMS. The heading stays pinned so you always know which day you are in.'],
+      ['habit','<b>Search is visible, always.</b> Hiding it behind a magnifier cost a tap on the most common retrieval path.'],
+      ['change','<b>Red is a status colour now, not a category.</b> Every outgoing row used to be red; thirty red numbers in a column is noise, and it leaves nothing to signal an actual problem. Outgoing amounts are ink, incoming are green, and red is reserved for over-budget and errors.'],
+      ['change','<b>Type filters and category filters share one row.</b> No mode switch, no second screen — the chip row scrolls.'],
+      ['rule','Amounts are always tabular and right-aligned; the minus is U+2212, never a hyphen.']
+    ]
+  },
+  plan:{
+    title:'Plan',
+    lede:'Forward-looking money is checked weekly, not hourly — which is why it has its own tab and no longer competes with the daily feed on Home.',
+    items:[
+      ['habit','<b>Bars compare, rings do not.</b> A ring asks you to estimate an arc against a circle; a bar asks you to compare two lengths. For six budgets stacked, bars win.'],
+      ['habit','<b>Goals are cards you can flick through,</b> not a list you have to open. Progress is legible at a glance and the horizontal rail keeps Plan one screen tall.'],
+      ['change','<b>Percentages tell the truth.</b> Over-budget reads “Over by ₹1,299” and a red bar capped at full width — never “100% used” next to a number that is clearly more.'],
+      ['change','<b>No hub-of-links.</b> Budgets, goals and subscriptions are shown, not just linked. The four big navigation cards that used to fill this screen are gone.'],
+      ['rule','Every progress bar is capped visually at 100% but labelled with the real number.']
+    ]
+  },
+  insights:{
+    title:'Insights',
+    lede:'Analysis is a deliberate visit, so this screen can be denser — but it should still answer “where did it go” in one look.',
+    items:[
+      ['habit','<b>Ranked bars beat a donut.</b> People compare lengths easily and angles badly. The donut’s legend was doing all the work anyway; now the legend is the chart.'],
+      ['habit','<b>One chart per question.</b> Ranking uses bars, trend uses a daily column strip, and “who” uses a plain list. No chart is asked to do two jobs.'],
+      ['change','<b>The period control is a quiet segmented row,</b> not a second navigation bar — it changes the data, not the screen.'],
+      ['rule','Colour identifies a category and nothing else; the same category keeps its colour on every screen.']
+    ]
+  },
+  settings:{
+    title:'Settings',
+    lede:'People find settings by scanning for a keyword, not by learning a hierarchy — so the screen is five short groups with one-line values.',
+    items:[
+      ['habit','<b>Grouped, short, and flat.</b> No nesting beyond one level; the current value sits on the right where the eye lands after the label.'],
+      ['change','<b>Destructive and rare actions moved to the bottom.</b> Data, privacy and version live below the things people change often.'],
+      ['rule','A settings row never needs a description paragraph. If it does, it is a screen, not a row.']
+    ]
+  },
+  sheet:{
+    title:'Quick Add',
+    lede:'The fastest path from “I just paid” to a saved row: amount, category, save. Everything else is optional and below the fold of the sheet.',
+    items:[
+      ['habit','<b>Amount first, keypad not keyboard.</b> A numeric pad is familiar, thumb-sized, and never covers the number you are typing.'],
+      ['habit','<b>Category chips sit under the amount</b> — the same chip used in the Activity filter row and the editor, so the control is learned once.'],
+      ['change','<b>Selected chips fill with ink.</b> The old picker’s selected state was painted over and invisible on device; a filled chip is unmistakable in both themes.'],
+      ['rule','The primary button is full-width and disabled until the amount is real.']
+    ]
+  }
+};
+
+function renderNotes(){
+  const n = NOTES[state.screen] || NOTES.home;
+  const el = document.getElementById('notes');
+
+  if (state.notesTab === 'system') {
+    el.innerHTML =
+      '<div class="notes-tabs">'+
+        '<button data-notestab="screen" aria-selected="false">This screen</button>'+
+        '<button data-notestab="system" aria-selected="true">The system</button>'+
+      '</div>'+
+      '<h2>Quiet Ledger</h2>'+
+      '<p class="lede">The same personality the Aurora document asks for — quiet, precise, nothing decorative without meaning — with the hierarchy rebuilt around how the app is actually used.</p>'+
+
+      '<div class="sys-h">Principles</div>'+
+      principle('01','<b>Chrome is monochrome, data is colour.</b> Violet marks the one thing you can act on. Category colours belong to categories. Red means something is wrong.')+
+      principle('02','<b>Type does the work gradients used to.</b> Size, weight and tracking carry hierarchy; surfaces stay flat.')+
+      principle('03','<b>Hairlines, never shadows.</b> Depth comes from a 1px line and a tonal surface — cheaper to draw, calmer to read.')+
+      principle('04','<b>One hero per screen,</b> and it is always a number.')+
+      principle('05','<b>Nothing tappable lives above the thumb’s reach</b> unless it is a back or a title.')+
+
+      '<div class="sys-h">Colour</div>'+
+      '<div class="swatches">'+
+        sw('Paper','var(--paper)')+sw('Surface','var(--surface)')+
+        sw('Ink','var(--ink)')+sw('Violet','var(--violet)')+
+        sw('Green','var(--green)')+sw('Brick','var(--brick)')+
+        sw('Track','var(--track)')+sw('Hairline','var(--line)')+
+      '</div>'+
+
+      '<div class="sys-h">Type — Plus Jakarta Sans</div>'+
+      '<div class="typescale">'+
+        ts('45 / 700','Balance','font-size:32px;font-weight:700;letter-spacing:-.038em','₹1,42,380')+
+        ts('23 / 700','Screen title','font-size:21px;font-weight:700;letter-spacing:-.025em','Good evening')+
+        ts('17 / 700','Card metric','font-size:16px;font-weight:700','₹7,299')+
+        ts('13 / 600','Row title','font-size:13px;font-weight:600','Swiggy')+
+        ts('11.5 / 500','Row meta','font-size:11.5px;font-weight:500;color:var(--muted)','Food & Dining · 8:42 pm')+
+        ts('10.5 / 700','Eyebrow','font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--faint)','TOTAL BALANCE')+
+      '</div>'+
+
+      '<div class="sys-h">Shape &amp; rhythm</div>'+
+      '<div class="note"><span class="tag rule">4dp</span><p>Grid: 4 / 8 / 12 / 16 / 20 / 26 / 32. Gutter is 20. Card radius 20, chip 99, sheet 30, FAB 19, avatar 50%.</p></div>'+
+      '<div class="note"><span class="tag rule">Motion</span><p>150ms press · 220ms content · 320ms sheet. Springs without overshoot except selection. Reduced-motion falls back to crossfades.</p></div>'+
+      '<div class="note"><span class="tag rule">A11y</span><p>Body text ≥ 4.5:1, large ≥ 3:1. Every bar carries its value as text. Colour is never the only signal — over-budget also says “over by”.</p></div>';
+    return;
+  }
+
+  el.innerHTML =
+    '<div class="notes-tabs">'+
+      '<button data-notestab="screen" aria-selected="true">This screen</button>'+
+      '<button data-notestab="system" aria-selected="false">The system</button>'+
+    '</div>'+
+    '<h2>'+n.title+'</h2>'+
+    '<p class="lede">'+n.lede+'</p>'+
+    n.items.map(function(it){
+      return '<div class="note"><span class="tag '+it[0]+'">'+it[0]+'</span><p>'+it[1]+'</p></div>';
+    }).join('');
+}
+
+function principle(num, html){
+  return '<div class="principle"><span class="pnum">'+num+'</span><p style="margin:0">'+html+'</p></div>';
+}
+function sw(name, val){
+  return '<div class="sw"><i style="background:'+val+'"></i><span>'+name+'</span></div>';
+}
+function ts(spec, label, style, sample){
+  return '<div class="ts"><em>'+spec+'</em><span style="'+style+'">'+sample+'</span></div>';
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   BOARD
+   ═══════════════════════════════════════════════════════════════════ */
+function renderBoard(){
+  const order = [
+    ['home','01','Home','Balance, this month’s flow, anything over budget, today’s rows — all above the fold.'],
+    ['activity','02','Activity','Visible search, one chip row for both type and category, sticky day headers.'],
+    ['plan','03','Plan','Budgets as comparable bars, goals as a flickable rail, honest over-budget copy.'],
+    ['insights','04','Insights','Ranked bars instead of a donut; one chart per question.'],
+    ['sheet','05','Quick Add','Amount, category, save. The keypad never covers the number.'],
+    ['settings','06','Settings','Five short groups, current value on the right.']
+  ];
+  document.getElementById('boardGrid').innerHTML = order.map(function(o){
+    const key = o[0];
+    let body;
+    if (key === 'sheet') { body = homeBody(); }
+    else { body = BODIES[key](); }
+    const hasNav = key !== 'settings';
+    const inner = '<div class="scaler"><div class="scr" style="position:absolute">'+
+      statusbar()+body+(hasNav?nav(key):'')+
+      (key==='sheet' ? sheetHTML().replace('class="sheet"','class="sheet open"').replace('class="scrim"','class="scrim open"') : '')+
+      '</div></div>';
+    return '<div class="bcard"><div class="bmini">'+inner+'</div>'+
+      '<div class="blabel"><span>'+o[1]+'</span><b>'+o[2]+'</b></div>'+
+      '<div class="bcap">'+o[3]+'</div></div>';
+  }).join('');
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   INTERACTION
+   ═══════════════════════════════════════════════════════════════════ */
+function setScreen(key, opts){
+  state.screen = key;
+  state.sheet = !!(opts && opts.sheet);
+  if (location.hash !== '#' + key) {
+    // Some browsers refuse replaceState on file:// — never let that abort a
+    // screen change.
+    try { history.replaceState(null, '', '#' + key); } catch (err) {}
+  }
+  renderPhone();
+  renderNotes();
+  if (state.view === 'board') renderBoard();
+}
+
+function setView(v){
+  state.view = v;
+  document.getElementById('stage').style.display = (v === 'proto') ? 'flex' : 'none';
+  document.getElementById('board').classList.toggle('on', v === 'board');
+  document.querySelectorAll('#viewSeg button').forEach(function(b){
+    b.setAttribute('aria-selected', String(b.dataset.view === v));
+  });
+  if (v === 'board') renderBoard();
+}
+
+function setTheme(t){
+  state.theme = t;
+  document.documentElement.setAttribute('data-theme', t);
+  document.querySelectorAll('#themeSeg button').forEach(function(b){
+    b.setAttribute('aria-selected', String(b.dataset.themeSet === t));
+  });
+  if (state.view === 'board') renderBoard();
+}
+
+document.addEventListener('click', function(e){
+  const t = e.target.closest('[data-nav],[data-open],[data-key],[data-chip],[data-period],[data-notestab],[data-view],[data-theme-set],[data-type]');
+  if (!t) return;
+
+  if (t.dataset.view) { setView(t.dataset.view); return; }
+  if (t.dataset.themeSet) { setTheme(t.dataset.themeSet); return; }
+
+  if (t.dataset.nav) {
+    setScreen(t.dataset.nav);
+    return;
+  }
+
+  if (t.dataset.notestab) {
+    state.notesTab = t.dataset.notestab;
+    renderNotes();
+    return;
+  }
+
+  if (t.dataset.open === 'sheet') {
+    state.sheet = true;
+    const s = document.getElementById('sheet'), sc = document.getElementById('scrim');
+    if (s) { s.classList.add('open'); sc.classList.add('open'); }
+    return;
+  }
+  if (t.dataset.open) return; // smart / manual — not part of this prototype
+
+  if (t.dataset.key !== undefined) {
+    const k = t.dataset.key;
+    if (k === '⌫') amount = amount.slice(0, -1);
+    else if (k === '.') { if (amount.indexOf('.') === -1) amount = (amount || '0') + '.'; }
+    else if (amount.length < 7) amount = (amount === '0' ? '' : amount) + k;
+    const el = document.getElementById('amt');
+    if (el) el.textContent = amountText();
+    const btn = document.getElementById('saveBtn');
+    if (btn) btn.disabled = !amount;
+    return;
+  }
+
+  if (t.hasAttribute('data-chip')) {
+    const group = t.parentElement;
+    Array.from(group.children).forEach(function(c){
+      if (c.hasAttribute && c.hasAttribute('data-chip')) c.setAttribute('aria-pressed','false');
+    });
+    t.setAttribute('aria-pressed','true');
+    return;
+  }
+
+  if (t.dataset.period !== undefined) {
+    period = Number(t.dataset.period);
+    renderPhone();
+    return;
+  }
+
+  if (t.hasAttribute('data-type')) {
+    const group = t.parentElement;
+    Array.from(group.children).forEach(function(c){ c.setAttribute('aria-selected','false'); });
+    t.setAttribute('aria-selected','true');
+    return;
+  }
+});
+
+document.addEventListener('click', function(e){
+  if (e.target.id === 'scrim') {
+    document.getElementById('sheet').classList.remove('open');
+    document.getElementById('scrim').classList.remove('open');
+    state.sheet = false;
+  }
+  if (e.target.id === 'saveBtn' && amount) {
+    document.getElementById('sheet').classList.remove('open');
+    document.getElementById('scrim').classList.remove('open');
+    amount = '';
+    state.sheet = false;
+    setTimeout(function(){ renderPhone(); }, 240);
+  }
+});
+
+document.addEventListener('keydown', function(e){
+  if (e.key === 'Escape') {
+    const s = document.getElementById('sheet');
+    if (s && s.classList.contains('open')) {
+      s.classList.remove('open');
+      document.getElementById('scrim').classList.remove('open');
+      state.sheet = false;
+    }
+  }
+});
+
+/* boot */
+const qTheme = new URLSearchParams(location.search).get('theme');
+const qView = new URLSearchParams(location.search).get('view');
+const qNotes = new URLSearchParams(location.search).get('notes');
+if (qNotes === 'system') state.notesTab = 'system';
+const qEmbed = new URLSearchParams(location.search).get('embed');
+if (qEmbed) document.body.classList.add('embed');
+const hKey = location.hash.replace('#','');
+
+setTheme(qTheme === 'dark' ? 'dark' : 'light');
+setView(qView === 'board' ? 'board' : 'proto');
+
+if (hKey === 'sheet') {
+  setScreen('home', {sheet:true});
+} else if (BODIES[hKey]) {
+  setScreen(hKey);
+} else {
+  setScreen('home');
+}
+</script>
+</body>
+</html>

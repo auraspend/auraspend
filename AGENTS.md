@@ -3,7 +3,139 @@
 > Read this file and the latest file in `docs/handoffs/` before touching anything.
 > Update both (plus `CLAUDE.md` / `memory/` when you learn something durable) before ending a session.
 >
-> Latest: `docs/handoffs/0056-ui-walk-fixes.md` — the on-device UI walk on
+> Latest: `docs/handoffs/0063-play-store-screenshots.md` — the Play listing's
+> screenshots were composed ads built against the old purple Aurora UI, so the
+> deck is rebuilt on the concept. The owner rejected the first device and the
+> deck now shows an **iPhone front**: the skill template's `public/mockup.png`
+> bezel with its pre-measured screen rect, and the concept's **iOS chrome drawn
+> over the capture** — the HTML's own 46px status bar (9:41, and the file's
+> three SVGs verbatim) and the 104×26 island. The Android status bar is
+> **measured** (`dumpsys window`: 72px at 3x = 24dp) and hidden behind the drawn
+> bar by nudging the capture down `46 − 24`px, which also drops the Android
+> gesture pill off the bottom. v1 (the concept's own drawn device) is parked in
+> `variants/01-android-frame/` with its frame source, and `variant.sh` parks any
+> deck the same way. Two traps are recorded because both are silent: an island
+> is a **stadium**, not `border-radius: 50%` (which draws an ellipse on a 4:1
+> box), and `--ql-paper` plus the ink `color` must sit on the **slide root** —
+> the device is a sibling of the background layer, so setting them there never
+> reaches it and dark slides draw a paper-white status bar. Chrome is verified by
+> decoding the exports (`measure_chrome.py`): island 99–100 % of the concept's
+> 104×26, band `#F7F5F0`/`#0F0F0D` per stage. Seven slides at 1080×1920,
+> light/dark alternating, isolated canvas. `pnpm dev` and `pnpm build` both write
+> `.next/` and will break each other. The copy is plain and ASO-shaped, and the
+> captures show a **healthy month** on purpose: `DemoDataSeeder.kt` was retuned
+> (rent ₹2,40,000 → ₹42,000, invoice ₹32,500 → ₹72,500, budgets up) so no
+> negative figure appears — balance ₹2,28,588, budgets 41–93 %, nothing "over" —
+> because the old data summed to exactly −₹9,412 and an ad that says "over
+> budget" sells the opposite of the product. Expense rows keep the app's own
+> minus; that is `TransactionRow`, not a screenshot. **Nothing is uploaded to
+> Play yet.**
+> Before: `docs/handoffs/0062-first-run-redesign.md` — the first-run surfaces were
+> the last Aurora holdouts: a violet gradient medallion, a violet pill button and
+> a violet glow behind the splash mark, in front of the one screen a new user
+> actually sees. They are now the concept's language — a 120dp tonal disc
+> (`onBackground` 6 %) with an outlined ink glyph, `screenTitle`, a new
+> `bodyCopy` (15sp) token, the concept's **ink** `.btn-primary`, an ink page dot,
+> and Skip as the one violet link. **`AuraGradients` is deleted** (with the
+> `AuroraGradient*` stops and the now-unused `AuroraViolet`/`AuroraTeal`):
+> onboarding and the splash were its last two users, and the concept retires the
+> gradient hero on purpose. The splash loses its radial glow and its overshoot
+> spring; the shared currency picker (onboarding + the Settings sheet) moves to
+> the settings-row metrics. The app icon stays on the splash — it is still the old
+> artwork and now the only colourful thing in the app, but the concept does not
+> specify an icon and the launcher/store assets are a tracked follow-up. Walked in
+> light and dark on the AVD. No new strings.
+> Before: `docs/handoffs/0061-navigation-jank.md` — the owner reported laggy
+> transitions, worst going back out of a detail screen. Measured with
+> `dumpsys gfxinfo framestats` on a **force-stopped** app (a warm app reads 33 ms
+> where a cold one reads 382 ms — the first measurement was meaningless), then
+> with `simpleperf`. Worst UI-thread frame on the Moto for Activity → detail →
+> back: **debug 289/117/382 ms → release 76/66/125 ms → release with a current
+> baseline profile 46/33/61 ms.** Three separate causes, all fixed:
+> (1) a debuggable app is not AOT-compiled — ~50 % of debug samples sit in the ART
+> interpreter, so judge anything performance-shaped on a release install;
+> (2) `AuraAppChrome` called `content()` from three different branches, so every
+> top-level ↔ detail crossing moved the whole `NavHost` subtree in the composition
+> and Compose rebuilt it mid-transition (one stable slot now), and Home's
+> `LaunchedEffect(Unit)` re-ran its whole load on every return, cancelling a live
+> Room subscription to re-run four aggregate queries (it no-ops while the
+> subscription is alive);
+> (3) **`baseline-prof.txt` was from 2026-09-12 and knew none of the current
+> screens** — regenerated, which is worth another 2×. Three traps there: the
+> phone is API 31 and `BaselineProfileRule` needs 33+ (use the AVD — a profile is
+> device-independent), `StartupBenchmark.PACKAGE` was the hardcoded **prod** id so
+> the README's dev-flavor command profiled the wrong package (now a per-flavor
+> `buildConfigField`), and reading it from the instrumentation made macrobenchmark
+> force-stop *itself* ("Process crashed") because the module is
+> self-instrumenting. **A profile does not apply on install** — the app sits at
+> `status=verify` until background dexopt runs (idle + charging); force it with
+> `adb shell cmd package compile -m speed-profile -f <pkg>`. 614 tests, R8 gate
+> green. The Moto now runs the release dev APK.
+> Before: `docs/handoffs/0060-quiet-ledger-pixel-parity.md` — 0059's fidelity pass
+> was done by eye; this one measures. The prototype is rendered at exactly
+> 390×844 CSS px @3x and the app is run on the AVD forced to 1170×2532 @480 dpi
+> (= 390×844 dp), with the per-app locale set to `en-IN`, so one app pixel is one
+> prototype pixel; geometry is compared from the prototype's DOM rects against
+> `uiautomator dump` bounds. **The headline defect: Plus Jakarta Sans was never
+> bold** — one variable TTF registered six times under six weights renders the
+> default instance, so every 700 was drawn at regular weight (measured: 35 % less
+> ink on the Activity title). Fixed with `FontVariation.Settings`. `AuraType` is
+> now the concept's type scale (sizes *and* tracking) with tokens for every role
+> the app had been approximating; four colour roles the scheme never named are
+> real tokens (`lineSoft`, `track`, `faint`, `inkSoft`); Plan and Insights use the
+> 38sp hero, not Home's 45sp; the segmented control is the concept's `.segsm` (and
+> had a real bug — `matchParentSize`'s fixed constraints beat `.width()`, so its
+> pill painted the whole track); category and nav icons are the outlined set;
+> default category colours are the concept's palette. The owner's one removal was
+> the header hide-amounts eye; Activity's month nav/sort/day totals and Settings'
+> second lines and inline actions stay, restyled. `SettingsScreen`'s PIN dialogs
+> were nested inside the wipe confirmation and never composed — fixed. 614 tests,
+> lint 0/0/1, licence + privacy clean. Known and deliberately uncompensated:
+> Compose floors a line box at 1.26 em where the browser's normal is ~1.15 em, so
+> text runs 1–4 dp taller and ~4–12 dp accumulates by the bottom of a screen.
+> Before: `docs/handoffs/0059-quiet-ledger-fidelity.md` — the 0058 build walked
+> against the 0057 prototype screen by screen on the Moto, gaps closed, still
+> **uncommitted** on `ui_enhance`: a shared `AuraChip` (32 dp pill, ink-fill
+> selection, category dot) now used by Activity, Quick Add, the editor, the
+> classification tab and the budget/subscription pickers; Quick Add reordered to
+> the concept (chips under the keypad, merchant + date on one row) and it opens
+> **expanded** so Save is never below the fold; Activity gained
+> "October · ₹44,663 out", lost the In/Out/Net pills, and its row meta is now
+> the **time of day** — a sticky header already names the day; Home's rail card
+> reads "Shopping is over / ₹13,797 over your ₹3,000 budget" and its second card
+> is the review queue (wired to `unrecognized_sms`); the Home chart moved to
+> Insights as a "Daily spending" strip; Insights caps the category ranking at
+> six rows ("4 more categories"); Plan's hero names the categories that are
+> over; Settings regrouped to Money / Messages / Appearance / Data / About, with
+> the theme behind a sheet and a live "Review queue — N waiting" row. 614/614
+> tests, lint baseline-only, licence + privacy clean; verified on the Moto in
+> dark **and** light. The committed `moto-*.png` captures predate 0058's last
+> edits — rebuild before comparing against them.
+> Before: `docs/handoffs/0058-quiet-ledger-implemented.md` — the 0057 concept is
+> now **built** on `ui_enhance` (not committed): warm paper/ink palette with one
+> violet accent, red demoted to a status colour (outgoing amounts are ink), a
+> typographic hero instead of the gradient, a flat hairline nav bar with an ink
+> FAB, Home reordered to a glance (balance → flow bar → needs-you rail → one
+> budget aggregate → recent → cash flow), always-visible search and one filter
+> row on Activity, bars instead of rings and donuts on Plan/Insights, and a new
+> `AuraProgressBar`. **616/616 tests, lint clean, license + privacy gates clean**;
+> verified on the AVD **and on the owner's Moto G40** in light and dark (dev
+> flavour only — the release package was never touched). The phone found two
+> defects the emulator did not: `formatRelativeDate` counted elapsed hours, so a
+> row read "Today" under a "Yesterday" header (now calendar days), and
+> `res/values/colors.xml` still held the old violet window background (now synced
+> — that file must track `Color.kt`). 14 orphaned string resources were deleted,
+> not left behind — `UnusedResources` is an error here.
+> Before: `docs/handoffs/0057-interface-concept.md` — a **concept, not a decision**:
+> the whole app redesigned as "Quiet Ledger" (monochrome chrome, colour only for
+> data, type instead of gradients, bars instead of rings and donuts) as a
+> self-contained clickable prototype at `docs/design/interface-concept/index.html`.
+> **No app code, strings or tokens changed**; the shipped UI is still Aurora.
+> Two things contradict `docs/design/aurora.md` on purpose and need the owner's
+> call before anything is built: outgoing amounts are ink rather than red (red
+> becomes a status colour), and the gradient hero is replaced by a typographic
+> one. Do not treat the prototype as a spec — it is an argument.
+> Before: `docs/handoffs/0056-ui-walk-fixes.md` — the on-device UI walk on
 > `dev`: Quick Add's category picker is now the app's standard chip (M3
 > `FilterChip` + inline `CategoryAvatar`, same as the Activity filter row and
 > the editor). The hand-rolled tile before it had labels overflowing a fixed
@@ -641,7 +773,7 @@ application id): `:benchmark:connectedDevBenchmarkAndroidTest` — see README.
 | Money text | `formatMoney` (locale-aware) / `AnimatedMoney` |
 | Spacing | `AuraSpacing.*` (4dp grid, `gutter = 20dp`) |
 | Motion | `AuraMotion.*` (never invent durations) |
-| Brand gradient | `AuraGradients.aurora` |
+| Brand | No gradient, no glow: the app's mark is the launcher icon on flat paper. `AuraGradients` was deleted with the last two users (0062) — the concept retires the gradient hero |
 
 ## Money, theme and i18n invariants
 

@@ -17,6 +17,7 @@ durable lives elsewhere. Keep it a pointer; promote findings to `memory/` or
 | Architecture decisions | `docs/adr/` |
 | Roadmap, deliberate no-gos | `ROADMAP.md` |
 | Design system | `docs/design/aurora.md` + `ui/designsystem/` |
+| Interface concept + its implementation (0057 → 0058) | `docs/design/interface-concept/` |
 | Measured classification numbers | `docs/evals/README.md` |
 
 ## Classification hot spots (cited from source)

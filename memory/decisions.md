@@ -2,6 +2,70 @@
 
 Durable decisions with context. Latest first.
 
+## D27 — A baseline profile is a build artifact, and three traps guard it (2026-10-18)
+
+Handoff 0061 found the app's `baseline-prof.txt` was five weeks stale and knew
+none of the current screens. Regenerating it halved the worst frame on the path
+the owner reported (release, Activity → detail → back: 125 ms → 61 ms). The
+traps, all of which cost time:
+
+- **A debuggable app is not AOT-compiled.** ~50 % of a debug build's samples sit
+  in the ART interpreter, so a debug build is 3–6× slower on the UI thread than
+  the release build of the same code. Never judge or tune performance on one.
+- **Measure on a force-stopped app.** A warm app reads 33 ms where a cold one
+  reads 382 ms on the same navigation; the first measurement was noise.
+- **`BaselineProfileRule` needs API 33+.** The owner's phone is API 31, so the
+  AVD generates it — a profile names dex methods, and the dex is the same APK, so
+  it is device-independent.
+- **In a self-instrumenting `com.android.test` module,
+  `InstrumentationRegistry.targetContext` is the benchmark itself.** Asking it for
+  the package under test makes macrobenchmark force-stop its own process, and the
+  run dies as "Process crashed" with no output. Declare the target package per
+  flavor in the module's build config instead — the hardcoded value before it was
+  the *prod* id, so the documented dev-flavor command profiled the wrong app.
+- **A profile does not apply on install.** After `adb install` the app sits at
+  `status=verify`; the profile lands with background dexopt (idle + charging). To
+  measure it locally, `adb shell cmd package compile -m speed-profile -f <pkg>`.
+  Real users' first day on a new version is the interpreted one.
+
+A profile's app-side entries are obfuscated names, so it is tied to the R8 output
+it was collected against: regenerate it whenever the UI changes materially.
+
+## D26 — Pixel parity is measured, and two font traps live in it (2026-10-18)
+
+Handoff 0060 compared the app against the interface-concept prototype by
+measurement, not by eye, and the method is reusable:
+
+- The prototype is rendered by headless Chrome at exactly 390×844 CSS px with
+  `--force-device-scale-factor=3`; the dev build runs on the AVD forced to
+  **1170×2532 @ 480 dpi**, which is exactly 390×844 dp. One app pixel is then one
+  prototype pixel, and the prototype's own `body.embed` mode exists for this.
+- The prototype's geometry comes from `getBoundingClientRect` over `.scr *`; the
+  app's comes from `uiautomator dump`. Both are dp, so they subtract.
+- **Set the app's locale before judging any formatting.** With the emulator's
+  `en-US` the app renders `$`, Western grouping, `4:07 AM` and a hyphen-minus —
+  four "fidelity bugs" that are really one locale mismatch. `adb shell cmd locale
+  set-app-locales <pkg> --user 0 --locales en-IN` fixes all four at once.
+
+Two traps worth remembering, both invisible in a green build:
+
+1. **A variable font registered under several `Font(weight = …)` entries renders
+   its default instance.** Every 700 in the app was drawn at regular weight for
+   several releases; measured on one title, 35 % less ink and 6.5 % narrower. The
+   weight axis needs `FontVariation.Settings(FontVariation.weight(n))` per entry.
+2. **Compose floors a line box at the font's natural height (1.26 em for Plus
+   Jakarta Sans) where the browser's `normal` is ~1.15 em.** A token's `lineHeight`
+   cannot go below the floor, so text runs 1–4 dp taller than the prototype and
+   ~4–12 dp accumulates by the bottom of a screen. `LineHeightStyle.Trim.Both`
+   does not help — trimming only removes *positive* leading. This is a platform
+   metric difference; do not compensate it with negative spacers.
+
+Two smaller ones from the same pass: `Modifier.matchParentSize()` hands its child
+*fixed* constraints, so a `.width()` after it is silently ignored (a segmented
+control's "pill" painted the whole track); and a Material `OutlinedTextField`
+carries a 56 dp floor, which is what pushed the Quick Add sheet's Save button
+under the fold.
+
 ## D25 — 0.1.6 was re-cut without the terracotta UI (2026-10-17)
 
 The first `v0.1.6` tag included handoff 0048 (terracotta UI). That was a
