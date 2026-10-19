@@ -30,15 +30,14 @@ android {
         applicationId = "com.awbuilds.auraspend"
         minSdk = 30
         targetSdk = 37
-        // 0.1.9 — release-only crash fix (handoff 0064): R8 had stripped the
-        // ONNX Runtime classes its JNI constructs by name, so the production
-        // build aborted the moment a message was categorised. Keep rules added
-        // and the R8 gate now derives the expected classes from the shipped .so.
-        // No data, schema or classification change.
+        // 0.1.91 — patch on 0.1.9 (handoff 0066): Plan counts the subscriptions
+        // its screen actually lists, Home regained a seven-day strip so a quiet
+        // day is not empty, and tab switches are instant. Presentation only — no
+        // data, schema or classification change.
         // versionCode must strictly increase for every store upload; Play
         // rejects an update that reuses one.
-        versionCode = 12
-        versionName = "0.1.9"
+        versionCode = 13
+        versionName = "0.1.91"
 
         // True in dev/prod; the `fdroid` flavor flips it to false (ADR 0012).
         // Screens read it to hide the Drive entry points rather than offer

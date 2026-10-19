@@ -3,7 +3,16 @@
 > Read this file and the latest file in `docs/handoffs/` before touching anything.
 > Update both (plus `CLAUDE.md` / `memory/` when you learn something durable) before ending a session.
 >
-> Latest: `docs/handoffs/0065-plan-subscription-count-and-home-week.md` — Plan
+> Latest: `docs/handoffs/0066-release-0.1.91.md` — **0.1.91 is cut** (versionCode
+> 13), a patch on 0.1.9 with three presentation changes and **no data, schema or
+> classification change**: Plan now counts the subscriptions its screen actually
+> lists (0065), Home regained a seven-day strip so a quiet day is not empty
+> (0065), and tab switches are instant (0064). 614 tests, lint baseline-only, R8
+> gate green including the 11 ONNX classes (the 0.1.8 crash cannot recur
+> silently). The one unverified item is the transition feel on the vivo — it is
+> measured on the emulator only, and reverting is `isTabSwitch()` returning
+> false.
+> Before: `docs/handoffs/0065-plan-subscription-count-and-home-week.md` — Plan
 > said "0 active subscriptions" above a screen listing four: the hub read only
 > `getActiveSubscriptions()` while the Subscriptions screen also shows the
 > classifier's **detected** recurring payments. The number was not wrong about

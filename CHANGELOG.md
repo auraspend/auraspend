@@ -10,6 +10,32 @@ internal APIs.
 
 ## [Unreleased]
 
+## [0.1.91] — 2026-10-19
+
+A patch on 0.1.9. **No data, schema or classification change** — presentation
+only.
+
+### Fixed
+
+- **Plan said "0 active subscriptions" above a Subscriptions screen listing
+  four.** The hub read only the tracked rows while that screen also shows the
+  recurring payments the classifier detected, so anything detected but not yet
+  tracked was invisible to the count. It now reads both and reads
+  "N active · M detected". Suggestions still stay out of the monthly total until
+  they are tracked.
+
+### Added
+
+- **Home shows the last seven days** as a strip of columns — the same component
+  Insights uses, today's column in ink. Below the budgets card, a day with no
+  transactions used to leave the screen empty.
+
+### Changed
+
+- **Tab switches are instant.** A cross-fade put each of two full screens into
+  its own alpha layer for the animation; the worst tab frame was 17.4 ms against
+  a 16.7 ms budget. Pushed screens keep a 200 ms slide.
+
 ## [0.1.9] — 2026-10-18
 
 A **release-only crash fix**. 0.1.8 aborted the moment the on-device categoriser

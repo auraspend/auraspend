@@ -1,4 +1,5 @@
-What's new in 0.1.9
+What's new in 0.1.91
 
-• Fixes a crash when a bank message was categorised on the device. If 0.1.8 closed itself while reading your messages, this is that fix.
-• Nothing else changed: same screens, same data, same behaviour.
+• Plan now shows how many subscriptions you actually have — the count matches the list.
+• Home adds a seven-day spending strip, so a quiet day is no longer an empty screen.
+• Tab switches are instant, without the cross-fade delay.
