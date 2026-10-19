@@ -45,6 +45,11 @@ tools/__pycache__/
 # OpenChamber tool state (local screenshots / session data).
 /.openchamber/
 
+# A screenshot-editor scaffold dropped at the repo root. The maintained editor
+# lives in docs/store/ and is tracked; a root copy brings ~370 MB of node_modules
+# and its own stale deck, which is a trap one `git add -A` away from the history.
+app-store-screenshots/
+
 # Kilo tool state (local session data).
 /.kilo/
 
