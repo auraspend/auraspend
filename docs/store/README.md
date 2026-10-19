@@ -19,7 +19,7 @@ the versioned source so assets can be changed and re-uploaded later.
 | `export.js` | Headless, deterministic bundle export | needs `pnpm dev` running |
 | `variant.sh` | Parks the current deck into `variants/<name>/` | run before trying a new frame |
 | `variants/` | Every deck variation that has been composed, with its frame source | — |
-| `raw/` | **The website's** captures (1080×2400), *not* the deck's | still pre-concept; see below |
+| `raw/` | The **old** website's captures (1080×2400), *not* the deck's | pre-concept; see below |
 
 **These assets are live on the listing.** The seven screenshots and the feature
 graphic were uploaded on 2026-10-18, replacing the old Aurora set. Note that the
@@ -198,12 +198,13 @@ Feature graphic:
 - **`variants/` is excluded from the type check** (`tsconfig.json`), because it
   holds parked copies of `constants.ts` and `device-frames.tsx` that import
   `./types` from a directory that has no such file.
-- **`raw/` is stale.** It holds the website's captures (`docs/index.html`
-  embeds `store/raw/*.png` for its light/dark switch), captured 2026-10-10
-  against the pre-concept UI. The website therefore still shows the old design.
-  Refreshing it means new captures at 1080×2400 plus the four `<img>` tags in
-  `docs/index.html`; it was left alone deliberately so this pass stayed scoped
-  to the store assets.
+- **`raw/` is stale, and nothing embeds it any more.** It holds the old
+  website's captures, taken 2026-10-10 against the pre-concept UI. The website
+  was rebuilt in `/site` on 2026-10-20 and now uses the current captures from
+  `public/screenshots/android/phone/en/` (1170×2532, light and dark), so the
+  site and the Play deck finally show the same UI. `raw/` was left on disk
+  because it is a useful reference for what the old site looked like; delete
+  it whenever nobody needs that comparison again.
 - **The launcher icon is still the old artwork** (`icon-512.png`), which is why
   the feature graphic's mark reads violet against the paper stage. Tracked with
   the icon follow-up in handoff 0062; the deck does not depend on it.

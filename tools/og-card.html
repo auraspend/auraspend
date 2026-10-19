@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<!--
+  Source for site/img/og.png — the social card, 1200 × 630.
+
+  Rendered with:
+      python3 /Users/Abhijith/.agents/skills/vision-skills/scripts/html_shot.py \
+          tools/og-card.html -o site/img/og.png --width 1200 --height 630 --wait-ms 400
+
+  Kept out of site/ on purpose: site/ is the published folder, and this file is
+  a generator, not a page.
+-->
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>AuraSpend</title>
+    <style>
+        @font-face {
+            font-family: "Plus Jakarta Sans";
+            src: url("../site/fonts/plus-jakarta-sans.ttf") format("truetype");
+            font-weight: 200 800;
+            font-style: normal;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            width: 1200px;
+            height: 630px;
+            overflow: hidden;
+            background: #EBE7DE;
+            color: #17160F;
+            font-family: "Plus Jakarta Sans", -apple-system, sans-serif;
+            -webkit-font-smoothing: antialiased;
+            display: flex;
+            align-items: stretch;
+        }
+
+        .copy {
+            flex: 1 1 auto;
+            min-width: 0;
+            padding: 54px 0 54px 68px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 0;
+        }
+
+        .mark {
+            font-size: 25px;
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            display: flex;
+            align-items: baseline;
+            gap: 6px;
+            margin-bottom: 46px;
+        }
+        .mark em { font-style: normal; color: #4A2E7A; }
+        .dot {
+            width: 5px; height: 5px; border-radius: 50%;
+            background: #4A2E7A; align-self: center; margin-left: 1px;
+        }
+
+        .eyebrow {
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: #918C7D;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            font-size: 70px;
+            font-weight: 800;
+            letter-spacing: -0.038em;
+            line-height: 1.03;
+            margin-bottom: 26px;
+        }
+        h1 em { font-style: normal; color: #4A2E7A; }
+
+        .lead {
+            font-size: 21px;
+            line-height: 1.5;
+            color: #6E6A5C;
+            max-width: 560px;
+            margin-bottom: 34px;
+        }
+
+        .chips { display: flex; gap: 10px; }
+        .chip {
+            height: 38px;
+            padding: 0 16px;
+            display: inline-flex;
+            align-items: center;
+            border-radius: 999px;
+            border: 1px solid #E3DED1;
+            background: #FFFFFF;
+            font-size: 14px;
+            font-weight: 600;
+            color: #3B382E;
+            white-space: nowrap;
+        }
+        .chip.violet {
+            background: #EDE6F8;
+            border-color: transparent;
+            color: #4A2E7A;
+        }
+
+        .phone {
+            flex: 0 0 auto;
+            align-self: flex-start;
+            margin: 24px 62px 0 40px;
+            width: 326px;
+            border-radius: 44px;
+            padding: 10px;
+            background: #141412;
+            box-shadow: 0 40px 80px -30px rgba(35, 30, 20, 0.5);
+        }
+        .phone img {
+            display: block;
+            width: 100%;
+            height: auto;
+            border-radius: 34px;
+        }
+    </style>
+</head>
+<body>
+    <div class="copy">
+        <div class="mark">Aura<em>Spend</em><span class="dot"></span></div>
+        <div class="eyebrow">SMS expense tracker · Offline · AGPL-3.0</div>
+        <h1>Your bank SMS becomes a <em>ledger.</em></h1>
+        <p class="lead">Read on your phone, categorised, and saved only when you approve it. No account, no ads, no server.</p>
+        <div class="chips">
+            <span class="chip violet">Open source</span>
+            <span class="chip">No account</span>
+            <span class="chip">Encrypted at rest</span>
+            <span class="chip">Android 11+</span>
+        </div>
+    </div>
+    <div class="phone">
+        <img src="../site/img/screens/home-light.png" alt="">
+    </div>
+</body>
+</html>

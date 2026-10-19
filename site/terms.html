@@ -3,86 +3,77 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="theme-color" content="#FAF7FD" media="(prefers-color-scheme: light)">
-    <meta name="theme-color" content="#14101C" media="(prefers-color-scheme: dark)">
+    <meta name="theme-color" content="#EBE7DE" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#080807" media="(prefers-color-scheme: dark)">
     <script>
-        // Applied before first paint so a stored choice never flashes the other theme.
         (function () {
+            var root = document.documentElement;
+            root.classList.add("js");
             try {
-                var stored = localStorage.getItem('auraspend-theme');
-                if (stored === 'light' || stored === 'dark') {
-                    document.documentElement.setAttribute('data-theme', stored);
+                var stored = localStorage.getItem("auraspend-theme");
+                if (stored === "light" || stored === "dark") {
+                    root.setAttribute("data-theme", stored);
                 }
-            } catch (e) { /* private mode: fall back to the system theme */ }
+            } catch (e) { /* private mode: follow the system theme */ }
         })();
     </script>
     <title>Terms of Service — AuraSpend</title>
-    <meta name="description" content="The terms for using AuraSpend, an open-source expense tracker licensed under AGPL-3.0-or-later.">
+    <meta name="description" content="The terms for using AuraSpend, an open-source expense tracker for Android licensed under AGPL-3.0-or-later: your rights under the licence, the three builds, your data, and the limits of what the software promises.">
+    <link rel="canonical" href="https://auraspend.github.io/auraspend/terms.html">
     <meta property="og:title" content="Terms of Service — AuraSpend">
     <meta property="og:description" content="The terms for using AuraSpend, an open-source expense tracker licensed under AGPL-3.0-or-later.">
     <meta property="og:url" content="https://auraspend.github.io/auraspend/terms.html">
     <meta property="og:type" content="website">
-    <link rel="canonical" href="https://auraspend.github.io/auraspend/terms.html">
+    <meta property="og:site_name" content="AuraSpend">
+    <meta property="og:image" content="https://auraspend.github.io/auraspend/img/og.png">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Terms of Service — AuraSpend">
+    <meta name="twitter:description" content="The terms for using AuraSpend, an open-source expense tracker licensed under AGPL-3.0-or-later.">
+    <meta name="twitter:image" content="https://auraspend.github.io/auraspend/img/og.png">
     <link rel="stylesheet" href="css/style.css">
-    <link rel="icon" href="store/icon-512.png" type="image/png">
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
 </head>
 <body>
     <a class="skip-link" href="#main">Skip to content</a>
 
-    <header class="site-header">
-        <div class="container">
-            <a href="index.html" class="logo" aria-label="AuraSpend home">
-                <span class="logo-mark" aria-hidden="true"><img src="store/icon-512.png" alt=""></span>
-                <span class="logo-word">Aura<em>Spend</em></span>
-            </a>
-            <div class="header-right">
-                <nav aria-label="Primary">
-                    <ul class="nav-list" id="site-nav">
-                        <li><a href="index.html#features">Features</a></li>
-                        <li><a href="index.html#privacy">Privacy</a></li>
-                        <li><a href="index.html#open-source">Open source</a></li>
-                        <li><a href="privacy.html">Privacy policy</a></li>
-                        <li><a href="terms.html" aria-current="page">Terms</a></li>
-                        <li><a href="https://github.com/auraspend/auraspend" class="nav-cta" target="_blank" rel="noopener">GitHub</a></li>
-                    </ul>
-                </nav>
-                <button class="theme-toggle" type="button" aria-label="Switch to dark theme">
-                    <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
-                    <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+        <header class="site-header">
+        <div class="container site-header__inner">
+            <a href="index.html" class="logo" aria-label="AuraSpend home">Aura<em>Spend</em><span class="logo__dot" aria-hidden="true"></span></a>
+            <nav class="nav" id="site-nav" aria-label="Primary">
+                <ul>
+                    <li><a href="index.html#how">How it works</a></li>
+                    <li><a href="index.html#features">Features</a></li>
+                    <li><a href="screenshots.html">Screenshots</a></li>
+                    <li><a href="download.html">Download</a></li>
+                    <li><a href="faq.html">FAQ</a></li>
+                    <li><a href="index.html#open-source">Open source</a></li>
+                </ul>
+            </nav>
+            <div class="header-actions">
+                <button class="icon-btn theme-toggle" type="button" aria-label="Switch to dark theme">
+                    <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+                    <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
                 </button>
-                <button class="menu-toggle" aria-label="Open menu" aria-expanded="false" aria-controls="site-nav">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+                <a class="btn btn--primary btn--sm header-cta" href="download.html">Get the app</a>
+                <button class="icon-btn menu-toggle" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="site-nav">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
                 </button>
             </div>
         </div>
     </header>
 
-    <main id="main" class="legal">
-        <div class="container legal-wrap">
-            <aside class="toc" aria-label="On this page">
-                <h2>On this page</h2>
-                <ol>
-                    <li><a href="#summary">Summary</a></li>
-                    <li><a href="#acceptance">1. Acceptance</a></li>
-                    <li><a href="#service">2. The app</a></li>
-                    <li><a href="#licence">3. Open-source licence</a></li>
-                    <li><a href="#price">4. Price and builds</a></li>
-                    <li><a href="#content">5. Your data</a></li>
-                    <li><a href="#third-party">6. Third parties</a></li>
-                    <li><a href="#use">7. Acceptable use</a></li>
-                    <li><a href="#warranty">8. No warranty</a></li>
-                    <li><a href="#liability">9. Limitation of liability</a></li>
-                    <li><a href="#indemnity">10. Indemnity</a></li>
-                    <li><a href="#law">11. Governing law and disputes</a></li>
-                    <li><a href="#termination">12. Ending use</a></li>
-                    <li><a href="#changes">13. Changes</a></li>
-                    <li><a href="#general">14. General</a></li>
-                </ol>
-            </aside>
-
-            <article>
+    <main id="main">
+        <section class="page-head">
+            <div class="container container--prose">
+                <span class="eyebrow">Legal</span>
                 <h1>Terms of Service</h1>
-                <p class="updated">Effective 10 October 2026</p>
+                <p class="lead">What you get, what you owe, and the limits of what a piece of software can promise.</p>
+                <p class="updated">Effective 19 October 2026</p>
+            </div>
+        </section>
+
+        <section class="section section--tight" style="padding-top:0">
+            <div class="container container--prose">
 
                 <div class="summary" id="summary">
                     <h2>The short version</h2>
@@ -94,28 +85,49 @@
                     </ul>
                 </div>
 
-                <section id="acceptance">
+                <nav class="toc" aria-label="On this page">
+                    <h2>On this page</h2>
+                    <ol>
+                        <li><a href="#acceptance">Acceptance</a></li>
+                        <li><a href="#service">The app</a></li>
+                        <li><a href="#licence">Open-source licence</a></li>
+                        <li><a href="#price">Price and builds</a></li>
+                        <li><a href="#content">Your data</a></li>
+                        <li><a href="#third-party">6. Third parties</a></li>
+                        <li><a href="#use">Acceptable use</a></li>
+                        <li><a href="#warranty">No warranty</a></li>
+                        <li><a href="#liability">Limitation of liability</a></li>
+                        <li><a href="#indemnity">Indemnity</a></li>
+                        <li><a href="#law">Governing law and disputes</a></li>
+                        <li><a href="#termination">Ending use</a></li>
+                        <li><a href="#changes">Changes</a></li>
+                        <li><a href="#general">General</a></li>
+                    </ol>
+                </nav>
+
+                <section id="acceptance" class="lsec">
                     <h2>1. Acceptance</h2>
                     <p>These Terms govern your use of the AuraSpend Android app and this website (together, the "App"). AW Builds ("we", "us") publishes the App. By installing or using the App you agree to these Terms. If you do not agree, do not install or use it.</p>
                     <p>You must be old enough to form a binding contract in your place of residence, or have a parent or guardian's permission. The App is designed for personal use.</p>
                 </section>
 
-                <section id="service">
+                <section id="service" class="lsec">
                     <h2>2. The app</h2>
                     <p>AuraSpend helps you record and review your personal spending. Its features include:</p>
                     <ul>
                         <li>Manual entry of income and expenses.</li>
-                        <li>Monthly budgets per category.</li>
-                        <li>Subscriptions and savings goals.</li>
+                        <li>Budgets per category, over a weekly, monthly or yearly period.</li>
+                        <li>Subscriptions, savings goals, and recurring payments detected from your messages.</li>
                         <li>Optional reading of bank SMS, with a review step before anything is saved.</li>
                         <li>Insights and charts of your cash flow and spending.</li>
                         <li>CSV export and import.</li>
                         <li>Optional backup to and restore from your own Google Drive.</li>
+                        <li>An optional app lock, and an encrypted database on the device.</li>
                     </ul>
                     <p>The App runs on your device and has no service of its own that holds your data. We may change or remove features in later releases. Where a change affects data you have stored, we will say so in the release notes.</p>
                 </section>
 
-                <section id="licence">
+                <section id="licence" class="lsec">
                     <h2>3. Open-source licence</h2>
                     <h3>3.1 Your rights</h3>
                     <p>The AuraSpend source code is licensed under the GNU Affero General Public License, version 3 or later (AGPL-3.0-or-later, "AGPL"). The full text is at <a href="https://www.gnu.org/licenses/agpl-3.0.en.html" target="_blank" rel="noopener">gnu.org/licenses/agpl-3.0.en.html</a>, in the <a href="https://github.com/auraspend/auraspend/blob/main/LICENSE" target="_blank" rel="noopener">LICENSE file</a> and in the App under <strong>Settings → About → Open-source licenses</strong>. The AGPL governs your rights to copy, modify and distribute the software. Nothing in these Terms restricts those rights.</p>
@@ -136,24 +148,25 @@
                     <p>The name and logo "AuraSpend" are trademarks of AW Builds. The AGPL does not grant rights to them. You may say that your build is based on AuraSpend, but you may not describe a modified or unofficial build as endorsed or published by AW Builds, or use the name and logo in a way that suggests it is.</p>
                 </section>
 
-                <section id="price">
+                <section id="price" class="lsec">
                     <h2>4. Price and builds</h2>
                     <h3>4.1 No charge</h3>
                     <p>AuraSpend has no paywall, no in-app purchases and no premium tier. Every feature is available in every build at no cost.</p>
                     <h3>4.2 Builds</h3>
                     <ul>
-                        <li><strong>Google Play build:</strong> the build prepared for Google Play under the application ID <code>com.awbuilds.auraspend</code>. The listing is staged in the Play Console and has not been published yet.</li>
-                        <li><strong>GitHub Releases APK:</strong> the same app, signed with the same release key, for installing directly. The latest release is on <a href="https://github.com/auraspend/auraspend/releases" target="_blank" rel="noopener">GitHub Releases</a>.</li>
+                        <li><strong>Google Play build:</strong> the build prepared for Google Play under the application ID <code>com.awbuilds.auraspend</code>, published to the <code>alpha</code> closed-testing track.</li>
+                        <li><strong>GitHub Releases APK:</strong> the same app, signed with the same release key, for installing directly. The latest release is on <a href="https://github.com/auraspend/auraspend/releases" target="_blank" rel="noopener">GitHub Releases</a>, with a SHA-256 checksum file beside every artifact.</li>
+                        <li><strong>F-Droid build:</strong> the same app without Google Play Services, which means no Google Drive backup and no in-app update check. F-Droid handles updates there. Everything else is identical.</li>
                         <li><strong>Your own build:</strong> you may build from the source. Builds you make are not published or endorsed by us, and you are responsible for them.</li>
                     </ul>
-                    <p>The App contains no analytics, advertising or telemetry in any build.</p>
+                    <p>The App contains no analytics, advertising or telemetry in any build. The difference between the builds is recorded in the project's decision records, ADR 0012 and ADR 0013.</p>
                     <h3>4.3 Supporting the project</h3>
                     <p>Support is voluntary. You can contribute code, documentation or bug reports through the project repository. Any donation is a gift. It is not a purchase, it buys no feature, and it is not refundable.</p>
                 </section>
 
-                <section id="content">
+                <section id="content" class="lsec">
                     <h2>5. Your data</h2>
-                    <p>You own the financial information you enter into the App ("your data"). We do not claim any rights to it. The App keeps your data on your device, except for a Drive backup you choose to restore. For what is stored and how to delete it, see the <a href="privacy.html">Privacy Policy</a>.</p>
+                    <p>You own the financial information you enter into the App ("your data"). We do not claim any rights to it. The App keeps your data on your device, except for a Drive backup you choose to create. For what is stored and how to delete it, see the <a href="privacy.html">Privacy Policy</a>.</p>
                     <p>You are responsible for keeping your own copies of anything important. Uninstalling the App deletes data stored on your device, and that cannot be undone. Export to CSV first if you want a copy.</p>
                 </section>
 
@@ -162,12 +175,12 @@
                     <p>Two optional features connect to services we do not run:</p>
                     <ul>
                         <li><strong>Hugging Face</strong> hosts the optional categorisation model. It is subject to <a href="https://huggingface.co/terms-of-service" target="_blank" rel="noopener">Hugging Face's Terms of Service</a>.</li>
-                        <li><strong>Google Drive and Google sign-in</strong> are used for restoring a backup. They are subject to the <a href="https://developers.google.com/terms" target="_blank" rel="noopener">Google API Terms of Service</a>.</li>
+                        <li><strong>Google Drive and Google sign-in</strong> are used for backing up and restoring a backup. They are subject to the <a href="https://developers.google.com/terms" target="_blank" rel="noopener">Google API Terms of Service</a>.</li>
                     </ul>
                     <p>We are not responsible for those services or for their availability, accuracy or conduct.</p>
                 </section>
 
-                <section id="use">
+                <section id="use" class="lsec">
                     <h2>7. Acceptable use</h2>
                     <p>You agree not to:</p>
                     <ul>
@@ -177,24 +190,24 @@
                     </ul>
                 </section>
 
-                <section id="warranty">
+                <section id="warranty" class="lsec">
                     <h2>8. No warranty</h2>
                     <p>THE APP IS PROVIDED "AS IS" AND "AS AVAILABLE", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, TITLE AND NON-INFRINGEMENT. WE DO NOT WARRANT THAT THE APP WILL BE ERROR-FREE OR UNINTERRUPTED, OR THAT THE FIGURES IT SHOWS ARE COMPLETE OR ACCURATE.</p>
                     <p>AuraSpend is a personal record. It is not a bank statement, an accounting system or investment advice. Bank-message parsing can be wrong, and you should check transactions against your bank before relying on them. Nothing in the App is advice to buy, sell or hold any asset.</p>
                 </section>
 
-                <section id="liability">
+                <section id="liability" class="lsec">
                     <h2>9. Limitation of liability</h2>
                     <p>TO THE MAXIMUM EXTENT PERMITTED BY LAW, AW BUILDS WILL NOT BE LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL OR PUNITIVE DAMAGES, OR FOR ANY LOSS OF DATA, PROFITS OR MONEY, ARISING FROM YOUR USE OF THE APP.</p>
                     <p>OUR TOTAL LIABILITY FOR ANY CLAIM RELATING TO THE APP WILL NOT EXCEED THE AMOUNT YOU PAID US FOR IT, WHICH IS ZERO. Nothing in these Terms limits liability that cannot be limited under applicable law, including liability for death or personal injury caused by negligence, or for fraud.</p>
                 </section>
 
-                <section id="indemnity">
+                <section id="indemnity" class="lsec">
                     <h2>10. Indemnity</h2>
                     <p>If your use of the App breaks these Terms or the law and that causes a claim against us, you will cover our reasonable costs of responding to it. This does not apply to claims caused by our own breach of these Terms.</p>
                 </section>
 
-                <section id="law">
+                <section id="law" class="lsec">
                     <h2>11. Governing law and disputes</h2>
                     <h3>11.1 Governing law</h3>
                     <p>These Terms are governed by the laws of India and the courts of Kerala, India. If you live in the EEA, UK or another place that gives you consumer protections you cannot waive, those protections still apply.</p>
@@ -202,18 +215,18 @@
                     <p>Please contact us at <a href="mailto:awbuilds.support@gmail.com">awbuilds.support@gmail.com</a> before starting a dispute. We will try to resolve it within 60 days.</p>
                 </section>
 
-                <section id="termination">
+                <section id="termination" class="lsec">
                     <h2>12. Ending use</h2>
                     <p>You can stop using the App at any time by uninstalling it. We may stop distributing any build, or change these Terms, but we will not terminate a licence the AGPL grants you to the source code.</p>
                     <p>Sections 3, 5, 8, 9, 10, 11 and 14 continue to apply after you stop using the App.</p>
                 </section>
 
-                <section id="changes">
+                <section id="changes" class="lsec">
                     <h2>13. Changes</h2>
                     <p>We may update these Terms. When we do, we change the effective date at the top of this page and record the change in the project's public history. If a change is material, we will say so in the release notes. Continuing to use the App after a change means you accept it.</p>
                 </section>
 
-                <section id="general">
+                <section id="general" class="lsec">
                     <h2>14. General</h2>
                     <ul>
                         <li><strong>Entire agreement:</strong> these Terms, the Privacy Policy and the AGPL are the whole agreement between you and AW Builds about the App.</li>
@@ -222,26 +235,24 @@
                         <li><strong>Contact:</strong> <a href="mailto:awbuilds.support@gmail.com">awbuilds.support@gmail.com</a>, or <a href="https://github.com/auraspend/auraspend" target="_blank" rel="noopener">github.com/auraspend/auraspend</a>.</li>
                     </ul>
                 </section>
-            </article>
-        </div>
+            </div>
+        </section>
     </main>
 
-    <footer class="site-footer">
+        <footer class="site-footer">
         <div class="container">
             <div class="footer-grid">
                 <div>
-                    <a href="index.html" class="logo">
-                        <span class="logo-mark" aria-hidden="true"><img src="store/icon-512.png" alt=""></span>
-                        <span class="logo-word">Aura<em>Spend</em></span>
-                    </a>
-                    <p>An open-source expense tracker for Android. Free software under AGPL-3.0.</p>
+                    <a href="index.html" class="logo">Aura<em>Spend</em><span class="logo__dot" aria-hidden="true"></span></a>
+                    <p>An open-source expense tracker for Android. Your bank messages become a ledger — on your phone, not on a server.</p>
                 </div>
                 <div>
                     <h3>Product</h3>
                     <ul>
                         <li><a href="index.html#features">Features</a></li>
-                        <li><a href="https://github.com/auraspend/auraspend/releases">Downloads</a></li>
-                        <li><a href="https://github.com/auraspend/auraspend#building-a-release" target="_blank" rel="noopener">Build from source</a></li>
+                        <li><a href="screenshots.html">Screenshots</a></li>
+                        <li><a href="download.html">Download</a></li>
+                        <li><a href="faq.html">FAQ</a></li>
                         <li><a href="changelog.html">Changelog</a></li>
                     </ul>
                 </div>
@@ -249,7 +260,7 @@
                     <h3>Legal</h3>
                     <ul>
                         <li><a href="privacy.html">Privacy policy</a></li>
-                        <li><a href="terms.html">Terms of service</a></li>
+                        <li><a href="terms.html" aria-current="page">Terms of service</a></li>
                         <li><a href="https://github.com/auraspend/auraspend/blob/main/LICENSE" target="_blank" rel="noopener">Licence</a></li>
                         <li><a href="https://github.com/auraspend/auraspend/blob/main/.github/SECURITY.md" target="_blank" rel="noopener">Security</a></li>
                     </ul>
@@ -257,60 +268,20 @@
                 <div>
                     <h3>Community</h3>
                     <ul>
-                        <li><a href="https://github.com/auraspend/auraspend" target="_blank" rel="noopener">GitHub</a></li>
+                        <li><a href="https://github.com/auraspend/auraspend" target="_blank" rel="noopener">Source code</a></li>
                         <li><a href="https://github.com/auraspend/auraspend/issues" target="_blank" rel="noopener">Report a bug</a></li>
-                        <li><a href="https://github.com/auraspend/auraspend/discussions" target="_blank" rel="noopener">Discussions</a></li>
+                        <li><a href="https://github.com/auraspend/auraspend/commits/main" target="_blank" rel="noopener">Commit history</a></li>
+                        <li><a href="https://github.com/auraspend/auraspend/tree/main/docs/adr" target="_blank" rel="noopener">Decision records</a></li>
                     </ul>
                 </div>
             </div>
             <div class="footer-bottom">
                 <span>© 2026 AW Builds</span>
-                <span>AuraSpend is licensed under AGPL-3.0-or-later.</span>
+                <span>AuraSpend is free software under the AGPL-3.0-or-later.</span>
             </div>
         </div>
     </footer>
 
-    <script>
-        // ── Theme: a stored choice wins, otherwise the system decides ─────────
-        (function () {
-            var root = document.documentElement;
-            var button = document.querySelector('.theme-toggle');
-            var media = window.matchMedia('(prefers-color-scheme: dark)');
-
-            function preferred() {
-                return root.getAttribute('data-theme') || (media.matches ? 'dark' : 'light');
-            }
-            function paint() {
-                var dark = preferred() === 'dark';
-                if (button) {
-                    button.setAttribute('aria-label', dark ? 'Switch to light theme' : 'Switch to dark theme');
-                    button.classList.toggle('is-dark', dark);
-                }
-            }
-            if (button) {
-                button.addEventListener('click', function () {
-                    var next = preferred() === 'dark' ? 'light' : 'dark';
-                    root.setAttribute('data-theme', next);
-                    try { localStorage.setItem('auraspend-theme', next); } catch (e) { /* ignore */ }
-                    paint();
-                });
-            }
-            if (media.addEventListener) media.addEventListener('change', paint);
-            paint();
-        })();
-
-        // ── Mobile menu ───────────────────────────────────────────────────────
-        (function () {
-            var toggle = document.querySelector('.menu-toggle');
-            var list = document.getElementById('site-nav');
-            if (!toggle || !list) return;
-            toggle.addEventListener('click', function () {
-                var open = toggle.getAttribute('aria-expanded') === 'true';
-                toggle.setAttribute('aria-expanded', String(!open));
-                toggle.setAttribute('aria-label', open ? 'Open menu' : 'Close menu');
-                list.classList.toggle('open', !open);
-            });
-        })();
-    </script>
+    <script src="js/site.js" defer></script>
 </body>
 </html>

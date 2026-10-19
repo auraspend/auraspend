@@ -10,6 +10,8 @@ A world-class expense manager for Android 17 (API 37) with bank message classifi
 
 Made with ❤️ by AW Builds
 
+**Website:** <https://auraspend.github.io/auraspend/> — the source for it is in [`/site`](site/), published by GitHub Pages from that folder.
+
 ---
 
 ## Features

@@ -2,6 +2,51 @@
 
 Durable decisions with context. Latest first.
 
+## D28 — The website is its own product surface, and it publishes from `/site` (2026-10-20)
+
+Handoff 0067 rebuilt the public site, and the structural decision is the one
+worth keeping: **the site moved out of `docs/` and into `/site`**, and GitHub
+Pages now publishes that folder from `.github/workflows/pages.yml` instead of
+serving `/docs` from the `main` branch.
+
+- **Why.** `docs/` is the engineering record — 67 handoffs, 14 ADRs, the
+  evaluation reports, the code review. Serving it as web pages put all of that
+  under the product's own domain, indexed by search engines. The repository is
+  public anyway, so this was never about secrecy; it was about the *published
+  surface* being exactly the product's front door and nothing else.
+- **The URL does not change.** A project site's base path is independent of the
+  source folder, so `auraspend.github.io/auraspend/` still holds and every
+  relative link still resolves. Switching the source to "GitHub Actions" is a
+  one-time manual step in the repository settings — `GITHUB_TOKEN` cannot
+  change a repository's own Pages source.
+- **The site is the app's design system, not a marketing skin.** It uses the
+  **Quiet Ledger** tokens verbatim from `ui/theme/Color.kt` and the interface
+  concept: paper, ink, one violet accent, hairline borders, no gradients, no
+  shadows on content. A change to the app's palette is a change to
+  `site/css/style.css` in the same commit. The old site was still Aurora
+  purple years after the app stopped being purple, and that divergence is
+  exactly what made it read as a different product.
+- **The failure mode to watch for is a number the app stopped producing.** A
+  parser count, a test count, a corpus percentage, an APK size, a version
+  number. The old site promised "progress rings" long after the concept retired
+  rings, and told visitors the Play listing was staged five releases after it
+  shipped. Re-derive every number; never carry it forward.
+- **The header and footer are stamped, not templated.** There is no build step
+  — the site is plain static HTML with one stylesheet and one script, so a
+  build would be a liability. `tools/stamp_site_chrome.py` copies the chrome
+  out of `site/index.html` into every other page verbatim and marks the
+  current page for assistive technology. Re-run it after changing the chrome.
+- **Two gates cover it.** `tools/check_license.sh` and
+  `tools/check_privacy_claims.sh` read `site/*.html`, and CI runs both on
+  every PR that touches `site/**`. The privacy gate is *line-scoped*, so a
+  claim split across two lines of markup escapes it — the stricter check is a
+  strip-tags pass, not a line pass.
+- **A trap worth keeping:** an `<img>` with `width` and `height` attributes
+  and a CSS `width: 100%` but no `height: auto` renders at the *attribute's*
+  height. Every screenshot on the site carries both attributes, so one missing
+  declaration made the hero phone 2,500px tall and pushed the entire hero copy
+  below the fold — which looked exactly like a broken layout.
+
 ## D27 — A baseline profile is a build artifact, and three traps guard it (2026-10-18)
 
 Handoff 0061 found the app's `baseline-prof.txt` was five weeks stale and knew

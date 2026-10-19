@@ -3,7 +3,19 @@
 > Read this file and the latest file in `docs/handoffs/` before touching anything.
 > Update both (plus `CLAUDE.md` / `memory/` when you learn something durable) before ending a session.
 >
-> Latest: `docs/handoffs/0066-release-0.1.91.md` — **0.1.91 is cut** (versionCode
+> Latest: `docs/handoffs/0067-website-rebuild.md` — **the public site was rebuilt**
+> and moved. It had been the last surface still carrying the old product: the
+> purple Aurora look, 2026-10-10 screenshots of a two-redesign-old UI, a
+> "Play listing is still staged" line that was five releases out of date, and a
+> privacy policy that claimed the app had no "erase all data" button (it has had
+> one since 0040). It is now `/site` — seven pages, the app's own **Quiet
+> Ledger** tokens verbatim, the current captures, the SMS→ledger transformation,
+> the review queue, the privacy ledger and the open-source proof. **No app code
+> changed**: still 0.1.91, 614 tests. The site now publishes from `/site` via
+> `.github/workflows/pages.yml` rather than from `/docs`, so the 67 handoffs, the
+> ADRs and the evaluation reports stop being served as web pages. **The owner
+> must switch Pages → Source → "GitHub Actions" once**; the URL does not change.
+> Before: `docs/handoffs/0066-release-0.1.91.md` — **0.1.91 is cut** (versionCode
 > 13), a patch on 0.1.9 with three presentation changes and **no data, schema or
 > classification change**: Plan now counts the subscriptions its screen actually
 > lists (0065), Home regained a seven-day strip so a quiet day is not empty
@@ -661,6 +673,8 @@ Do not start new work without reading the latest handoff.
 |---|---|
 | `:app` | Everything (UI, domain, data) |
 | `:benchmark` | Macrobenchmark module for cold-start and baseline-profile generation. Not shipped, not part of the app. |
+| `site/` | The public website. Plain static HTML, one stylesheet, one script, no build step. Published by GitHub Pages from this folder (`.github/workflows/pages.yml`), **not** from `docs/`. |
+| `docs/` | The internal engineering record — handoffs, ADRs, evaluations, reviews, the store editor. **Not published.** |
 
 On-device inference is ONNX Runtime (an AAR, not a module). The `:llama` module
 and the `third_party/llama.cpp` submodule were removed in handoff 0013 along with
@@ -803,6 +817,23 @@ application id): `:benchmark:connectedDevBenchmarkAndroidTest` — see README.
    features after Drive backup made it false — a promise that drifts by omission
    needs a tripwire, not another review comment. Add the exception, do not
    delete the claim.
+10. **The website must only say what the app does.** The site in `/site` is the
+    product's front door, and it makes specific claims — 53 parsers, 97.6 %
+    exact, 614 tests, SQLCipher at rest, an app lock, three distribution
+    channels. Every one of them was checked against the source before it was
+    written, and every one of them must be re-checked when the app changes. A
+    stale claim on the website is exactly as bad as a stale claim in the app:
+    the old site promised "progress rings" for years after the concept retired
+    rings, and told visitors the Play listing was staged five releases after it
+    shipped. **The failure mode to watch for is a number that the app stopped
+    producing** — a parser count, a test count, a corpus percentage, a file
+    size, a version. Re-derive them; do not carry them forward. The site also
+    uses the app's own **Quiet Ledger** tokens (paper, ink, one violet accent,
+    hairline borders, no gradients) — a change to `ui/theme/Color.kt` or the
+    interface concept is a change to `site/css/style.css` in the same commit.
+    Both gates run on every PR that touches `site/**`, and the header and
+    footer are stamped into each page by `tools/stamp_site_chrome.py` — re-run
+    it after changing the chrome in `site/index.html`.
 
 ## Design system quick reference
 

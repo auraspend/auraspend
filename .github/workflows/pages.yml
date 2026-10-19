@@ -1,0 +1,54 @@
+name: Pages
+
+# The public site lives in /site and is published from there. The rest of
+# /docs is the project's internal engineering record — handoffs, decision
+# records, evaluations and reviews — and is deliberately NOT published.
+#
+# One-time setup in the repository settings:
+#   Settings → Pages → Build and deployment → Source → "GitHub Actions"
+#
+# Until that switch is made, the previous branch-based deployment from /docs
+# continues to serve the old site and this workflow's deployment will fail
+# with a permissions error. The site is also published from a custom domain
+# if one is added later; the URLs below are relative, so nothing breaks.
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "site/**"
+      - ".github/workflows/pages.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# One deployment at a time; a newer push cancels an in-flight one.
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v6
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v6
+
+      - name: Upload the site
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: ./site
+
+      - name: Deploy
+        id: deployment
+        uses: actions/deploy-pages@v5

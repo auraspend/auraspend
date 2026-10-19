@@ -72,11 +72,11 @@ check_mentions "CONTRIBUTING states AGPL and copyright assignment" \
 check_mentions "PR template carries the assignment confirmation" \
     .github/PULL_REQUEST_TEMPLATE.md 'assign copyright in this contribution'
 check_mentions "website hero states AGPL" \
-    docs/index.html 'AGPL-3\.0'
+    site/index.html 'AGPL-3\.0'
 check_mentions "website schema.org licence is AGPL" \
-    docs/index.html '"license": "https://www\.gnu\.org/licenses/agpl'
+    site/index.html '"license": "https://www\.gnu\.org/licenses/agpl'
 check_mentions "terms of service state AGPL" \
-    docs/terms.html 'agpl-3\.0'
+    site/terms.html 'agpl-3\.0'
 check_mentions "third-party licence index exists" \
     docs/licenses/README.md 'AGPL-3\.0-or-later'
 
@@ -89,7 +89,7 @@ check_mentions "third-party licence index exists" \
 # when it carries a marker explaining why an Apache mention is legitimate.
 # Failures print the offending line, because "it failed" is not actionable.
 exempt='0\.1\.0|0\.1\.1|relicens|was Apache|rather than|was licensed under|third.party|this project relicens'
-for f in README.md docs/index.html docs/terms.html \
+for f in README.md site/index.html site/terms.html \
          app/src/main/res/values/strings.xml \
          app/src/main/res/values-hi/strings.xml \
          .github/CONTRIBUTING.md; do

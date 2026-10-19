@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#EBE7DE" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#080807" media="(prefers-color-scheme: dark)">
+    <script>
+        (function () {
+            var root = document.documentElement;
+            root.classList.add("js");
+            try {
+                var stored = localStorage.getItem("auraspend-theme");
+                if (stored === "light" || stored === "dark") {
+                    root.setAttribute("data-theme", stored);
+                }
+            } catch (e) { /* private mode: follow the system theme */ }
+        })();
+    </script>
+    <title>Screenshots — AuraSpend</title>
+    <meta name="description" content="Every screen in AuraSpend 0.1.91, in light and dark: Home, Activity, Plan, Insights, Quick Add, Subscriptions, transaction detail and Settings.">
+    <link rel="canonical" href="https://auraspend.github.io/auraspend/screenshots.html">
+    <meta property="og:title" content="Screenshots — AuraSpend">
+    <meta property="og:description" content="Every screen in AuraSpend 0.1.91, in light and dark.">
+    <meta property="og:url" content="https://auraspend.github.io/auraspend/screenshots.html">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="AuraSpend">
+    <meta property="og:image" content="https://auraspend.github.io/auraspend/img/og.png">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Screenshots — AuraSpend">
+    <meta name="twitter:description" content="Every screen in AuraSpend 0.1.91, in light and dark.">
+    <meta name="twitter:image" content="https://auraspend.github.io/auraspend/img/og.png">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
+</head>
+<body>
+    <a class="skip-link" href="#main">Skip to content</a>
+
+        <header class="site-header">
+        <div class="container site-header__inner">
+            <a href="index.html" class="logo" aria-label="AuraSpend home">Aura<em>Spend</em><span class="logo__dot" aria-hidden="true"></span></a>
+            <nav class="nav" id="site-nav" aria-label="Primary">
+                <ul>
+                    <li><a href="index.html#how">How it works</a></li>
+                    <li><a href="index.html#features">Features</a></li>
+                    <li><a href="screenshots.html" aria-current="page">Screenshots</a></li>
+                    <li><a href="download.html">Download</a></li>
+                    <li><a href="faq.html">FAQ</a></li>
+                    <li><a href="index.html#open-source">Open source</a></li>
+                </ul>
+            </nav>
+            <div class="header-actions">
+                <button class="icon-btn theme-toggle" type="button" aria-label="Switch to dark theme">
+                    <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+                    <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+                </button>
+                <a class="btn btn--primary btn--sm header-cta" href="download.html">Get the app</a>
+                <button class="icon-btn menu-toggle" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="site-nav">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main id="main">
+        <section class="page-head">
+            <div class="container">
+                <span class="eyebrow">Screenshots</span>
+                <h1>Every screen, exactly as it ships.</h1>
+                <p class="lead">These are the real app, captured from the release build at 390 × 844 dp. The theme toggle in the header switches them all at once — the captures exist in a light and a dark pair for that reason.</p>
+            </div>
+        </section>
+
+        <section class="section section--tight" style="padding-top:0">
+            <div class="container">
+                <div class="shots">
+                    <figure class="shot reveal">
+                        <div class="shot__frame">
+                            <img src="img/screens/home-light.png" width="1170" height="2532" loading="lazy" alt="Home: the greeting, the total balance, money in and out, a seven-day spending strip, budget progress and today's transactions" data-light-src="img/screens/home-light.png" data-dark-src="img/screens/home-dark.png">
+                        </div>
+                        <figcaption>Home</figcaption>
+                        <p>Balance, this month's flow, a seven-day strip, one budget aggregate, and the day’s transactions.</p>
+                    </figure>
+
+                    <figure class="shot reveal">
+                        <div class="shot__frame">
+                            <img src="img/screens/activity-light.png" width="1170" height="2532" loading="lazy" alt="Activity: search, category filters, a sticky day header with the day's net amount, and transaction rows" data-light-src="img/screens/activity-light.png" data-dark-src="img/screens/activity-dark.png">
+                        </div>
+                        <figcaption>Activity</figcaption>
+                        <p>Search, filters, month navigation and a day-by-day ledger.</p>
+                    </figure>
+
+                    <figure class="shot reveal">
+                        <div class="shot__frame">
+                            <img src="img/screens/plan-light.png" width="1170" height="2532" loading="lazy" alt="Plan: money spent against budgets, a usage bar, and per-category budget rows" data-light-src="img/screens/plan-light.png" data-dark-src="img/screens/plan-dark.png">
+                        </div>
+                        <figcaption>Plan</figcaption>
+                        <p>Budgets, subscriptions and savings goals, with the true percentage.</p>
+                    </figure>
+
+                    <figure class="shot reveal">
+                        <div class="shot__frame">
+                            <img src="img/screens/insights-light.png" width="1170" height="2532" loading="lazy" alt="Insights: total spent for the period, a change against last month, spending by category and top merchants" data-light-src="img/screens/insights-light.png" data-dark-src="img/screens/insights-dark.png">
+                        </div>
+                        <figcaption>Insights</figcaption>
+                        <p>Where it went, how it compares, and who you spent with.</p>
+                    </figure>
+
+                    <figure class="shot reveal">
+                        <div class="shot__frame">
+                            <img src="img/screens/subscriptions-light.png" width="1170" height="2532" loading="lazy" alt="Subscriptions: the tracked recurring payments with their renewal dates, and the recurring payments detected from messages" data-light-src="img/screens/subscriptions-light.png" data-dark-src="img/screens/subscriptions-dark.png">
+                        </div>
+                        <figcaption>Subscriptions</figcaption>
+                        <p>What you renew, and what AuraSpend has spotted in your messages.</p>
+                    </figure>
+
+                    <figure class="shot reveal">
+                        <div class="shot__frame">
+                            <img src="img/screens/quick-add-light.png" width="1170" height="2532" loading="lazy" alt="Quick Add: a large amount display, a numeric keypad, category chips, merchant and date, and a Save button" data-light-src="img/screens/quick-add-light.png" data-dark-src="img/screens/quick-add-dark.png">
+                        </div>
+                        <figcaption>Quick Add</figcaption>
+                        <p>Amount, category, merchant, date — and Save, never below the fold.</p>
+                    </figure>
+
+                    <figure class="shot reveal">
+                        <div class="shot__frame">
+                            <img src="img/screens/detail-light.png" width="1170" height="2532" loading="lazy" alt="Transaction detail: the category, the amount, the merchant, and the original bank message with a copy action" data-light-src="img/screens/detail-light.png" data-dark-src="img/screens/detail-dark.png">
+                        </div>
+                        <figcaption>Transaction detail</figcaption>
+                        <p>The original bank message, a copy button, and a tap to re-categorise.</p>
+                    </figure>
+
+                    <figure class="shot reveal">
+                        <div class="shot__frame">
+                            <img src="img/screens/settings-light.png" width="1170" height="2532" loading="lazy" alt="Settings: Money, Messages, Appearance, Data and About, with the theme choices and the data controls" data-light-src="img/screens/settings-light.png" data-dark-src="img/screens/settings-dark.png">
+                        </div>
+                        <figcaption>Settings</figcaption>
+                        <p>Money, Messages, Appearance, Data, About — and a review queue that tells you its count.</p>
+                    </figure>
+                </div>
+            </div>
+        </section>
+
+        <section class="section section--paper">
+            <div class="container container--prose">
+                <h2>About these captures</h2>
+                <p>They were taken on an Android emulator running the release build, with the app's locale set to <code>en-IN</code> and the screen at exactly 390 × 844 dp — the geometry of a typical phone. The numbers are demo data, and the demo data was chosen to be honest: a month that is going fine, with budgets between 41 % and 93 % used and nothing over.</p>
+                <p>The light and dark versions are the same app in the same two themes, so the theme toggle switches every image on this page at once. If you would rather see the app in your own hands, <a href="download.html">download it</a> — it is about 41 MB.</p>
+            </div>
+        </section>
+    </main>
+
+        <footer class="site-footer">
+        <div class="container">
+            <div class="footer-grid">
+                <div>
+                    <a href="index.html" class="logo">Aura<em>Spend</em><span class="logo__dot" aria-hidden="true"></span></a>
+                    <p>An open-source expense tracker for Android. Your bank messages become a ledger — on your phone, not on a server.</p>
+                </div>
+                <div>
+                    <h3>Product</h3>
+                    <ul>
+                        <li><a href="index.html#features">Features</a></li>
+                        <li><a href="screenshots.html" aria-current="page">Screenshots</a></li>
+                        <li><a href="download.html">Download</a></li>
+                        <li><a href="faq.html">FAQ</a></li>
+                        <li><a href="changelog.html">Changelog</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h3>Legal</h3>
+                    <ul>
+                        <li><a href="privacy.html">Privacy policy</a></li>
+                        <li><a href="terms.html">Terms of service</a></li>
+                        <li><a href="https://github.com/auraspend/auraspend/blob/main/LICENSE" target="_blank" rel="noopener">Licence</a></li>
+                        <li><a href="https://github.com/auraspend/auraspend/blob/main/.github/SECURITY.md" target="_blank" rel="noopener">Security</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h3>Community</h3>
+                    <ul>
+                        <li><a href="https://github.com/auraspend/auraspend" target="_blank" rel="noopener">Source code</a></li>
+                        <li><a href="https://github.com/auraspend/auraspend/issues" target="_blank" rel="noopener">Report a bug</a></li>
+                        <li><a href="https://github.com/auraspend/auraspend/commits/main" target="_blank" rel="noopener">Commit history</a></li>
+                        <li><a href="https://github.com/auraspend/auraspend/tree/main/docs/adr" target="_blank" rel="noopener">Decision records</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <span>© 2026 AW Builds</span>
+                <span>AuraSpend is free software under the AGPL-3.0-or-later.</span>
+            </div>
+        </div>
+    </footer>
+
+    <script src="js/site.js" defer></script>
+</body>
+</html>

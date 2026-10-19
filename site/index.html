@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#EBE7DE" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#080807" media="(prefers-color-scheme: dark)">
+    <script>
+        // Applied before the first paint, so a stored choice never flashes the
+        // other theme — and so the scroll-reveal styles only apply when the
+        // script that undoes them is actually running.
+        (function () {
+            var root = document.documentElement;
+            root.classList.add("js");
+            try {
+                var stored = localStorage.getItem("auraspend-theme");
+                if (stored === "light" || stored === "dark") {
+                    root.setAttribute("data-theme", stored);
+                }
+            } catch (e) { /* private mode: follow the system theme */ }
+        })();
+    </script>
+    <title>AuraSpend — your bank SMS becomes a ledger</title>
+    <meta name="description" content="AuraSpend is an open-source expense tracker for Android. It reads the bank messages your phone already receives and turns them into a spending record you approve — on your device, with no account, no ads and no server.">
+    <link rel="canonical" href="https://auraspend.github.io/auraspend/">
+    <meta property="og:title" content="AuraSpend — your bank SMS becomes a ledger">
+    <meta property="og:description" content="An open-source expense tracker for Android. Bank messages are parsed on your phone, categorised, and saved only when you approve them.">
+    <meta property="og:url" content="https://auraspend.github.io/auraspend/">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="AuraSpend">
+    <meta property="og:image" content="https://auraspend.github.io/auraspend/img/og.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="AuraSpend — your bank SMS becomes a ledger">
+    <meta name="twitter:description" content="An open-source expense tracker for Android. Bank messages are parsed on your phone and saved only when you approve them.">
+    <meta name="twitter:image" content="https://auraspend.github.io/auraspend/img/og.png">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="img/icon-512.png">
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "AuraSpend",
+        "operatingSystem": "Android 11 or later",
+        "applicationCategory": "FinanceApplication",
+        "operatingSystem": "Android",
+        "description": "An open-source expense tracker for Android. It reads bank messages on your phone, turns them into categorised transactions, and saves them only when you approve. Budgets, subscriptions, savings goals, insights, CSV import and export, an encrypted database and an optional app lock.",
+        "url": "https://auraspend.github.io/auraspend/",
+        "license": "https://www.gnu.org/licenses/agpl-3.0.en.html",
+        "softwareVersion": "0.1.91",
+        "downloadUrl": "https://github.com/auraspend/auraspend/releases/latest",
+        "author": {
+            "@type": "Organization",
+            "name": "AW Builds"
+        },
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "USD"
+        }
+    }
+    </script>
+</head>
+<body>
+    <a class="skip-link" href="#main">Skip to content</a>
+
+    <header class="site-header">
+        <div class="container site-header__inner">
+            <a href="index.html" class="logo" aria-label="AuraSpend home">Aura<em>Spend</em><span class="logo__dot" aria-hidden="true"></span></a>
+            <nav class="nav" id="site-nav" aria-label="Primary">
+                <ul>
+                    <li><a href="index.html#how">How it works</a></li>
+                    <li><a href="index.html#features">Features</a></li>
+                    <li><a href="screenshots.html">Screenshots</a></li>
+                    <li><a href="download.html">Download</a></li>
+                    <li><a href="faq.html">FAQ</a></li>
+                    <li><a href="index.html#open-source">Open source</a></li>
+                </ul>
+            </nav>
+            <div class="header-actions">
+                <button class="icon-btn theme-toggle" type="button" aria-label="Switch to dark theme">
+                    <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+                    <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+                </button>
+                <a class="btn btn--primary btn--sm header-cta" href="download.html">Get the app</a>
+                <button class="icon-btn menu-toggle" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="site-nav">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main id="main">
+
+        <!-- ═══ Hero ══════════════════════════════════════════════════════ -->
+        <section class="hero">
+            <div class="container hero__grid">
+                <div>
+                    <span class="eyebrow">SMS expense tracker · Offline · Android 11 and later</span>
+                    <h1>Your bank SMS becomes a <em>ledger</em>.</h1>
+                    <p class="lead">AuraSpend reads the messages your bank already sends you, turns them into a categorised spending record on your phone, and asks before it saves anything. No account, no ads, no server.</p>
+                    <div class="btn-row">
+                        <a class="btn btn--primary" href="download.html">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                            Download the APK
+                        </a>
+                        <a class="btn btn--ghost" href="#how">See how it works</a>
+                        <a class="btn btn--ghost" href="https://github.com/auraspend/auraspend" target="_blank" rel="noopener">View source</a>
+                    </div>
+                    <ul class="fact-strip">
+                        <li>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+                            No account
+                        </li>
+                        <li>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+                            No ads or trackers
+                        </li>
+                        <li>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+                            Database encrypted at rest
+                        </li>
+                        <li>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+                            Free and open source
+                        </li>
+                    </ul>
+                </div>
+                <div class="hero__media">
+                    <div class="device device--lg">
+                        <img src="img/screens/home-light.png" width="1170" height="2532" alt="AuraSpend's home screen: the total balance, this month's money in and out, a seven-day spending strip, budget progress and today's transactions" data-light-src="img/screens/home-light.png" data-dark-src="img/screens/home-dark.png" fetchpriority="high">
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ═══ How it works ══════════════════════════════════════════════ -->
+        <section class="section section--paper" id="how">
+            <div class="container">
+                <div class="section-head reveal">
+                    <span class="eyebrow">How it works</span>
+                    <h2>Three steps. The third one is you.</h2>
+                    <p class="lead">AuraSpend never asks for your card number, your net banking credentials or an account with anyone. It reads the SMS your bank already sends, on your phone.</p>
+                </div>
+
+                <div class="transform reveal">
+                    <div class="transform__step">
+                        <span class="transform__label">1 · The message arrives</span>
+                        <div class="sms">
+                            <div class="sms__head">HDFC Bank <span>Today, 20:14</span></div>
+                            <p class="sms__body">Rs 640.00 debited for UPI to SWIGGY on UPI. Reference number 523144776210. Avl Bal Rs 24,180.55</p>
+                            <p class="sms__foot">Sender ID <strong>HDFCBK</strong> — the one piece of routing metadata your phone already has, and the reason a bank-specific parser can be trusted with the numbers.</p>
+                        </div>
+                    </div>
+
+                    <div class="transform__arrow" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+                    </div>
+
+                    <div class="transform__step">
+                        <span class="transform__label">2 · Parsed on your phone</span>
+                        <dl class="parse">
+                            <div class="parse__row"><dt>Direction</dt><dd>Debit</dd></div>
+                            <div class="parse__row"><dt>Amount</dt><dd class="money">−₹640.00</dd></div>
+                            <div class="parse__row"><dt>Merchant</dt><dd>Swiggy</dd></div>
+                            <div class="parse__row"><dt>Category</dt><dd>Food &amp; Dining</dd></div>
+                            <div class="parse__row"><dt>Parsed by</dt><dd>HDFC parser</dd></div>
+                        </dl>
+                    </div>
+
+                    <div class="transform__arrow" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+                    </div>
+
+                    <div class="transform__step">
+                        <span class="transform__label">3 · In your ledger</span>
+                        <div class="ledger">
+                            <div class="txn" style="--cat:#d0574c">
+                                <span class="txn__avatar">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 3v8M11 3v8M15 3v8M19 3v8M4 11h16v6a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4z"/></svg>
+                                </span>
+                                <span class="txn__body">
+                                    <span class="txn__title">Swiggy</span>
+                                    <span class="txn__meta">Food &amp; Dining · 8:14 pm</span>
+                                </span>
+                                <span class="txn__amount txn__amount--out">−₹640</span>
+                            </div>
+                            <div class="txn" style="--cat:#3d7ebf">
+                                <span class="txn__avatar">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 17h14M5 17a2 2 0 1 1-4 0 2 2 0 0 1 4 0zM19 17a2 2 0 1 1-4 0 2 2 0 0 1 4 0zM3 17V9l1.5-4h15L21 9v8M6 9h12"/></svg>
+                                </span>
+                                <span class="txn__body">
+                                    <span class="txn__title">Uber</span>
+                                    <span class="txn__meta">Transport · 8:41 pm</span>
+                                </span>
+                                <span class="txn__amount txn__amount--out">−₹245</span>
+                            </div>
+                            <p class="ledger__foot"><span>Swipe right to save</span><span class="money">₹2,28,588</span></p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid--3" style="margin-top:var(--sp-4xl)">
+                    <div class="card reveal">
+                        <h3>No scraping, no linking</h3>
+                        <p>AuraSpend never connects to your bank. It reads the same message you already read, with read-only access to your inbox. It cannot send an SMS and never asks for banking credentials.</p>
+                    </div>
+                    <div class="card reveal">
+                        <h3>53 parsers, and a fallback</h3>
+                        <p>The sender ID picks the parser that knows that bank's format — 53 of them, covering banks, cards, wallets and payment apps. Anything else falls back to a general engine.</p>
+                    </div>
+                    <div class="card reveal">
+                        <h3>Nothing written yet</h3>
+                        <p>A parsed transaction waits in a review queue. It reaches your ledger only when you swipe it there, and you can undo that in one tap.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ═══ Review first ══════════════════════════════════════════════ -->
+        <section class="section" id="review">
+            <div class="container">
+                <div class="grid grid--2" style="gap:var(--sp-4xl);align-items:center">
+                    <div class="reveal">
+                        <span class="eyebrow">Review first</span>
+                        <h2>Nothing is saved without your say.</h2>
+                        <p class="lead">Most money apps guess and move on. AuraSpend shows you exactly what it read, and waits.</p>
+                        <ul class="checklist">
+                            <li><strong>Messages it cannot read are kept.</strong> If a message carries an amount and a movement verb but no parser claims it, it goes to a review list with its raw text — never into the bin.</li>
+                            <li><strong>Skipped messages stay visible.</strong> Every message it skips is listed in Smart Add, with a “Classify again” button, so a parser fix reaches back and re-queues it.</li>
+                            <li><strong>The model cannot delete your money.</strong> A transaction is discarded only when the parser found no amount <em>and</em> the on-device model is certain it is not one. The shipped encoder has never done that to a real debit.</li>
+                        </ul>
+                    </div>
+
+                    <div class="reveal">
+                        <div class="triage">
+                            <div class="triage__head">
+                                <span class="triage__count">34 messages found</span>
+                                <span class="chip chip--violet">Categorising 12 of 34</span>
+                            </div>
+                            <div class="triage__row">
+                                <span class="txn__avatar" style="--cat:#3e9159">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                                </span>
+                                <span class="txn__body">
+                                    <span class="txn__title">Salary credited</span>
+                                    <span class="txn__meta">Income · HDFC Bank · 9:02 am</span>
+                                </span>
+                                <span class="triage__actions">
+                                    <span class="triage__btn triage__btn--save" aria-hidden="true">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                                    </span>
+                                    <span class="triage__btn triage__btn--skip" aria-hidden="true">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                                    </span>
+                                </span>
+                            </div>
+                            <div class="triage__row">
+                                <span class="txn__avatar" style="--cat:#3d7ebf">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 17h14M5 17a2 2 0 1 1-4 0 2 2 0 0 1 4 0zM19 17a2 2 0 1 1-4 0 2 2 0 0 1 4 0zM3 17V9l1.5-4h15L21 9v8M6 9h12"/></svg>
+                                </span>
+                                <span class="txn__body">
+                                    <span class="txn__title">Uber India</span>
+                                    <span class="txn__meta">Transport · 8:41 pm</span>
+                                </span>
+                                <span class="triage__actions">
+                                    <span class="triage__btn triage__btn--save" aria-hidden="true">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                                    </span>
+                                    <span class="triage__btn triage__btn--skip" aria-hidden="true">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                                    </span>
+                                </span>
+                            </div>
+                            <div class="triage__row">
+                                <span class="txn__avatar" style="--cat:#9b5cb8">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>
+                                </span>
+                                <span class="txn__body">
+                                    <span class="txn__title">Amazon Pay</span>
+                                    <span class="txn__meta">Shopping · 7:12 pm</span>
+                                </span>
+                                <span class="triage__actions">
+                                    <span class="triage__btn triage__btn--save" aria-hidden="true">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                                    </span>
+                                    <span class="triage__btn triage__btn--skip" aria-hidden="true">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                                    </span>
+                                </span>
+                            </div>
+                            <div class="triage__foot">
+                                <span>Swipe right to save · left to dismiss</span>
+                                <span><strong>Skipped (4)</strong> — messages it could not read</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ═══ Features ══════════════════════════════════════════════════ -->
+        <section class="section section--paper" id="features">
+            <div class="container">
+                <div class="section-head reveal">
+                    <span class="eyebrow">The app</span>
+                    <h2>Everything you need, and none of the noise.</h2>
+                    <p class="lead">Every feature below ships in every build. There is no paywall, no premium tier and no in-app purchase.</p>
+                </div>
+
+                <article class="feature reveal">
+                    <div class="feature__body">
+                        <span class="eyebrow">Activity</span>
+                        <h3>Find anything, fast.</h3>
+                        <p class="lead">Every transaction you have kept, in one scrollable ledger — grouped by day, with the net amount for each day in the header.</p>
+                        <ul class="checklist">
+                            <li>Search by merchant or note, always visible at the top.</li>
+                            <li>Filter by direction and by category, with each category in its own colour.</li>
+                            <li>Step through months, and switch between newest and oldest first.</li>
+                            <li>Swipe a row away to delete it, with undo.</li>
+                        </ul>
+                    </div>
+                    <div class="feature__media">
+                        <div class="device device--sm">
+                            <img src="img/screens/activity-light.png" width="1170" height="2532" loading="lazy" alt="The Activity screen: a search field, category filter chips, a sticky day header with the day's net amount, and transaction rows" data-light-src="img/screens/activity-light.png" data-dark-src="img/screens/activity-dark.png">
+                        </div>
+                    </div>
+                </article>
+
+                <article class="feature feature--flip reveal">
+                    <div class="feature__body">
+                        <span class="eyebrow">Plan</span>
+                        <h3>Budgets, subscriptions and goals, in one place.</h3>
+                        <p class="lead">A budget for every category you care about, and a single screen that says plainly whether you are over.</p>
+                        <ul class="checklist">
+                            <li>Per-category budgets, shown as bars you can compare by length, with the real percentage — “122 % used”, never a clamped 100 beside a larger number.</li>
+                            <li>Savings goals with a target amount and an optional date.</li>
+                            <li>Subscriptions you track, plus the recurring payments AuraSpend has spotted in your messages — offered to you, never added silently.</li>
+                            <li>The count on Plan is the count on the screen it links to.</li>
+                        </ul>
+                    </div>
+                    <div class="feature__media">
+                        <div class="device device--sm">
+                            <img src="img/screens/plan-light.png" width="1170" height="2532" loading="lazy" alt="The Plan screen: money spent against budgets, a usage bar, and per-category budget rows" data-light-src="img/screens/plan-light.png" data-dark-src="img/screens/plan-dark.png">
+                        </div>
+                    </div>
+                </article>
+
+                <article class="feature reveal">
+                    <div class="feature__body">
+                        <span class="eyebrow">Insights</span>
+                        <h3>See where it actually went.</h3>
+                        <p class="lead">A ranked answer to “where did the money go”, and how this month compares with the last one.</p>
+                        <ul class="checklist">
+                            <li>Spending by category, ranked, with the tail summarised rather than hidden.</li>
+                            <li>Daily spending across the period you chose — this month, the last 30 days, or all time.</li>
+                            <li>Your top merchants, with a count of how many times you spent there.</li>
+                            <li>Tap any category or merchant to jump straight to the transactions behind it.</li>
+                        </ul>
+                    </div>
+                    <div class="feature__media">
+                        <div class="device device--sm">
+                            <img src="img/screens/insights-light.png" width="1170" height="2532" loading="lazy" alt="The Insights screen: total spent for the period, a change against last month, spending by category and top merchants" data-light-src="img/screens/insights-light.png" data-dark-src="img/screens/insights-dark.png">
+                        </div>
+                    </div>
+                </article>
+
+                <article class="feature feature--flip reveal">
+                    <div class="feature__body">
+                        <span class="eyebrow">Quick Add</span>
+                        <h3>An expense in seconds.</h3>
+                        <p class="lead">For the things that never arrive by SMS — cash, a card paid in person, a shared bill.</p>
+                        <ul class="checklist">
+                            <li>A keypad with haptics, a category row, and merchant and date on one line.</li>
+                            <li>The sheet opens expanded, so Save is never below the fold.</li>
+                            <li>Smart Add and Manual are one tap away, not buried in a menu.</li>
+                        </ul>
+                    </div>
+                    <div class="feature__media">
+                        <div class="device device--sm">
+                            <img src="img/screens/quick-add-light.png" width="1170" height="2532" loading="lazy" alt="The Quick Add sheet: a large amount display, a numeric keypad, category chips and a Save button" data-light-src="img/screens/quick-add-light.png" data-dark-src="img/screens/quick-add-dark.png">
+                        </div>
+                    </div>
+                </article>
+            </div>
+        </section>
+
+        <!-- ═══ Your data ═════════════════════════════════════════════════ -->
+        <section class="section" id="data">
+            <div class="container">
+                <div class="section-head reveal">
+                    <span class="eyebrow">Your data</span>
+                    <h2>Yours to take out, and yours to keep.</h2>
+                    <p class="lead">You should be able to leave whenever you want, with everything intact.</p>
+                </div>
+                <div class="grid grid--3">
+                    <div class="card reveal">
+                        <div class="card__icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                        </div>
+                        <h3>CSV in and out</h3>
+                        <p>Export every transaction to a CSV file, or import one back. Re-importing is duplicate-checked, so a file you bring in does not double your history.</p>
+                    </div>
+                    <div class="card reveal">
+                        <div class="card__icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C7.539 20.193 2 14.993 2 10a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+                        </div>
+                        <h3>Drive backup</h3>
+                        <p>Keep a copy of your ledger in your own Google Drive and restore it on another phone. Nothing is uploaded unless you start a backup yourself.</p>
+                    </div>
+                    <div class="card reveal">
+                        <div class="card__icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                        </div>
+                        <h3>App lock</h3>
+                        <p>A four-digit PIN, and optionally your fingerprint or face. The PIN is stored as a salted hash, never in plain text — and there is no back door.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ═══ Privacy ════════════════════════════════════════════════════ -->
+        <section class="section section--paper" id="privacy">
+            <div class="container">
+                <div class="section-head reveal">
+                    <span class="eyebrow">Privacy and security</span>
+                    <h2>Your money data stays on your phone — unless you ask it to leave.</h2>
+                    <p class="lead">AuraSpend has no account, no server that holds your data, and no analytics, advertising or crash-reporting SDK in any build.</p>
+                </div>
+
+                <table class="ledger-table ledger-table--two reveal">
+                    <caption>Everything AuraSpend can send over the network, and exactly when.</caption>
+                    <thead>
+                        <tr>
+                            <th scope="col">On the device</th>
+                            <th scope="col">Off the device</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Transactions, categories, budgets, goals and subscriptions</td>
+                            <td><span class="leaves"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7M9 7h8v8"/></svg> A Drive backup you start</span> — one JSON file, in your own Drive</td>
+                        </tr>
+                        <tr>
+                            <td>Your bank messages, and the queue of what it read</td>
+                            <td><span class="leaves"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7M9 7h8v8"/></svg> The optional 22 MB categoriser</span> — a file request that carries no message content</td>
+                        </tr>
+                        <tr>
+                            <td>The categorisation model and its vocabulary, once downloaded</td>
+                            <td><span class="stays"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><polyline points="8 12 11 15 16 9"/></svg> Nothing else.</span> The app has no server of its own.</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div class="grid grid--3" style="margin-top:var(--sp-3xl)">
+                    <div class="card reveal">
+                        <h3>Encrypted at rest</h3>
+                        <p>Your database is encrypted with SQLCipher, using a key derived from a non-exportable key in the Android Keystore. There is no fallback to plain text — the app refuses to open rather than open in the clear.</p>
+                    </div>
+                    <div class="card reveal">
+                        <h3>Scrubbed before it is stored</h3>
+                        <p>Phone numbers, UPI references, UTRs, folio ids and hash-like tokens are masked out of the message queue, the notes and the exports — while the amount, the date and the bank's own card mask survive, so the app still works.</p>
+                    </div>
+                    <div class="card reveal">
+                        <h3>Android's own backup is off</h3>
+                        <p>The database, the preferences and the model directory are excluded from both cloud backup and device-to-device transfer. A backup is something you start, not something that happens to you.</p>
+                    </div>
+                </div>
+
+                <p style="margin-top:var(--sp-2xl)"><a class="link-arrow" href="privacy.html">Read the full privacy policy</a></p>
+            </div>
+        </section>
+
+        <!-- ═══ Open source ═════════════════════════════════════════════════ -->
+        <section class="section" id="open-source">
+            <div class="container">
+                <div class="grid grid--2" style="gap:var(--sp-4xl);align-items:center">
+                    <div class="reveal">
+                        <span class="eyebrow">Open source</span>
+                        <h2>Free software, under the AGPL.</h2>
+                        <p class="lead">AuraSpend is licensed under the GNU Affero General Public License v3.0 or later. You can read every line, build it yourself, and change it.</p>
+                        <p>The AGPL means that if you distribute a modified AuraSpend, your version stays under the same licence — and if you run a modified version as a network service, you must offer its source to the people who use it.</p>
+                        <p>Every significant decision in this project is written down as an architecture decision record, and the reasoning behind each release is published as a handoff. The privacy claims on this page are checkable, not just trusted.</p>
+                        <div class="btn-row">
+                            <a class="btn btn--primary" href="https://github.com/auraspend/auraspend" target="_blank" rel="noopener">Source code</a>
+                            <a class="btn btn--ghost" href="https://github.com/auraspend/auraspend/blob/main/LICENSE" target="_blank" rel="noopener">Read the licence</a>
+                            <a class="btn btn--ghost" href="https://github.com/auraspend/auraspend/tree/main/docs/adr" target="_blank" rel="noopener">Decision records</a>
+                        </div>
+                    </div>
+
+                    <div class="reveal">
+                        <dl class="proof">
+                            <div class="proof__cell">
+                                <dt>Bank parsers</dt>
+                                <dd>53</dd>
+                                <p>Sender-routed parsers for banks, cards, wallets and payment apps.</p>
+                            </div>
+                            <div class="proof__cell">
+                                <dt>Exact match</dt>
+                                <dd>97.6 %</dd>
+                                <p>On the 82-case classification corpus, with the model switched off.</p>
+                            </div>
+                            <div class="proof__cell">
+                                <dt>Unit tests</dt>
+                                <dd>614</dd>
+                                <p>Run on every commit, plus lint, licence and privacy gates.</p>
+                            </div>
+                            <div class="proof__cell">
+                                <dt>Trackers</dt>
+                                <dd>0</dd>
+                                <p>No analytics, advertising or crash-reporting SDK in any build.</p>
+                            </div>
+                        </dl>
+                        <p style="margin-top:var(--sp-lg);font-size:var(--fs-small);color:var(--muted)">The model is optional. The parsing layer alone is what gets those numbers, and the app is fully functional without ever downloading it.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ═══ Get it ═════════════════════════════════════════════════════ -->
+        <section class="section section--paper" id="get">
+            <div class="container">
+                <div class="section-head reveal">
+                    <span class="eyebrow">Get AuraSpend</span>
+                    <h2>Three ways to install it. One app.</h2>
+                    <p class="lead">Every build is the same code with the same features. The only differences are where it comes from and which optional Google services it carries.</p>
+                </div>
+
+                <div class="grid grid--3">
+                    <div class="channel reveal">
+                        <div class="channel__head">
+                            <span class="channel__logo">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg>
+                            </span>
+                            <h3>GitHub Releases</h3>
+                        </div>
+                        <p>The signed APK, and the signed app bundle. Available now, with a SHA-256 checksum for every file.</p>
+                        <a class="btn btn--primary btn--sm" href="https://github.com/auraspend/auraspend/releases/latest" target="_blank" rel="noopener">Download 0.1.91</a>
+                        <span class="channel__note">Android 11 and later · no Google services required</span>
+                    </div>
+
+                    <div class="channel reveal">
+                        <div class="channel__head">
+                            <span class="channel__logo">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 3h16l-7.5 9v7l-1 1-1-1v-7z"/></svg>
+                            </span>
+                            <h3>Google Play</h3>
+                        </div>
+                        <p>In closed testing on the <code>alpha</code> track. This build adds Drive backup and an in-app update check.</p>
+                        <span class="chip">Closed testing</span>
+                        <span class="channel__note">Ask in the repository for an invitation to the tester list.</span>
+                    </div>
+
+                    <div class="channel reveal">
+                        <div class="channel__head">
+                            <span class="channel__logo">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2 3 7v10l9 5 9-5V7z"/><path d="m3 7 9 5 9-5M12 12v10"/></svg>
+                            </span>
+                            <h3>F-Droid</h3>
+                        </div>
+                        <p>Submitted. This build ships without Google Play Services, so it has no Drive backup and no in-app update check — everything else is identical.</p>
+                        <span class="chip">Submitted</span>
+                        <span class="channel__note">Tracked in the F-Droid metadata repository.</span>
+                    </div>
+                </div>
+
+                <p style="margin-top:var(--sp-2xl);font-size:var(--fs-small);color:var(--muted)">Prefer to build it yourself? <a href="download.html">Here is how</a> — it is the same app either way.</p>
+            </div>
+        </section>
+
+        <!-- ═══ FAQ teaser ═════════════════════════════════════════════════ -->
+        <section class="section" id="faq">
+            <div class="container container--prose">
+                <div class="section-head reveal">
+                    <span class="eyebrow">Questions</span>
+                    <h2>The short answers.</h2>
+                </div>
+
+                <div class="faq reveal">
+                    <details>
+                        <summary>Do I need an account?</summary>
+                        <div class="faq__answer"><p>No. There is no AuraSpend account, no sign-in and no server. Install it, grant read access to your SMS if you want automatic tracking, and it works.</p></div>
+                    </details>
+                    <details>
+                        <summary>Does it connect to my bank?</summary>
+                        <div class="faq__answer"><p>No. It never asks for a card number, a customer ID, a net banking password or an OTP. It reads the same SMS you already read, and it cannot send an SMS.</p></div>
+                    </details>
+                    <details>
+                        <summary>Does it work without internet?</summary>
+                        <div class="faq__answer"><p>Yes. Parsing, categorisation, budgets, goals and insights all run on the device. Day-to-day use needs no connection at all.</p></div>
+                    </details>
+                    <details>
+                        <summary>Is it really free?</summary>
+                        <div class="faq__answer"><p>Yes — no ads, no trackers, no accounts, no paywall and no in-app purchase. Every feature is in every build, and the source is open under the AGPL-3.0.</p></div>
+                    </details>
+                </div>
+
+                <p style="margin-top:var(--sp-2xl)"><a class="link-arrow" href="faq.html">Read all the questions</a></p>
+            </div>
+        </section>
+
+        <!-- ═══ CTA ════════════════════════════════════════════════════════ -->
+        <section class="section section--ink cta">
+            <div class="container">
+                <span class="eyebrow">Start here</span>
+                <h2>Take control of your spending.</h2>
+                <p class="lead">Download the signed APK, or build it from source — it is the same app either way. Your bank messages stay on your phone until you say otherwise.</p>
+                <div class="btn-row">
+                    <a class="btn btn--primary" href="download.html">Download AuraSpend</a>
+                    <a class="btn btn--ghost" href="https://github.com/auraspend/auraspend" target="_blank" rel="noopener">View on GitHub</a>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="container">
+            <div class="footer-grid">
+                <div>
+                    <a href="index.html" class="logo">Aura<em>Spend</em><span class="logo__dot" aria-hidden="true"></span></a>
+                    <p>An open-source expense tracker for Android. Your bank messages become a ledger — on your phone, not on a server.</p>
+                </div>
+                <div>
+                    <h3>Product</h3>
+                    <ul>
+                        <li><a href="index.html#features">Features</a></li>
+                        <li><a href="screenshots.html">Screenshots</a></li>
+                        <li><a href="download.html">Download</a></li>
+                        <li><a href="faq.html">FAQ</a></li>
+                        <li><a href="changelog.html">Changelog</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h3>Legal</h3>
+                    <ul>
+                        <li><a href="privacy.html">Privacy policy</a></li>
+                        <li><a href="terms.html">Terms of service</a></li>
+                        <li><a href="https://github.com/auraspend/auraspend/blob/main/LICENSE" target="_blank" rel="noopener">Licence</a></li>
+                        <li><a href="https://github.com/auraspend/auraspend/blob/main/.github/SECURITY.md" target="_blank" rel="noopener">Security</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h3>Community</h3>
+                    <ul>
+                        <li><a href="https://github.com/auraspend/auraspend" target="_blank" rel="noopener">Source code</a></li>
+                        <li><a href="https://github.com/auraspend/auraspend/issues" target="_blank" rel="noopener">Report a bug</a></li>
+                        <li><a href="https://github.com/auraspend/auraspend/commits/main" target="_blank" rel="noopener">Commit history</a></li>
+                        <li><a href="https://github.com/auraspend/auraspend/tree/main/docs/adr" target="_blank" rel="noopener">Decision records</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <span>© 2026 AW Builds</span>
+                <span>AuraSpend is free software under the AGPL-3.0-or-later.</span>
+            </div>
+        </div>
+    </footer>
+
+    <script src="js/site.js" defer></script>
+</body>
+</html>

@@ -32,6 +32,9 @@ on:
       - 'README.md'
       - 'CHANGELOG.md'
       - 'docs/**'
+      # The website. It carries the licence claim, the privacy claims and the
+      # product's factual claims, and both gates below read it.
+      - 'site/**'
       - '.github/**'
 
 permissions:

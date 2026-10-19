@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#EBE7DE" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#080807" media="(prefers-color-scheme: dark)">
+    <script>
+        (function () {
+            var root = document.documentElement;
+            root.classList.add("js");
+            try {
+                var stored = localStorage.getItem("auraspend-theme");
+                if (stored === "light" || stored === "dark") {
+                    root.setAttribute("data-theme", stored);
+                }
+            } catch (e) { /* private mode: follow the system theme */ }
+        })();
+    </script>
+    <title>Changelog — AuraSpend</title>
+    <meta name="description" content="Every AuraSpend release, newest first: the Quiet Ledger redesign, the ONNX crash fix, the encrypted database, the app lock, and the classification work.">
+    <link rel="canonical" href="https://auraspend.github.io/auraspend/changelog.html">
+    <meta property="og:title" content="Changelog — AuraSpend">
+    <meta property="og:description" content="Every AuraSpend release, newest first.">
+    <meta property="og:url" content="https://auraspend.github.io/auraspend/changelog.html">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="AuraSpend">
+    <meta property="og:image" content="https://auraspend.github.io/auraspend/img/og.png">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Changelog — AuraSpend">
+    <meta name="twitter:description" content="Every AuraSpend release, newest first.">
+    <meta name="twitter:image" content="https://auraspend.github.io/auraspend/img/og.png">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
+</head>
+<body>
+    <a class="skip-link" href="#main">Skip to content</a>
+
+        <header class="site-header">
+        <div class="container site-header__inner">
+            <a href="index.html" class="logo" aria-label="AuraSpend home">Aura<em>Spend</em><span class="logo__dot" aria-hidden="true"></span></a>
+            <nav class="nav" id="site-nav" aria-label="Primary">
+                <ul>
+                    <li><a href="index.html#how">How it works</a></li>
+                    <li><a href="index.html#features">Features</a></li>
+                    <li><a href="screenshots.html">Screenshots</a></li>
+                    <li><a href="download.html">Download</a></li>
+                    <li><a href="faq.html">FAQ</a></li>
+                    <li><a href="index.html#open-source">Open source</a></li>
+                </ul>
+            </nav>
+            <div class="header-actions">
+                <button class="icon-btn theme-toggle" type="button" aria-label="Switch to dark theme">
+                    <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+                    <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+                </button>
+                <a class="btn btn--primary btn--sm header-cta" href="download.html">Get the app</a>
+                <button class="icon-btn menu-toggle" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="site-nav">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main id="main">
+        <section class="page-head">
+            <div class="container container--prose">
+                <span class="eyebrow">Changelog</span>
+                <h1>Every release, newest first.</h1>
+                <p class="lead">The project follows <a href="https://keepachangelog.com/en/1.1.0/" target="_blank" rel="noopener">Keep a Changelog</a>. Below is the summary of each release; the canonical, unabridged record is <a href="https://github.com/auraspend/auraspend/blob/main/CHANGELOG.md" target="_blank" rel="noopener">CHANGELOG.md</a> in the repository, and the reasoning behind each one is published in the project's handoff log.</p>
+                <p class="updated">13 releases · 0.1.0 (13 May 2026) → 0.1.91 (19 October 2026)</p>
+            </div>
+        </section>
+
+        <section class="section section--tight" style="padding-top:0">
+            <div class="container container--prose">
+
+                <article class="release" id="v0-1-91">
+                    <div class="release__meta">
+                        <div class="release__version">0.1.91</div>
+                        <div class="release__date">19 October 2026</div>
+                    </div>
+                    <div class="release__body">
+                        <p>A patch on 0.1.9. <strong>No data, schema or classification change</strong> — presentation only.</p>
+                        <h3>Fixed</h3>
+                        <ul>
+                            <li><strong>Plan said “0 active subscriptions” above a Subscriptions screen listing four.</strong> The hub read only the tracked rows, while that screen also shows the recurring payments the classifier detected. It now reads both and says “N active · M detected”.</li>
+                        </ul>
+                        <h3>Added</h3>
+                        <ul>
+                            <li><strong>Home shows the last seven days</strong> as a strip of columns, today's column in ink. Below the budgets card, a day with no transactions used to leave the screen empty.</li>
+                        </ul>
+                        <h3>Changed</h3>
+                        <ul>
+                            <li><strong>Tab switches are instant.</strong> A cross-fade put each of two full screens into its own alpha layer; the worst tab frame was 17.4 ms against a 16.7 ms budget.</li>
+                        </ul>
+                    </div>
+                </article>
+
+                <article class="release" id="v0-1-9">
+                    <div class="release__meta">
+                        <div class="release__version">0.1.9</div>
+                        <div class="release__date">18 October 2026</div>
+                    </div>
+                    <div class="release__body">
+                        <p>A <strong>release-only crash fix</strong>. 0.1.8 aborted the moment the on-device categoriser ran — that is, the moment a bank message was classified. Nothing changed in what the app does, only in what R8 is allowed to remove.</p>
+                        <h3>Fixed</h3>
+                        <ul>
+                            <li><strong>The production build crashed while categorising a message.</strong> R8 had stripped <code>ai.onnxruntime.TensorInfo</code> and <code>OnnxJavaType</code>; the runtime's JNI constructs them by literal name, so the lookup returned null and the VM aborted. A JNI abort cannot be caught, so the whole app died. Debug builds are not minified, which is why every earlier on-device check had passed: the encoder had never run in a minified build.</li>
+                        </ul>
+                        <h3>Changed</h3>
+                        <ul>
+                            <li>The R8 release check now derives the classes the JNI needs <strong>from the shipped native library</strong> instead of a hand-written list of three, so an ONNX Runtime upgrade that adds a class fails the gate rather than the app.</li>
+                        </ul>
+                    </div>
+                </article>
+
+                <article class="release" id="v0-1-8">
+                    <div class="release__meta">
+                        <div class="release__version">0.1.8</div>
+                        <div class="release__date">18 October 2026</div>
+                    </div>
+                    <div class="release__body">
+                        <p>The <strong>Quiet Ledger</strong> interface: the app redrawn on a new concept. Monochrome chrome with colour only in the data, a typographic hero instead of the gradient, bars instead of rings and donuts, and a first-run that speaks the same language. <strong>No data, schema or classification change</strong> — the SMS pipeline, the money arithmetic and the stored data are untouched.</p>
+                        <h3>Changed</h3>
+                        <ul>
+                            <li><strong>A new look, app-wide.</strong> Warm paper and ink with a single violet accent, red demoted to a status colour, and the typeface carrying the hierarchy at its real weights — every bold had been rendering at regular weight, because one variable font was registered six times.</li>
+                            <li><strong>Home is a glance, not a dashboard.</strong> Balance, a flow bar, a “needs you” rail, one budget aggregate, recent activity and cash flow. The spending chart moved to Insights as a daily strip.</li>
+                            <li><strong>Activity</strong> gained a month-and-total sub-line, one filter row on the app's standard chip, and row metadata that is the time of day. <strong>Insights</strong> ranks categories and merchants, capped at six rows with a summed tail.</li>
+                            <li><strong>Plan</strong> states how far over you are and on what; over-budget rows show the true percentage instead of clamping at 100 %.</li>
+                            <li><strong>Settings</strong> regrouped into Money / Messages / Appearance / Data / About, with the theme behind a sheet and a live review-queue count.</li>
+                            <li><strong>Quick Add</strong> follows the concept's order and opens expanded, so Save is never below the fold. One chip control is now shared by Activity, Quick Add, the editor, classification, budgets and subscriptions.</li>
+                        </ul>
+                        <h3>Fixed</h3>
+                        <ul>
+                            <li><strong>Screen transitions no longer rebuild the app.</strong> Every top-level ↔ detail crossing moved the whole navigation subtree in the composition; it is one stable slot now. Home's load no longer re-runs on every return.</li>
+                            <li><strong>A fresh baseline profile</strong> — the old one knew none of the current screens. Worst UI-thread frame on Activity → detail → back, release build: 66 ms → 33 ms.</li>
+                        </ul>
+                    </div>
+                </article>
+
+                <article class="release" id="v0-1-71">
+                    <div class="release__meta">
+                        <div class="release__version">0.1.71</div>
+                        <div class="release__date">17 October 2026</div>
+                    </div>
+                    <div class="release__body">
+                        <p>A UI-correctness patch from a full on-device walk. No database, data-model or classification change.</p>
+                        <h3>Fixed</h3>
+                        <ul>
+                            <li><strong>Quick Add's category picker</strong> now uses the app's standard chip — the same control as the Activity filter row and the transaction editor. The tile it replaces had labels overflowing a fixed pill and an invisible selected state.</li>
+                            <li><strong>Budget percentages no longer clamp at 100 %.</strong> The Plan hub said “100 % used” next to ₹33,467 of ₹26,000; it now reads <strong>128 %</strong> with an error colour and <strong>“Over by ₹7,467”</strong>.</li>
+                            <li><strong>The Insights saving badge</strong> takes its minus from the shared money helper, matching the net amount beside it.</li>
+                            <li><strong>The Plan hub scrolls</strong> at very large font scales instead of clipping its last rows.</li>
+                        </ul>
+                    </div>
+                </article>
+
+                <article class="release" id="v0-1-7">
+                    <div class="release__meta">
+                        <div class="release__version">0.1.7</div>
+                        <div class="release__date">17 October 2026</div>
+                    </div>
+                    <div class="release__body">
+                        <p>A Play-distribution release. No database, data-model or classification change.</p>
+                        <h3>Added</h3>
+                        <ul>
+                            <li><strong>Play-only in-app updates.</strong> Settings → About now has <strong>Check for updates</strong> in the Play build. It asks Play whether an update is available, starts a flexible download, and turns into “Update ready — tap to restart” when the download finishes. There is no forced update and no prompt on launch.</li>
+                            <li>The F-Droid build has no Play Core dependency and no update row; F-Droid handles updates there. The dev build also hides the row.</li>
+                        </ul>
+                    </div>
+                </article>
+
+                <article class="release" id="v0-1-6">
+                    <div class="release__meta">
+                        <div class="release__version">0.1.6</div>
+                        <div class="release__date">17 October 2026</div>
+                    </div>
+                    <div class="release__body">
+                        <p>A classification-correctness release, prompted by a closed tester's export. No visual redesign, no new feature, no schema change, and no change to the encrypted database — existing rows carry over unchanged.</p>
+                        <h3>Changed</h3>
+                        <ul>
+                            <li><strong>Classification accuracy re-measured honestly</strong> — the golden corpus now scores amount and date and counts correct rejections as passes. Measured: <strong>80/82 exact (97.6 %), type 98.8 %, category 100 %, merchant 98.8 %, amount 98.8 %, date 100 %</strong>.</li>
+                        </ul>
+                        <h3>Fixed</h3>
+                        <ul>
+                            <li><strong>Informational messages are no longer saved as transactions.</strong> Reward points, mutual-fund NAV notices, card offers and expiry reminders all carried an amount plus a word the movement lexicon knows. They are vetoed now, with the load-bearing rule that <strong>a completed debit outranks every informational phrase</strong>.</li>
+                            <li><strong>Payment rails are not categories.</strong> <code>upi</code>, <code>neft</code>, <code>imps</code> and <code>rtgs</code> were category cues, which filed 43 % of a closed tester's export under “Transfer”. A rail with a person-shaped counterparty is a person-to-person transfer, where money received is income and money sent is an expense.</li>
+                            <li><strong>Mutual-fund and SIP debits are investments</strong>, and a fund's NAV can no longer become the merchant.</li>
+                            <li><strong>Payee names survive the compact “Refno” form</strong>, which used to take the counterparty with it.</li>
+                            <li><strong>HDFC's “If not you” tail no longer drops a genuine debit.</strong></li>
+                            <li><strong>Sender routing merges over the global parse</strong>, so a per-bank parser can no longer blank a merchant or date the global parser already resolved.</li>
+                            <li><strong>Own-account transfers are excluded from every total.</strong></li>
+                            <li><strong>Corrections teach future messages.</strong> Detail-screen edits learn, memory generalises location suffixes, and a remembered category no longer suppresses recurring detection.</li>
+                        </ul>
+                    </div>
+                </article>
+
+                <article class="release" id="v0-1-5">
+                    <div class="release__meta">
+                        <div class="release__version">0.1.5</div>
+                        <div class="release__date">15 October 2026</div>
+                    </div>
+                    <div class="release__body">
+                        <p>A privacy release: the top two items of the improvement list, as separate pull requests that landed together.</p>
+                        <h3>Added</h3>
+                        <ul>
+                            <li><strong>App lock</strong>: an opt-in four-digit PIN, stored only as a salted PBKDF2 hash, with a biometric shortcut where the hardware supports it. It locks on every cold start and again after more than a minute in the background. “Forgot PIN” wipes through the same sweep as Delete all data; there is no back door.</li>
+                            <li><strong>The database is encrypted at rest</strong> (SQLCipher). The passphrase is derived from a non-exportable Android Keystore key and never stored anywhere; an existing database is upgraded in place, once, before the app opens it.</li>
+                        </ul>
+                        <h3>Notes</h3>
+                        <ul>
+                            <li>The one-time upgrade is crash-safe: the plaintext original is moved aside rather than deleted, the encrypted copy takes its place, and only then is the backup removed.</li>
+                            <li>Do not sideload an older release over 0.1.5 — a pre-0.1.5 build cannot open the encrypted database.</li>
+                        </ul>
+                    </div>
+                </article>
+
+                <article class="release" id="v0-1-4">
+                    <div class="release__meta">
+                        <div class="release__version">0.1.4</div>
+                        <div class="release__date">14 October 2026</div>
+                    </div>
+                    <div class="release__body">
+                        <p>A correctness release measured against a real inbox: the on-device classifier runs for the first time, the reconstructed books match message for message, and the app gains its F-Droid build.</p>
+                        <h3>Added</h3>
+                        <ul>
+                            <li><strong>Detected subscriptions</strong> — recurring payments the classifier had always flagged now surface under a “Detected from your messages” section, each with a one-tap Track that opens the add sheet prefilled.</li>
+                            <li><strong>Skipped-message history</strong> in Smart Add — “Skipped (N)”, Classify again and Skip all — so a parser fix can reach messages that were set aside.</li>
+                            <li><strong>Activity browsing</strong>: month navigation, a newest/oldest sort toggle, and drill-down from Insights into the filtered list.</li>
+                            <li><strong>Settings</strong>: SMS-access status, a categorisation-notifications toggle, and Delete all data (wipe, re-seed, re-scan).</li>
+                            <li><strong>Category icon and colour pickers</strong> in the category editor.</li>
+                            <li><strong>Transaction detail</strong>: tap the hero to re-categorize, Share as plain text, and the original SMS with sender and received time.</li>
+                            <li><strong>Investments category</strong> — EPF contribution confirmations book as an investment, not income.</li>
+                            <li><strong>F-Droid build</strong> — a third flavour without Google Play Services, and therefore without Drive backup.</li>
+                        </ul>
+                        <h3>Fixed</h3>
+                        <ul>
+                            <li><strong>The optional on-device classifier now actually runs.</strong> A wrong tokenizer filename and a missing model input had kept it inert behind caught exceptions while the UI said “ready”.</li>
+                            <li><strong>Dates</strong>: month-first formats parse, and messages without a date are booked at their arrival time instead of when they were scanned.</li>
+                            <li><strong>Smart Add no longer lags</strong> while a drain is classifying messages.</li>
+                            <li><strong>Fewer wrongly skipped payments</strong> — the duplicate guard is paise-flat, and payments it had swallowed are restored on the next pass.</li>
+                            <li><strong>Dark and AMOLED visibility</strong>: back buttons, month chevrons and the navigation-bar icons were black on every background.</li>
+                        </ul>
+                    </div>
+                </article>
+
+                <article class="release" id="v0-1-3">
+                    <div class="release__meta">
+                        <div class="release__version">0.1.3</div>
+                        <div class="release__date">13 October 2026</div>
+                    </div>
+                    <div class="release__body">
+                        <p>A categorisation fix release, measured by draining a real 1,952-message inbox on a device: the triage surface became visible, and four defects that had silently dropped or mis-filed real money are fixed.</p>
+                        <h3>Added</h3>
+                        <ul>
+                            <li><strong>Visible categorisation status.</strong> The triage tab shows a determinate progress header, an “N messages waiting” line and a “Categorizing…” chip on the message being processed.</li>
+                            <li><strong>One honest notification per drain</strong> — a single ongoing determinate notification while messages are categorised, and one summary at the end.</li>
+                            <li>OTPs, alerts and promos are dropped when messages are ingested, so the queue, its progress count and the pick-list hold only real candidates.</li>
+                        </ul>
+                        <h3>Fixed</h3>
+                        <ul>
+                            <li><strong>Genuine card spends were silently deleted.</strong> One bank appends an anti-fraud warning to every card alert, and the hard anti-fraud veto treated that tail as a phishing lure — three real spends appeared nowhere. The veto now has one narrow exception for the bank's own alarm shape.</li>
+                            <li><strong>The triage screen no longer hides behind the optional 22 MB model.</strong> The queue, its progress and its swipe actions render whether or not the model is downloaded.</li>
+                            <li><strong>Credits phrased around their reversal were skipped as typeless</strong>, and now record as income.</li>
+                            <li><strong>Dashed month-name dates never parsed</strong>, so those transactions were saved with the time they were processed. The date pattern, month-name matching and the duplicate check's amount gate are all fixed.</li>
+                            <li><strong>“Payment attempt … unsuccessful” and “refund … has been initiated”</strong> are treated as alerts instead of piling into the unrecognised list.</li>
+                        </ul>
+                    </div>
+                </article>
+
+                <article class="release" id="v0-1-2">
+                    <div class="release__meta">
+                        <div class="release__version">0.1.2</div>
+                        <div class="release__date">11 October 2026</div>
+                    </div>
+                    <div class="release__body">
+                        <p>The reliability release. A 32-finding code review is fixed end to end — the on-device categoriser had been silently inert in production, and three separate paths could lose, hide or overwrite real money — plus Google Drive backup, a currency picker, and guarded release signing.</p>
+                        <h3>Added</h3>
+                        <ul>
+                            <li><strong>Google Drive backup.</strong> The app could restore from Drive but had no way to create a backup; Settings → Data now has both. The backup serialises every user-owned table inside one transaction, and restore (a replace, not a merge) asks for confirmation first.</li>
+                            <li><strong>Currency picker.</strong> 30 currencies, captured offline as a source constant, with the device currency preselected. Formatting only — <strong>no FX conversion, and the picker says so</strong>.</li>
+                            <li><strong>The test suite grew 256 → 350</strong>, and a privacy-claims check joined the licence check in CI: an absolute privacy claim without its exception now fails the build.</li>
+                        </ul>
+                        <h3>Fixed</h3>
+                        <ul>
+                            <li><strong>The flagship on-device categoriser was inert in production.</strong> The centroid asset is little-endian; the reader parsed big-endian, failed, and the failure was swallowed into “model unavailable” while settings said “ready”. The asset digest is now pinned and a test decodes the real asset.</li>
+                            <li><strong>The model's discard gate was dead code</strong>, so the threshold could never fire; a test now fails if it becomes unreachable again.</li>
+                            <li><strong>A duplicate source reference could delete the user's edited transaction.</strong> Writes are now update-if-present, insert-if-absent, and CSV import is one all-or-nothing batch.</li>
+                            <li><strong>A fresh install never ingested its SMS history.</strong> A single watermark advanced past everything older than the newest 500 messages; the scan now keeps a high-water mark plus a downwards history walk.</li>
+                            <li><strong>Deposits and refunds with a balance tail were dropped before parsing</strong>, and sender-first routing had no production callers. Both fixed.</li>
+                            <li><strong>Restore re-imported unmasked message bodies</strong> from pre-masker backups; restore now masks the message queue on the way in.</li>
+                            <li><strong>The 30-day unrecognised-message purge was never called</strong>; it now runs on the periodic worker tick.</li>
+                            <li><strong>The R8 and native-runtime audits are now CI gates.</strong></li>
+                        </ul>
+                    </div>
+                </article>
+
+                <article class="release" id="v0-1-1">
+                    <div class="release__meta">
+                        <div class="release__version">0.1.1</div>
+                        <div class="release__date">30 September 2026</div>
+                    </div>
+                    <div class="release__body">
+                        <p>A substantial pre-1.0 release. The headline is that the on-device categoriser shrank from 468 MB to 22 MB, and the project changed licence.</p>
+                        <h3>Changed</h3>
+                        <ul>
+                            <li><strong>Licence: Apache-2.0 → AGPL-3.0-or-later</strong>, so that a modified AuraSpend offered to users over a network must offer its source too. Irreversible for this code, and recorded in ADR 0009.</li>
+                            <li><strong>On-device categoriser: 468 MB generative model → 22 MB int8 encoder.</strong> Five candidate runtimes were measured before the choice was made.</li>
+                            <li><strong>Two ABIs instead of four.</strong> The bundle went from 35.4 MB to 20.5 MB, the APK from 78.8 MB to 37.2 MB.</li>
+                            <li>The model is downloaded at runtime after an explicit opt-in, and its digest is verified before use.</li>
+                        </ul>
+                        <h3>Fixed</h3>
+                        <ul>
+                            <li><strong>A fresh install silently downloaded the model</strong> and enabled auto-read with no prompt. Consent was a tap on an inline card instead.</li>
+                            <li><strong>Swipe-to-save and swipe-to-delete were silent no-ops.</strong> Both used a callback that is deprecated without replacement, so it was never invoked — the row animated, painted a coloured background, and changed nothing. Both now drive off the settled state, and both are undoable.</li>
+                            <li><strong>The triage inbox never drained.</strong> Saved and dismissed messages stayed listed forever. They now leave the list, and undo brings them back.</li>
+                            <li><strong>Plan reported ₹0 while the home screen reported real spend</strong> — a stale cached column.</li>
+                            <li>Unguarded enum parsing in the mapper — one corrupt value could brick the dashboard.</li>
+                        </ul>
+                        <h3>Added</h3>
+                        <ul>
+                            <li><strong>Open-source licenses screen</strong> in the app, which AGPL-3.0 §4 requires. Before this the app displayed only the licence string with no way to read anything.</li>
+                            <li><strong>A CLA with copyright assignment</strong>, so contributions can be relicensed as a whole later.</li>
+                            <li>A licence-consistency check, run in CI. The licence had already drifted across eleven files.</li>
+                        </ul>
+                    </div>
+                </article>
+
+                <article class="release" id="v0-1-0">
+                    <div class="release__meta">
+                        <div class="release__version">0.1.0</div>
+                        <div class="release__date">13 May 2026</div>
+                    </div>
+                    <div class="release__body">
+                        <p>First alpha. Feature-complete for its scope: a Material 3 interface, bank SMS classification, budgets, subscriptions, savings goals, and Google Drive backup. Licensed under Apache-2.0 at the time — releases up to and including this one remain under that licence.</p>
+                    </div>
+                </article>
+
+                <p style="margin-top:var(--sp-3xl);font-size:var(--fs-small);color:var(--muted)">Looking for the unabridged record? The canonical <a href="https://github.com/auraspend/auraspend/blob/main/CHANGELOG.md" target="_blank" rel="noopener">CHANGELOG.md</a> has every line, including the test counts and the measurements behind each claim.</p>
+            </div>
+        </section>
+    </main>
+
+        <footer class="site-footer">
+        <div class="container">
+            <div class="footer-grid">
+                <div>
+                    <a href="index.html" class="logo">Aura<em>Spend</em><span class="logo__dot" aria-hidden="true"></span></a>
+                    <p>An open-source expense tracker for Android. Your bank messages become a ledger — on your phone, not on a server.</p>
+                </div>
+                <div>
+                    <h3>Product</h3>
+                    <ul>
+                        <li><a href="index.html#features">Features</a></li>
+                        <li><a href="screenshots.html">Screenshots</a></li>
+                        <li><a href="download.html">Download</a></li>
+                        <li><a href="faq.html">FAQ</a></li>
+                        <li><a href="changelog.html" aria-current="page">Changelog</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h3>Legal</h3>
+                    <ul>
+                        <li><a href="privacy.html">Privacy policy</a></li>
+                        <li><a href="terms.html">Terms of service</a></li>
+                        <li><a href="https://github.com/auraspend/auraspend/blob/main/LICENSE" target="_blank" rel="noopener">Licence</a></li>
+                        <li><a href="https://github.com/auraspend/auraspend/blob/main/.github/SECURITY.md" target="_blank" rel="noopener">Security</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h3>Community</h3>
+                    <ul>
+                        <li><a href="https://github.com/auraspend/auraspend" target="_blank" rel="noopener">Source code</a></li>
+                        <li><a href="https://github.com/auraspend/auraspend/issues" target="_blank" rel="noopener">Report a bug</a></li>
+                        <li><a href="https://github.com/auraspend/auraspend/commits/main" target="_blank" rel="noopener">Commit history</a></li>
+                        <li><a href="https://github.com/auraspend/auraspend/tree/main/docs/adr" target="_blank" rel="noopener">Decision records</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <span>© 2026 AW Builds</span>
+                <span>AuraSpend is free software under the AGPL-3.0-or-later.</span>
+            </div>
+        </div>
+    </footer>
+
+    <script src="js/site.js" defer></script>
+</body>
+</html>

@@ -25,9 +25,12 @@ cd "$(dirname "$0")/.." || exit 2
 FILES=(
   app/src/main/res/values/strings.xml
   app/src/main/res/values-hi/strings.xml
-  docs/index.html
-  docs/privacy.html
-  docs/terms.html
+  site/index.html
+  site/download.html
+  site/faq.html
+  site/privacy.html
+  site/terms.html
+  site/screenshots.html
   README.md
 )
 

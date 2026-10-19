@@ -16,6 +16,7 @@ durable lives elsewhere. Keep it a pointer; promote findings to `memory/` or
 | Glossary, decisions, stack, project state | `memory/` |
 | Architecture decisions | `docs/adr/` |
 | Roadmap, deliberate no-gos | `ROADMAP.md` |
+| Public website (published from `/site`, not `docs/`) | `site/` + `tools/stamp_site_chrome.py` |
 | Design system | `docs/design/aurora.md` + `ui/designsystem/` |
 | Interface concept + its implementation (0057 → 0058) | `docs/design/interface-concept/` |
 | Measured classification numbers | `docs/evals/README.md` |

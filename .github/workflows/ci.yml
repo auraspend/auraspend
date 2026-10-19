@@ -70,6 +70,16 @@ jobs:
       - name: Verify licence metadata and third-party attributions
         run: ./tools/check_license.sh
 
+      # The same class of check for the app's privacy copy, and for the
+      # website's. "Nothing leaves your phone" was written before Drive backup
+      # existed and was still on screen two features later, while a backup
+      # uploads the message queue (masked, but message text) as plain JSON. A
+      # promise that drifts by omission needs a tripwire, not another review
+      # comment. It is here as well as in pr_check.yml because this workflow
+      # runs on the pushes to main that publish the site.
+      - name: Verify privacy claims state their exception
+        run: ./tools/check_privacy_claims.sh
+
       - name: Build dev flavor (debug)
         run: ./gradlew assembleDevDebug
 
