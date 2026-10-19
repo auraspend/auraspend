@@ -334,11 +334,11 @@ object BankMessageParser {
         // "Acct XX051 debited for Rs 180.00 on 10-Nov-25; MADURAI STORES credited."
         Regex(""";\s*([A-Za-z][A-Za-z0-9&.'\- ]{1,38}?)\s+credited\b""", RegexOption.IGNORE_CASE),
         // "... to AMAZON PAY ... " / "sent to X"
-        Regex("""\bto\s+([A-Za-z][A-Za-z0-9&.'\- ]{1,38}?)(?=\s+(?:on|via|using|thru|through|dated|ref|no|avail|has|is|for|towards)\b|[/.,]|$)""", RegexOption.IGNORE_CASE),
+        Regex("""\bto\s+([A-Za-z][A-Za-z0-9&.'\- ]{1,38}?)(?=\s+(?:on|via|using|thru|through|dated|ref|no|avail|has|is|for|towards)\b|[/.,;]|$)""", RegexOption.IGNORE_CASE),
         // BoB style with a colon: "Rs.29 transferred from A/c ...5494 to:Loan Recovery Fo."
-        Regex("""\bto:\s*([A-Za-z][A-Za-z0-9&.'\- ]{1,38}?)(?=\s*[/.,]|$)""", RegexOption.IGNORE_CASE),
+        Regex("""\bto:\s*([A-Za-z][A-Za-z0-9&.'\- ]{1,38}?)(?=\s*[/.,;]|$)""", RegexOption.IGNORE_CASE),
         // credits: "from JOHN DOE ref..."
-        Regex("""\bfrom\s+([A-Za-z][A-Za-z0-9&.'\- ]{1,38}?)(?=\s+(?:on|ref|no|dated|has|is|avail)\b|[/.,]|$)""", RegexOption.IGNORE_CASE),
+        Regex("""\bfrom\s+([A-Za-z][A-Za-z0-9&.'\- ]{1,38}?)(?=\s+(?:on|ref|no|dated|has|is|avail|for)\b|[/.,;]|$)""", RegexOption.IGNORE_CASE),
         // Canara-style NEFT credits: "... by Sender ACME SOLUTIONS LIMITED, IFSC ..."
         Regex("""\bby\s+sender\s+([A-Za-z][A-Za-z0-9&.'\- ]{1,38}?)(?=\s*,|\s+IFSC\b|\s+A/c\b|[.,]|$)""", RegexOption.IGNORE_CASE),
         // "<currency> credited by <NAME>": "Rs.2500.00 credited to A/c …
@@ -346,6 +346,11 @@ object BankMessageParser {
         // Scoped to a preceding "credited" and blocked on currency words so a
         // bare "paid by AUTO-DEBIT"-style sentence can never match.
         Regex("""(?i)\bcredited\b[^.\n]{0,40}?\bby\s+(?!(?:rs|inr)\b|salary\b|[₹])([A-Za-z][A-Za-z0-9&.'\- ]{1,38}?)(?=\s+(?:thru|through|via)\b|\s*[.,]|\s+on\b|$)"""),
+        // "... debited for INR 641.00 ... for UPI-641413082469-DENMARRK": the
+        // payee is the last segment of a UPI reference, the way the NEFT
+        // patterns below read a remitter out of a NEFT reference. The segment
+        // must look like a name, so a reference that ends in digits is ignored.
+        Regex("""\bUPI[-/][A-Za-z0-9]{6,20}[-/]([A-Za-z][A-Za-z0-9&.'\- ]{1,38}?)(?=\s*[.,;]|$)""", RegexOption.IGNORE_CASE),
         // HDFC-style NEFT credits name the remitting organisation as a segment:
         // "...for NEFT Cr-CITI0100000-ACME TECHNOLOGIES-PERSON NAME-CITIN…".
         Regex("""\bNEFT\s+Cr-[A-Za-z0-9]+-([^-\n.]{1,40})""", RegexOption.IGNORE_CASE),
@@ -353,7 +358,7 @@ object BankMessageParser {
         // "...Info NEFT-FDRLM4175907234-JOHN JOSE."
         Regex("""\bNEFT-[A-Za-z0-9]{6,}-([A-Za-z][A-Za-z .]{1,38}?)(?=[.,]|$)""", RegexOption.IGNORE_CASE),
         // "... towards BIG BAZAAR bangalore ..."
-        Regex("""\btowards\s+([A-Za-z][A-Za-z0-9&.'\- ]{1,38}?)(?=\s+(?:on|ref|no|dated|has|is|for)\b|[/.,]|$)""", RegexOption.IGNORE_CASE),
+        Regex("""\btowards\s+([A-Za-z][A-Za-z0-9&.'\- ]{1,38}?)(?=\s+(?:on|ref|no|dated|has|is|for)\b|[/.,;]|$)""", RegexOption.IGNORE_CASE),
         // Salary credit: "... salary credited ... NEFT ACME CORP". The existing
         // NEFT patterns only cover the "Cr-"/"NEFT-<ref>-" shapes.
         Regex(
@@ -382,6 +387,11 @@ object BankMessageParser {
         // Boilerplate fragments observed leaking into production data.
         "enjoy", "uninterrupted", "pay your", "bill pay", "installment", "scheme",
         "investor", "report", "fraud", "cyber", "scam", "phishing", "statement",
+        // Counterparty clauses, not identities: a cashback line says "towards
+        // reversal/cashback from <THE MERCHANT>", and an onboarding line says
+        // "to register your UPI PIN". Extracted as the merchant, they hid the
+        // name the message actually carries.
+        "register", "reversal", "cashback", "expire",
         "due", "overdue", "reminder", "offer", "win", "download", "subscribe",
         // Generic descriptors are not merchant identities. Without these the
         // "towards" pattern returned "school fees", "house rent", "general
@@ -666,10 +676,15 @@ object BankMessageParser {
             if (name != null && name.length in 2..40 && looksLikeMerchant(name)) return name
         }
 
+        // Every match of every pattern, not just the first: a rejected
+        // candidate must not hide a later one. "… DEBITED to your account
+        // XXXX0007 … to Some Store;" has two "to" clauses, and the first one is
+        // the account — which is rejected, so the second is the payee.
         for (pattern in merchantPatterns) {
-            val match = pattern.find(message) ?: continue
-            val name = cleanMerchant(match.groupValues[1]) ?: continue
-            if (name.length in 2..40 && looksLikeMerchant(name)) return name
+            for (match in pattern.findAll(message)) {
+                val name = cleanMerchant(match.groupValues[1]) ?: continue
+                if (name.length in 2..40 && looksLikeMerchant(name)) return name
+            }
         }
 
         // A known subscription service is a merchant even when the bank's
@@ -847,6 +862,12 @@ object BankMessageParser {
         if (Regex("""(?i)[0-9a-f]{10,}""").containsMatchIn(name)) return false
         // Reject date fragments like "23 08" or "15 Aug".
         if (Regex("""^\d{1,2}[ /.-]\d{1,2}([ /.-]\d{2,4})?$""").containsMatchIn(name)) return false
+        // ...and the written form: "October 22" (a fund-notice effective date)
+        // is not a merchant either.
+        if (Regex(
+                """(?i)^(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\s+\d{1,2}$"""
+            ).containsMatchIn(name)
+        ) return false
         return true
     }
 
