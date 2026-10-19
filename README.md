@@ -268,22 +268,30 @@ Build and run:
 
 ## Preview
 
-| Home | Quick Add | Activity |
+| Home | Activity | Plan |
 |---|---|---|
-| ![Home](docs/screenshots/home-light.png) | ![Quick Add](docs/screenshots/quick-add.png) | ![Activity](docs/screenshots/activity.png) |
+| ![Home](docs/screenshots/home-light.png) | ![Activity](docs/screenshots/activity.png) | ![Plan](docs/screenshots/plan.png) |
 
-| Transaction detail | Insights | Savings goals |
+| Quick Add | Insights | Subscriptions |
 |---|---|---|
-| ![Transaction detail](docs/screenshots/transaction-detail.png) | ![Insights](docs/screenshots/insights.png) | ![Goals](docs/screenshots/goals.png) |
+| ![Quick Add](docs/screenshots/quick-add.png) | ![Insights](docs/screenshots/insights.png) | ![Subscriptions](docs/screenshots/subscriptions.png) |
 
-| Onboarding | Dark theme | AMOLED settings |
+| Settings | Home, dark | Transaction detail |
 |---|---|---|
-| ![Onboarding](docs/screenshots/onboarding.png) | ![Home dark](docs/screenshots/home-dark.png) | ![Settings](docs/screenshots/settings.png) |
+| ![Settings](docs/screenshots/settings.png) | ![Home dark](docs/screenshots/home-dark.png) | ![Transaction detail](docs/screenshots/transaction-detail.png) |
 
-The UI is built on the **Aurora design system** (`app/src/main/java/com/awbuilds/auraspend/ui/designsystem`):
-brand purple + lavender + teal, Plus Jakarta Sans with tabular figures, hairline
-borders instead of shadows, spring motion tokens and a light / dark / true-black
-AMOLED theme. Screenshots are from the dev debug build.
+The UI follows the **Quiet Ledger** concept
+([`docs/design/interface-concept/index.html`](docs/design/interface-concept/index.html)):
+monochrome chrome with colour only in the data, warm paper and ink with one
+violet accent, type instead of gradients, bars instead of rings and donuts, and
+light / dark stages. The components live in
+`app/src/main/java/com/awbuilds/auraspend/ui/designsystem` (the `Aura*` names
+predate the concept and are kept on purpose).
+
+Screenshots are captured on the emulator forced to **1170×2532 @480 dpi** —
+390×844 dp, one app pixel to one concept pixel — with demo data from
+`DemoDataSeeder`, never a real inbox. The composed Play Store deck is in
+[`docs/store/screenshots/`](docs/store/screenshots).
 
 ## Testing
 
