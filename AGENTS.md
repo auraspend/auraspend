@@ -3,7 +3,23 @@
 > Read this file and the latest file in `docs/handoffs/` before touching anything.
 > Update both (plus `CLAUDE.md` / `memory/` when you learn something durable) before ending a session.
 >
-> Latest: `docs/handoffs/0067-website-rebuild.md` — **the public site was rebuilt**
+> Latest: `docs/handoffs/0068-payee-extraction-measured.md` — payee extraction
+> was **measured against a second SMS parser** over one message corpus, message
+> by message (the corpus is not in the repo). Amounts never disagreed; this app
+> was right on direction where the other booked card spends as income; and this
+> app was *behind* on payees, which four general rules in `BankMessageParser`
+> closed: a **semicolon ends a payee name** (the "to X" pattern terminated on
+> `[/.,]` and never on `;`, so "… to SOMEONE; UPI: …" did not match at all), a
+> **rejected candidate must not hide a later one** (the loop took only the
+> first match, so a second "to" clause lost to the account clause), a
+> **counterparty clause is not a merchant** ("towards reversal/cashback from
+> THE MERCHANT" extracted "reversal"; "to register" extracted "register"), and a
+> **written date is not a merchant** ("October 22"). Also added the
+> `UPI-<ref>-<NAME>` shape. Six synthetic fixtures; 621 tests. The comparison
+> harness is `ExternalCorpusEvalTest` — it applies the production classifier to
+> an external corpus from environment paths, asserts nothing, and no-ops
+> without them.
+> Before: `docs/handoffs/0067-website-rebuild.md` — **the public site was rebuilt**
 > and moved. It had been the last surface still carrying the old product: the
 > purple Aurora look, 2026-10-10 screenshots of a two-redesign-old UI, a
 > "Play listing is still staged" line that was five releases out of date, and a
