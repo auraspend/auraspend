@@ -301,6 +301,30 @@ object BankMessageParser {
         """(?i)\b(a/c|acct|account|card|ending(?:\s+in)?)\s*(?:no\.?|number)?\s*[:#-]?\s*[x*]*([0-9]{4})\b"""
     )
 
+    /**
+     * The balance a message states and the instrument it belongs to, for **any**
+     * parser's output. A sender-routed bank parser returns its own
+     * `ParsedBankMessage`, so the figures have to be lifted here — where every
+     * parse converges — rather than inside the global engine, which those
+     * parsers bypass.
+     */
+    fun detectBalanceAndInstrument(message: String): Triple<Double?, String?, Boolean> {
+        val instrumentMatch = instrumentRef.find(message)
+        val keyword = instrumentMatch?.groupValues?.get(1)?.lowercase()
+        val last4 = instrumentMatch?.groupValues?.get(2)
+        val isCard = keyword?.startsWith("card") == true || keyword?.startsWith("ending") == true
+        val balance = if (isCard) {
+            creditLimitClause.find(message)?.value?.let { clause ->
+                Regex("""([0-9][0-9,]*(?:\.[0-9]{1,2})?)""")
+                    .find(clause)?.groupValues?.get(1)?.replace(",", "")?.toDoubleOrNull()
+            }
+        } else {
+            availableBalance.find(message)?.groupValues?.get(1)
+                ?.replace(",", "")?.toDoubleOrNull()
+        }
+        return Triple(balance, last4, isCard)
+    }
+
     /** Replaces each match with spaces of equal length so indexes keep working. */
     private fun maskOut(message: String, pattern: Regex): String =
         pattern.replace(message) { " ".repeat(it.value.length) }

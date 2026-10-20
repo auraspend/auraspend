@@ -310,6 +310,7 @@ object SmsAutoClassifier {
         receivedAt: Long = 0L
     ): Transaction {
         val parsed = classified.parsed
+        val balanceInfo = BankMessageParser.detectBalanceAndInstrument(parsed.rawMessage)
         val subscriptionCategory = if (classified.isSubscription) "cat_subscription" else null
         val effectiveCategory = subscriptionCategory ?: categoryId ?: parsed.categoryId ?: "cat_other"
         return Transaction(
@@ -318,9 +319,12 @@ object SmsAutoClassifier {
             note = parsed.note ?: parsed.rawMessage.take(100),
             merchant = parsed.merchant,
             bankName = parsed.bankName,
-            balanceAfter = parsed.balanceAfter,
-            instrumentLast4 = parsed.instrumentLast4,
-            instrumentIsCard = parsed.instrumentIsCard,
+            // Lifted here, where every parse converges: a sender-routed bank
+            // parser (Canara, Axis, …) returns its own result, so the global
+            // engine's balance never ran for those messages.
+            balanceAfter = parsed.balanceAfter ?: balanceInfo.first,
+            instrumentLast4 = parsed.instrumentLast4 ?: balanceInfo.second,
+            instrumentIsCard = parsed.instrumentIsCard ?: balanceInfo.third,
             // A body with no parseable date used to fall back to the save clock,
             // which booked a July message as the October day the drain reached it
             // (owner's device, 2026-10-13). The provider's arrival timestamp is
