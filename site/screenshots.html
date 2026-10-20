@@ -36,6 +36,26 @@
 <body>
     <a class="skip-link" href="#main">Skip to content</a>
 
+    <!-- The concept's iOS chrome, drawn once and referenced by every phone
+         frame on the page. A 390×46 viewBox, so it scales with the frame
+         instead of needing per-size math. -->
+    <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+        <symbol id="ios-statusbar" viewBox="0 0 390 46">
+            <text x="30" y="27.68" font-size="13" font-weight="700" letter-spacing="0.13" fill="currentColor">9:41</text>
+            <g transform="translate(293,17.5)" fill="currentColor">
+                <path d="M0 7h3v4H0zM4.5 5h3v6h-3zM9 2.6h3V11H9zM13.5 0h3v11h-3z"/>
+                <g transform="translate(22,0)">
+                    <path d="M8 10.4 5.6 8a3.4 3.4 0 0 1 4.8 0zM8 6.2a6.6 6.6 0 0 0-4.6 1.9L1.9 6.6a9.4 9.4 0 0 1 12.2 0l-1.5 1.5A6.6 6.6 0 0 0 8 6.2z"/>
+                </g>
+                <g transform="translate(43,0)">
+                    <rect x="0.6" y="0.6" width="19" height="9.8" rx="3" fill="none" stroke="currentColor" stroke-opacity="0.45"/>
+                    <rect x="2.4" y="2.4" width="14.4" height="6.2" rx="1.7"/>
+                    <path d="M21.6 4v3" fill="none" stroke="currentColor" stroke-opacity="0.45" stroke-width="1.4" stroke-linecap="round"/>
+                </g>
+            </g>
+        </symbol>
+    </svg>
+
         <header class="site-header">
         <div class="container site-header__inner">
             <a href="index.html" class="logo" aria-label="AuraSpend home">Aura<em>Spend</em><span class="logo__dot" aria-hidden="true"></span></a>
@@ -75,64 +95,112 @@
             <div class="container">
                 <div class="shots">
                     <figure class="shot reveal">
-                        <div class="shot__frame">
-                            <img src="img/screens/home-light.png" width="1170" height="2532" loading="lazy" alt="Home: the greeting, the total balance, money in and out, a seven-day spending strip, budget progress and today's transactions" data-light-src="img/screens/home-light.png" data-dark-src="img/screens/home-dark.png">
+                        <div class="iphone">
+                            <img class="iphone__bezel" src="img/mockup.png" width="1022" height="2082" alt="" aria-hidden="true" loading="lazy">
+                            <div class="iphone__screen">
+                                <img class="iphone__capture" src="img/screens/home-light.png" width="1170" height="2532" loading="lazy" alt="Home: the greeting, the total balance, money in and out, a seven-day spending strip, budget progress and today's transactions" data-light-src="img/screens/home-light.png" data-dark-src="img/screens/home-dark.png">
+                                <span class="iphone__band" aria-hidden="true"></span>
+                                <svg class="iphone__chrome" viewBox="0 0 390 46" aria-hidden="true" focusable="false"><use href="#ios-statusbar"></use></svg>
+                                <span class="iphone__island" aria-hidden="true"></span>
+                            </div>
                         </div>
                         <figcaption>Home</figcaption>
                         <p>Balance, this month's flow, a seven-day strip, one budget aggregate, and the day’s transactions.</p>
                     </figure>
 
                     <figure class="shot reveal">
-                        <div class="shot__frame">
-                            <img src="img/screens/activity-light.png" width="1170" height="2532" loading="lazy" alt="Activity: search, category filters, a sticky day header with the day's net amount, and transaction rows" data-light-src="img/screens/activity-light.png" data-dark-src="img/screens/activity-dark.png">
+                        <div class="iphone">
+                            <img class="iphone__bezel" src="img/mockup.png" width="1022" height="2082" alt="" aria-hidden="true" loading="lazy">
+                            <div class="iphone__screen">
+                                <img class="iphone__capture" src="img/screens/activity-light.png" width="1170" height="2532" loading="lazy" alt="Activity: search, category filters, a sticky day header with the day's net amount, and transaction rows" data-light-src="img/screens/activity-light.png" data-dark-src="img/screens/activity-dark.png">
+                                <span class="iphone__band" aria-hidden="true"></span>
+                                <svg class="iphone__chrome" viewBox="0 0 390 46" aria-hidden="true" focusable="false"><use href="#ios-statusbar"></use></svg>
+                                <span class="iphone__island" aria-hidden="true"></span>
+                            </div>
                         </div>
                         <figcaption>Activity</figcaption>
                         <p>Search, filters, month navigation and a day-by-day ledger.</p>
                     </figure>
 
                     <figure class="shot reveal">
-                        <div class="shot__frame">
-                            <img src="img/screens/plan-light.png" width="1170" height="2532" loading="lazy" alt="Plan: money spent against budgets, a usage bar, and per-category budget rows" data-light-src="img/screens/plan-light.png" data-dark-src="img/screens/plan-dark.png">
+                        <div class="iphone">
+                            <img class="iphone__bezel" src="img/mockup.png" width="1022" height="2082" alt="" aria-hidden="true" loading="lazy">
+                            <div class="iphone__screen">
+                                <img class="iphone__capture" src="img/screens/plan-light.png" width="1170" height="2532" loading="lazy" alt="Plan: money spent against budgets, a usage bar, and per-category budget rows" data-light-src="img/screens/plan-light.png" data-dark-src="img/screens/plan-dark.png">
+                                <span class="iphone__band" aria-hidden="true"></span>
+                                <svg class="iphone__chrome" viewBox="0 0 390 46" aria-hidden="true" focusable="false"><use href="#ios-statusbar"></use></svg>
+                                <span class="iphone__island" aria-hidden="true"></span>
+                            </div>
                         </div>
                         <figcaption>Plan</figcaption>
                         <p>Budgets, subscriptions and savings goals, with the true percentage.</p>
                     </figure>
 
                     <figure class="shot reveal">
-                        <div class="shot__frame">
-                            <img src="img/screens/insights-light.png" width="1170" height="2532" loading="lazy" alt="Insights: total spent for the period, a change against last month, spending by category and top merchants" data-light-src="img/screens/insights-light.png" data-dark-src="img/screens/insights-dark.png">
+                        <div class="iphone">
+                            <img class="iphone__bezel" src="img/mockup.png" width="1022" height="2082" alt="" aria-hidden="true" loading="lazy">
+                            <div class="iphone__screen">
+                                <img class="iphone__capture" src="img/screens/insights-light.png" width="1170" height="2532" loading="lazy" alt="Insights: total spent for the period, a change against last month, spending by category and top merchants" data-light-src="img/screens/insights-light.png" data-dark-src="img/screens/insights-dark.png">
+                                <span class="iphone__band" aria-hidden="true"></span>
+                                <svg class="iphone__chrome" viewBox="0 0 390 46" aria-hidden="true" focusable="false"><use href="#ios-statusbar"></use></svg>
+                                <span class="iphone__island" aria-hidden="true"></span>
+                            </div>
                         </div>
                         <figcaption>Insights</figcaption>
                         <p>Where it went, how it compares, and who you spent with.</p>
                     </figure>
 
                     <figure class="shot reveal">
-                        <div class="shot__frame">
-                            <img src="img/screens/subscriptions-light.png" width="1170" height="2532" loading="lazy" alt="Subscriptions: the tracked recurring payments with their renewal dates, and the recurring payments detected from messages" data-light-src="img/screens/subscriptions-light.png" data-dark-src="img/screens/subscriptions-dark.png">
+                        <div class="iphone">
+                            <img class="iphone__bezel" src="img/mockup.png" width="1022" height="2082" alt="" aria-hidden="true" loading="lazy">
+                            <div class="iphone__screen">
+                                <img class="iphone__capture" src="img/screens/subscriptions-light.png" width="1170" height="2532" loading="lazy" alt="Subscriptions: the tracked recurring payments with their renewal dates, and the recurring payments detected from messages" data-light-src="img/screens/subscriptions-light.png" data-dark-src="img/screens/subscriptions-dark.png">
+                                <span class="iphone__band" aria-hidden="true"></span>
+                                <svg class="iphone__chrome" viewBox="0 0 390 46" aria-hidden="true" focusable="false"><use href="#ios-statusbar"></use></svg>
+                                <span class="iphone__island" aria-hidden="true"></span>
+                            </div>
                         </div>
                         <figcaption>Subscriptions</figcaption>
                         <p>What you renew, and what AuraSpend has spotted in your messages.</p>
                     </figure>
 
                     <figure class="shot reveal">
-                        <div class="shot__frame">
-                            <img src="img/screens/quick-add-light.png" width="1170" height="2532" loading="lazy" alt="Quick Add: a large amount display, a numeric keypad, category chips, merchant and date, and a Save button" data-light-src="img/screens/quick-add-light.png" data-dark-src="img/screens/quick-add-dark.png">
+                        <div class="iphone">
+                            <img class="iphone__bezel" src="img/mockup.png" width="1022" height="2082" alt="" aria-hidden="true" loading="lazy">
+                            <div class="iphone__screen">
+                                <img class="iphone__capture" src="img/screens/quick-add-light.png" width="1170" height="2532" loading="lazy" alt="Quick Add: a large amount display, a numeric keypad, category chips, merchant and date, and a Save button" data-light-src="img/screens/quick-add-light.png" data-dark-src="img/screens/quick-add-dark.png">
+                                <span class="iphone__band" aria-hidden="true"></span>
+                                <svg class="iphone__chrome" viewBox="0 0 390 46" aria-hidden="true" focusable="false"><use href="#ios-statusbar"></use></svg>
+                                <span class="iphone__island" aria-hidden="true"></span>
+                            </div>
                         </div>
                         <figcaption>Quick Add</figcaption>
                         <p>Amount, category, merchant, date — and Save, never below the fold.</p>
                     </figure>
 
                     <figure class="shot reveal">
-                        <div class="shot__frame">
-                            <img src="img/screens/detail-light.png" width="1170" height="2532" loading="lazy" alt="Transaction detail: the category, the amount, the merchant, and the original bank message with a copy action" data-light-src="img/screens/detail-light.png" data-dark-src="img/screens/detail-dark.png">
+                        <div class="iphone">
+                            <img class="iphone__bezel" src="img/mockup.png" width="1022" height="2082" alt="" aria-hidden="true" loading="lazy">
+                            <div class="iphone__screen">
+                                <img class="iphone__capture" src="img/screens/detail-light.png" width="1170" height="2532" loading="lazy" alt="Transaction detail: the category, the amount, the merchant, and the original bank message with a copy action" data-light-src="img/screens/detail-light.png" data-dark-src="img/screens/detail-dark.png">
+                                <span class="iphone__band" aria-hidden="true"></span>
+                                <svg class="iphone__chrome" viewBox="0 0 390 46" aria-hidden="true" focusable="false"><use href="#ios-statusbar"></use></svg>
+                                <span class="iphone__island" aria-hidden="true"></span>
+                            </div>
                         </div>
                         <figcaption>Transaction detail</figcaption>
                         <p>The original bank message, a copy button, and a tap to re-categorise.</p>
                     </figure>
 
                     <figure class="shot reveal">
-                        <div class="shot__frame">
-                            <img src="img/screens/settings-light.png" width="1170" height="2532" loading="lazy" alt="Settings: Money, Messages, Appearance, Data and About, with the theme choices and the data controls" data-light-src="img/screens/settings-light.png" data-dark-src="img/screens/settings-dark.png">
+                        <div class="iphone">
+                            <img class="iphone__bezel" src="img/mockup.png" width="1022" height="2082" alt="" aria-hidden="true" loading="lazy">
+                            <div class="iphone__screen">
+                                <img class="iphone__capture" src="img/screens/settings-light.png" width="1170" height="2532" loading="lazy" alt="Settings: Money, Messages, Appearance, Data and About, with the theme choices and the data controls" data-light-src="img/screens/settings-light.png" data-dark-src="img/screens/settings-dark.png">
+                                <span class="iphone__band" aria-hidden="true"></span>
+                                <svg class="iphone__chrome" viewBox="0 0 390 46" aria-hidden="true" focusable="false"><use href="#ios-statusbar"></use></svg>
+                                <span class="iphone__island" aria-hidden="true"></span>
+                            </div>
                         </div>
                         <figcaption>Settings</figcaption>
                         <p>Money, Messages, Appearance, Data, About — and a review queue that tells you its count.</p>

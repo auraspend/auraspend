@@ -1589,26 +1589,20 @@ code {
 .shots {
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: var(--sp-2xl);
+    gap: var(--sp-4xl) var(--sp-2xl);
 }
 
 .shot {
     display: grid;
     gap: var(--sp-md);
+    justify-items: center;
+    text-align: center;
 }
 
-.shot__frame {
-    background: var(--surface);
-    border: 1px solid var(--line);
-    border-radius: var(--r-lg);
-    padding: var(--sp-md);
-}
-
-.shot__frame img {
-    width: 100%;
-    height: auto;
-    border-radius: var(--r-md);
-    background: var(--paper);
+/* The bezel *is* the frame here, so there is no card around it — the phone
+   fills its column and the caption sits under it. */
+.shot .iphone {
+    max-width: 100%;
 }
 
 .shot figcaption {
@@ -1622,6 +1616,7 @@ code {
     font-size: var(--fs-micro);
     color: var(--muted);
     line-height: 1.5;
+    max-width: 22ch;
 }
 
 /* ── 20. Legal pages ───────────────────────────────────────────────────── */

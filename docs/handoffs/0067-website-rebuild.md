@@ -132,6 +132,12 @@ frame on the page, so it scales with the frame instead of needing per-size
 math. The frame's shadow is a `drop-shadow`, not a `box-shadow`, so it follows
 the bezel PNG's silhouette instead of casting a rectangle.
 
+**The screenshots gallery uses the same frame** — all eight screens, in the
+same iPhone, four across, with the caption centred under each. The bezel *is*
+the frame there, so the card that used to sit around each capture is gone;
+eight bare phones on a paper stage read as one image rather than eight
+components.
+
 ---
 
 ## The deployment change
