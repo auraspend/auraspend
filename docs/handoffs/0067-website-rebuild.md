@@ -172,11 +172,17 @@ still holds and every relative link still resolves. The old site's four pages
 are gone from `/docs`; `docs/README.md` now explains that the folder is the
 engineering record and is no longer published.
 
-> **One manual step, and only the owner can do it:** repository settings →
-> Pages → Build and deployment → Source → **GitHub Actions**. Until that is
-> switched, the old branch-based deployment keeps serving the old site and the
-> new workflow will fail with a permissions error. The workflow cannot flip it
-> itself; `GITHUB_TOKEN` cannot change a repository's Pages source.
+> **One manual step:** repository settings → Pages → Build and deployment →
+> Source → **GitHub Actions**. Until that is switched, the old branch-based
+> deployment keeps serving the old site and the new workflow will fail with a
+> permissions error. The workflow cannot flip it itself.
+>
+> **Corrected 2026-10-20 (handoff 0071).** This step was still outstanding, and
+> the site served a **404** because of it: the branch deployment was publishing
+> `/docs`, which has no `index.html` since the move. It also turns out that
+> "`GITHUB_TOKEN` cannot change a repository's Pages source" is **wrong** —
+> `PUT /repos/{owner}/{repo}/pages` with `build_type=workflow` does it. The
+> switch has now been made and the site is live.
 
 ## Corrections made to the copy
 

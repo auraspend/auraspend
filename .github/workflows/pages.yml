@@ -7,10 +7,13 @@ name: Pages
 # One-time setup in the repository settings:
 #   Settings → Pages → Build and deployment → Source → "GitHub Actions"
 #
-# Until that switch is made, the previous branch-based deployment from /docs
-# continues to serve the old site and this workflow's deployment will fail
-# with a permissions error. The site is also published from a custom domain
-# if one is added later; the URLs below are relative, so nothing breaks.
+# **Done (2026-10-20, handoff 0071).** Until that switch is made the previous
+# branch-based deployment from /docs keeps serving the site — and /docs has no
+# index.html since the move, so the site served a 404 while this workflow ran
+# green on every push. The switch can also be made without the UI:
+#   gh api --method PUT repos/<owner>/<repo>/pages -F build_type=workflow
+# The site is also published from a custom domain if one is added later; the
+# URLs below are relative, so nothing breaks.
 
 on:
   push:

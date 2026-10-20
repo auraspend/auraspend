@@ -3,7 +3,16 @@
 > Read this file and the latest file in `docs/handoffs/` before touching anything.
 > Update both (plus `CLAUDE.md` / `memory/` when you learn something durable) before ending a session.
 >
-> Latest: `docs/handoffs/0070-release-0.1.92.md` — **0.1.92 is cut**:
+> Latest: `docs/handoffs/0071-site-404-pages-source.md` — **the site was
+> serving a 404**: the repository's Pages source was still *deploy from a
+> branch* publishing `/docs`, which has had no `index.html` since the site
+> moved to `/site` — so the `pages.yml` workflow had been running green on
+> every push while changing nothing. The source is now **GitHub Actions** and
+> the site is live. Handoff 0067's claim that "`GITHUB_TOKEN` cannot change a
+> repository's Pages source" is **wrong**: `PUT /repos/{owner}/{repo}/pages`
+> with `build_type=workflow` does it. The site's changelog page gained the
+> 0.1.92 entry.
+> Before: `docs/handoffs/0070-release-0.1.92.md` — **0.1.92 is cut**:
 > versionCode 14, tag `v0.1.92`, run 39408271870 green, GitHub release
 > published with the AAB/APK/SHA256SUMS, and the Play closed-testing track
 > (`alpha`) holds it as `IN_REVIEW`. The number follows the project's own
