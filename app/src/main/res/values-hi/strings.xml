@@ -648,18 +648,25 @@
     <string name="category_leaf_freelance_income">फ़्रीलांस आय</string>
     <string name="category_leaf_investment_returns">निवेश पर प्रतिफल</string>
     <!-- Quiet Ledger -->
-    <string name="home_out_short">खर्च</string>
-    <string name="home_in_short">आय</string>
     <string name="home_budgets_month">%1$s बजट</string>
-    <string name="home_last_seven_days">पिछले 7 दिन</string>
-    <plurals name="home_budgets_over">
-        <item quantity="one">%2$d में से %1$d बजट ओवर</item>
-        <item quantity="other">%2$d में से %1$d बजट ओवर</item>
-    </plurals>
-    <string name="home_left">%1$s शेष</string>
     <string name="home_over">%1$s ज़्यादा</string>
     <string name="home_all_budgets">सभी बजट</string>
     <string name="home_all_activity">सभी गतिविधि</string>
+    <!-- Home, restored to the Aurora composition in the Quiet Ledger's language -->
+    <string name="home_quick_expense">खर्च</string>
+    <string name="home_quick_income">आय</string>
+    <string name="home_quick_smart_add">स्मार्ट ऐड</string>
+    <string name="home_quick_stats">आंकड़े</string>
+    <string name="home_cash_flow">नकदी प्रवाह</string>
+    <string name="home_subscriptions">सदस्यताएँ</string>
+    <plurals name="home_subscriptions_active">
+        <item quantity="one">%1$d सक्रिय</item>
+        <item quantity="other">%1$d सक्रिय</item>
+    </plurals>
+    <string name="home_subscription_monthly">%1$s/माह</string>
+    <string name="home_out_this_month">इस महीने का खर्च</string>
+    <string name="home_in_this_month">इस महीने की आय</string>
+    <string name="home_budget_percent_used">%1$s बजट %2$d प्रतिशत उपयोग</string>
     <plurals name="plan_across_budgets">
         <item quantity="one">%2$d बजट में %1$s</item>
         <item quantity="other">%2$d बजट में %1$s</item>

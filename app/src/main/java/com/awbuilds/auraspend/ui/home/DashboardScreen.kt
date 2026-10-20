@@ -1,7 +1,6 @@
 package com.awbuilds.auraspend.ui.home
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
@@ -12,6 +11,11 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ReceiptLong
 import androidx.compose.material.icons.filled.CloudOff
+import androidx.compose.material.icons.outlined.Add
+import androidx.compose.material.icons.outlined.ArrowDownward
+import androidx.compose.material.icons.outlined.AutoAwesome
+import androidx.compose.material.icons.outlined.BarChart
+import androidx.compose.material.icons.outlined.Subscriptions
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -35,17 +39,26 @@ import com.awbuilds.auraspend.ui.theme.extendedColors
 import java.time.LocalDate
 import java.util.Locale
 import java.time.format.DateTimeFormatter
+import java.time.ZoneId
 
 /**
- * Home is a glance, not a dashboard.
+ * Home is a glance that is also a dashboard.
  *
- * A money app is opened in three-second bursts, usually to answer one of two
- * questions: *can I afford this*, and *did that charge land*. So the screen reads
- * in this order — position, anything that needs action, how the month is going,
- * and today's rows — and all of it fits above the fold on a 411 dp phone.
+ * The Aurora home (0.1.71) carried a hero, four quick actions, a cash-flow
+ * chart, a carousel of budget rings, a subscriptions card and the recent rows.
+ * The Quiet Ledger pass reduced it to a bare glance and moved the chart to
+ * Insights. Both were right about their own question — and this screen now
+ * answers both, in the concept's language rather than Aurora's:
  *
- * The cash-flow chart that used to sit below the rows now lives on Insights as
- * "Daily spending": analysis is a deliberate visit, and Home is a glance.
+ * - **First screenful**: the hero (what you have), four quick actions (record
+ *   something), and the needs-you rail (whatever needs a decision).
+ * - **Below it**: the seven-day cash flow, the budgets as rings, the
+ *   subscriptions, the account ledger, and today's rows.
+ *
+ * Everything here is flat paper, hairline edges and ink figures, with colour
+ * reserved for data (a category, a status). The one thing the Aurora hero had
+ * that this one does not is its gradient: the concept retired the brand sweep,
+ * and a flat tonal block says the same thing without it.
  */
 @Composable
 fun DashboardScreen(
@@ -80,13 +93,14 @@ fun DashboardScreen(
         state.budgets.filter { it.limitAmount > 0 && it.spentAmount > it.limitAmount }
             .sortedByDescending { it.spentAmount - it.limitAmount }
     }
-    // ── The seven-day strip. A quiet day used to leave Home with nothing below
-    // the budgets card but an empty "Today", so the strip carries the week even
-    // when today has no rows. Values are normalised to the week's own maximum,
-    // which is what AuraSparkColumns expects.
-    val weekStrip = remember(state.dailySpend) {
-        val max = state.dailySpend.maxOrNull() ?: 0.0
-        state.dailySpend.map { if (max > 0.0) (it / max).toFloat() else 0f }
+    // ── The seven days, for the chart. The area chart scales the values against
+    // their own maximum, so they stay raw amounts; only the x-axis needs times.
+    val weekPoints = remember(state.dailySpend) {
+        val zone = ZoneId.systemDefault()
+        val today = LocalDate.now()
+        state.dailySpend.mapIndexed { index, amount ->
+            today.minusDays((6 - index).toLong()).atStartOfDay(zone).toInstant().toEpochMilli() to amount
+        }
     }
     val weekTotal = remember(state.dailySpend) { state.dailySpend.sum() }
     val locale = LocalConfiguration.current.locales[0]
@@ -187,6 +201,200 @@ fun DashboardScreen(
                 )
             }
 
+            // ── Quick actions: the four things a money app is opened to do.
+            item {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = AuraSpacing.gutter),
+                    horizontalArrangement = Arrangement.spacedBy(AuraSpacing.sm)
+                ) {
+                    AuraQuickAction(
+                        icon = Icons.Outlined.Add,
+                        label = stringResource(R.string.home_quick_expense),
+                        modifier = Modifier.weight(1f),
+                        onClick = { onQuickAdd(TransactionType.EXPENSE) }
+                    )
+                    AuraQuickAction(
+                        icon = Icons.Outlined.ArrowDownward,
+                        label = stringResource(R.string.home_quick_income),
+                        modifier = Modifier.weight(1f),
+                        onClick = { onQuickAdd(TransactionType.INCOME) }
+                    )
+                    AuraQuickAction(
+                        icon = Icons.Outlined.AutoAwesome,
+                        label = stringResource(R.string.home_quick_smart_add),
+                        modifier = Modifier.weight(1f),
+                        onClick = onOpenReviewQueue
+                    )
+                    AuraQuickAction(
+                        icon = Icons.Outlined.BarChart,
+                        label = stringResource(R.string.home_quick_stats),
+                        modifier = Modifier.weight(1f),
+                        onClick = onNavigateToAnalytics
+                    )
+                }
+            }
+
+            // ── Anything that needs a decision, in one swipeable row
+            if (overBudget.isNotEmpty() || state.reviewQueueCount > 0) {
+                item {
+                    NeedsYouRail(
+                        overBudget = overBudget.firstOrNull(),
+                        overBudgetCategory = overBudget.firstOrNull()?.let { budget ->
+                            state.categories.find { it.id == budget.categoryId }?.name
+                        },
+                        reviewQueueCount = state.reviewQueueCount,
+                        onOpenPlan = onNavigateToPlan,
+                        onOpenReviewQueue = onOpenReviewQueue
+                    )
+                }
+            }
+
+            // ── The cash flow of the last seven days. The area chart the Aurora
+            // home carried, in the concept's ink: a quiet day reads as a dip to
+            // the baseline rather than a missing column.
+            if (weekPoints.any { it.second > 0.0 }) {
+                item {
+                    AuraSectionHeader(
+                        title = stringResource(R.string.home_cash_flow),
+                        modifier = Modifier.padding(top = AuraSpacing.section),
+                        trailing = {
+                            Text(
+                                formatMoney(weekTotal, fractionDigits = 0),
+                                style = AuraType.rankPercent,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    )
+                }
+                item {
+                    Box(modifier = Modifier.padding(horizontal = AuraSpacing.gutter)) {
+                        AuraCard(
+                            style = AuraCardStyle.Outlined,
+                            modifier = Modifier.fillMaxWidth(),
+                            onClick = onNavigateToAnalytics
+                        ) {
+                            Spacer(modifier = Modifier.height(AuraSpacing.sm))
+                            AuraAreaChart(
+                                points = weekPoints,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(92.dp),
+                                // Ink, not the brand violet: the chart is chrome,
+                                // not data, and the concept spends colour on data.
+                                lineColor = MaterialTheme.colorScheme.onBackground,
+                                fillTop = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.12f),
+                                contentDescription = stringResource(R.string.home_cash_flow)
+                            )
+                            Spacer(modifier = Modifier.height(AuraSpacing.sm))
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                weekLabels.forEach { label ->
+                                    Text(
+                                        label,
+                                        style = AuraType.axisLabel,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // ── The budgets, one card each with its ring. The month's totals
+            // ride in the section header, so the aggregate is not lost: the
+            // carousel says which budget, the header says how the month stands.
+            if (state.budgets.isNotEmpty()) {
+                item {
+                    AuraSectionHeader(
+                        title = stringResource(R.string.home_budgets_month, rememberMonthName()),
+                        modifier = Modifier.padding(top = AuraSpacing.section),
+                        trailing = {
+                            AuraSectionLink(
+                                text = stringResource(R.string.home_all_budgets),
+                                onClick = onNavigateToPlan
+                            )
+                        }
+                    )
+                }
+                item {
+                    LazyRow(
+                        contentPadding = PaddingValues(
+                            start = AuraSpacing.gutter,
+                            end = AuraSpacing.gutter
+                        ),
+                        horizontalArrangement = Arrangement.spacedBy(AuraSpacing.sm)
+                    ) {
+                        items(state.budgets, key = { it.id }) { budget ->
+                            val category = state.categories.find { it.id == budget.categoryId }
+                            AuraBudgetRingCard(
+                                name = category?.name ?: stringResource(R.string.home_unknown_category),
+                                emoji = categoryIconGlyph(category?.icon),
+                                color = categoryColor(category?.color),
+                                spent = budget.spentAmount,
+                                limit = budget.limitAmount,
+                                onClick = onNavigateToPlan
+                            )
+                        }
+                    }
+                }
+            }
+
+            // ── The subscriptions, and what they cost a month. Read from the
+            // same table the Subscriptions screen reads, so the two cannot
+            // disagree about how many there are.
+            if (state.activeSubscriptions.isNotEmpty()) {
+                item {
+                    AuraSectionHeader(
+                        title = stringResource(R.string.home_subscriptions),
+                        modifier = Modifier.padding(top = AuraSpacing.section)
+                    )
+                }
+                item {
+                    Box(modifier = Modifier.padding(horizontal = AuraSpacing.gutter)) {
+                        AuraCard(
+                            style = AuraCardStyle.Tonal,
+                            modifier = Modifier.fillMaxWidth(),
+                            contentPadding = PaddingValues(horizontal = AuraSpacing.lg, vertical = 14.dp),
+                            onClick = onNavigateToPlan
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                androidx.compose.material3.Icon(
+                                    Icons.Outlined.Subscriptions,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.onBackground,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                                Spacer(modifier = Modifier.width(AuraSpacing.md))
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        pluralStringResource(
+                                            R.plurals.home_subscriptions_active,
+                                            state.activeSubscriptions.size,
+                                            state.activeSubscriptions.size
+                                        ),
+                                        style = AuraType.rowTitle,
+                                        color = MaterialTheme.colorScheme.onBackground
+                                    )
+                                    Text(
+                                        stringResource(
+                                            R.string.home_subscription_monthly,
+                                            formatMoney(state.totalSubscriptionCost, fractionDigits = 0)
+                                        ),
+                                        style = AuraType.rowMeta,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
             // ── The ledger: one row per account or card, from the balance the
             // bank last stated. Only shows instruments a message has carried a
             // figure for; nothing is estimated.
@@ -240,95 +448,15 @@ fun DashboardScreen(
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
                                 }
+                                // Air between the meta line and the figure: at a
+                                // 200 % font scale the meta wraps, and without
+                                // this gap it ran into the amount.
+                                Spacer(modifier = Modifier.width(AuraSpacing.sm))
                                 Text(
                                     formatMoney(account.balance, fractionDigits = 0),
                                     style = AuraType.moneySmall,
                                     color = MaterialTheme.colorScheme.onBackground
                                 )
-                            }
-                        }
-                    }
-                }
-            }
-
-            // ── Anything that needs a decision, in one swipeable row
-            if (overBudget.isNotEmpty() || state.reviewQueueCount > 0) {
-                item {
-                    NeedsYouRail(
-                        overBudget = overBudget.firstOrNull(),
-                        overBudgetCategory = overBudget.firstOrNull()?.let { budget ->
-                            state.categories.find { it.id == budget.categoryId }?.name
-                        },
-                        reviewQueueCount = state.reviewQueueCount,
-                        onOpenPlan = onNavigateToPlan,
-                        onOpenReviewQueue = onOpenReviewQueue
-                    )
-                }
-            }
-
-            // ── The month's budgets, as one aggregate rather than a carousel
-            if (budgetLimit > 0) {
-                item {
-                    AuraSectionHeader(
-                        title = stringResource(R.string.home_budgets_month, rememberMonthName()),
-                        modifier = Modifier.padding(top = AuraSpacing.section),
-                        trailing = {
-                            AuraSectionLink(
-                                text = stringResource(R.string.home_all_budgets),
-                                onClick = onNavigateToPlan
-                            )
-                        }
-                    )
-                }
-                item {
-                    BudgetSummaryCard(
-                        spent = budgetSpent,
-                        limit = budgetLimit,
-                        overCount = overBudget.size,
-                        budgetCount = state.budgets.size,
-                        onClick = onNavigateToPlan
-                    )
-                }
-            }
-
-            // ── The last seven days, so a quiet day is not a blank screen
-            if (state.dailySpend.any { it > 0.0 }) {
-                item {
-                    AuraSectionHeader(
-                        title = stringResource(R.string.home_last_seven_days),
-                        modifier = Modifier.padding(top = AuraSpacing.section),
-                        trailing = {
-                            Text(
-                                formatMoney(weekTotal, fractionDigits = 0),
-                                style = AuraType.rankPercent,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                    )
-                }
-                item {
-                    Box(modifier = Modifier.padding(horizontal = AuraSpacing.gutter)) {
-                        AuraCard(style = AuraCardStyle.Outlined, modifier = Modifier.fillMaxWidth()) {
-                            Spacer(modifier = Modifier.height(AuraSpacing.lg))
-                            AuraSparkColumns(
-                                values = weekStrip,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(56.dp),
-                                contentDescription = stringResource(R.string.home_last_seven_days)
-                            )
-                            Spacer(modifier = Modifier.height(AuraSpacing.sm))
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween
-                            ) {
-                                weekLabels.forEach { label ->
-                                    Text(
-                                        label,
-                                        style = AuraType.axisLabel,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                }
                             }
                         }
                     }
@@ -395,9 +523,13 @@ fun DashboardScreen(
 // ─── Pieces ───────────────────────────────────────────────────────────────────
 
 /**
- * The one hero on this screen: the balance, then the share of this month's
- * income that has already gone. The bar is the fastest read of "am I ahead this
- * month" — faster than two numbers, and far faster than the ring it replaced.
+ * The hero: what you have, then how much of this month's income is gone.
+ *
+ * Aurora's hero was a gradient block with the balance and two stats split by a
+ * hairline. This one keeps the shape — a label, a figure, and two figures
+ * either side of a hairline — and drops the gradient: the concept's flat tonal
+ * block says the same thing without a brand sweep. The bar between the figure
+ * and the stats is the fastest read of "am I ahead this month".
  */
 @Composable
 private fun BalanceBlock(
@@ -410,14 +542,13 @@ private fun BalanceBlock(
 ) {
     val fraction = if (income > 0) (expense / income).toFloat() else 0f
 
-    Column(
+    AuraCard(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = onOpenAnalytics)
-            // `.balance{padding:2px 0 0}` — no bottom padding: the rail's own
-            // 22dp margin is the whole gap between the flow captions and the cards.
-            .padding(horizontal = AuraSpacing.gutter)
-            .padding(top = 2.dp)
+            .padding(horizontal = AuraSpacing.gutter),
+        style = AuraCardStyle.Tonal,
+        shape = RoundedCornerShape(24.dp),
+        onClick = onOpenAnalytics
     ) {
         AuraEyebrow(
             stringResource(
@@ -452,50 +583,66 @@ private fun BalanceBlock(
             trackColor = MaterialTheme.extendedColors.track,
             height = 7.dp
         )
-        Spacer(modifier = Modifier.height(9.dp))
+        Spacer(modifier = Modifier.height(AuraSpacing.md))
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            FlowCaption(
-                dotColor = MaterialTheme.colorScheme.onSurface,
-                amount = formatMoney(expense),
-                word = stringResource(R.string.home_out_short)
+            HeroStat(
+                label = stringResource(R.string.home_out_this_month),
+                value = formatMoney(expense, fractionDigits = 0),
+                modifier = Modifier.weight(1f)
             )
-            Spacer(modifier = Modifier.weight(1f))
-            FlowCaption(
-                dotColor = MaterialTheme.extendedColors.incomeAmount,
-                amount = formatMoney(income),
-                word = stringResource(R.string.home_in_short)
+            HeroDivider()
+            HeroStat(
+                label = stringResource(R.string.home_in_this_month),
+                value = formatMoney(income, fractionDigits = 0),
+                modifier = Modifier.weight(1f)
             )
         }
     }
 }
 
 /**
- * "● ₹86,200 out" — one line per side of the bar.
+ * One side of the hero: what it is, and what it is.
  *
- * Two labelled columns ("Out this month" above the value) cost a line of height
- * and made the caption compete with the balance above it. The dot carries the
- * colour, the word carries the direction, and the bar carries the ratio — so the
- * amount itself is unsigned; a minus beside the word "out" says it twice.
+ * Aurora's hero stats were a label above a figure, split by a hairline. The
+ * label is the metric label (small, quiet) and the figure is money, so the two
+ * halves of the hero read as one scale rather than as two different apps.
+ *
+ * The figure is rounded to whole rupees. Two money strings share one line at a
+ * 200 % font scale, and "₹46,006.40" wraps mid-number — which reads as two
+ * numbers. The paise are in Activity, where an exact figure belongs; the hero
+ * answers "roughly how much", and the ledger card below rounds the same way.
  */
 @Composable
-private fun FlowCaption(dotColor: Color, amount: String, word: String) {
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        Box(
-            modifier = Modifier
-                .size(6.dp)
-                .clip(CircleShape)
-                .background(dotColor)
-        )
-        Spacer(modifier = Modifier.width(6.dp))
+private fun HeroStat(label: String, value: String, modifier: Modifier = Modifier) {
+    Column(modifier = modifier) {
         Text(
-            "$amount $word",
-            style = AuraType.flowCaption,
+            label,
+            style = AuraType.metricLabel,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
+        Spacer(modifier = Modifier.height(2.dp))
+        Text(
+            value,
+            style = AuraType.moneySmall,
+            color = MaterialTheme.colorScheme.onBackground,
+            maxLines = 1
+        )
     }
+}
+
+/** The hairline between the hero's two stats — the concept's `lineSoft`. */
+@Composable
+private fun HeroDivider() {
+    Box(
+        modifier = Modifier
+            .padding(horizontal = AuraSpacing.sm)
+            .width(1.dp)
+            .heightIn(min = 30.dp)
+            .background(MaterialTheme.extendedColors.lineSoft)
+    )
 }
 
 /**
@@ -608,83 +755,6 @@ private fun AlertCard(
                     color = if (emphasise) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
-                )
-            }
-        }
-    }
-}
-
-/**
- * One aggregate instead of a carousel of per-category cards.
- *
- * The carousel showed three budgets and hid the rest behind a horizontal scroll,
- * so "am I over this month" needed a swipe and a mental sum. The aggregate
- * answers it immediately; the per-category detail lives on Plan, one tap away.
- */
-@Composable
-private fun BudgetSummaryCard(
-    spent: Double,
-    limit: Double,
-    overCount: Int,
-    budgetCount: Int,
-    onClick: () -> Unit
-) {
-    val fraction = if (limit > 0) (spent / limit).toFloat() else 0f
-    val over = limit > 0 && spent > limit
-    val barColor = when {
-        over -> MaterialTheme.colorScheme.error
-        fraction >= 0.8f -> MaterialTheme.colorScheme.tertiary
-        else -> MaterialTheme.colorScheme.onBackground
-    }
-
-    Box(modifier = Modifier.padding(horizontal = AuraSpacing.gutter)) {
-        AuraCard(
-            style = AuraCardStyle.Outlined,
-            modifier = Modifier.fillMaxWidth(),
-            contentPadding = PaddingValues(horizontal = AuraSpacing.lg, vertical = 15.dp),
-            onClick = onClick
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    "${formatMoney(spent)} ${stringResource(R.string.home_budget_of, formatMoney(limit))}",
-                    style = AuraType.budgetName,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier.weight(1f)
-                )
-                Text(
-                    stringResource(R.string.common_percent, (fraction * 100).toInt()),
-                    style = AuraType.budgetAmount,
-                    color = if (over) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface
-                )
-            }
-            Spacer(modifier = Modifier.height(10.dp))
-            AuraProgressBar(
-                progress = fraction,
-                color = barColor,
-                trackColor = MaterialTheme.extendedColors.track
-            )
-            Spacer(modifier = Modifier.height(AuraSpacing.sm))
-            Row(modifier = Modifier.fillMaxWidth()) {
-                Text(
-                    pluralStringResource(R.plurals.home_budgets_over, budgetCount, overCount, budgetCount),
-                    style = AuraType.budgetSub,
-                    color = if (overCount > 0) MaterialTheme.colorScheme.error
-                    else MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.weight(1f)
-                )
-                // The right cell always says where the month stands. It used to
-                // disappear when the month went over, which left the row looking
-                // half-rendered next to the concept; "₹7,467 over" is the same
-                // cell answering the same question in the other direction.
-                Text(
-                    if (over) stringResource(R.string.home_over, formatMoney(spent - limit))
-                    else stringResource(R.string.home_left, formatMoney(limit - spent)),
-                    style = AuraType.budgetSub,
-                    color = if (over) MaterialTheme.colorScheme.error
-                    else MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         }

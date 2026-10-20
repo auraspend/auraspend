@@ -5,6 +5,7 @@ import com.awbuilds.auraspend.ui.core.UiError
 import com.awbuilds.auraspend.domain.model.Account
 import com.awbuilds.auraspend.domain.model.Budget
 import com.awbuilds.auraspend.domain.model.Category
+import com.awbuilds.auraspend.domain.model.Subscription
 import com.awbuilds.auraspend.domain.model.Transaction
 
 data class DashboardViewState(
@@ -37,6 +38,15 @@ data class DashboardViewState(
      * inventing a balance.
      */
     val accounts: List<Account> = emptyList(),
+    /**
+     * The subscriptions the user has confirmed, and what they cost a month.
+     *
+     * Read from the same table the Subscriptions screen reads, so the Home card
+     * and that screen cannot disagree about how many there are or what they
+     * cost — the failure 0065 was about on Plan.
+     */
+    val activeSubscriptions: List<Subscription> = emptyList(),
+    val totalSubscriptionCost: Double = 0.0,
     val isLoading: Boolean = false,
     val error: UiError? = null
 )

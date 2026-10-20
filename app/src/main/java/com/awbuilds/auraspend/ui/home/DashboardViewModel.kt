@@ -12,6 +12,8 @@ import com.awbuilds.auraspend.domain.model.Budget
 import com.awbuilds.auraspend.domain.model.BudgetPeriod
 import com.awbuilds.auraspend.domain.model.Category
 import com.awbuilds.auraspend.domain.model.DayTotal
+import com.awbuilds.auraspend.domain.model.RecurringCost
+import com.awbuilds.auraspend.domain.model.Subscription
 import com.awbuilds.auraspend.domain.model.Transaction
 import com.awbuilds.auraspend.domain.model.TransactionSummary
 import com.awbuilds.auraspend.domain.repository.TransactionRepository
@@ -115,18 +117,26 @@ class DashboardViewModel(
         }
 
         val supporting = combine(
-            repository.getRecentTransactions(RECENT_LIMIT),
-            repository.getAllCategories(),
-            repository.getAllBudgets(),
-            repository.observeExpenseByCategory(epoch(yearStart), epoch(yearEnd)),
-            repository.observeAccounts()
-        ) { recent, categories, budgets, yearCats, accounts ->
+            combine(
+                repository.getRecentTransactions(RECENT_LIMIT),
+                repository.getAllCategories(),
+                repository.getAllBudgets()
+            ) { recent, categories, budgets -> Triple(recent, categories, budgets) },
+            combine(
+                repository.observeExpenseByCategory(epoch(yearStart), epoch(yearEnd)),
+                repository.observeAccounts(),
+                repository.getActiveSubscriptions()
+            ) { yearCats, accounts, subscriptions ->
+                Triple(yearCats.associate { it.categoryId to it.amount }, accounts, subscriptions)
+            }
+        ) { meta, rest ->
             Supporting(
-                recent = recent,
-                categories = categories,
-                budgets = budgets,
-                yearlyByCategory = yearCats.associate { it.categoryId to it.amount },
-                accounts = accounts
+                recent = meta.first,
+                categories = meta.second,
+                budgets = meta.third,
+                yearlyByCategory = rest.first,
+                accounts = rest.second,
+                subscriptions = rest.third
             )
         }
 
@@ -177,6 +187,11 @@ class DashboardViewModel(
                 categoryMonthTotals = categoryTotals,
                 dailySpend = dailySpend,
                 accounts = sup.accounts,
+                activeSubscriptions = sup.subscriptions,
+                // What the subscriptions cost a month, normalised: a yearly
+                // subscription is a twelfth of its price here, which is the same
+                // arithmetic the Subscriptions screen uses.
+                totalSubscriptionCost = RecurringCost.monthlyTotal(sup.subscriptions),
                 isLoading = false,
                 error = null
             )
@@ -211,7 +226,8 @@ class DashboardViewModel(
         val categories: List<Category>,
         val budgets: List<Budget>,
         val yearlyByCategory: Map<String, Double>,
-        val accounts: List<Account>
+        val accounts: List<Account>,
+        val subscriptions: List<Subscription>
     )
 
     private companion object {

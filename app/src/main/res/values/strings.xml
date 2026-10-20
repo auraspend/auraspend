@@ -655,18 +655,25 @@
     <string name="category_leaf_freelance_income">Freelance Income</string>
     <string name="category_leaf_investment_returns">Investment Returns</string>
     <!-- Quiet Ledger: labels the design needs that had no equivalent -->
-    <string name="home_out_short">out</string>
-    <string name="home_in_short">in</string>
     <string name="home_budgets_month">%1$s budgets</string>
-    <string name="home_last_seven_days">Last 7 days</string>
-    <plurals name="home_budgets_over">
-        <item quantity="one">%1$d of %2$d budget over</item>
-        <item quantity="other">%1$d of %2$d budgets over</item>
-    </plurals>
-    <string name="home_left">%1$s left</string>
     <string name="home_over">%1$s over</string>
     <string name="home_all_budgets">All budgets</string>
     <string name="home_all_activity">All activity</string>
+    <!-- Home, restored to the Aurora composition in the Quiet Ledger's language -->
+    <string name="home_quick_expense">Expense</string>
+    <string name="home_quick_income">Income</string>
+    <string name="home_quick_smart_add">Smart Add</string>
+    <string name="home_quick_stats">Stats</string>
+    <string name="home_cash_flow">Cash flow</string>
+    <string name="home_subscriptions">Subscriptions</string>
+    <plurals name="home_subscriptions_active">
+        <item quantity="one">%1$d active</item>
+        <item quantity="other">%1$d active</item>
+    </plurals>
+    <string name="home_subscription_monthly">%1$s/mo</string>
+    <string name="home_out_this_month">Out this month</string>
+    <string name="home_in_this_month">In this month</string>
+    <string name="home_budget_percent_used">%1$s budget %2$d percent used</string>
     <plurals name="plan_across_budgets">
         <item quantity="one">%1$s across %2$d budget</item>
         <item quantity="other">%1$s across %2$d budgets</item>
