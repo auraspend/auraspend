@@ -15,10 +15,16 @@
 > **counterparty clause is not a merchant** ("towards reversal/cashback from
 > THE MERCHANT" extracted "reversal"; "to register" extracted "register"), and a
 > **written date is not a merchant** ("October 22"). Also added the
-> `UPI-<ref>-<NAME>` shape. Six synthetic fixtures; 621 tests. The comparison
-> harness is `ExternalCorpusEvalTest` — it applies the production classifier to
-> an external corpus from environment paths, asserts nothing, and no-ops
-> without them.
+> `UPI-<ref>-<NAME>` shape. **Categories were compared too, on the app itself
+> with the model present** (its own CSV export, joined exactly by source SMS id):
+> amounts never disagreed, this app is right on direction where the other booked
+> card spends as income, and this app is *ahead* on categories — it files a
+> specific category where the other app falls back to its generic bucket. The two
+> gaps that went the other way were merchants the keyword map did not know
+> (a hotel-booking portal and a retail chain), now fixed. 623 tests. The
+> comparison harness is `ExternalCorpusEvalTest` — it applies the production
+> classifier to an external corpus from environment paths, asserts nothing, and
+> no-ops without them.
 > Before: `docs/handoffs/0067-website-rebuild.md` — **the public site was rebuilt**
 > and moved. It had been the last surface still carrying the old product: the
 > purple Aurora look, 2026-10-10 screenshots of a two-redesign-old UI, a
