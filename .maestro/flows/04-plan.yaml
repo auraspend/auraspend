@@ -1,0 +1,98 @@
+# Plan: budgets, savings goals and the subscriptions link.
+#
+# The hero is "SPENT AGAINST BUDGETS" with the real percentage — 0.1.56 fixed
+# the clamp that used to print "100 % used" next to a larger figure, and the
+# flow asserts the true number so that regression cannot come back.
+appId: com.awbuilds.auraspend.dev
+name: 04 · Plan
+tags:
+  - plan
+  - budgets
+---
+- launchApp:
+    appId: com.awbuilds.auraspend.dev
+
+# Leave an open sheet, then a pushed screen, if the last flow left the app
+# on one. `launchApp` brings the existing task forward and the navigation
+# stack comes back with it, so the app can resume on Settings, on
+# Categories, or with the currency sheet open — none of which have a
+# navigation bar to tap.
+- runFlow:
+    when:
+      visible: "Close sheet"
+    commands:
+      - tapOn: "Close sheet"
+- runFlow:
+    when:
+      visible: "Back"
+    commands:
+      - back
+
+- tapOn: "Plan"
+
+# The list keeps its scroll position between launches, so every flow scrolls
+# back to the top first. `centerElement` is what makes this exact: the
+# element is brought to the middle of the viewport, and the top of a list
+# cannot be scrolled past.
+#
+# A swipe is not used for this. A drag that starts over the cash-flow chart
+# is swallowed by the chart's own gesture handling and the list does not
+# move, and a bare `direction: DOWN` starts at the system status bar and
+# pulls the notification shade down over the app.
+- scrollUntilVisible:
+    element:
+      text: "SPENT AGAINST BUDGETS"
+    direction: UP
+    centerElement: true
+
+- assertVisible: "SPENT AGAINST BUDGETS"
+- assertVisible: "of ₹44,000 across 5 budgets"
+
+# The percentage is the true one, not a clamped 100.
+- assertVisible: "76% used|76 % used"
+
+# The per-budget rows, each with its own true percentage and limit.
+- assertVisible: "Food & Dining"
+- assertVisible: "62% used|62 % used"
+- assertVisible: "of ₹8,000"
+- assertVisible: "Grocery"
+- assertVisible: "of ₹9,000"
+- assertVisible: "Transport"
+- assertVisible: "Shopping"
+- assertVisible: "Entertainment"
+
+# ── Savings goals ──────────────────────────────────────────────────────────
+- scrollUntilVisible:
+    element:
+      text: "Savings goals"
+    direction: DOWN
+    centerElement: true
+- assertVisible: "Savings goals"
+- assertVisible: "View all"
+
+# ── The budgets screen, reached from Edit ───────────────────────────────────
+- scrollUntilVisible:
+    element:
+      text: "Edit"
+    direction: UP
+    centerElement: true
+- tapOn: "Edit"
+- assertVisible: "Budgets"
+- assertVisible: "All budgets"
+- back
+- assertVisible: "SPENT AGAINST BUDGETS"
+
+# ── Subscriptions ──────────────────────────────────────────────────────────
+# The hub's subscription row and the Subscriptions screen must agree about the
+# count — that was 0.1.91's whole point. The row reads "N active subscriptions"
+# when nothing has been detected, and "N active · M detected" when it has.
+- scrollUntilVisible:
+    element:
+      text: "Subscriptions"
+    direction: DOWN
+    centerElement: true
+- assertVisible: "Subscriptions"
+- assertVisible: ".*active( · .*detected| subscriptions).*"
+- tapOn: "Subscriptions"
+- assertVisible: "Recurring monthly"
+- back

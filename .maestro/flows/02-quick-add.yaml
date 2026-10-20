@@ -1,0 +1,97 @@
+# Quick Add: enter an expense through the keypad and find it in the ledger.
+#
+# The sheet opens **expanded** so Save is never below the fold — the flow would
+# have to scroll to reach it otherwise, and that is exactly the regression the
+# expanded sheet exists to prevent. Asserting Save is visible without
+# scrolling is therefore part of the test.
+#
+# The flow cleans up after itself: the transaction it creates is deleted at the
+# end, so the suite can be re-run against the same seeded data.
+appId: com.awbuilds.auraspend.dev
+name: 02 · Quick Add
+tags:
+  - quickadd
+  - transactions
+---
+- launchApp:
+    appId: com.awbuilds.auraspend.dev
+
+# Leave an open sheet, then a pushed screen, if the last flow left the app
+# on one. `launchApp` brings the existing task forward and the navigation
+# stack comes back with it, so the app can resume on Settings, on
+# Categories, or with the currency sheet open — none of which have a
+# navigation bar to tap.
+- runFlow:
+    when:
+      visible: "Close sheet"
+    commands:
+      - tapOn: "Close sheet"
+- runFlow:
+    when:
+      visible: "Back"
+    commands:
+      - back
+
+# Make sure this is the Home tab, and back to the top of its list. The list
+# keeps its scroll position between launches, so without this an assertion can
+# fail because the row is above the viewport rather than because it is
+# missing. `centerElement` is what makes it exact: the element is brought to
+# the middle of the viewport, and the top of a list cannot be scrolled past.
+#
+# A swipe is not used for this. A drag that starts over the cash-flow chart
+# is swallowed by the chart's own gesture handling and the list does not
+# move, and a bare `direction: DOWN` starts at the system status bar and
+# pulls the notification shade down over the app.
+- tapOn: "Home"
+- scrollUntilVisible:
+    element:
+      text: "AVAILABLE"
+    direction: UP
+    centerElement: true
+
+# The add button is the centred, ink, round button in the navigation bar. It
+# carries a content description, so it can be tapped by name.
+- tapOn: "Add transaction"
+
+# The sheet, open and expanded.
+- assertVisible: "Merchant (optional)"
+- assertVisible: "Save"
+- assertVisible: "Expense"
+
+# The amount, on the keypad.
+- tapOn: "2"
+- tapOn: "5"
+- tapOn: "0"
+
+# A category chip. The chips are the category *groups*, not the leaves.
+- tapOn: "Transport"
+
+# A merchant, so the row can be found by name afterwards.
+- tapOn: "Merchant (optional)"
+- inputText: "Maestro Test"
+- hideKeyboard:
+    optional: true
+
+# Save is on screen — no scrolling was needed to reach it.
+- tapOn: "Save"
+
+# It is in the ledger now.
+- tapOn: "Activity"
+- scrollUntilVisible:
+    element:
+      text: "TODAY"
+    direction: UP
+    centerElement: true
+
+- assertVisible: "Search merchant or note"
+- assertVisible: "Maestro Test"
+- assertVisible: "Transport · .*"
+- assertVisible: "−₹250"
+
+# ── Clean up: delete it again ───────────────────────────────────────────────
+- tapOn: "Maestro Test"
+- assertVisible: "Maestro Test"
+- tapOn: "Delete"
+- assertVisible: "Delete transaction?"
+- tapOn: "Delete"
+- assertNotVisible: "Maestro Test"

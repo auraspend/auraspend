@@ -12,6 +12,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -174,7 +176,14 @@ fun TransactionEditor(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
-            Switch(checked = isRecurring, onCheckedChange = { isRecurring = it })
+            // Same reason as the Settings switches: the label next to it is a
+            // sibling, not the switch's name.
+            val recurringLabel = stringResource(R.string.txn_editor_recurring)
+            Switch(
+                checked = isRecurring,
+                onCheckedChange = { isRecurring = it },
+                modifier = Modifier.semantics { contentDescription = recurringLabel }
+            )
         }
 
         Spacer(modifier = Modifier.height(AuraSpacing.xxl))

@@ -1,0 +1,104 @@
+# Settings → Categories: the category editor.
+#
+# The category editor is the one place a user writes their own labels, so it is
+# the one place the sanitiser matters — the app must not take a name that
+# breaks the layout, and must not lose it either.
+#
+# The flow cleans up after itself.
+#
+# One gap, deliberately left open: **renaming** a category is not covered
+# here. It needs the field cleared first, and `eraseText` is inert on this
+# emulator — it sends no key event to a field that does not have the soft
+# keyboard up, and the editor's field is not a text field the flow can put
+# the caret at the end of. Creating a category exercises the same editor, the
+# same field and the same save path, so what is left uncovered is the
+# pre-fill of an existing name rather than the save itself.
+appId: com.awbuilds.auraspend.dev
+name: 07 · Categories
+tags:
+  - settings
+  - categories
+---
+- launchApp:
+    appId: com.awbuilds.auraspend.dev
+
+# Leave an open sheet, then a pushed screen, if the last flow left the app
+# on one. `launchApp` brings the existing task forward and the navigation
+# stack comes back with it, so the app can resume on Settings, on
+# Categories, or with the currency sheet open — none of which have a
+# navigation bar to tap.
+- runFlow:
+    when:
+      visible: "Close sheet"
+    commands:
+      - tapOn: "Close sheet"
+- runFlow:
+    when:
+      visible: "Back"
+    commands:
+      - back
+
+# The settings entry is the avatar in the top-right of every tab. It carries a
+# content description, so it is tapped by name rather than by position.
+- tapOn: "Settings"
+
+# Back to the top of the Settings list.
+- scrollUntilVisible:
+    element:
+      text: "MONEY"
+    direction: UP
+    centerElement: true
+
+- assertVisible: "Settings"
+- tapOn: "Categories"
+
+# The categories screen.
+- assertVisible: "Manage Categories"
+- scrollUntilVisible:
+    element:
+      text: "Food & Dining"
+    direction: UP
+    centerElement: true
+
+# The twelve seeded categories are there, and the default ones are marked.
+- assertVisible: "Food & Dining"
+- assertVisible: "Transport"
+- assertVisible: "Default"
+
+# ── The editor refuses an empty name ────────────────────────────────────────
+- tapOn: "Add Category"
+- assertVisible: "Category Name"
+- tapOn: "Save"
+- assertVisible: "Category Name"
+
+# ── Create one ─────────────────────────────────────────────────────────────
+- tapOn: "Category Name"
+- inputText: "Maestro Test Category"
+- tapOn: "Save"
+
+# The new category is added to the end of the list, so it is scrolled to.
+- scrollUntilVisible:
+    element:
+      text: "Maestro Test Category"
+    direction: DOWN
+    centerElement: true
+- assertVisible: "Maestro Test Category"
+
+# ── And delete it, so the suite leaves no trace ────────────────────────────
+# Every row has its own delete affordance, so the one to tap is the one to the
+# right of this row's name.
+- tapOn:
+    text: "Delete"
+    rightOf:
+      text: "Maestro Test Category"
+
+# Deleting a category asks first, and says what happens to the transactions
+# that used it.
+- assertVisible: "Delete Category"
+- tapOn: "Delete"
+- scrollUntilVisible:
+    element:
+      text: "Food & Dining"
+    direction: UP
+    centerElement: true
+- assertNotVisible: "Maestro Test Category"

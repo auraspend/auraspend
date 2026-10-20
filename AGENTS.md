@@ -3,7 +3,23 @@
 > Read this file and the latest file in `docs/handoffs/` before touching anything.
 > Update both (plus `CLAUDE.md` / `memory/` when you learn something durable) before ending a session.
 >
-> Latest: `docs/handoffs/0071-site-404-pages-source.md` — **the site was
+> Latest: `docs/handoffs/0072-maestro-suite.md` — **the app has an end-to-end
+> UI test**: thirteen Maestro flows in `.maestro/flows/`, driven by
+> `tools/run_maestro.sh` (clean install → onboarding → the app's locale set to
+> en-IN → the demo data seeded → the flows → the data seeded again). It found
+> three real defects in the first hour (and one false alarm that was the
+> test's own fault): the Activity search field and the Quick
+> Add merchant field had **no accessible name** (the hint was a `Text` sibling
+> of the `BasicTextField` inside a clickable, and a clickable merges its
+> descendants — so the merged node took its empty text from the field); the
+> **Settings switches had no accessible name** either; and a settings row whose
+> title did nothing when tapped. All four are fixed, and the fixes are what the
+> flows now assert. 637 unit tests, 0 failures, lint baseline-only. The traps
+> are in the handoff: Maestro's own driver has to be on the device, a stale
+> `~/.maestro/sessions` entry makes every run fail with "Device server died",
+> `launchApp` does not rebuild the task, a list keeps its scroll position
+> between launches, and `clearState` clears the per-app locale with it.
+> Before: `docs/handoffs/0071-site-404-pages-source.md` — **the site was
 > serving a 404**: the repository's Pages source was still *deploy from a
 > branch* publishing `/docs`, which has had no `index.html` since the site
 > moved to `/site` — so the `pages.yml` workflow had been running green on
@@ -730,6 +746,7 @@ Do not start new work without reading the latest handoff.
 | `:app` | Everything (UI, domain, data) |
 | `:benchmark` | Macrobenchmark module for cold-start and baseline-profile generation. Not shipped, not part of the app. |
 | `site/` | The public website. Plain static HTML, one stylesheet, one script, no build step. Published by GitHub Pages from this folder (`.github/workflows/pages.yml`), **not** from `docs/`. |
+| `.maestro/` | The end-to-end UI suite: thirteen flows in `flows/`, driven by `tools/run_maestro.sh`. Runs against the **dev** flavour on an emulator. |
 | `docs/` | The internal engineering record — handoffs, ADRs, evaluations, reviews, the store editor. **Not published.** |
 
 On-device inference is ONNX Runtime (an AAR, not a module). The `:llama` module

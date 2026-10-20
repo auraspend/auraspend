@@ -1,0 +1,73 @@
+# Onboarding, from a clean install.
+#
+# This is the only flow that clears app state. Every other flow assumes the app
+# has been through onboarding, because the encrypted database is created on the
+# way out of it and re-clearing it between flows would only re-test this file.
+#
+# The last page is interactive — it hosts the currency picker — so this flow
+# also proves the picker is there and says what it does. The picker itself is
+# exercised by `09-currency`.
+#
+# Note what this flow does **not** assert: a currency symbol.
+# `launchApp: clearState: true` clears the app's per-app locale override, so
+# the device's own locale decides what the default is, and that is not the
+# same on every machine. The runner sets the locale to en-IN *after* this flow,
+# which is why the rest of the suite is in rupees.
+appId: com.awbuilds.auraspend.dev
+name: 00 · Onboarding
+tags:
+  - smoke
+  - onboarding
+---
+- launchApp:
+    appId: com.awbuilds.auraspend.dev
+    clearState: true
+    permissions:
+      all: allow
+
+# Page 1
+- assertVisible: "Track your money"
+- assertVisible: "Income, expenses and balance — always up to date, always on your device."
+- assertVisible: "Skip"
+- tapOn: "Continue"
+
+# Page 2
+- assertVisible: "Smart by default"
+- tapOn: "Continue"
+
+# Page 3
+- assertVisible: "Plan ahead"
+- tapOn: "Continue"
+
+# Page 4 — the interactive one. The caveat sits above the list on purpose, and
+# the button has changed from Continue to Get started.
+- assertVisible: "Pick your currency"
+- assertVisible: "Amounts are not converted — this changes how money is displayed."
+- assertVisible: "Get started"
+
+# The list is the catalogue, with the device's own currency first. Only the
+# first few rows are on screen — the rest is alphabetical and further down, and
+# `09-currency` scrolls to them.
+- assertVisible: "USD"
+
+# Take the default and move on. (There is no "Match my device" row here — that
+# is a Settings row, on the sheet, not in this list.)
+- tapOn: "Get started"
+
+# A notification prompt may appear on API 33+ even with the permissions granted
+# up front, depending on the ROM. Tolerate it rather than fail on it.
+- runFlow:
+    when:
+      visible: "Allow"
+    commands:
+      - tapOn: "Allow"
+
+# The app lands on Home, with all four tabs. With nothing in the ledger yet the
+# hero reads "THIS MONTH" rather than "AVAILABLE" — there is no account balance
+# to report — and the empty state says so.
+- assertVisible: "THIS MONTH"
+- assertVisible: "No transactions yet"
+- assertVisible: "Home"
+- assertVisible: "Activity"
+- assertVisible: "Plan"
+- assertVisible: "Insights"

@@ -24,6 +24,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.draw.clip
@@ -584,7 +586,15 @@ private fun ActivitySearchField(
                         style = AuraType.searchPlaceholder,
                         color = MaterialTheme.extendedColors.faint,
                         maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
+                        overflow = TextOverflow.Ellipsis,
+                        // The hint is decoration, not the field's name. The
+                        // clickable pill below merges its descendants, and a
+                        // merged node takes its *text* from the field, which
+                        // is empty — so leaving this in the tree merged the
+                        // field into an unnamed EditText. The field carries
+                        // the label instead, and this is taken out of the
+                        // tree so it is not announced twice.
+                        modifier = Modifier.clearAndSetSemantics { }
                     )
                 }
                 BasicTextField(
@@ -598,6 +608,7 @@ private fun ActivitySearchField(
                     modifier = Modifier
                         .fillMaxWidth()
                         .focusRequester(focusRequester)
+                        .semantics { contentDescription = hint }
                 )
             }
             if (query.isNotEmpty()) {

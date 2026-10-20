@@ -1,0 +1,14 @@
+# Maestro configuration for AuraSpend.
+#
+# Run everything:      maestro test .maestro
+# Run one flow:        maestro test .maestro/flows/03-activity.yaml
+# Run the smoke set:   maestro test --include-tags smoke .maestro
+#
+# The full sequence, with the demo data seeded in the middle, is driven by
+# `tools/run_maestro.sh` — Maestro cannot seed a database, and the aggregate
+# screens have nothing to assert on an empty ledger.
+#
+# The flows target the **dev** build (`com.awbuilds.auraspend.dev`), which is
+# feature-identical to prod and safe to wipe. Never point them at
+# `com.awbuilds.auraspend`: that package holds the owner's real data.
+appId: com.awbuilds.auraspend.dev

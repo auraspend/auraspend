@@ -1,0 +1,139 @@
+# Home, on seeded demo data.
+#
+# The 0.1.92 Home is the Aurora composition in the Quiet Ledger theme: a flat
+# tonal hero, the seven-day cash-flow area chart, a carousel of budget rings,
+# the subscriptions card, the accounts ledger and today's rows. The first
+# screenful is still the glance — balance and flow — so the assertions start
+# there and scroll down rather than assuming everything is above the fold.
+#
+# Requires the demo data: run `tools/seed_demo_data.sh` first.
+#
+# Three things about driving this screen, all of them learned the hard way:
+#
+#   * The list keeps its scroll position between launches, so every flow
+#     scrolls back to the top first. `centerElement: true` is what makes that
+#     exact: the element is brought to the middle of the viewport, and the top
+#     of a list cannot be scrolled past. A swipe is not used for this — a drag
+#     that starts over the cash-flow chart is swallowed by the chart's own
+#     gesture handling and the list does not move, and a bare
+#     `direction: DOWN` starts at the system status bar and pulls the
+#     notification shade down over the app.
+#   * `centerElement: true` is also what makes an assertion on a row near the
+#     bottom reliable: an element scrolled to the edge of the viewport can
+#     still be clipped by the navigation bar.
+#   * `launchApp` brings the existing task forward rather than rebuilding it,
+#     so the screen a flow finds is the one the last flow left. Every flow
+#     says which tab it wants.
+appId: com.awbuilds.auraspend.dev
+name: 01 · Home
+tags:
+  - smoke
+  - home
+---
+- launchApp:
+    appId: com.awbuilds.auraspend.dev
+
+# Leave an open sheet, then a pushed screen, if the last flow left the app
+# on one. `launchApp` brings the existing task forward and the navigation
+# stack comes back with it, so the app can resume on Settings, on
+# Categories, or with the currency sheet open — none of which have a
+# navigation bar to tap.
+- runFlow:
+    when:
+      visible: "Close sheet"
+    commands:
+      - tapOn: "Close sheet"
+- runFlow:
+    when:
+      visible: "Back"
+    commands:
+      - back
+
+# Make sure this is the Home tab.
+- tapOn: "Home"
+
+# Back to the top of the list.
+- scrollUntilVisible:
+    element:
+      text: "AVAILABLE"
+    direction: UP
+    centerElement: true
+
+# The glance: available, the flow bar, and the month's two totals.
+- assertVisible: "AVAILABLE"
+- assertVisible: "Out this month"
+- assertVisible: "In this month"
+- assertVisible: "Cash flow"
+
+# The chart's own labels prove it rendered with data rather than as an empty
+# frame — three date ticks and the net figure.
+- assertVisible: ".*Oct"
+- assertVisible: ".*\\d.*"
+
+# The budget rings, in a carousel.
+- assertVisible: "All budgets"
+- assertVisible: "Food & Dining"
+- assertVisible: "of ₹8,000"
+- assertVisible: "Grocery"
+
+# Subscriptions, and what they cost a month.
+- scrollUntilVisible:
+    element:
+      text: "5 active"
+    direction: DOWN
+    centerElement: true
+- assertVisible: "5 active"
+- assertVisible: ".*\\/mo"
+
+# Accounts: one row per instrument a message carried a balance for.
+- scrollUntilVisible:
+    element:
+      text: "Accounts"
+    direction: DOWN
+    centerElement: true
+- assertVisible: "HDFC Bank"
+- assertVisible: ".*As of.*"
+
+# Today's rows.
+- scrollUntilVisible:
+    element:
+      text: "Swiggy"
+    direction: DOWN
+    centerElement: true
+- assertVisible: "Uber"
+- assertVisible: "Swiggy"
+
+# ── Navigation out of the aggregates ────────────────────────────────────────
+# "All budgets" opens **Plan** — the hub that holds the budgets, the goals and
+# the subscriptions. It is not the Budgets screen itself; Plan's "Edit" is.
+- scrollUntilVisible:
+    element:
+      text: "All budgets"
+    direction: UP
+    centerElement: true
+- tapOn: "All budgets"
+- assertVisible: "SPENT AGAINST BUDGETS"
+- assertVisible: "76% used|76 % used"
+- back
+- scrollUntilVisible:
+    element:
+      text: "AVAILABLE"
+    direction: UP
+    centerElement: true
+- assertVisible: "AVAILABLE"
+
+# "All activity" opens Activity.
+- scrollUntilVisible:
+    element:
+      text: "All activity"
+    direction: DOWN
+    centerElement: true
+- tapOn: "All activity"
+- assertVisible: "Search merchant or note"
+- back
+- scrollUntilVisible:
+    element:
+      text: "AVAILABLE"
+    direction: UP
+    centerElement: true
+- assertVisible: "AVAILABLE"

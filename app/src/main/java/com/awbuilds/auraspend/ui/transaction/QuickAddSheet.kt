@@ -36,6 +36,9 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
@@ -446,7 +449,14 @@ private fun MerchantField(
                     style = AuraType.chipLabel,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
+                    overflow = TextOverflow.Ellipsis,
+                    // Decoration, not the field's name. The clickable pill
+                    // merges its descendants and the merged node takes its
+                    // text from the field, which is empty — so leaving this
+                    // in the tree merged the field into an unnamed EditText.
+                    // The field carries the label instead, and this is taken
+                    // out of the tree so it is not announced twice.
+                    modifier = Modifier.clearAndSetSemantics { }
                 )
             }
             BasicTextField(
@@ -459,6 +469,7 @@ private fun MerchantField(
                 modifier = Modifier
                     .fillMaxWidth()
                     .focusRequester(focusRequester)
+                    .semantics { contentDescription = hint }
             )
         }
     }

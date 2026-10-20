@@ -1,0 +1,113 @@
+# Activity: search, filter, month navigation, sort, and the drill-down.
+#
+# The header line is "October · ₹44,663 out" — the month and what left the
+# account. Since 0.1.92 that total follows the *filter*, so the flow checks
+# that too: filter to Incoming and the header must stop saying "out".
+appId: com.awbuilds.auraspend.dev
+name: 03 · Activity
+tags:
+  - smoke
+  - activity
+---
+- launchApp:
+    appId: com.awbuilds.auraspend.dev
+
+# Leave an open sheet, then a pushed screen, if the last flow left the app
+# on one. `launchApp` brings the existing task forward and the navigation
+# stack comes back with it, so the app can resume on Settings, on
+# Categories, or with the currency sheet open — none of which have a
+# navigation bar to tap.
+- runFlow:
+    when:
+      visible: "Close sheet"
+    commands:
+      - tapOn: "Close sheet"
+- runFlow:
+    when:
+      visible: "Back"
+    commands:
+      - back
+
+- tapOn: "Activity"
+
+# The list keeps its scroll position between launches, so every flow scrolls
+# back to the top first. `centerElement` is what makes this exact: the
+# element is brought to the middle of the viewport, and the top of a list
+# cannot be scrolled past.
+#
+# A swipe is not used for this. A drag that starts over the cash-flow chart
+# is swallowed by the chart's own gesture handling and the list does not
+# move, and a bare `direction: DOWN` starts at the system status bar and
+# pulls the notification shade down over the app.
+- scrollUntilVisible:
+    element:
+      text: "TODAY"
+    direction: UP
+    centerElement: true
+
+- assertVisible: "Search merchant or note"
+- assertVisible: "October 2026"
+
+# The month's out total, in the header.
+- assertVisible: ".*·.*out"
+
+# ── Filters ────────────────────────────────────────────────────────────────
+# The type chips: All, Outgoing, Incoming.
+- tapOn: "Outgoing"
+- assertVisible: "Swiggy"
+- assertNotVisible: "Razorpay Payments"
+
+- tapOn: "Incoming"
+- assertVisible: "Razorpay Payments"
+
+# Back to everything. The list keeps the scroll position the filtered list
+# left it at, which is further down the month — so it is scrolled back to the
+# top before the rows are checked.
+- tapOn: "All"
+- scrollUntilVisible:
+    element:
+      text: "TODAY"
+    direction: UP
+    centerElement: true
+- assertVisible: "Swiggy"
+
+# The income row is further down the month, so it is scrolled to.
+- scrollUntilVisible:
+    element:
+      text: "Razorpay Payments"
+    direction: DOWN
+    centerElement: true
+- assertVisible: "Razorpay Payments"
+
+# ── Search ─────────────────────────────────────────────────────────────────
+- tapOn: "Search merchant or note"
+- inputText: "Swiggy"
+- assertVisible: "Swiggy"
+- assertNotVisible: "Third Wave Coffee"
+- tapOn: "Search merchant or note"
+- eraseText: 6
+
+# A search that matches nothing must say so rather than show an empty list.
+- inputText: "zzzznotathing"
+- assertVisible: "No matching transactions"
+- tapOn: "Search merchant or note"
+- eraseText: 13
+- hideKeyboard
+
+# ── Day groups ─────────────────────────────────────────────────────────────
+# The sticky headers carry the day's net amount.
+- assertVisible: "TODAY|Yesterday|TODAY"
+- assertVisible: "YESTERDAY"
+
+# ── Month navigation ───────────────────────────────────────────────────────
+- tapOn: "Previous month"
+- assertVisible: "September 2026"
+- tapOn: "Next month"
+- assertVisible: "October 2026"
+
+# ── Sort ───────────────────────────────────────────────────────────────────
+# The header toggle flips between newest and oldest first, and says which.
+- tapOn: "Newest first"
+- assertVisible: "Oldest first"
+- tapOn: "Oldest first"
+- assertVisible: "Newest first"

@@ -1,0 +1,89 @@
+# Smart Add → Auto Detect, and the review queue for messages the app could not
+# read.
+#
+# Auto Detect is the triage inbox: messages the classifier has read, waiting
+# to be saved or dismissed. The review queue is the other half — the messages
+# it could *not* read, kept with their raw text rather than dropped.
+#
+# With the seeded demo data both are empty, which is itself worth asserting:
+# an empty triage surface must say so, not show a blank list.
+appId: com.awbuilds.auraspend.dev
+name: 12 · Review queue
+tags:
+  - classification
+---
+- launchApp:
+    appId: com.awbuilds.auraspend.dev
+
+# Leave an open sheet, then a pushed screen, if the last flow left the app
+# on one. `launchApp` brings the existing task forward and the navigation
+# stack comes back with it, so the app can resume on Settings, on
+# Categories, or with the currency sheet open — none of which have a
+# navigation bar to tap.
+- runFlow:
+    when:
+      visible: "Close sheet"
+    commands:
+      - tapOn: "Close sheet"
+- runFlow:
+    when:
+      visible: "Back"
+    commands:
+      - back
+
+# The add button is the centred, ink, round button in the navigation bar. It
+# carries a content description, so it can be tapped by name.
+- tapOn: "Add transaction"
+- tapOn: "Smart Add"
+
+# The optional on-device categoriser is offered here. "Not now" leaves it
+# alone, and the app is fully functional without it.
+- runFlow:
+    when:
+      visible: "Not now"
+    commands:
+      - tapOn: "Not now"
+
+# The triage tab.
+- tapOn: "Auto Detect"
+
+# The triage needs read access to SMS, and the system asks for it the first
+# time. The answer is yes, because the flow is about what the triage does.
+- runFlow:
+    when:
+      visible: "Allow"
+    commands:
+      - tapOn: "Allow"
+
+# Either there is a queue, or the app says there is not. Both are correct
+# states; a silent empty list is not.
+- runFlow:
+    when:
+      visible: "Skipped"
+    commands:
+      - assertVisible: "Skipped"
+
+# The review queue, from Settings, with its live count. Smart Add is a full
+# screen, so one `back` is enough to leave it.
+- back
+- tapOn: "Home"
+- tapOn: "Settings"
+- scrollUntilVisible:
+    element:
+      text: "MONEY"
+    direction: UP
+    centerElement: true
+- scrollUntilVisible:
+    element:
+      text: "Review queue"
+    direction: DOWN
+    centerElement: true
+- assertVisible: "Review queue"
+- assertVisible: ".*waiting"
+- tapOn: "Review queue"
+
+# The queue itself. With everything read, it says so rather than showing a
+# blank list.
+- assertVisible: "Messages we couldn't read"
+- assertVisible: "Nothing missed"
+- assertVisible: "Every bank message was read successfully."

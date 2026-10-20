@@ -1,0 +1,67 @@
+# Delete all data.
+#
+# Destructive, and therefore last in the suite: it wipes every table, re-seeds
+# the default categories and forgets the SMS scan position. The confirmation is
+# mandatory, and the app must say what it did afterwards.
+#
+# The flow runs against a clean install, so there is nothing of the owner's in
+# it. It leaves the app empty, so the runner re-seeds afterwards.
+appId: com.awbuilds.auraspend.dev
+name: 13 · Delete all data
+tags:
+  - destructive
+  - settings
+---
+- launchApp:
+    appId: com.awbuilds.auraspend.dev
+
+# Leave an open sheet, then a pushed screen, if the last flow left the app
+# on one. `launchApp` brings the existing task forward and the navigation
+# stack comes back with it, so the app can resume on Settings, on
+# Categories, or with the currency sheet open — none of which have a
+# navigation bar to tap.
+- runFlow:
+    when:
+      visible: "Close sheet"
+    commands:
+      - tapOn: "Close sheet"
+- runFlow:
+    when:
+      visible: "Back"
+    commands:
+      - back
+
+# The settings entry is the avatar in the top-right of every tab. It carries a
+# content description, so it is tapped by name rather than by position.
+- tapOn: "Settings"
+
+# The list keeps its scroll position between launches, so every flow scrolls
+# back to the top first. `centerElement` is what makes this exact: the
+# element is brought to the middle of the viewport, and the top of a list
+# cannot be scrolled past.
+#
+# A swipe is not used for this. A drag that starts over the cash-flow chart
+# is swallowed by the chart's own gesture handling and the list does not
+# move, and a bare `direction: DOWN` starts at the system status bar and
+# pulls the notification shade down over the app.
+- scrollUntilVisible:
+    element:
+      text: "MONEY"
+    direction: UP
+    centerElement: true
+
+- assertVisible: "Settings"
+- scrollUntilVisible:
+    element:
+      text: "Delete all data"
+    direction: DOWN
+    centerElement: true
+- tapOn: "Delete all data"
+- assertVisible: "Delete"
+- tapOn: "Delete"
+
+# The app says what it did, and the ledger is empty.
+- assertVisible: "All data deleted|No transactions yet"
+- back
+- assertVisible: "No transactions yet"
+- assertVisible: "Add transaction"

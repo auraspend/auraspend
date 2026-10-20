@@ -52,6 +52,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -944,6 +945,11 @@ private fun SettingToggleRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            // The whole row toggles, not just the switch. Every other row in
+            // this screen opens something when it is tapped, and a row whose
+            // title does nothing is a surprise. The Switch consumes its own
+            // touches, so tapping the switch does not toggle it twice.
+            .clickable { onCheckedChange(!checked) }
             .padding(vertical = (RowHeight - 48.dp) / 2),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(AuraSpacing.md)
@@ -959,7 +965,15 @@ private fun SettingToggleRow(
                 )
             }
         }
-        Switch(checked = checked, onCheckedChange = onCheckedChange)
+        // The switch carries the row's own title as its accessible name. A
+        // bare Switch is a "switch, off" with nothing after it, and the row's
+        // title and subtitle are siblings of it rather than its label — so a
+        // screen-reader user was told a switch existed and not what it did.
+        Switch(
+            checked = checked,
+            onCheckedChange = onCheckedChange,
+            modifier = Modifier.semantics { contentDescription = title }
+        )
     }
 }
 

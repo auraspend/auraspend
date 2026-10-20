@@ -47,6 +47,42 @@ serving `/docs` from the `main` branch.
   declaration made the hero phone 2,500px tall and pushed the entire hero copy
   below the fold — which looked exactly like a broken layout.
 
+## D29 — The app has an end-to-end UI test, and the suite found four defects (2026-10-21)
+
+Handoff 0072 added thirteen Maestro flows (`.maestro/flows/`) driven by
+`tools/run_maestro.sh`. The decision worth keeping is not the suite but **what
+it found in the first hour**:
+
+- **The Activity search field had no accessible name.** The hint was a `Text`
+  sibling of the `BasicTextField`, inside a row with `.clickable` — and a
+  clickable *merges* its descendants, so the merged node took its **text** from
+  the field, which is empty. The field was a node of class `EditText` with no
+  text and no content description. The same pattern was in the Quick Add
+  merchant field.
+- **The Settings switches had no accessible name** either. A `Switch` with no
+  description, on a row whose title and subtitle are *siblings* of it rather
+  than its label. Four switches, plus the recurring switch in the editor.
+- **A settings row whose title did nothing.** Tapping "App lock" — the title,
+  the thing a user aims at — did not toggle the lock. Every other row in that
+  screen opens something.
+
+The generalisable lesson, and the one to carry into new code: **in Compose, a
+`BasicTextField` or a `Switch` inside a clickable parent inherits the parent's
+merged semantics, and the merged node takes its text from the *editable* or
+*toggleable* child, which is empty or unlabelled.** The hint and the title
+have to be attached to the control itself, as a `contentDescription`, or they
+are decoration. `clearAndSetSemantics` on the decorative sibling stops it
+being announced twice.
+
+The other durable finding: **a list keeps its scroll position between
+launches**, so a UI test that asserts on a row can fail because the row is
+above the viewport rather than because it is missing. Every flow now scrolls
+back to the top first, with `centerElement: true` — the element is brought to
+the middle of the viewport, and the top of a list cannot be scrolled past.
+A swipe is not used for this: a drag that starts over a chart is swallowed by
+the chart's gesture handling, and a bare `direction: DOWN` starts at the
+system status bar and pulls the notification shade down over the app.
+
 ## D27 — A baseline profile is a build artifact, and three traps guard it (2026-10-18)
 
 Handoff 0061 found the app's `baseline-prof.txt` was five weeks stale and knew

@@ -1,0 +1,62 @@
+# Smart Add: paste a bank message and let the app read it.
+#
+# The paste path is the whole classification pipeline in one screen: the message
+# goes in, the amount, direction, merchant and category come out, and the
+# result is a card the user can accept or correct.
+#
+# The message is a synthetic one. Nothing in this project's fixtures may be a
+# real bank message from a real inbox.
+appId: com.awbuilds.auraspend.dev
+name: 11 · Smart Add
+tags:
+  - classification
+---
+- launchApp:
+    appId: com.awbuilds.auraspend.dev
+
+# Leave an open sheet, then a pushed screen, if the last flow left the app
+# on one. `launchApp` brings the existing task forward and the navigation
+# stack comes back with it, so the app can resume on Settings, on
+# Categories, or with the currency sheet open — none of which have a
+# navigation bar to tap.
+- runFlow:
+    when:
+      visible: "Close sheet"
+    commands:
+      - tapOn: "Close sheet"
+- runFlow:
+    when:
+      visible: "Back"
+    commands:
+      - back
+
+# The add button is the centred, ink, round button in the navigation bar. It
+# carries a content description, so it can be tapped by name.
+- tapOn: "Add transaction"
+- tapOn: "Smart Add"
+
+# The three tabs: Paste, From SMS, Auto Detect.
+- assertVisible: "Paste"
+- assertVisible: "From SMS"
+- assertVisible: "Auto Detect"
+
+# The optional on-device categoriser is offered here. "Not now" leaves it
+# alone, and the app is fully functional without it.
+- runFlow:
+    when:
+      visible: "Not now"
+    commands:
+      - tapOn: "Not now"
+
+# The message goes in.
+- tapOn: "Paste bank SMS message"
+- inputText: "Rs 640.00 debited for UPI to SWIGGY on UPI. Reference number 523144776210. Avl Bal Rs 24,180.55"
+- tapOn: "Classify Message"
+
+# And what came out of it. The card is the whole point of the screen: the
+# amount, the direction, the merchant and the category, each with the
+# confidence the classifier had.
+- assertVisible: "₹640"
+- assertVisible: "Expense"
+- assertVisible: "SWIGGY"
+- assertVisible: "Food & Dining"
