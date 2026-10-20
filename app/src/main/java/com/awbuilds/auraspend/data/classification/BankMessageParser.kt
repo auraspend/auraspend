@@ -281,6 +281,26 @@ object BankMessageParser {
         """(?i)\b(?:avl|avail(?:able)?)\.?\s+(?:credit\s+)?(?:limit|lmt)\b\s*(?:is)?\s*:?\s*(?:inr|rs\.?|₹)?\s*[0-9,]*\.?\d+"""
     )
 
+    /**
+     * The two figures an SMS can carry that are **balances, not movements**: a
+     * bank's "Avl Bal INR 21,691.95" and a card's "Avl Limit: INR 40,140.08".
+     * Captured, never booked as an amount.
+     */
+    private val availableBalance = Regex(
+        """(?i)\b(?:avl|available|avail)?\s*(?:bal|balance)\b[^0-9]{0,12}([0-9][0-9,]*(?:\.[0-9]{1,2})?)"""
+    )
+
+    /**
+     * The instrument the message is about: "a/c XX0007", "card XX5003",
+     * "ending 8424". The keyword is captured so the *first* reference decides
+     * the instrument: "A/C XXXX0007 linked to card XXXX1751 debited …" is an
+     * account movement, and the card it mentions is not where "Avl Bal" comes
+     * from.
+     */
+    private val instrumentRef = Regex(
+        """(?i)\b(a/c|acct|account|card|ending(?:\s+in)?)\s*(?:no\.?|number)?\s*[:#-]?\s*[x*]*([0-9]{4})\b"""
+    )
+
     /** Replaces each match with spaces of equal length so indexes keep working. */
     private fun maskOut(message: String, pattern: Regex): String =
         pattern.replace(message) { " ".repeat(it.value.length) }
@@ -464,6 +484,24 @@ object BankMessageParser {
         val categoryId = categoryIdFor(message, merchant, type)
         val confidence = calculateConfidence(message, amount, type, bankName, merchant)
 
+        // The balance that belongs to this message's instrument. A card states
+        // its remaining credit ("Avl Limit"), a bank account its balance
+        // ("Avl Bal"); they are different figures and are never swapped.
+        val instrumentMatch = instrumentRef.find(message)
+        val instrumentKeyword = instrumentMatch?.groupValues?.get(1)?.lowercase()
+        val instrument = instrumentMatch?.groupValues?.get(2)
+        val isCard = instrumentKeyword?.startsWith("card") == true ||
+            instrumentKeyword?.startsWith("ending") == true
+        val balance = if (isCard) {
+            creditLimitClause.find(message)?.value?.let { clause ->
+                Regex("""([0-9][0-9,]*(?:\.[0-9]{1,2})?)""")
+                    .find(clause)?.groupValues?.get(1)?.replace(",", "")?.toDoubleOrNull()
+            }
+        } else {
+            availableBalance.find(message)?.groupValues?.get(1)
+                ?.replace(",", "")?.toDoubleOrNull()
+        }
+
         return ParsedBankMessage(
             amount = amount,
             type = type,
@@ -473,6 +511,9 @@ object BankMessageParser {
             note = merchant ?: truncateMessage(message),
             categoryId = categoryId,
             confidence = confidence,
+            balanceAfter = balance,
+            instrumentLast4 = instrument,
+            instrumentIsCard = isCard,
             rawMessage = message
         )
     }

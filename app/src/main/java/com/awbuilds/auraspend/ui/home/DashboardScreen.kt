@@ -163,7 +163,15 @@ fun DashboardScreen(
             // ── Position: the balance, and how much of this month's income is gone
             item {
                 BalanceBlock(
-                    balance = state.totalBalance,
+                    // The month's net, not "the balance". Income minus expense
+                    // since the first message is not money you have — there is
+                    // no opening balance and no account behind it — and calling
+                    // it a balance made a credit-card spend look like cash
+                    // leaving your pocket (2026-10-20). What the data can
+                    // honestly say is what came in and what went out this
+                    // month; a real balance needs the bank's own figure, which
+                    // is the next step.
+                    balance = state.monthlyIncome - state.monthlyExpense,
                     income = state.monthlyIncome,
                     expense = state.monthlyExpense,
                     onOpenAnalytics = onNavigateToAnalytics
@@ -336,7 +344,7 @@ private fun BalanceBlock(
             .padding(horizontal = AuraSpacing.gutter)
             .padding(top = 2.dp)
     ) {
-        AuraEyebrow(stringResource(R.string.home_total_balance))
+        AuraEyebrow(stringResource(R.string.home_this_month))
         Spacer(modifier = Modifier.height(AuraSpacing.sm))
         AnimatedMoney(
             amount = balance,

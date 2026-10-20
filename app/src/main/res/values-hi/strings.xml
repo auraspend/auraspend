@@ -43,7 +43,7 @@
     <string name="home_greeting_morning">सुप्रभात</string>
     <string name="home_greeting_afternoon">नमस्कार</string>
     <string name="home_greeting_evening">शुभ संध्या</string>
-    <string name="home_total_balance">कुल शेष</string>
+    <string name="home_this_month">इस महीने</string>
     <string name="home_unknown_category">अज्ञात</string>
     <string name="home_budget_of">%1$s में से</string>
     <string name="home_nothing_today">आज कुछ दर्ज नहीं</string>

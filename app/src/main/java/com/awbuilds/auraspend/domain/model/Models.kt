@@ -66,6 +66,19 @@ data class ParsedBankMessage(
     val note: String? = null,
     val categoryId: String? = null,
     val confidence: Float = 0f,
+    /**
+     * The bank's own "Avl Bal" figure, when the message states one. Never used
+     * as the transaction amount — it is the account's position after the
+     * movement, which is the only figure in an SMS that is a *balance*.
+     */
+    val balanceAfter: Double? = null,
+    /**
+     * The last four digits of the account or card the message is about, and
+     * whether it is a card. Together with [bankName] this identifies the
+     * instrument a [balanceAfter] belongs to.
+     */
+    val instrumentLast4: String? = null,
+    val instrumentIsCard: Boolean = false,
     val rawMessage: String = ""
 )
 
