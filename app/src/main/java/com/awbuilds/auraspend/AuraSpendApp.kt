@@ -153,6 +153,14 @@ open class AuraSpendApp : Application() {
         applicationScope.launch {
             ModelDownloadManager.sync(this@AuraSpendApp)
             AutoClassificationWorker.schedule(this@AuraSpendApp)
+            // One pass on start. After a fresh install — or a data clear, which
+            // resets the ingest cursor — the periodic pass is up to six hours
+            // away and the live queue is empty, so **nothing reads the inbox**
+            // until the app happens to be restarted: a tester's fresh setup sat
+            // at zero transactions until a restart kicked it (2026-10-20). The
+            // worker re-checks consent and the SMS permission itself and returns
+            // success when either is missing, and REPLACE makes this idempotent.
+            AutoClassificationWorker.runNow(this@AuraSpendApp)
         }
 
         // Startup performance: the merchant CSV (~assets I/O + parsing) never blocks the
