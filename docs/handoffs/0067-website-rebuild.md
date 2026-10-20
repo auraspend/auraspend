@@ -138,6 +138,22 @@ the frame there, so the card that used to sit around each capture is gone;
 eight bare phones on a paper stage read as one image rather than eight
 components.
 
+**The README uses it too**, and that one needed a different answer. GitHub
+renders Markdown with no CSS and strips inline style, so the frame cannot be
+layered onto the README's page — it has to be baked into the image.
+`tools/render_readme_frames.py` renders the nine composites with the same
+geometry, straight from the captures, with a transparent background so they
+sit correctly on either GitHub theme. It found the island bug on its first
+run, which the site did not have: the aspect ratio was written as the
+island's *width percentage* over its *pixel height*, which makes a 1:1 box,
+which a 999px radius turns into a circle. The site passes `104 / 26`.
+
+Deleting the README's nine raw captures took them out of a second copy of
+`site/img/screens/` — they were byte-identical, except for
+`subscriptions.png`, which was the **dark** capture sitting in a row of light
+ones. `site/img/screens/` is now the single copy in the repository, and the
+composites are generated from it.
+
 ---
 
 ## The deployment change

@@ -272,15 +272,15 @@ Build and run:
 
 | Home | Activity | Plan |
 |---|---|---|
-| ![Home](docs/screenshots/home-light.png) | ![Activity](docs/screenshots/activity.png) | ![Plan](docs/screenshots/plan.png) |
+| ![Home](docs/screenshots/framed/home.png) | ![Activity](docs/screenshots/framed/activity.png) | ![Plan](docs/screenshots/framed/plan.png) |
 
 | Quick Add | Insights | Subscriptions |
 |---|---|---|
-| ![Quick Add](docs/screenshots/quick-add.png) | ![Insights](docs/screenshots/insights.png) | ![Subscriptions](docs/screenshots/subscriptions.png) |
+| ![Quick Add](docs/screenshots/framed/quick-add.png) | ![Insights](docs/screenshots/framed/insights.png) | ![Subscriptions](docs/screenshots/framed/subscriptions.png) |
 
 | Settings | Home, dark | Transaction detail |
 |---|---|---|
-| ![Settings](docs/screenshots/settings.png) | ![Home dark](docs/screenshots/home-dark.png) | ![Transaction detail](docs/screenshots/transaction-detail.png) |
+| ![Settings](docs/screenshots/framed/settings.png) | ![Home dark](docs/screenshots/framed/home-dark.png) | ![Transaction detail](docs/screenshots/framed/transaction-detail.png) |
 
 The UI follows the **Quiet Ledger** concept
 ([`docs/design/interface-concept/index.html`](docs/design/interface-concept/index.html)):
@@ -294,6 +294,13 @@ Screenshots are captured on the emulator forced to **1170×2532 @480 dpi** —
 390×844 dp, one app pixel to one concept pixel — with demo data from
 `DemoDataSeeder`, never a real inbox. The composed Play Store deck is in
 [`docs/store/screenshots/`](docs/store/screenshots).
+
+The pictures above are the same captures inside the same iPhone the Play Store
+deck uses, so the repository, the website and the store listing all show one
+device. GitHub renders Markdown with no CSS, so the frame is baked into the
+image rather than layered on the page: `python3 tools/render_readme_frames.py`
+regenerates it from [`site/img/screens/`](site/img/screens), which is the
+single copy of the captures.
 
 ## Testing
 
