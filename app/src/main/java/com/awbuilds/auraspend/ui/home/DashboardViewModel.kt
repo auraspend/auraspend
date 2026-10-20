@@ -6,7 +6,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.awbuilds.auraspend.core.AuraLog
 import com.awbuilds.auraspend.data.local.UnrecognizedSmsRepository
+import com.awbuilds.auraspend.domain.model.Account
 import com.awbuilds.auraspend.domain.model.Budget
+
 import com.awbuilds.auraspend.domain.model.BudgetPeriod
 import com.awbuilds.auraspend.domain.model.Category
 import com.awbuilds.auraspend.domain.model.DayTotal
@@ -116,13 +118,15 @@ class DashboardViewModel(
             repository.getRecentTransactions(RECENT_LIMIT),
             repository.getAllCategories(),
             repository.getAllBudgets(),
-            repository.observeExpenseByCategory(epoch(yearStart), epoch(yearEnd))
-        ) { recent, categories, budgets, yearCats ->
+            repository.observeExpenseByCategory(epoch(yearStart), epoch(yearEnd)),
+            repository.observeAccounts()
+        ) { recent, categories, budgets, yearCats, accounts ->
             Supporting(
                 recent = recent,
                 categories = categories,
                 budgets = budgets,
-                yearlyByCategory = yearCats.associate { it.categoryId to it.amount }
+                yearlyByCategory = yearCats.associate { it.categoryId to it.amount },
+                accounts = accounts
             )
         }
 
@@ -172,6 +176,7 @@ class DashboardViewModel(
                 budgets = budgets,
                 categoryMonthTotals = categoryTotals,
                 dailySpend = dailySpend,
+                accounts = sup.accounts,
                 isLoading = false,
                 error = null
             )
@@ -205,7 +210,8 @@ class DashboardViewModel(
         val recent: List<Transaction>,
         val categories: List<Category>,
         val budgets: List<Budget>,
-        val yearlyByCategory: Map<String, Double>
+        val yearlyByCategory: Map<String, Double>,
+        val accounts: List<Account>
     )
 
     private companion object {

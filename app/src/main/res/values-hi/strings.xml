@@ -43,6 +43,12 @@
     <string name="home_greeting_morning">सुप्रभात</string>
     <string name="home_greeting_afternoon">नमस्कार</string>
     <string name="home_greeting_evening">शुभ संध्या</string>
+    <string name="home_available">उपलब्ध</string>
+    <string name="home_card_credit">कार्ड पर उपलब्ध</string>
+    <string name="home_account_card">कार्ड</string>
+    <string name="home_account_bank">खाता</string>
+    <string name="home_accounts">खाते</string>
+    <string name="home_account_as_of">%1$s तक</string>
     <string name="home_this_month">इस महीने</string>
     <string name="home_unknown_category">अज्ञात</string>
     <string name="home_budget_of">%1$s में से</string>

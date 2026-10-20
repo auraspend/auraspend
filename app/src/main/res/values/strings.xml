@@ -42,6 +42,12 @@
     <string name="home_greeting_morning">Good morning</string>
     <string name="home_greeting_afternoon">Good afternoon</string>
     <string name="home_greeting_evening">Good evening</string>
+    <string name="home_available">Available</string>
+    <string name="home_card_credit">Available on cards</string>
+    <string name="home_account_card">Card</string>
+    <string name="home_account_bank">Account</string>
+    <string name="home_accounts">Accounts</string>
+    <string name="home_account_as_of">As of %1$s</string>
     <string name="home_this_month">This month</string>
     <string name="home_unknown_category">Unknown</string>
     <string name="home_budget_of">of %1$s</string>

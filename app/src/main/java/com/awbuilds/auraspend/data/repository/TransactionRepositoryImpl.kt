@@ -189,6 +189,24 @@ class TransactionRepositoryImpl(
         savingsGoalDao.updateSavingsGoal(goal.toEntity())
     }
 
+    override fun observeAccounts(): Flow<List<Account>> =
+        transactionDao.observeBalanceSnapshots().map { rows ->
+            rows.mapNotNull { row ->
+                val balance = row.balanceAfter ?: return@mapNotNull null
+                Account(
+                    id = "${row.instrumentLast4 ?: "unknown"}|${row.instrumentIsCard}",
+                    isCard = row.instrumentIsCard,
+                    bankName = row.bankName,
+                    last4 = row.instrumentLast4,
+                    balance = balance,
+                    asOf = java.time.LocalDateTime.ofInstant(
+                        java.time.Instant.ofEpochMilli(row.dateTimestamp),
+                        java.time.ZoneId.systemDefault()
+                    )
+                )
+            }.distinctBy { it.id }
+        }
+
     override fun getActiveSubscriptions(): Flow<List<Subscription>> =
         subscriptionDao.getActiveSubscriptions().map { it.map { e -> e.toDomain() } }
 

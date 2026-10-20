@@ -19,6 +19,10 @@ interface TestTransactionRepositoryDefaults : TransactionRepository {
     override fun getRecentTransactions(limit: Int): Flow<List<com.awbuilds.auraspend.domain.model.Transaction>> =
         getAllTransactions().map { it.take(limit) }
 
+    /** No ledger unless a test gives one: the app falls back to the month's flow. */
+    override fun observeAccounts(): Flow<List<com.awbuilds.auraspend.domain.model.Account>> =
+        kotlinx.coroutines.flow.flowOf(emptyList())
+
     override fun observeSummary(start: Long, end: Long): Flow<TransactionSummary> =
         getTransactionsInRange(start, end).map { list ->
             TransactionSummary(

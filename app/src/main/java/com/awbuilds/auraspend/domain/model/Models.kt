@@ -16,7 +16,22 @@ data class Transaction(
     val recurrenceFrequency: RecurrenceFrequency? = null,
     val nextDueDate: LocalDateTime? = null,
     val subscriptionName: String? = null,
-    val sourceSmsId: String? = null
+    val sourceSmsId: String? = null,
+    /** The balance the message stated, and the instrument it belongs to. */
+    val balanceAfter: Double? = null,
+    val instrumentLast4: String? = null,
+    val instrumentIsCard: Boolean = false
+)
+
+/** One account or card, as the latest balance snapshot knows it. */
+data class Account(
+    val id: String,
+    val isCard: Boolean,
+    val bankName: String?,
+    val last4: String?,
+    /** Bank: money available. Card: remaining credit. Never both. */
+    val balance: Double,
+    val asOf: java.time.LocalDateTime
 )
 
 enum class TransactionType {

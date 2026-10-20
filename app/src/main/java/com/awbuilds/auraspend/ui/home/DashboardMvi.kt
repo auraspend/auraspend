@@ -2,6 +2,7 @@ package com.awbuilds.auraspend.ui.home
 
 import com.awbuilds.auraspend.ui.core.UiError
 
+import com.awbuilds.auraspend.domain.model.Account
 import com.awbuilds.auraspend.domain.model.Budget
 import com.awbuilds.auraspend.domain.model.Category
 import com.awbuilds.auraspend.domain.model.Transaction
@@ -30,6 +31,12 @@ data class DashboardViewState(
      * left a hole where the app's job — showing where the money went — should be.
      */
     val dailySpend: List<Double> = emptyList(),
+    /**
+     * Accounts and cards, from the latest balance a message stated. Empty when
+     * no message carried one — Home then states the month's flow instead of
+     * inventing a balance.
+     */
+    val accounts: List<Account> = emptyList(),
     val isLoading: Boolean = false,
     val error: UiError? = null
 )

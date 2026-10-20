@@ -58,6 +58,13 @@ interface TransactionRepository {
     suspend fun updateSavingsGoal(goal: SavingsGoal)
 
     fun getActiveSubscriptions(): Flow<List<Subscription>>
+
+    /**
+     * One row per account or card, from the latest balance a message stated.
+     * Empty until a message carries an "Avl Bal" — the app then falls back to
+     * stating the month's flow rather than inventing a balance.
+     */
+    fun observeAccounts(): Flow<List<Account>>
     suspend fun saveSubscription(subscription: Subscription)
     suspend fun deleteSubscription(id: String, active: Boolean)
 }

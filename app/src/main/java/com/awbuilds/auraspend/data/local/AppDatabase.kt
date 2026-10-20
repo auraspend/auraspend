@@ -22,7 +22,7 @@ import com.awbuilds.auraspend.data.local.entities.*
         ClassificationMemoryEntity::class,
         UnrecognizedSmsEntity::class
     ],
-    version = 8,
+    version = 9,
     // Exported so a migration can be tested against a real previous schema
     // (androidx.room:room-testing's MigrationTestHelper) and so a schema change
     // is visible in review. The KSP `room.schemaLocation` argument that says
@@ -198,6 +198,20 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        private val MIGRATION_8_9 = object : Migration(8, 9) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                // A balance snapshot per transaction, not a separate accounts
+                // table: the account ledger is derived from these rows, so the
+                // backup keeps its existing shape and there is one copy of the
+                // truth. Nullable because most messages state no balance.
+                db.execSQL("ALTER TABLE `transactions` ADD COLUMN `balanceAfter` REAL")
+                db.execSQL("ALTER TABLE `transactions` ADD COLUMN `instrumentLast4` TEXT")
+                db.execSQL(
+                    "ALTER TABLE `transactions` ADD COLUMN `instrumentIsCard` INTEGER NOT NULL DEFAULT 0"
+                )
+            }
+        }
+
         private const val DB_NAME = "auraspend_db"
 
         /**
@@ -239,7 +253,8 @@ abstract class AppDatabase : RoomDatabase() {
                 )
                     .addMigrations(
                         MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6,
-                        MIGRATION_6_7, MIGRATION_7_8
+                        MIGRATION_6_7, MIGRATION_7_8,
+                    MIGRATION_8_9
                     )
                     // Deliberate, and deliberately narrow: a destructive recreate is
                     // allowed *only* from version 1, whose schema never shipped (see

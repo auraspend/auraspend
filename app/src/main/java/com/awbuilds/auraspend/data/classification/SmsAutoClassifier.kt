@@ -318,6 +318,9 @@ object SmsAutoClassifier {
             note = parsed.note ?: parsed.rawMessage.take(100),
             merchant = parsed.merchant,
             bankName = parsed.bankName,
+            balanceAfter = parsed.balanceAfter,
+            instrumentLast4 = parsed.instrumentLast4,
+            instrumentIsCard = parsed.instrumentIsCard,
             // A body with no parseable date used to fall back to the save clock,
             // which booked a July message as the October day the drain reached it
             // (owner's device, 2026-10-13). The provider's arrival timestamp is

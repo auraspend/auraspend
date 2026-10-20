@@ -12,6 +12,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ReceiptLong
 import androidx.compose.material.icons.filled.CloudOff
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
@@ -88,8 +89,9 @@ fun DashboardScreen(
         state.dailySpend.map { if (max > 0.0) (it / max).toFloat() else 0f }
     }
     val weekTotal = remember(state.dailySpend) { state.dailySpend.sum() }
-    val weekLabels = remember(state.dailySpend) {
-        val formatter = DateTimeFormatter.ofPattern("d MMM", Locale.getDefault())
+    val locale = LocalConfiguration.current.locales[0]
+    val weekLabels = remember(state.dailySpend, locale) {
+        val formatter = DateTimeFormatter.ofPattern("d MMM", locale)
         val today = LocalDate.now()
         listOf(6, 3, 0).map { back -> today.minusDays(back.toLong()).format(formatter) }
     }
@@ -162,7 +164,14 @@ fun DashboardScreen(
 
             // ── Position: the balance, and how much of this month's income is gone
             item {
+                // The ledger, when a message has stated a balance. Nothing
+                // here is invented: a bank row is money the bank says is there,
+                // a card row is the credit the card says is left.
+                val bankBalance = state.accounts.filter { !it.isCard }.sumOf { it.balance }
+                val cardCredit = state.accounts.filter { it.isCard }.sumOf { it.balance }
                 BalanceBlock(
+                    available = if (state.accounts.any { !it.isCard }) bankBalance else null,
+                    cardCredit = if (state.accounts.any { it.isCard }) cardCredit else null,
                     // The month's net, not "the balance". Income minus expense
                     // since the first message is not money you have — there is
                     // no opening balance and no account behind it — and calling
@@ -176,6 +185,70 @@ fun DashboardScreen(
                     expense = state.monthlyExpense,
                     onOpenAnalytics = onNavigateToAnalytics
                 )
+            }
+
+            // ── The ledger: one row per account or card, from the balance the
+            // bank last stated. Only shows instruments a message has carried a
+            // figure for; nothing is estimated.
+            if (state.accounts.isNotEmpty()) {
+                item {
+                    AuraSectionHeader(
+                        title = stringResource(R.string.home_accounts),
+                        modifier = Modifier.padding(top = AuraSpacing.section)
+                    )
+                }
+                item {
+                    val accountLocale = LocalConfiguration.current.locales[0]
+                    AuraCard(
+                        style = AuraCardStyle.Outlined,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = AuraSpacing.gutter)
+                    ) {
+                        state.accounts.forEachIndexed { index, account ->
+                            if (index > 0) {
+                                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                            }
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = AuraSpacing.sm),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        account.bankName ?: stringResource(
+                                            if (account.isCard) R.string.home_account_card
+                                            else R.string.home_account_bank
+                                        ),
+                                        style = AuraType.rowTitle,
+                                        color = MaterialTheme.colorScheme.onBackground
+                                    )
+                                    Text(
+                                        buildString {
+                                            if (account.last4 != null) append("•••• ").append(account.last4).append(" · ")
+                                            append(
+                                                stringResource(
+                                                    R.string.home_account_as_of,
+                                                    account.asOf.format(
+                                                        DateTimeFormatter.ofPattern("d MMM", accountLocale)
+                                                    )
+                                                )
+                                            )
+                                        },
+                                        style = AuraType.rowMeta,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                                Text(
+                                    formatMoney(account.balance, fractionDigits = 0),
+                                    style = AuraType.moneySmall,
+                                    color = MaterialTheme.colorScheme.onBackground
+                                )
+                            }
+                        }
+                    }
+                }
             }
 
             // ── Anything that needs a decision, in one swipeable row
@@ -328,6 +401,8 @@ fun DashboardScreen(
  */
 @Composable
 private fun BalanceBlock(
+    available: Double?,
+    cardCredit: Double?,
     balance: Double,
     income: Double,
     expense: Double,
@@ -344,13 +419,28 @@ private fun BalanceBlock(
             .padding(horizontal = AuraSpacing.gutter)
             .padding(top = 2.dp)
     ) {
-        AuraEyebrow(stringResource(R.string.home_this_month))
+        AuraEyebrow(
+            stringResource(
+                if (available != null) R.string.home_available else R.string.home_this_month
+            )
+        )
         Spacer(modifier = Modifier.height(AuraSpacing.sm))
         AnimatedMoney(
-            amount = balance,
+            amount = available ?: balance,
             style = AuraType.moneyHero,
             color = MaterialTheme.colorScheme.onBackground
         )
+        if (available != null && cardCredit != null) {
+            Spacer(modifier = Modifier.height(AuraSpacing.xs))
+            Text(
+                stringResource(
+                    R.string.home_card_credit,
+                    formatMoney(cardCredit, fractionDigits = 0)
+                ),
+                style = AuraType.flowCaption,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
 
         Spacer(modifier = Modifier.height(18.dp))
         AuraProgressBar(

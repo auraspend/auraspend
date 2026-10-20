@@ -59,6 +59,9 @@ fun TransactionEntity.toDomain(): Transaction = Transaction(
     nextDueDate = nextDueDateTimestamp?.let {
         LocalDateTime.ofInstant(Instant.ofEpochMilli(it), ZoneId.systemDefault())
     },
+    balanceAfter = balanceAfter,
+    instrumentLast4 = instrumentLast4,
+    instrumentIsCard = instrumentIsCard,
     subscriptionName = subscriptionName,
     sourceSmsId = sourceSmsId
 )
@@ -76,7 +79,10 @@ fun Transaction.toEntity(): TransactionEntity = TransactionEntity(
     recurrenceFrequency = recurrenceFrequency?.name,
     nextDueDateTimestamp = nextDueDate?.atZone(ZoneId.systemDefault())?.toInstant()?.toEpochMilli(),
     subscriptionName = subscriptionName,
-    sourceSmsId = sourceSmsId
+    sourceSmsId = sourceSmsId,
+    balanceAfter = balanceAfter,
+    instrumentLast4 = instrumentLast4,
+    instrumentIsCard = instrumentIsCard
 )
 
 fun CategoryEntity.toDomain(): Category = Category(

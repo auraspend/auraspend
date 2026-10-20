@@ -92,6 +92,13 @@ interface TransactionDao {
     )
     fun observeSummary(start: Long, end: Long): Flow<TransactionSummaryRow>
 
+    /**
+     * Every row that carried a balance, newest first. The account ledger is the
+     * first row per instrument: `distinctBy` in the repository keeps the latest.
+     */
+    @Query("SELECT * FROM transactions WHERE balanceAfter IS NOT NULL ORDER BY dateTimestamp DESC")
+    fun observeBalanceSnapshots(): Flow<List<TransactionEntity>>
+
     @Query(
         "SELECT COALESCE(SUM(CASE WHEN type = 'INCOME' THEN amount ELSE -amount END), 0) " +
             "FROM transactions WHERE categoryId != 'cat_transfer'"

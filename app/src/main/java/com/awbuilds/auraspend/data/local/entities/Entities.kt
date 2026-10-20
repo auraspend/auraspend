@@ -26,7 +26,16 @@ data class TransactionEntity(
     val recurrenceFrequency: String? = null,
     val nextDueDateTimestamp: Long? = null,
     val subscriptionName: String? = null,
-    val sourceSmsId: String? = null
+    val sourceSmsId: String? = null,
+    /**
+     * The balance the message stated ("Avl Bal" / a card's "Avl Limit"), and the
+     * instrument it belongs to. A snapshot per transaction rather than a
+     * separate accounts table: the account ledger is derived from these, which
+     * keeps the backup a single existing shape.
+     */
+    val balanceAfter: Double? = null,
+    val instrumentLast4: String? = null,
+    val instrumentIsCard: Boolean = false
 )
 
 @Entity(tableName = "categories")
