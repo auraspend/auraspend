@@ -3,7 +3,15 @@
 > Read this file and the latest file in `docs/handoffs/` before touching anything.
 > Update both (plus `CLAUDE.md` / `memory/` when you learn something durable) before ending a session.
 >
-> Latest: `docs/handoffs/0069-home-redesign.md` — **Home is a glance and a
+> Latest: `docs/handoffs/0070-release-0.1.92.md` — **0.1.92 is cut**:
+> versionCode 14, tag `v0.1.92`, run 39408271870 green, GitHub release
+> published with the AAB/APK/SHA256SUMS, and the Play closed-testing track
+> (`alpha`) holds it as `IN_REVIEW`. The number follows the project's own
+> convention (`0.1.71` and `0.1.91` were the first patches of their lines) —
+> but unlike 0.1.91 this one **does** carry a schema migration (v9, additive)
+> and two features, so the changelog says so rather than repeating
+> "presentation only".
+> Before: `docs/handoffs/0069-home-redesign.md` — **Home is a glance and a
 > dashboard again**: the owner asked for the Aurora composition in the current
 > theme, so the hero (a flat tonal block — Aurora's shape, no gradient), the
 > seven-day cash-flow **area chart**, a carousel of budget **rings**, the
