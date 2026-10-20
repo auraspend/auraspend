@@ -8,6 +8,8 @@ import androidx.compose.ui.platform.LocalContext
 import java.text.DecimalFormat
 import java.text.DecimalFormatSymbols
 import java.text.NumberFormat
+import java.math.BigDecimal
+import java.math.RoundingMode
 import java.util.Currency
 import java.util.Locale
 import kotlin.math.abs
@@ -130,8 +132,23 @@ fun formatMoney(
     // grouping for both en_IN and hi_IN), so the grouping is done explicitly.
     // Deterministic rendering beats platform-dependent formatting for money.
     if (locale.usesIndianGrouping()) {
-        val fraction = if (digits > 0) "." + "0".repeat(digits) else ""
-        val plain = DecimalFormat("#,##0.#", DecimalFormatSymbols(Locale.US)).format(abs(value))
+        // Two defects lived in this one line, and both were invisible until an
+        // amount carried paise:
+        //
+        // 1. The pattern "#,##0.#" allows **one** decimal digit, so every
+        //    amount was rounded to a tenth and the padding below invented the
+        //    second one: ₹123,456.78 rendered as ₹1,23,456.80, and ₹1.05 as
+        //    ₹1.10. The pattern now carries as many fraction digits as the
+        //    currency shows.
+        // 2. The value is a `Double`, whose exact binary value is not the
+        //    number the user typed — 452,310.55 is really 452,310.54999…, and
+        //    rounding that to a tenth moved it further still. Scaling the
+        //    decimal the user meant *before* formatting fixes it.
+        val scaled = runCatching {
+            BigDecimal(abs(value)).setScale(digits, RoundingMode.HALF_UP)
+        }.getOrElse { BigDecimal.ZERO.setScale(digits) }
+        val pattern = "#,##0" + if (digits > 0) "." + "#".repeat(digits) else ""
+        val plain = DecimalFormat(pattern, DecimalFormatSymbols(Locale.US)).format(scaled)
         val (whole, decimals) = plain.split('.', limit = 2).let {
             it[0].replace(",", "") to it.getOrNull(1)?.padEnd(digits, '0')?.take(digits).orEmpty()
         }

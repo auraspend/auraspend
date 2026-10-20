@@ -70,6 +70,37 @@ class MoneyFormattingTest {
     }
 
     @Test
+    fun `Indian grouping keeps the paise the amount actually has`() {
+        // The Indian path formatted with "#,##0.#" — one decimal digit — and
+        // then padded the second one with a zero, so every amount with paise
+        // was mis-stated: ₹123,456.78 rendered as ₹1,23,456.80 and ₹1.05 as
+        // ₹1.10. The demo data has no paise anywhere, which is why nothing in
+        // the app or the store screenshots ever showed it; a real bank message
+        // with a fractional rupee did (2026-10-20).
+        val enIn = Locale.forLanguageTag("en-IN")
+        assertEquals("₹1,23,456.78", formatMoney(123456.78, inr, enIn))
+        assertEquals("₹4,52,310.55", formatMoney(452310.55, inr, enIn))
+        assertEquals("₹12,345.67", formatMoney(12_345.67, inr, enIn))
+        assertEquals("₹1.05", formatMoney(1.05, inr, enIn))
+        assertEquals("₹0.99", formatMoney(0.99, inr, enIn))
+        // A whole amount still reads as a whole amount.
+        assertEquals("₹1,23,456", formatMoney(123456.0, inr, enIn))
+    }
+
+    @Test
+    fun `the same paise are kept in a non-Indian locale`() {
+        // The two paths are separate implementations, so the fix to one must not
+        // be assumed for the other.
+        assertEquals("₹123,456.78", formatMoney(123456.78, inr, Locale.US))
+    }
+
+    @Test
+    fun `Indian grouping rounds to whole rupees when asked for no decimals`() {
+        val enIn = Locale.forLanguageTag("en-IN")
+        assertEquals("₹1,23,457", formatMoney(123456.78, inr, enIn, fractionDigits = 0))
+    }
+
+    @Test
     fun `negative amounts keep their sign`() {
         // MINUS_SIGN (U+2212), not the platform's hyphen-minus: the app draws one
         // minus glyph everywhere, and `NumberFormat` emits a hyphen (or accounting
