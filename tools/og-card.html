@@ -109,18 +109,62 @@
         .phone {
             flex: 0 0 auto;
             align-self: flex-start;
-            margin: 24px 62px 0 40px;
-            width: 326px;
-            border-radius: 44px;
-            padding: 10px;
-            background: #141412;
-            box-shadow: 0 40px 80px -30px rgba(35, 30, 20, 0.5);
+            margin: 22px 58px 0 40px;
+            width: 320px;
+            aspect-ratio: 1022 / 2082;
+            position: relative;
+            filter: drop-shadow(0 2rem 3.5rem -1.5rem rgba(35, 30, 20, 0.45));
         }
-        .phone img {
+        .phone img.bezel {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
             display: block;
+        }
+        .phone .screen {
+            position: absolute;
+            left: 5.088%;
+            top: 2.209%;
+            width: 89.824%;
+            height: 95.581%;
+            overflow: hidden;
+            border-radius: 13.725% / 6.332%;
+            background: #F7F5F0;
+        }
+        .phone .capture {
+            position: absolute;
+            left: 0;
+            top: 2.607%;
             width: 100%;
             height: auto;
-            border-radius: 34px;
+            display: block;
+        }
+        .phone .band {
+            position: absolute;
+            inset: 0 0 auto 0;
+            height: 5.451%;
+            background: #F7F5F0;
+        }
+        .phone .chrome {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: auto;
+            display: block;
+            font-family: "Plus Jakarta Sans", sans-serif;
+            color: #17160F;
+        }
+        .phone .island {
+            position: absolute;
+            top: 1.303%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 26.667%;
+            aspect-ratio: 104 / 26;
+            border-radius: 999px;
+            background: #000;
         }
     </style>
 </head>
@@ -138,7 +182,26 @@
         </div>
     </div>
     <div class="phone">
-        <img src="../site/img/screens/home-light.png" alt="">
+        <img class="bezel" src="../docs/store/public/mockup.png" alt="">
+        <div class="screen">
+            <img class="capture" src="../site/img/screens/home-light.png" alt="">
+            <span class="band"></span>
+            <svg class="chrome" viewBox="0 0 390 46" aria-hidden="true">
+                <text x="30" y="27.68" font-size="13" font-weight="700" letter-spacing="0.13" fill="currentColor">9:41</text>
+                <g transform="translate(293,17.5)" fill="currentColor">
+                    <path d="M0 7h3v4H0zM4.5 5h3v6h-3zM9 2.6h3V11H9zM13.5 0h3v11h-3z"/>
+                    <g transform="translate(22,0)">
+                        <path d="M8 10.4 5.6 8a3.4 3.4 0 0 1 4.8 0zM8 6.2a6.6 6.6 0 0 0-4.6 1.9L1.9 6.6a9.4 9.4 0 0 1 12.2 0l-1.5 1.5A6.6 6.6 0 0 0 8 6.2z"/>
+                    </g>
+                    <g transform="translate(43,0)">
+                        <rect x="0.6" y="0.6" width="19" height="9.8" rx="3" fill="none" stroke="currentColor" stroke-opacity="0.45"/>
+                        <rect x="2.4" y="2.4" width="14.4" height="6.2" rx="1.7"/>
+                        <path d="M21.6 4v3" fill="none" stroke="currentColor" stroke-opacity="0.45" stroke-width="1.4" stroke-linecap="round"/>
+                    </g>
+                </g>
+            </svg>
+            <span class="island"></span>
+        </div>
     </div>
 </body>
 </html>

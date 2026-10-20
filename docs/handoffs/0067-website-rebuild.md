@@ -103,6 +103,35 @@ second half and a violet dot. The favicon is a violet "A" on the ink tile,
 drawn as a path so it does not depend on the webfont. The old artwork is
 still what ships on the phone; the site no longer pretends otherwise.
 
+### The phone frame
+
+The device on the site is the **same iPhone the Play Store deck uses**, built
+from the same numbers: `docs/store/public/mockup.png` (the skill template's
+1022×2082 iPhone 15 Pro bezel), the capture dropped into the screen rect that
+was measured for it (`PHONE_SCREEN` in `docs/store/src/lib/constants.ts`), the
+Android chrome cropped away, and the concept's own iOS chrome drawn in its
+place (`IPHONE_CHROME` — the 46px status bar with 9:41, the signal/wifi/battery
+row, and the 104×26 island). The site and the store deck are now the same
+picture rather than two approximations of one.
+
+The three details that make it work, and that are easy to get wrong:
+
+- **The capture is nudged down by (46 − 24)px.** 46 is the height of the
+  drawn iOS status bar; 24 is the height of the Android one the captures
+  carry. The nudge puts the Android row exactly behind the drawn band and
+  drops the Android gesture pill off the bottom.
+- **The band is painted in the app's own background colour**, not in the
+  page's. The strip above the shifted capture then reads as the device rather
+  than as a gap, and it is what makes the frame work in both themes.
+- **The island is a stadium, not a circle.** `border-radius: 50%` on a 4:1 box
+  draws an ellipse. It is `999px`. It also covers the mockup's own punch-hole
+  camera dot, which would otherwise peek out below it.
+
+The iOS chrome is one `<symbol>` with a 390×46 viewBox, referenced by every
+frame on the page, so it scales with the frame instead of needing per-size
+math. The frame's shadow is a `drop-shadow`, not a `box-shadow`, so it follows
+the bezel PNG's silhouette instead of casting a rectangle.
+
 ---
 
 ## The deployment change
@@ -203,6 +232,12 @@ baseline-only, the R8 keep-rule gate, the native audit.
 - **The old site embedded the icon as an `<img>` with a `store/icon-512.png`
   path.** The new one uses an SVG favicon, because the old artwork is purple
   and the site is not.
+- **The phone frame is not a CSS bezel.** It is a PNG with a screen rect
+  measured for it, and the capture is positioned by hand inside that rect. If
+  the store editor's `PHONE_SCREEN` or `IPHONE_CHROME` constants change, the
+  site's `.iphone__screen` and `.iphone__chrome` rules change with them, or
+  the capture will sit a few pixels off and the Android status bar will peek
+  out from under the drawn one.
 - **The header and footer are duplicated across seven pages.** There is no
   build step, so they are copied. `tools/stamp_site_chrome.py` copies them out
   of `index.html` verbatim and marks the current page for assistive

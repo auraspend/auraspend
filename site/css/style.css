@@ -63,7 +63,6 @@
     --amber: #a66a1e;
 
     /* Chrome */
-    --bezel: #141412;
     --focus: #4a2e7a;
 
     /* Type */
@@ -106,8 +105,10 @@
     --prose: 46rem;
     --nav-h: 4.25rem;
 
-    /* The one shadow in the system: floating chrome only. */
-    --lift: 0 2.5rem 5rem -2rem rgba(35, 30, 20, 0.42);
+    /* The one shadow in the system: the floating device frame only. It is a
+       drop-shadow rather than a box-shadow, so it follows the bezel PNG's
+       silhouette instead of casting a rectangle. */
+    --lift: 0 2rem 3.5rem -1.5rem rgba(35, 30, 20, 0.45);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -133,9 +134,8 @@
         --brick: #e89a8a;
         --brick-soft: #2e1c18;
         --amber: #e5b072;
-        --bezel: #0a0a09;
         --focus: #c9b3f2;
-        --lift: 0 2.5rem 5rem -1.5rem rgba(0, 0, 0, 0.8);
+        --lift: 0 2rem 3.5rem -1.5rem rgba(0, 0, 0, 0.8);
     }
 }
 
@@ -161,9 +161,8 @@
     --brick: #e89a8a;
     --brick-soft: #2e1c18;
     --amber: #e5b072;
-    --bezel: #0a0a09;
     --focus: #c9b3f2;
-    --lift: 0 2.5rem 5rem -1.5rem rgba(0, 0, 0, 0.8);
+    --lift: 0 2rem 3.5rem -1.5rem rgba(0, 0, 0, 0.8);
 }
 
 /* ── 3. Base ───────────────────────────────────────────────────────────── */
@@ -771,42 +770,98 @@ code {
     margin-top: var(--sp-lg);
 }
 
-/* ── 10. The device frame ──────────────────────────────────────────────── */
+/* ── 10. The iPhone frame ───────────────────────────────────────────────
+   The same device the Play Store deck uses, built from the same numbers:
+   the skill template's `mockup.png` (1022×2082) with the capture dropped
+   into the screen rect that was measured for it (PHONE_SCREEN in
+   `docs/store/src/lib/constants.ts`), the Android chrome cropped away, and
+   the concept's own iOS chrome drawn in its place (IPHONE_CHROME). The site
+   and the store deck are therefore the same picture.
 
-.device {
+   The capture is nudged down by (46 − 24)px — 46 is the height of the drawn
+   iOS status bar, 24 the height of the Android one the captures carry — so
+   the Android row lands exactly behind the drawn band, and the gesture pill
+   falls off the bottom. The band is painted in the app's own background
+   colour, so the strip above the shifted capture reads as the device rather
+   than as a gap. */
+
+.iphone {
     position: relative;
-    border-radius: 2.75rem;
-    padding: 0.75rem;
-    background: var(--bezel);
-    box-shadow: var(--lift);
     width: 100%;
-    max-width: 19rem;
+    max-width: 21rem;
     margin-inline: auto;
+    aspect-ratio: 1022 / 2082;
+    filter: drop-shadow(var(--lift));
 }
 
-.device img {
-    width: 100%;
-    height: auto;
-    border-radius: 2.125rem;
-    background: var(--paper);
-}
-
-.device--lg {
-    max-width: 22rem;
-}
-
-.device--sm {
-    max-width: 15rem;
-}
-
-/* The bezel's own edge, a hairline so it does not melt into the stage. */
-.device::after {
-    content: "";
+.iphone__bezel {
     position: absolute;
     inset: 0;
-    border-radius: inherit;
-    border: 1px solid color-mix(in srgb, var(--paper) 12%, transparent);
-    pointer-events: none;
+    width: 100%;
+    height: 100%;
+    display: block;
+    z-index: 0;
+}
+
+.iphone__screen {
+    position: absolute;
+    left: 5.088%;
+    top: 2.209%;
+    width: 89.824%;
+    height: 95.581%;
+    overflow: hidden;
+    border-radius: 13.725% / 6.332%;
+    background: var(--paper);
+    z-index: 1;
+}
+
+.iphone__capture {
+    position: absolute;
+    left: 0;
+    top: 2.607%;
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+/* The band that hides the capture's own Android status bar. */
+.iphone__band {
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 5.451%;
+    background: var(--paper);
+    z-index: 2;
+}
+
+.iphone__chrome {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: auto;
+    display: block;
+    font-family: var(--font);
+    color: var(--ink);
+    z-index: 3;
+}
+
+/* A stadium, not a circle: `border-radius: 50%` on a 4:1 box draws an
+   ellipse, and the island is the one shape that tells the eye it is an
+   iPhone before it has read a single word. */
+.iphone__island {
+    position: absolute;
+    top: 1.303%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 26.667%;
+    aspect-ratio: 104 / 26;
+    border-radius: 999px;
+    background: #000;
+    z-index: 4;
+}
+
+.iphone--sm {
+    max-width: 15.5rem;
 }
 
 /* ── 11. Cards ─────────────────────────────────────────────────────────── */
@@ -2042,7 +2097,7 @@ code {
         columns: 1;
     }
 
-    .device {
+    .iphone {
         max-width: 15rem;
     }
 
