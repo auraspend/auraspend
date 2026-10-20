@@ -94,7 +94,8 @@ class DemoDataSeeder {
         fun expense(
             id: String, amount: Double, category: String, note: String,
             merchant: String, daysAgo: Long, recurring: Boolean = false,
-            frequency: String? = null, subscription: String? = null
+            frequency: String? = null, subscription: String? = null,
+            balanceAfter: Double? = null, instrumentLast4: String? = null
         ) {
             tx += TransactionEntity(
                 id = id, amount = amount, categoryId = category, note = note,
@@ -102,7 +103,8 @@ class DemoDataSeeder {
                 dateTimestamp = daysAgo(daysAgo), type = "EXPENSE",
                 isRecurring = recurring, recurrenceFrequency = frequency,
                 nextDueDateTimestamp = if (recurring) inDays(28) else null,
-                subscriptionName = subscription
+                subscriptionName = subscription,
+                balanceAfter = balanceAfter, instrumentLast4 = instrumentLast4
             )
         }
 
@@ -124,7 +126,15 @@ class DemoDataSeeder {
         )
 
         // Food & Dining
-        expense("tx-f1", 640.0, "cat_food", "Dinner", "Swiggy", 0)
+        expense(
+            "tx-f1", 640.0, "cat_food", "Dinner", "Swiggy", 0,
+            // The balance the bank's message stated, and the instrument it
+            // belongs to. One row carrying it is enough: the account ledger is
+            // derived from these, so this is what puts a real account on the
+            // Home screen and lets the hero say "Available" instead of the
+            // month's flow.
+            balanceAfter = 4_52_310.55, instrumentLast4 = "4523"
+        )
         expense("tx-f2", 1280.0, "cat_food", "Weekend brunch", "Third Wave Coffee", 1)
         expense("tx-f3", 249.0, "cat_food", "Lunch", "Chaayos", 2)
         expense("tx-f4", 1899.0, "cat_food", "Family dinner", "Barbeque Nation", 5)

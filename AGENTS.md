@@ -3,7 +3,21 @@
 > Read this file and the latest file in `docs/handoffs/` before touching anything.
 > Update both (plus `CLAUDE.md` / `memory/` when you learn something durable) before ending a session.
 >
-> Latest: `docs/handoffs/0068-payee-extraction-measured.md` — payee extraction
+> Latest: `docs/handoffs/0069-home-redesign.md` — **Home is a glance and a
+> dashboard again**: the owner asked for the Aurora composition in the current
+> theme, so the hero (a flat tonal block — Aurora's shape, no gradient), four
+> quick actions, the seven-day cash-flow **area chart**, a carousel of budget
+> **rings**, the subscriptions card, the accounts ledger and today's rows are
+> all on it, with the needs-you rail high. The first screenful is still the
+> glance. Two new design-system components (`AuraQuickAction`,
+> `AuraBudgetRingCard`). The redesign also **found a money bug**: the Indian
+> grouping path formatted with `#,##0.#` (one decimal) and padded the second
+> with a zero, so ₹123,456.78 rendered as ₹1,23,456.80 and ₹1.05 as ₹1.10 —
+> fixed with a digits-aware pattern over a `BigDecimal` scale, and pinned by
+> three tests. 632 tests. The store deck was re-exported, uploaded to the Play
+> listing and **verified by SHA-1**; the site's Home/Quick Add captures, alt
+> text and test count follow the app.
+> Before: `docs/handoffs/0068-payee-extraction-measured.md` — payee extraction
 > was **measured against a second SMS parser** over one message corpus, message
 > by message (the corpus is not in the repo). Amounts never disagreed; this app
 > was right on direction where the other booked card spends as income; and this
