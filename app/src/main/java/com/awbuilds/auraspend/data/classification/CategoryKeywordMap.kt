@@ -67,6 +67,10 @@ object CategoryKeywordMap {
         "ikea" to "cat_shopping",
         "decathlon" to "cat_shopping",
         "shop" to "cat_shopping",
+        // Chains the other parser filed as shopping and this one left blank.
+        "big bazaar" to "cat_shopping",
+        "bazaar" to "cat_shopping",
+        "a2z" to "cat_shopping",
         "store" to "cat_shopping",
         // Transport
         "uber" to "cat_transport",
@@ -82,6 +86,19 @@ object CategoryKeywordMap {
         "metro" to "cat_transport",
         "irctc" to "cat_transport",
         "makemytrip" to "cat_transport",
+        // Travel booking portals. The table had airlines and two bus/air
+        // portals, but no hotel side, so a hotel booking landed in "Other" while
+        // the other parser called it travel. Found by comparing parse results
+        // over a message corpus (handoff 0068).
+        "agoda" to "cat_transport",
+        "ixigo" to "cat_transport",
+        "trivago" to "cat_transport",
+        "expedia" to "cat_transport",
+        "cleartrip" to "cat_transport",
+        "easemytrip" to "cat_transport",
+        "yatra" to "cat_transport",
+        "airbnb" to "cat_transport",
+        "savaari" to "cat_transport",
         "redbus" to "cat_transport",
         // Subscriptions
         "netflix" to "cat_subscription",

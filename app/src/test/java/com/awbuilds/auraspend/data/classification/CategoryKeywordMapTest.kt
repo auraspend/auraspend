@@ -16,6 +16,23 @@ class CategoryKeywordMapTest {
     }
 
     @Test
+    fun `travel booking portals are transport`() {
+        // The map had airlines and two bus/air portals, but no hotel side, so a
+        // hotel booking fell into "Other" while the other parser called it
+        // travel. Found by comparing parse results over a message corpus
+        // (handoff 0068).
+        assertEquals("cat_transport", CategoryKeywordMap.resolve("AGODA COMPANY P", isExpense = true))
+        assertEquals("cat_transport", CategoryKeywordMap.resolve("MakeMyTrip", isExpense = true))
+        assertEquals("cat_transport", CategoryKeywordMap.resolve("TRIVAGO", isExpense = true))
+    }
+
+    @Test
+    fun `a retail chain is shopping`() {
+        // The other parser filed this one as shopping; this app left it blank.
+        assertEquals("cat_shopping", CategoryKeywordMap.resolve("BIG BAZAAR", isExpense = true))
+    }
+
+    @Test
     fun `income never resolves to a spending category`() {
         // A refund from Swiggy is not a Swiggy expense. Reading it through the
         // expense table would file income as spending and corrupt every budget.
