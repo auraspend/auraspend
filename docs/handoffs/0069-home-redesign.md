@@ -113,12 +113,52 @@ the app does):
   what is on the screen, and a re-derived test count (614 → 632). The old
   number was four releases out of date.
 
+## The Activity header, measured on the phone
+
+Testing the redesign on the owner's vivo surfaced a defect that had been
+logged since 0065: **the Activity header described a different set of rows
+from the list under it**. It showed the month SQL aggregate, which ignores the
+direction chips, the category chips and the search box — so "October · ₹74,855
+out" sat above a list filtered to one category, and above an *empty* one.
+
+The aggregate is now narrowed by the same constraints the paged query uses
+(`observeSummaryFiltered`), and the line names what it is counting: the
+category when one is selected, the month otherwise, and "in" rather than "out"
+when the list shows income only. On the phone:
+
+| Filter | Before | Now |
+|---|---|---|
+| none | October · ₹74,855 out | October · ₹74,855 out |
+| Incoming | October · ₹74,855 out | October · **₹5,767 in** |
+| Food & Dining | October · ₹74,855 out | **Food & Dining · ₹0 out** |
+
+Five tests (`FilteredSummaryTest`) pin it against a real in-memory database,
+including the case the phone showed: a filter that matches nothing totals
+nothing.
+
+## Transitions on the vivo, measured
+
+The outstanding item from 0038 — the screen-flicker/lag report — is now
+measured, because `gfxinfo` reports zero frames on this device and the frame
+source has to be the layer's own present timestamps.
+
+- **SurfaceFlinger `--latency`**: p50 **16.74 ms**, p95 17.5 ms at the panel's
+  60 Hz — one frame, on budget — with at most a single 33 ms frame per
+  transition. The 770 ms hole the first run reported was a **measurement
+  artefact**: the buffer is a ring of the last 128 presents and it keeps
+  collecting while the screen is static, so the idle period between two taps
+  reads as one enormous frame.
+- **A screen recording** settles the flicker question: every tab switch and
+  every detail transition lands as **one frame change**, and no stretch of the
+  recording is static for 250 ms. The instant tab switch (0064) is therefore
+  right on this device and stays.
+
 ## Verification
 
-- `./gradlew :app:testProdDebugUnitTest` — **632 tests, 0 failures**.
+- `./gradlew :app:testProdDebugUnitTest` — **637 tests, 0 failures**.
   Two new ones (`DashboardSubscriptionsTest`: the confirmed count, the
-  normalised monthly cost, the cancelled subscription left out) and three in
-  `MoneyFormattingTest`.
+  normalised monthly cost, the cancelled subscription left out), three in
+  `MoneyFormattingTest` and five in `FilteredSummaryTest`.
 - `./gradlew :app:lintProdDebug` — clean (baseline-only).
 - `./tools/check_license.sh`, `./tools/check_privacy_claims.sh` — clean.
 - On the emulator (1170×2532 @480 dpi): Home walked in **light and dark**, the
@@ -127,6 +167,11 @@ the app does):
   ("Bal INR 66,000.00" → the hero flips to "Available" and an account row
   appears), the budgets carousel, the subscriptions card and the accounts card
   all read correctly.
+- **On the owner's vivo** (the dev build, the real inbox): the new Home
+  renders, all four quick actions were driven to their destination, and the
+  filtered Activity header was checked against the phone's own data. The
+  phone's screen timeout and stay-awake setting were restored to 15 s and 0
+  afterwards.
 - At a **200 % font scale** (light and dark): the hero, the quick actions, the
   chart, the budget cards and the account rows all survive.
 - The Play listing was checked after the upload: seven images, digests equal to
@@ -137,6 +182,9 @@ the app does):
 - The **Play build (0.1.91) carries none of this** — no redesign, no ledger,
   no money fix. The next release must.
 - The site's **changelog page** has not been updated for this redesign.
+- The Activity header now names the **category** when one is selected, and
+  the month is still named by the stepper below it — so the month is one line
+  further away than it was.
 - The **launcher icon and store assets** are still the old artwork (tracked
   since 0062).
 - `AuraBudgetRingCard` is 188 dp wide with a fixed `width`; it is the one new

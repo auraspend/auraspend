@@ -68,6 +68,7 @@
     <!-- Activity (transaction list) -->
     <string name="activity_title">Activity</string>
     <string name="activity_month_out">%1$s · %2$s out</string>
+    <string name="activity_month_in">%1$s · %2$s in</string>
     <string name="activity_previous_month">Previous month</string>
     <string name="activity_sort_newest_first">Newest first</string>
     <string name="activity_sort_oldest_first">Oldest first</string>

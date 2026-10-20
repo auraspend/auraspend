@@ -69,6 +69,7 @@
     <!-- Activity (transaction list) -->
     <string name="activity_title">गतिविधि</string>
     <string name="activity_month_out">%1$s · %2$s खर्च</string>
+    <string name="activity_month_in">%1$s · %2$s आय</string>
     <string name="activity_previous_month">पिछला महीना</string>
     <string name="activity_sort_newest_first">नवीनतम पहले</string>
     <string name="activity_sort_oldest_first">पुराने पहले</string>

@@ -32,6 +32,15 @@ interface TransactionRepository {
 
     // SQL aggregates — avoid loading rows into the app for summaries.
     fun observeSummary(start: Long, end: Long): Flow<TransactionSummary>
+
+    /**
+     * The same totals, narrowed to the filter the Activity list is showing.
+     *
+     * The header above the list must describe the rows under it: a filtered
+     * list under the whole month's total reads as a contradiction, and an empty
+     * filtered list under a large total reads as a bug.
+     */
+    fun observeSummary(filter: TransactionFilter): Flow<TransactionSummary>
     fun observeBalance(): Flow<Double>
     fun observeExpenseByCategory(start: Long, end: Long): Flow<List<CategoryTotal>>
     fun observeDailyExpense(start: Long, end: Long): Flow<List<DayTotal>>

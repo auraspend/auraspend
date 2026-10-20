@@ -93,6 +93,41 @@ interface TransactionDao {
     fun observeSummary(start: Long, end: Long): Flow<TransactionSummaryRow>
 
     /**
+     * The same aggregate, narrowed to the filter the list is showing.
+     *
+     * The Activity header used this month's **unfiltered** total, so a list
+     * filtered to one category or to one direction sat under a number that
+     * described a different set of rows — and an empty filtered list sat under
+     * a large one. The constraint list mirrors `pagedTransactions` exactly, so
+     * the header and the list describe the same rows.
+     */
+    @Query(
+        """
+        SELECT COALESCE(SUM(CASE WHEN type = 'INCOME' THEN amount ELSE 0 END), 0) AS income,
+               COALESCE(SUM(CASE WHEN type = 'EXPENSE' THEN amount ELSE 0 END), 0) AS expense,
+               SUM(CASE WHEN type = 'INCOME' THEN 1 ELSE 0 END) AS incomeCount,
+               SUM(CASE WHEN type = 'EXPENSE' THEN 1 ELSE 0 END) AS expenseCount
+        FROM transactions
+        WHERE dateTimestamp BETWEEN :start AND :end
+          AND categoryId != 'cat_transfer'
+          AND (:type IS NULL OR type = :type)
+          AND (:categoryId IS NULL OR categoryId = :categoryId)
+          AND (
+              :query IS NULL OR :query = ''
+              OR note LIKE '%' || :query || '%'
+              OR merchant LIKE '%' || :query || '%'
+          )
+        """
+    )
+    fun observeSummaryFiltered(
+        query: String?,
+        type: String?,
+        categoryId: String?,
+        start: Long,
+        end: Long
+    ): Flow<TransactionSummaryRow>
+
+    /**
      * Every row that carried a balance, newest first. The account ledger is the
      * first row per instrument: `distinctBy` in the repository keeps the latest.
      */

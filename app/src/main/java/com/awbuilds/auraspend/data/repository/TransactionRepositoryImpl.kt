@@ -68,6 +68,24 @@ class TransactionRepositoryImpl(
             pagingData.map { entity -> entity.toDomain() }
         }
 
+    override fun observeSummary(filter: TransactionFilter): Flow<TransactionSummary> {
+        val (start, end) = filter.month.toEpochRange(ZoneId.systemDefault())
+        return transactionDao.observeSummaryFiltered(
+            query = filter.query.trim().ifBlank { null },
+            type = filter.type?.name,
+            categoryId = filter.categoryId,
+            start = start,
+            end = end
+        ).map { row ->
+            TransactionSummary(
+                income = row.income,
+                expense = row.expense,
+                incomeCount = row.incomeCount,
+                expenseCount = row.expenseCount
+            )
+        }
+    }
+
     override fun observeSummary(start: Long, end: Long): Flow<TransactionSummary> =
         transactionDao.observeSummary(start, end).map {
             TransactionSummary(

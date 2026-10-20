@@ -14,9 +14,11 @@
 > grouping path formatted with `#,##0.#` (one decimal) and padded the second
 > with a zero, so ₹123,456.78 rendered as ₹1,23,456.80 and ₹1.05 as ₹1.10 —
 > fixed with a digits-aware pattern over a `BigDecimal` scale, and pinned by
-> three tests. 632 tests. The store deck was re-exported, uploaded to the Play
+> three tests. 637 tests. The store deck was re-exported, uploaded to the Play
 > listing and **verified by SHA-1**; the site's Home/Quick Add captures, alt
-> text and test count follow the app.
+> text and test count follow the app. The Activity header now follows the
+> list's filter too (it used to show the month's unfiltered total above a
+> filtered — sometimes empty — list).
 > Before: `docs/handoffs/0068-payee-extraction-measured.md` — payee extraction
 > was **measured against a second SMS parser** over one message corpus, message
 > by message (the corpus is not in the repo). Amounts never disagreed; this app

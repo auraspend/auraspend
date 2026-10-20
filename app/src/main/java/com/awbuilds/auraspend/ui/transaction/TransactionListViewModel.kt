@@ -86,9 +86,17 @@ class TransactionListViewModel(
         }
         .cachedIn(viewModelScope)
 
-    /** SQL aggregate for the summary strip, over the month being browsed. */
+    /**
+     * SQL aggregate for the header, over **exactly the rows the list shows**.
+     *
+     * It used to be the month's unfiltered total, so a list filtered to one
+     * category or one direction sat under a number describing a different set
+     * of rows — and an empty filtered list sat under a large one, which reads
+     * as a bug rather than as a filter. The query is debounced with the list's
+     * own, so the two never disagree about what is being searched.
+     */
     val monthSummary: StateFlow<TransactionSummary> = _filter
-        .map { it.month }
+        .map { it.copy(query = it.query) }
         .distinctUntilChanged()
         .flatMapLatest { createMonthSummary(it) }
         .stateIn(
@@ -138,14 +146,12 @@ class TransactionListViewModel(
         }
     }
 
-    private fun createMonthSummary(month: YearMonth): Flow<TransactionSummary> {
-        val (start, end) = month.toEpochRange(ZoneId.systemDefault())
-        return repository.observeSummary(start, end)
+    private fun createMonthSummary(filter: TransactionFilter): Flow<TransactionSummary> =
+        repository.observeSummary(filter)
             .catch { error ->
                 AuraLog.e(TAG, "Month summary failed", error)
                 emit(TransactionSummary(income = 0.0, expense = 0.0, incomeCount = 0, expenseCount = 0))
             }
-    }
 
     private companion object {
         const val TAG = "TransactionList"

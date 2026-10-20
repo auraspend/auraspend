@@ -154,11 +154,34 @@ fun TransactionListScreen(
                     // rows of chrome above the list.
                     Text(
                         stringResource(
-                            R.string.activity_month_out,
-                            filter.month.format(monthOnlyFormatter),
+                            // "in" when the list is showing income only: the
+                            // header has to count what the rows below it are,
+                            // and "₹5,767 out" above a list of credits is the
+                            // same contradiction this line was fixed for.
+                            if (filter.type == TransactionType.INCOME) {
+                                R.string.activity_month_in
+                            } else {
+                                R.string.activity_month_out
+                            },
+                            // The scope: the category when one is selected (the
+                            // month is still named by the stepper below), the
+                            // month otherwise.
+                            if (filter.categoryId != null) {
+                                categories.find { it.id == filter.categoryId }?.name
+                                    ?: filter.month.format(monthOnlyFormatter)
+                            } else {
+                                filter.month.format(monthOnlyFormatter)
+                            },
                             // Whole rupees: the concept's `inr()` rounds, and a
                             // header summary does not need the paise a row does.
-                            formatMoney(monthSummary.expense, fractionDigits = 0)
+                            formatMoney(
+                                if (filter.type == TransactionType.INCOME) {
+                                    monthSummary.income
+                                } else {
+                                    monthSummary.expense
+                                },
+                                fractionDigits = 0
+                            )
                         ),
                         // The concept's `.eyebrow` with `text-transform:none` and
                         // `letter-spacing:.02em` — 11.5sp/600, +0.23sp tracking.
