@@ -11,10 +11,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ReceiptLong
 import androidx.compose.material.icons.filled.CloudOff
-import androidx.compose.material.icons.outlined.Add
-import androidx.compose.material.icons.outlined.ArrowDownward
-import androidx.compose.material.icons.outlined.AutoAwesome
-import androidx.compose.material.icons.outlined.BarChart
 import androidx.compose.material.icons.outlined.Subscriptions
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
@@ -199,41 +195,6 @@ fun DashboardScreen(
                     expense = state.monthlyExpense,
                     onOpenAnalytics = onNavigateToAnalytics
                 )
-            }
-
-            // ── Quick actions: the four things a money app is opened to do.
-            item {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = AuraSpacing.gutter),
-                    horizontalArrangement = Arrangement.spacedBy(AuraSpacing.sm)
-                ) {
-                    AuraQuickAction(
-                        icon = Icons.Outlined.Add,
-                        label = stringResource(R.string.home_quick_expense),
-                        modifier = Modifier.weight(1f),
-                        onClick = { onQuickAdd(TransactionType.EXPENSE) }
-                    )
-                    AuraQuickAction(
-                        icon = Icons.Outlined.ArrowDownward,
-                        label = stringResource(R.string.home_quick_income),
-                        modifier = Modifier.weight(1f),
-                        onClick = { onQuickAdd(TransactionType.INCOME) }
-                    )
-                    AuraQuickAction(
-                        icon = Icons.Outlined.AutoAwesome,
-                        label = stringResource(R.string.home_quick_smart_add),
-                        modifier = Modifier.weight(1f),
-                        onClick = onOpenReviewQueue
-                    )
-                    AuraQuickAction(
-                        icon = Icons.Outlined.BarChart,
-                        label = stringResource(R.string.home_quick_stats),
-                        modifier = Modifier.weight(1f),
-                        onClick = onNavigateToAnalytics
-                    )
-                }
             }
 
             // ── Anything that needs a decision, in one swipeable row

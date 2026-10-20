@@ -22,9 +22,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.awbuilds.auraspend.R
@@ -44,64 +42,6 @@ import androidx.compose.ui.res.stringResource
  * They live in the design system rather than in the screen so the shape, the
  * tokens and the 200 % font-scale behaviour are decided once.
  */
-
-/**
- * A quick action: an icon in a tinted disc with a caption under it.
- *
- * The disc is the only tint on the screen that is not data, and it is the
- * concept's own `onBackground` at 6 % — the same quiet disc the first-run
- * screens use for their medallion, so the row does not read as a second brand.
- */
-@Composable
-fun AuraQuickAction(
-    icon: ImageVector,
-    label: String,
-    modifier: Modifier = Modifier,
-    onClick: () -> Unit
-) {
-    Column(
-        modifier = modifier
-            .clip(RoundedCornerShape(16.dp))
-            .clickable(onClick = onClick)
-            .padding(vertical = AuraSpacing.sm),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Box(
-            modifier = Modifier
-                .size(42.dp)
-                .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.onBackground.copy(alpha = 0.06f)),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                icon,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onBackground,
-                modifier = Modifier.size(20.dp)
-            )
-        }
-        Spacer(modifier = Modifier.height(AuraSpacing.sm))
-        // Two lines, so a label that is longer than the tile wraps instead of
-        // being cut. `heightIn`, never a fixed height: at 200 % the caption must
-        // be allowed to grow.
-        //
-        // The caption is the nav-label size, not the chip size: four tiles
-        // share one screen width, and at a 200 % font scale a 12 sp caption
-        // breaks "Expense" across two lines mid-word ("Expen / se"). The icon
-        // carries the meaning; the caption only names it.
-        Text(
-            label,
-            style = AuraType.navLabel,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.Center,
-            maxLines = 2,
-            overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.heightIn(
-                min = with(LocalDensity.current) { AuraType.navLabel.lineHeight.toDp() } * 2
-            )
-        )
-    }
-}
 
 /**
  * One budget in the Home carousel: a ring, the category's name, and what it has

@@ -661,10 +661,6 @@
     <string name="home_all_budgets">All budgets</string>
     <string name="home_all_activity">All activity</string>
     <!-- Home, restored to the Aurora composition in the Quiet Ledger's language -->
-    <string name="home_quick_expense">Expense</string>
-    <string name="home_quick_income">Income</string>
-    <string name="home_quick_smart_add">Smart Add</string>
-    <string name="home_quick_stats">Stats</string>
     <string name="home_cash_flow">Cash flow</string>
     <string name="home_subscriptions">Subscriptions</string>
     <plurals name="home_subscriptions_active">

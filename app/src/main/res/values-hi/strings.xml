@@ -654,10 +654,6 @@
     <string name="home_all_budgets">सभी बजट</string>
     <string name="home_all_activity">सभी गतिविधि</string>
     <!-- Home, restored to the Aurora composition in the Quiet Ledger's language -->
-    <string name="home_quick_expense">खर्च</string>
-    <string name="home_quick_income">आय</string>
-    <string name="home_quick_smart_add">स्मार्ट ऐड</string>
-    <string name="home_quick_stats">आंकड़े</string>
     <string name="home_cash_flow">नकदी प्रवाह</string>
     <string name="home_subscriptions">सदस्यताएँ</string>
     <plurals name="home_subscriptions_active">

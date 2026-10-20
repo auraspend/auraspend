@@ -16,20 +16,24 @@ language:
 |---|---|---|
 | 1 | Greeting + avatar | unchanged |
 | 2 | **Hero** | Aurora's *shape* — a label, the figure, and two stats either side of a hairline — on a **flat tonal block**. The gradient stays retired: a brand sweep is the one thing that would not match the theme. |
-| 3 | **Quick actions** | Expense · Income · Smart Add · Stats. Expense and Income open the sheet with the type preset; Smart Add opens the review queue; Stats opens Insights. |
-| 4 | **Needs-you rail** | unchanged (over-budget sentence, review queue) |
-| 5 | **Cash flow** | Aurora's `AuraAreaChart`, seven days ending today, in ink — the Quiet Ledger's *Daily spending* strip stays on Insights. |
-| 6 | **Budgets** | Aurora's carousel of ring cards. The ring is ink, not the category's colour; brick appears **only** when a budget is over, because that is a status. |
-| 7 | **Subscriptions** | Count + monthly cost, from the same table the Subscriptions screen reads. |
-| 8 | **Accounts** | The ledger from 0068 (b26530a), unchanged. |
-| 9 | Today | unchanged |
+| 3 | **Needs-you rail** | unchanged (over-budget sentence, review queue) |
+| 4 | **Cash flow** | Aurora's `AuraAreaChart`, seven days ending today, in ink — the Quiet Ledger's *Daily spending* strip stays on Insights. |
+| 5 | **Budgets** | Aurora's carousel of ring cards. The ring is ink, not the category's colour; brick appears **only** when a budget is over, because that is a status. |
+| 6 | **Subscriptions** | Count + monthly cost, from the same table the Subscriptions screen reads. |
+| 7 | **Accounts** | The ledger from 0068 (b26530a), unchanged. |
+| 8 | Today | unchanged |
 
-The first screenful is still the glance — hero, quick actions, rail — and the
-rest scrolls.
+The owner then asked for the **quick-action row to be removed** (Expense ·
+Income · Smart Add · Stats), so Home is the hero, the rail, the chart, the
+budget rings, the subscriptions, the accounts and today's rows — with the
+centre **+** in the nav bar as the one way to record something. The row's
+component (`AuraQuickAction`) and its four labels went with it rather than
+being left behind as dead code.
 
 ### New design-system components
 
-`ui/designsystem/Tiles.kt` (new): `AuraQuickAction` and `AuraBudgetRingCard`.
+`ui/designsystem/Tiles.kt` (new): `AuraBudgetRingCard` (and, until the owner
+removed the row, `AuraQuickAction`).
 They live in the design system rather than in the screen so the shape, the
 tokens and the 200 % font-scale behaviour are decided once, and so
 `DesignSystemGuardTest` covers them.
@@ -45,11 +49,12 @@ subscription counts as a twelfth of its price.
 
 ### Strings
 
-Eleven keys added (the copy the 0059 fidelity pass deleted: the four quick
-actions, "Cash flow", the subscriptions card, the two hero stat labels, the
-ring's screen-reader string) and five orphans removed (`home_out_short`,
-`home_in_short`, `home_last_seven_days`, `home_budgets_over`, `home_left` —
-`UnusedResources` is an error in this project). EN/HI parity: **555/555**.
+Seven keys added (the copy the 0059 fidelity pass deleted: "Cash flow", the
+subscriptions card, the two hero stat labels, the ring's screen-reader string)
+and nine orphans removed — the four quick-action labels went with the row, and
+`home_out_short`, `home_in_short`, `home_last_seven_days`, `home_budgets_over`
+and `home_left` with the sections that used them (`UnusedResources` is an error
+in this project). EN/HI parity: **552/552**.
 
 ## A money bug this found
 
@@ -82,9 +87,6 @@ non-Indian path keeps the same paise.
 Three things did not survive the largest system font, and all three are now
 right:
 
-- The quick-action captions were 12 sp. Four tiles share one screen width, and
-  at 200 % "Expense" broke mid-word ("Expen / se"). They are the nav-label size
-  now; the icon carries the meaning and the caption only names it.
 - The hero's two money strings share one line, and "₹46,006.40" wrapped into
   "₹46,006.4 / 0" — which reads as two numbers. The hero's stats round to
   whole rupees (the exact figure is in Activity, and the ledger card below
@@ -162,18 +164,17 @@ source has to be the layer's own present timestamps.
 - `./gradlew :app:lintProdDebug` — clean (baseline-only).
 - `./tools/check_license.sh`, `./tools/check_privacy_claims.sh` — clean.
 - On the emulator (1170×2532 @480 dpi): Home walked in **light and dark**, the
-  four quick actions each driven (sheet opens with the type preset / the
-  review queue / Insights), the ledger populated from a real bank message
+  the ledger populated from a real bank message
   ("Bal INR 66,000.00" → the hero flips to "Available" and an account row
   appears), the budgets carousel, the subscriptions card and the accounts card
   all read correctly.
 - **On the owner's vivo** (the dev build, the real inbox): the new Home
-  renders, all four quick actions were driven to their destination, and the
-  filtered Activity header was checked against the phone's own data. The
+  renders, and the filtered Activity header was checked against the phone's
+  own data. The
   phone's screen timeout and stay-awake setting were restored to 15 s and 0
   afterwards.
-- At a **200 % font scale** (light and dark): the hero, the quick actions, the
-  chart, the budget cards and the account rows all survive.
+- At a **200 % font scale** (light and dark): the hero, the chart, the budget
+  cards and the account rows all survive.
 - The Play listing was checked after the upload: seven images, digests equal to
   the local files.
 
@@ -190,5 +191,5 @@ source has to be the layer's own present timestamps.
 - `AuraBudgetRingCard` is 188 dp wide with a fixed `width`; it is the one new
   component with a hard width, and a very long category name will still wrap
   (two lines, reserved ✓).
-- The home-screen **first-screenful promise** ("hero, quick actions, rail
-  fits above the fold") is measured by eye on a 390×844 dp emulator only.
+- The home-screen **first-screenful promise** ("the hero and the rail fit
+  above the fold") is measured by eye on a 390×844 dp emulator only.
