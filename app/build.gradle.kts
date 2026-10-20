@@ -30,14 +30,17 @@ android {
         applicationId = "com.awbuilds.auraspend"
         minSdk = 30
         targetSdk = 37
-        // 0.1.91 — patch on 0.1.9 (handoff 0066): Plan counts the subscriptions
-        // its screen actually lists, Home regained a seven-day strip so a quiet
-        // day is not empty, and tab switches are instant. Presentation only — no
-        // data, schema or classification change.
+        // 0.1.92 — the second patch of the 0.1.9 line (handoff 0069): the Home
+        // screen is rebuilt (hero, cash-flow chart, budget rings, subscriptions,
+        // accounts), the balances the bank states became a ledger (schema v9 —
+        // an additive migration), the start-up pass reads the inbox at once,
+        // payee and category extraction got sharper, and two real bugs are
+        // fixed: rupee amounts with paise were mis-stated, and the Activity
+        // header described a different set of rows from the list under it.
         // versionCode must strictly increase for every store upload; Play
         // rejects an update that reuses one.
-        versionCode = 13
-        versionName = "0.1.91"
+        versionCode = 14
+        versionName = "0.1.92"
 
         // True in dev/prod; the `fdroid` flavor flips it to false (ADR 0012).
         // Screens read it to hide the Drive entry points rather than offer

@@ -1,5 +1,6 @@
-What's new in 0.1.91
+What's new in 0.1.92
 
-• Plan now shows how many subscriptions you actually have — the count matches the list.
-• Home adds a seven-day spending strip, so a quiet day is no longer an empty screen.
-• Tab switches are instant, without the cross-fade delay.
+• The home screen is rebuilt: your balance, this month's money in and out, a seven-day spending chart, budget rings, your subscriptions, and the accounts your bank told us about.
+• Fixed: amounts with paise could be rounded wrongly — Rs 1,23,456.78 shown as Rs 1,23,456.80.
+• Fixed: the Activity header counted the whole month even when the list was filtered.
+• More shop and travel names are filed under the right category now.

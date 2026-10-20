@@ -10,6 +10,55 @@ internal APIs.
 
 ## [Unreleased]
 
+## [0.1.92] — 2026-10-20
+
+The second patch of the 0.1.9 line, following the project's own numbering
+(`0.1.71` and `0.1.91` were the first patches of theirs). Unlike 0.1.91 this
+one **does** carry a schema migration and two features — the schema change is
+additive (two nullable columns, v9) and the migration is exercised by the
+suite — so the changelog says so rather than repeating "presentation only".
+
+### Added
+
+- **The home screen, rebuilt.** The Aurora composition in the Quiet Ledger's
+  language: the hero as a flat tonal block with the month's in and out split by
+  a hairline, a seven-day cash-flow area chart, the budgets as a carousel of
+  rings, the subscriptions, the accounts, and today's rows. The gradient stays
+  retired.
+- **Accounts and cards as a ledger.** When a bank message states a balance, the
+  app now keeps it: one row per account or card, with the last four digits and
+  when the figure was last seen. The hero says "Available" instead of the
+  month's flow once there is one.
+- **A fresh install reads the inbox at once.** The start-up pass runs on launch
+  instead of waiting for the periodic worker, which could be six hours away —
+  a tester's fresh setup sat at zero transactions until a restart kicked it.
+- **A classifier may not invent a transfer.** The on-device model was allowed
+  to assign the transfer category, which moved real spending out of the
+  budgets; transfers are rule-decided now.
+
+### Fixed
+
+- **Rupee amounts with paise were mis-stated.** The Indian grouping path
+  formatted with a one-decimal pattern and padded the second digit with a
+  zero, so ₹123,456.78 rendered as ₹1,23,456.80 and ₹1.05 as ₹1.10. The demo
+  data had no paise anywhere, which is why it went unnoticed until the app had
+  a balance to show.
+- **The Activity header described a different set of rows from the list under
+  it.** It showed the month's unfiltered total, so a list filtered to one
+  category or one direction sat under a number describing other rows — and an
+  empty filtered list sat under a large one. It now counts what the list shows
+  and names the scope.
+- **A sender-routed bank's messages never carried a balance.** The global
+  engine read the balance, but a per-bank parser returns its own result and
+  bypassed it, so exactly the messages that state a balance were the ones that
+  never got one. The figures are lifted where every parse converges.
+- **Payee extraction.** A semicolon ends a payee name, a rejected candidate no
+  longer hides a later one, a counterparty clause is not a merchant, and a
+  written date is not a merchant. The rules were measured against a second
+  parser over one message corpus.
+- **Category gaps.** Travel portals and retail chains the app left blank are
+  filed now.
+
 ## [0.1.91] — 2026-10-19
 
 A patch on 0.1.9. **No data, schema or classification change** — presentation
