@@ -73,6 +73,16 @@ object AiSignalFusion {
             isSubscription -> "cat_subscription"
             base.categoryId != null -> base.categoryId
             else -> ai?.category
+                // A transfer is a **structural fact** — own-account movement, or
+                // a payment to a person — and it is decided by rule in
+                // `BankMessageParser.categoryIdFor`, never by an embedding.
+                // The model files a company NEFT credit ("… Cr-SOME COMPANY
+                // LTD-…") as Transfer because the message is full of transfer
+                // language, and a Transfer is excluded from the balance: five
+                // such salaries vanished from a tester's balance while every
+                // expense stayed, and Home read minus five lakh (2026-10-20).
+                // Rejecting it here lets the keyword map, or nothing, decide.
+                ?.takeUnless { it == TRANSFER_CATEGORY_ID }
                 ?: CategoryKeywordMap.resolve(
                     resolvedMerchant,
                     resolvedType == TransactionType.EXPENSE
@@ -104,6 +114,9 @@ object AiSignalFusion {
      * 40/46 (SmolLM2-135M), so the model is far more often wrong about this
      * than right and the bar has to reflect that.
      */
+    /** The one category a model may not assign; see `fuse`. */
+    private const val TRANSFER_CATEGORY_ID = "cat_transfer"
+
     const val DISCARD_MIN_CONFIDENCE = 0.9f
 
     /**

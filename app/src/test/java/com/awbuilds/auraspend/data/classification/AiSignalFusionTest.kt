@@ -5,6 +5,7 @@ import com.awbuilds.auraspend.domain.model.ParsedBankMessage
 import com.awbuilds.auraspend.domain.model.TransactionType
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -182,4 +183,28 @@ class AiSignalFusionTest {
         org.junit.Assert.assertTrue("LIC premium should be recurring", fused.isSubscription)
         org.junit.Assert.assertEquals("cat_subscription", fused.parsed.categoryId)
     }
+
+    @Test
+    fun `a model cannot assign the transfer category`() {
+        // A company credit is full of transfer language ("NEFT Cr-…"), so the
+        // model files it as Transfer — and a Transfer is excluded from the
+        // balance, which made five months of salary vanish from Home.
+        val parsed = ParsedBankMessage(
+            amount = 55000.0,
+            type = TransactionType.INCOME,
+            merchant = "SOME COMPANY LIMITED",
+            rawMessage = "NEFT Cr-ACME0000001-SOME COMPANY LIMITED-NEFT ref 123456"
+        )
+        val ai = SmsExtraction(
+            isTransaction = true,
+            type = TransactionType.INCOME,
+            category = "cat_transfer",
+            merchant = "SOME COMPANY LIMITED",
+            isSubscription = false,
+            confidence = 0.9f
+        )
+        val fused = AiSignalFusion.fuse(parsed, ai)
+        assertNotEquals("cat_transfer", fused.parsed.categoryId)
+    }
+
 }
