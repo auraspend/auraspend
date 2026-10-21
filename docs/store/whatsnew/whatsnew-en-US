@@ -1,5 +1,4 @@
-What's new in 0.1.95
+What's new in 0.1.96
 
-• Fixed: "See all" on Home no longer opens Activity with "{query}" typed into the search box and every row filtered out.
-• Fixed: the Activity tab now shows itself as the selected tab.
-• Fixed: advertising that quotes a price — cashback offers, coupons, prize pools, "spend and earn" prompts and wallet links — is no longer saved as income or as an expense.
+• Fixed: a transaction's date now comes from the message. A message that names no date is dated by when the SMS arrived, not by when the app scanned it — one row had been booked years after it arrived.
+• Fixed: the word "today" in advertising copy is no longer read as a date.

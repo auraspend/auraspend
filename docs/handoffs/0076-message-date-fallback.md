@@ -1,7 +1,7 @@
 # 0076 — a date from the message, not from the scanner
 
-**Date:** 2026-10-21 · **Branch:** `main` + `dev` · **Status: unreleased**,
-after 0.1.95.
+**Date:** 2026-10-21 · **Branch:** `main` + `dev` · **Status: tagged,
+`versionCode` 18.**
 
 ## The report
 
@@ -65,4 +65,6 @@ it is ever wanted back, `toTransaction` is the place — it holds the anchor.
 
 - **The already-saved row still carries the wrong date.** The change is
   forward-only; that one transaction needs its date edited in the editor.
-- The fix is **unreleased** — it ships with the next version, not 0.1.95.
+- Signed pre-flight: `versionCode=18 versionName=0.1.96`, `CN=AuraSpend`, APK
+  43,438,072 bytes · AAB 24,543,633 bytes. Store notes EN 299 / HI 272
+  characters.

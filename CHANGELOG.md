@@ -10,6 +10,29 @@ internal APIs.
 
 ## [Unreleased]
 
+## [0.1.96] — 2026-10-21
+
+Patch on 0.1.95. **No schema, data-model or classification-accuracy change** —
+the 82-case golden corpus is bit-identical (80/82 exact, 97.6 %, date 17/17).
+
+### Fixed
+
+- **A transaction could be dated with the day its inbox was scanned instead of
+  the day its message arrived.** `detectDateTime` read the word "today"
+  anywhere in a body as a date and answered with the wall clock, which made the
+  arrival-time fallback added in 0036 unreachable. Advertising copy that said
+  "…the match Today!" booked a 2021 message on the day of a re-scan, years
+  later. The branch is gone: a message that states no date now inherits its
+  arrival time.
+- **Parsing no longer depends on the wall clock**, so the same message cannot
+  parse to a different date on a different day.
+
+### Changed
+
+- A body that says "yesterday" now gets the arrival day rather than arrival − 1.
+  One day, rare — against an error measured in years. If it is wanted back, the
+  place is `toTransaction`, which holds the anchor.
+
 ## [0.1.95] — 2026-10-21
 
 Patch on 0.1.94. **No schema, data-model or corpus change** — the 82-case

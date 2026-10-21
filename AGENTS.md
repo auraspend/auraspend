@@ -3,8 +3,8 @@
 > Read this file and the latest file in `docs/handoffs/` before touching anything.
 > Update both (plus `CLAUDE.md` / `memory/` when you learn something durable) before ending a session.
 >
-> Latest: `docs/handoffs/0076-message-date-fallback.md` — **a date from the
-> message, not from the scanner** (unreleased, after 0.1.95). A transaction was
+> Latest: `docs/handoffs/0076-message-date-fallback.md` — **0.1.96 is cut**: a
+> date from the message, not from the scanner. A transaction was
 > dated with the day its inbox was scanned, years after the message arrived.
 > `BankMessageParser.detectDateTime` treated the **word** "today" anywhere in the
 > body as a date and answered `LocalDateTime.now()`, which made `parsed.date`
