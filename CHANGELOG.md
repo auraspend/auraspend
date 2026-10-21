@@ -10,6 +10,46 @@ internal APIs.
 
 ## [Unreleased]
 
+## [0.1.95] — 2026-10-21
+
+Patch on 0.1.94. **No schema, data-model or corpus change** — the 82-case
+golden corpus scores exactly what it scored before (80/82 exact, 97.6 %), which
+is the point: the marketing this release refuses was never in it. Two UI
+defects are fixed, and roughly two dozen marketing shapes stopped being saved as
+money.
+
+### Fixed
+
+- **Home's "see all" opened Activity with `{query}` written into the search
+  box.** The route constant was the destination *pattern*
+  (`activity?categoryId={categoryId}&query={query}`), and navigating to it hands
+  Navigation those placeholders as literal argument values — so the list was
+  filtered to `{query}` and showed nothing. The template is now private to the
+  graph and the navigable route is bare.
+- **The Activity tab could never draw itself as selected.** The same two strings
+  in reverse: the bar compared `NavDestination.route` (always the pattern) with
+  the bare route. A top-level destination now carries both — the pattern for
+  selection, the bare route for navigation.
+- **Advertisements are no longer booked as money.** A message that quotes a
+  price and a link, with no movement verb at all, is not a payment; and neither
+  is a cashback offer, a coupon or voucher, a prize pool or a "welcome bonus
+  that can be credited", a "shop and earn" instruction, a flat discount, a
+  recharge confirmation's "pack credited", or a wallet credit that wants a
+  click. A cashback that **has been credited** still is one, and a message that
+  names money actually leaving is still a purchase.
+- **A card instrument is not a debit.** "SBI Debit Card" contains the parser's
+  debit word, so every card-marketing SMS silenced the informational vetoes and
+  read as a purchase; the guard now evaluates with the instrument masked out.
+- **An amount can contain a dot.** The veto windows stopped at `.`, so
+  `Rs.1,499.00` cut a "get … cashback" phrase in half and the rule never fired.
+
+### Changed
+
+- **AGENTS.md gains hard requirement 11:** never record personal information in
+  this repository — no names, numbers, accounts, senders or message text, and no
+  screenshot of a real inbox — in docs, handoffs, tests, fixtures, commit
+  messages or the site. Describe the shape; invent the example.
+
 ## [0.1.94] — 2026-10-21
 
 Patch on 0.1.93. **No schema migration, no data-model change and no

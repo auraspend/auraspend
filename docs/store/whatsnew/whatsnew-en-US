@@ -1,6 +1,5 @@
-What's new in 0.1.94
+What's new in 0.1.95
 
-• AuraSpend now asks Google Play once a day and says so quietly: a line in Settings → About, a dot on the Settings button, and one dismissible strip on Home.
-• A download that finished while the app was closed now offers the restart the next time you open it.
-• A release marked urgent opens Play's own update screen on launch.
-• Updates can also arrive as a notification, on their own channel, which you can turn off.
+• Fixed: "See all" on Home no longer opens Activity with "{query}" typed into the search box and every row filtered out.
+• Fixed: the Activity tab now shows itself as the selected tab.
+• Fixed: advertising that quotes a price — cashback offers, coupons, prize pools, "spend and earn" prompts and wallet links — is no longer saved as income or as an expense.

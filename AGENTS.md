@@ -3,7 +3,32 @@
 > Read this file and the latest file in `docs/handoffs/` before touching anything.
 > Update both (plus `CLAUDE.md` / `memory/` when you learn something durable) before ending a session.
 >
-> Latest: `docs/handoffs/0074-release-0.1.94.md` — **0.1.94 is cut**:
+> Latest: `docs/handoffs/0075-activity-route-and-promo-vetoes.md` — **0.1.95 is
+> cut**: versionCode 17. Two defects that looked unrelated. **Home's "see all"
+> opened Activity with `{query}` written into the search box** and every row
+> filtered out: the route constant was the destination *pattern*, so Navigation
+> received the `{placeholders}` as literal argument values. The same mismatch had
+> a second symptom: **the Activity tab could never draw itself as selected**,
+> because the bar compared the pattern with the bare route. A top-level
+> destination now carries both strings — the pattern for selection, the bare
+> route for navigation — and `RoutesTest` (4 cases) pins it. The other report was
+> **an income row that was an advertisement**. The first diagnosis was wrong: the
+> message has **no movement verb**, so the regex could not have typed it — the
+> **on-device classifier or the learned classification memory** filled the gap
+> *after* the ingest gate, which is the 0032 trap. So eight promotional families
+> were added **at the gate**, upstream of both: ad copy that quotes a price,
+> cashback invitations, coupons, prize/future credits, "spend and earn", flat
+> discounts, "pack credited", and wallet-plus-link. Each is guarded twice — a
+> debit verb stands the block down, and a cashback that *has been credited* stays
+> income. **The golden corpus is bit-identical** (80/82, 97.6 %, type 98.8,
+> category 100). Measured against a real export, **24 of 31** promotional rows
+> would now be skipped and **8 of 8** real controls kept. Two rule bugs surfaced:
+> `[^.!]` windows could not cross an amount because amounts contain dots, and
+> **"SBI Debit Card" is not a debit** — it tripped the stand-down and booked
+> advertising as spending. **674 tests.** AGENTS.md also gains hard requirement
+> **11**: **no personal information in this repository** — shapes and counts,
+> never messages, senders, amounts or screenshots.
+> Before: `docs/handoffs/0074-release-0.1.94.md` — **0.1.94 is cut**:
 > versionCode 16, tag `v0.1.94`. The fourth patch of the 0.1.9 line, and a
 > **feature** release — unlike the three before it, which each had to say what
 > they were not. No schema migration, no data-model change, no classification
@@ -944,6 +969,28 @@ application id): `:benchmark:connectedDevBenchmarkAndroidTest` — see README.
     Both gates run on every PR that touches `site/**`, and the header and
     footer are stamped into each page by `tools/stamp_site_chrome.py` — re-run
     it after changing the chrome in `site/index.html`.
+
+11. **Never record personal information in this repository.** It is public and
+    its history is permanent, so "private for now" does not exist here. Do not
+    commit a real name, phone number, account/card/folio/reference number, UPI
+    handle, address, employer, sender ID, e-mail, IP, or **the text of a real
+    message** — not in docs, handoffs, ADRs, evaluations, tests, fixtures,
+    comments, commit messages, store copy, or the site. Screenshots of a real
+    inbox, device or account are never committed; a screenshot is not evidence,
+    it is personal data.
+    - **Describe the shape, write a synthetic equivalent.** "A telecom
+      advertisement for a streaming plan, quoting a price and a short link" is
+      the record; the message itself is not. `FixturePrivacyTest` is a tripwire
+      for fixtures, and prose is not exempt from the rule just because nothing
+      can check it.
+    - **Measured evidence lives in numbers, not quotations.** A handoff says
+      *how many* rows a rule changed and *which family*, never the rows.
+    - **An external corpus stays external.** Real exports are read through an
+      environment variable (`ExternalCorpusEvalTest` is the pattern), no-op
+      when it is absent, and never become a committed fixture. Delete a
+      temporary copy when the measurement is done.
+    - This rule outranks convenience, review, and "it was already in the
+      ticket". If an example is needed to explain a bug, invent one.
 
 ## Design system quick reference
 
