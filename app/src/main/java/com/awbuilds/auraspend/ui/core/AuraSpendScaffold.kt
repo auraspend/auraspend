@@ -50,17 +50,35 @@ import com.awbuilds.auraspend.ui.theme.extendedColors
  * hardcoded English name left the whole app chrome untranslated.
  */
 enum class TopLevelDestination(
+    /**
+     * The route the destination was registered with — what
+     * `NavDestination.route` holds, so this is what selection compares against.
+     */
     val route: String,
+    /**
+     * The route `navigate()` takes. Same as [route] unless the destination has
+     * arguments, in which case [route] is a `{placeholder}` template and
+     * navigating to it fills the arguments with those literal placeholders.
+     */
+    val navigateRoute: String = route,
     // `@param:` is explicit: the annotation is meant for the constructor
     // parameter only, and Kotlin warns that its default target will grow to
     // include the backing field. It is what makes lint verify each `R.string` id.
     @param:StringRes val labelRes: Int,
     val icon: ImageVector
 ) {
-    HOME("home", R.string.home_title, Icons.Outlined.Home),
-    ACTIVITY("activity", R.string.activity_title, Icons.AutoMirrored.Outlined.ListAlt),
-    PLAN("plan", R.string.plan_title, Icons.Outlined.Adjust),
-    INSIGHTS("insights", R.string.insights_title, Icons.Outlined.BarChart)
+    HOME("home", labelRes = R.string.home_title, icon = Icons.Outlined.Home),
+    ACTIVITY(
+        // The registered pattern — placeholders are a template, not arguments.
+        "activity?categoryId={categoryId}&query={query}",
+        // What `navigate()` takes. Both args have defaults, so the bare route
+        // means "no filter". `Routes.ACTIVITY` is derived from this pair.
+        "activity",
+        R.string.activity_title,
+        Icons.AutoMirrored.Outlined.ListAlt
+    ),
+    PLAN("plan", labelRes = R.string.plan_title, icon = Icons.Outlined.Adjust),
+    INSIGHTS("insights", labelRes = R.string.insights_title, icon = Icons.Outlined.BarChart)
 }
 
 /**
@@ -112,7 +130,7 @@ fun AuraAppChrome(
                         val label = stringResource(destination.labelRes)
                         NavigationRailItem(
                             selected = currentRoute == destination.route,
-                            onClick = { onNavigate(destination.route) },
+                            onClick = { onNavigate(destination.navigateRoute) },
                             icon = { Icon(destination.icon, contentDescription = label) },
                             label = { Text(label) },
                             alwaysShowLabel = true
@@ -165,26 +183,26 @@ private fun AuraBottomBar(
                 NavItem(
                     destination = TopLevelDestination.HOME,
                     selected = currentRoute == TopLevelDestination.HOME.route,
-                    onClick = { onNavigate(TopLevelDestination.HOME.route) },
+                    onClick = { onNavigate(TopLevelDestination.HOME.navigateRoute) },
                     modifier = Modifier.weight(1f)
                 )
                 NavItem(
                     destination = TopLevelDestination.ACTIVITY,
                     selected = currentRoute == TopLevelDestination.ACTIVITY.route,
-                    onClick = { onNavigate(TopLevelDestination.ACTIVITY.route) },
+                    onClick = { onNavigate(TopLevelDestination.ACTIVITY.navigateRoute) },
                     modifier = Modifier.weight(1f)
                 )
                 AddButton(onClick = onAddClick, modifier = Modifier.weight(1f))
                 NavItem(
                     destination = TopLevelDestination.PLAN,
                     selected = currentRoute == TopLevelDestination.PLAN.route,
-                    onClick = { onNavigate(TopLevelDestination.PLAN.route) },
+                    onClick = { onNavigate(TopLevelDestination.PLAN.navigateRoute) },
                     modifier = Modifier.weight(1f)
                 )
                 NavItem(
                     destination = TopLevelDestination.INSIGHTS,
                     selected = currentRoute == TopLevelDestination.INSIGHTS.route,
-                    onClick = { onNavigate(TopLevelDestination.INSIGHTS.route) },
+                    onClick = { onNavigate(TopLevelDestination.INSIGHTS.navigateRoute) },
                     modifier = Modifier.weight(1f)
                 )
             }

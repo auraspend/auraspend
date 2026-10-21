@@ -57,6 +57,7 @@ import com.awbuilds.auraspend.ui.classification.UnrecognizedSmsScreen
 import com.awbuilds.auraspend.ui.classification.ClassificationViewIntent
 import com.awbuilds.auraspend.ui.classification.ClassificationViewModel
 import com.awbuilds.auraspend.ui.core.AuraAppChrome
+import com.awbuilds.auraspend.ui.core.TopLevelDestination
 import com.awbuilds.auraspend.ui.core.UiError
 import com.awbuilds.auraspend.ui.core.isNotificationPermissionNeeded
 import com.awbuilds.auraspend.ui.core.rememberNotificationPermissionLauncher
@@ -86,7 +87,28 @@ object Routes {
 
     // Top-level destinations (chrome visible).
     const val HOME = "home"
-    const val ACTIVITY = "activity?categoryId={categoryId}&query={query}"
+
+    /**
+     * The Activity tab, as `navigate()` takes it — bare, no query string.
+     *
+     * The destination is registered with [ACTIVITY_PATTERN], whose `{…}`
+     * placeholders are a *template*: passing that string to `navigate()` hands
+     * Navigation the literal text "{categoryId}"/"{query}", which is exactly
+     * how the Activity search box came to open pre-filled with `{query}` and
+     * filtered to nothing (reported 2026-10-21), and why the tab could never
+     * draw itself as selected. Both placeholders have defaults, so the bare
+     * route matches the pattern and means "no filter".
+     */
+    val ACTIVITY: String = TopLevelDestination.ACTIVITY.navigateRoute
+
+    /**
+     * The Activity destination's registered pattern. For `composable()` and
+     * for [topLevel] (a `NavDestination.route` is the pattern, never the
+     * navigate string). **Never pass this to `navigate()`** — use [ACTIVITY]
+     * or [activity].
+     */
+    val ACTIVITY_PATTERN: String = TopLevelDestination.ACTIVITY.route
+
     const val PLAN = "plan"
     const val INSIGHTS = "insights"
 
@@ -113,7 +135,7 @@ object Routes {
         "activity?categoryId=${android.net.Uri.encode(categoryId.orEmpty())}" +
             "&query=${android.net.Uri.encode(query.orEmpty())}"
 
-    val topLevel = setOf(HOME, ACTIVITY, PLAN, INSIGHTS)
+    val topLevel = setOf(HOME, ACTIVITY_PATTERN, PLAN, INSIGHTS)
 }
 
 /**
@@ -268,7 +290,7 @@ fun AuraSpendNavHost(
             }
 
             composable(
-                route = Routes.ACTIVITY,
+                route = Routes.ACTIVITY_PATTERN,
                 arguments = listOf(
                     navArgument("categoryId") {
                         type = NavType.StringType
