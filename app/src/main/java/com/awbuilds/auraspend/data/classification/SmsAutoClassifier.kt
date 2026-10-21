@@ -152,6 +152,95 @@ object SmsAutoClassifier {
     )
 
     /**
+     * Promotional families, measured on a tester's export (2026-10-21) where
+     * roughly one row in six was marketing rather than money.
+     *
+     * The shape that started this is the reason the whole block lives at the
+     * **ingest gate**: a telecom ad for a streaming plan, quoting a price and a
+     * call to action ("…Recharge Rs.501 = 1 year … Click bit.ly/…"), with no
+     * movement verb at all. The regex cannot type such a message, so it was
+     * never the regex that saved it. `SmsAiEnricher` lets the on-device model
+     * — or the learned classification memory — fill a missing type, and both
+     * run *after* this gate. A veto here is the only check upstream of them
+     * both, which is also why it can be tested without the model.
+     *
+     * Every family below is guarded twice: a message that names money actually
+     * **leaving** is a purchase however it is dressed (the existing
+     * `hasDebitVerb` stand-down), and a cashback that **has been credited** is
+     * real money — the difference between an offer and a credit is the verb,
+     * not the noun.
+     */
+    /**
+     * "SBI Debit Card" names an instrument, not a movement. `debit` is in the
+     * parser's debit lexicon, so card-marketing SMS tripped the stand-down
+     * below and read as purchases — measured on the same export, where "spend
+     * Rs 2,000 with your Debit Card" booked the ₹2,000 as an expense.
+     */
+    private val cardInstrumentPhrase = Regex("(?i)\\b(?:debit|credit)\\s+card\\b")
+
+    private val completedCreditPattern = Regex(
+        "(?i)\\b(?:credited|received|deposited|refunded|reversed|posted)\\b"
+    )
+
+    /** "Get/earn/win/claim/flat/upto … cashback|off" — an offer, not a credit. */
+    private val cashbackInvitationPattern = Regex(
+        "(?i)\\b(?:get|earn(?:ed)?|win|won|claim|avail|unlock|grab|enjoy|assured|flat|up\\s?to)\\b" +
+            "[^!\\n]{0,60}?\\b(?:cash\\s?back|off)\\b"
+    )
+
+    /** A coupon or voucher is a promise; "credited" there is not a rupee. */
+    private val couponPattern = Regex(
+        "(?i)\\b(?:coupon|voucher)s?\\b[^!\\n]{0,60}?\\b(?:credited|added|unlocked|issued|valid)\\b" +
+            "|\\b(?:credited|added)\\b[^!\\n]{0,60}?\\b(?:coupon|voucher)s?\\b"
+    )
+
+    /**
+     * Future and prize credits. The project already treats "will be refunded"
+     * and "refund initiated" as not-yet-money; "can be credited" is the same
+     * tense, and a prize pool is not a balance.
+     */
+    private val futureCreditPattern = Regex(
+        "(?i)\\b(?:can|will|may)\\s+be\\s+(?:credited|claimed|deposited)\\b" +
+            "|\\b(?:welcome|free|joining)\\s+bonus\\b|\\bprize\\s+pool\\b"
+    )
+
+    /** "Shop/swipe/spend/tap … earn reward points|vouchers|offer" — an instruction, not a payment. */
+    private val spendMarketingPattern = Regex(
+        "(?i)\\b(?:shop|swipe|spend|tap)\\b[\\s\\S]{0,90}?" +
+            "\\b(?:reward\\s+points|bonus\\s+points|vouchers?|cash\\s?back|earn|offer)\\b" +
+            "|\\b(?:earn|reward\\s+points|bonus\\s+points|offer)\\b[\\s\\S]{0,90}?" +
+            "\\b(?:shop|swipe|spend|tap)\\b"
+    )
+
+    /** "Flat Rs.333 off", "get upto Rs.100 off|rewards" — a discount, not a charge. */
+    private val discountPattern = Regex(
+        "(?i)\\bflat\\s+(?:rs\\.?|inr|\u20b9)?\\s*[\\d,]+(?:\\.\\d+)?\\s*(?:off|cashback)\\b" +
+            "|\\bget\\s+(?:upto|up\\s+to)\\s+(?:rs\\.?|inr|\u20b9)?\\s*[\\d,]+\\s*(?:off|rewards?|cashback)\\b"
+    )
+
+    /** A recharge confirmation's "pack credited" is data arriving, not money. */
+    private val packCreditPattern = Regex(
+        "(?i)\\b(?:pack|data|gb|benefits?)\\b[^!\\n]{0,40}?\\b(?:credited|added|activated)\\b"
+    )
+
+    /** A "wallet" credit that wants a click is a lead, not a statement. */
+    private val walletLinkPattern = Regex(
+        "(?i)\\bwallet\\b[\\s\\S]{0,140}?\\b(?:https?://|www\\.|click\\s+(?:it|to|here))\\b"
+    )
+
+    /**
+     * Ad copy: a link or a call to action. Only consulted when the message has
+     * **no movement verb at all**, which is what keeps it away from real
+     * transactions — a genuine debit or credit always names one.
+     */
+    private val promotionalCopyPattern = Regex(
+        "(?i)(?:https?://|\\b(?:bit\\.ly|tinyurl|t\\.co|dlvr\\.it|rb\\.gy|is\\.gd|bit\\.do)\\b" +
+            "|\\b(?:dont\\s+miss|don'?t\\s+miss|hurry|limited\\s+(?:offer|period)" +
+            "|apply\\s+now|download\\s+(?:now|the)|register\\s+now|subscribe\\s+now" +
+            "|click\\s+(?:here|on|the|below)|t&c\\s+apply|terms\\s+(?:and|&)\\s+conditions)\\b)"
+    )
+
+    /**
      * Hard vetoes: these prove NO completed transaction regardless of any amount or
      * debit/credit wording present. They bypass the amount+verb rescue below.
      *
@@ -483,9 +572,36 @@ object SmsAutoClassifier {
         // cashback") is exactly what the rescue reads as a movement. A completed
         // debit still outranks them: a real purchase may mention points or an
         // offer, and it must not be dropped for it.
-        if (!BankMessageParser.hasDebitVerb(message)) {
+        // Measured with the card instrument taken out: "your Debit Card" is not
+        // money leaving, and leaving it in silenced every family below.
+        val withoutCardInstrument = cardInstrumentPhrase.replace(message, "card")
+        if (!BankMessageParser.hasDebitVerb(withoutCardInstrument)) {
             if (pointsVetoPatterns.any { it.containsMatchIn(message) }) return true
             if (marketingVetoPatterns.any { it.containsMatchIn(message) }) return true
+            // A cashback that has been credited is money; one that is being
+            // offered is not. The verb is the whole distinction.
+            if (cashbackInvitationPattern.containsMatchIn(message) &&
+                !completedCreditPattern.containsMatchIn(message)
+            ) {
+                return true
+            }
+            if (couponPattern.containsMatchIn(message)) return true
+            if (futureCreditPattern.containsMatchIn(message)) return true
+            if (spendMarketingPattern.containsMatchIn(message)) return true
+            if (discountPattern.containsMatchIn(message)) return true
+            if (packCreditPattern.containsMatchIn(message)) return true
+            if (walletLinkPattern.containsMatchIn(message)) return true
+        }
+
+        // An advertisement is not a payment even when nothing can type it. It
+        // carries a price and a call to action and no movement verb, so the
+        // regex returns no type and the pipeline would skip it — what saves it
+        // is the model or the classification memory filling that gap, after
+        // this gate. Nothing else runs before them.
+        if (promotionalCopyPattern.containsMatchIn(message) &&
+            !BankMessageParser.hasMovementVerb(withoutCardInstrument)
+        ) {
+            return true
         }
 
         // Check for alert patterns
