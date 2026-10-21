@@ -61,6 +61,25 @@ else
   printf '%s\n' "$STALE" | sed 's/^/          /'
 fi
 
+# 3. The changelog's summary line is a *current* claim, unlike the entries
+#    below it: how many releases there are and which one is the newest. Check 2
+#    exempts the whole changelog because its history is not stale, which is
+#    exactly why this one needs its own check — the line still read
+#    "→ 0.1.93" in the commit that added 0.1.94, and nothing noticed, because
+#    the version gate looked everywhere except the one place that says which
+#    release is current.
+if [[ -f site/changelog.html ]]; then
+  SUMMARY_LINE="$(grep -o 'class="updated">[^<]*' site/changelog.html | head -1)"
+  SUMMARY_COUNT="$(printf '%s' "$SUMMARY_LINE" | grep -oE '[0-9]+ releases' | grep -oE '[0-9]+')"
+  SUMMARY_VERSION="$(printf '%s' "$SUMMARY_LINE" | grep -oE '0\.1\.[0-9]+' | tail -1)"
+  SUMMARY_ENTRIES="$(grep -c 'class="release"' site/changelog.html)"
+  if [[ "$SUMMARY_VERSION" == "$APP_VERSION" && "$SUMMARY_COUNT" == "$SUMMARY_ENTRIES" ]]; then
+    pass "the changelog's summary ends at $APP_VERSION across $SUMMARY_ENTRIES releases"
+  else
+    fail "the changelog summary says '${SUMMARY_COUNT:-?} releases ... ${SUMMARY_VERSION:-?}' but the page has $SUMMARY_ENTRIES entries and the app is '$APP_VERSION'"
+  fi
+fi
+
 echo
 if [[ $failures -eq 0 ]]; then
   echo "The site agrees with the app."
