@@ -183,6 +183,14 @@ jobs:
           releaseFiles: dist/${{ steps.names.outputs.base }}.aab
           tracks: ${{ vars.PLAY_TRACK || 'alpha' }}
           status: completed
+          # Play's 0-5 in-app update priority. The app reads it back through
+          # `AppUpdateInfo.updatePriority()` and treats 4-5 as "open the
+          # blocking flow on launch" (`UpdatePolicy`). 0 by default: a routine
+          # release asks quietly, in the banner. Set the repository variable
+          # `PLAY_UPDATE_PRIORITY` to 4 or 5 for a security fix — a variable
+          # rather than a code change, because the decision belongs to the
+          # release, not to the branch.
+          inAppUpdatePriority: ${{ vars.PLAY_UPDATE_PRIORITY || '0' }}
           whatsNewDirectory: docs/store/whatsnew
           mappingFile: app/build/outputs/mapping/prodRelease/mapping.txt
 

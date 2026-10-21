@@ -43,6 +43,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.awbuilds.auraspend.R
+import com.awbuilds.auraspend.ui.theme.extendedColors
 
 /**
  * Failure counterpart to [AuraEmptyState].
@@ -275,6 +276,76 @@ fun AuraErrorBanner(
                     imageVector = Icons.Default.Close,
                     contentDescription = stringResource(R.string.action_dismiss),
                     tint = scheme.onErrorContainer
+                )
+            }
+        }
+    }
+}
+
+/**
+ * A quiet strip that says something changed and offers the one action it
+ * implies.
+ *
+ * Deliberately not [AuraErrorBanner]: an available app update is information,
+ * not a failure, and painting it in `errorContainer` teaches people to read red
+ * as "ignore me". The tonal container keeps it above the canvas without
+ * raising its voice, and the dismiss is optional so a notice the user cannot
+ * clear (an update mid-download, say) does not offer a dead tap target.
+ */
+@Composable
+fun AuraNoticeBanner(
+    title: String,
+    message: String,
+    icon: ImageVector,
+    modifier: Modifier = Modifier,
+    actionLabel: String? = null,
+    onAction: (() -> Unit)? = null,
+    onDismiss: (() -> Unit)? = null
+) {
+    val scheme = MaterialTheme.colorScheme
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(MaterialTheme.shapes.medium)
+            .background(scheme.surfaceContainer)
+            .padding(start = AuraSpacing.md, top = AuraSpacing.sm, bottom = AuraSpacing.sm)
+            // Announced politely: this is news, not an alarm.
+            .semantics { liveRegion = LiveRegionMode.Polite },
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = scheme.primary,
+            modifier = Modifier.size(20.dp)
+        )
+        Spacer(modifier = Modifier.width(AuraSpacing.sm))
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleSmall,
+                color = scheme.onSurface
+            )
+            Text(
+                text = message,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.extendedColors.inkSoft
+            )
+        }
+        if (actionLabel != null && onAction != null) {
+            TextButton(onClick = onAction) {
+                Text(actionLabel, style = MaterialTheme.typography.labelLarge)
+            }
+        }
+        if (onDismiss != null) {
+            IconButton(
+                onClick = onDismiss,
+                modifier = Modifier.sizeIn(minWidth = 48.dp, minHeight = 48.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Close,
+                    contentDescription = stringResource(R.string.action_dismiss),
+                    tint = MaterialTheme.extendedColors.inkSoft
                 )
             }
         }

@@ -47,7 +47,8 @@ private val AvatarTouchTarget = 48.dp
 @Composable
 fun SettingsAvatarButton(
     onClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    showUpdateBadge: Boolean = false
 ) {
     Box(
         modifier = modifier
@@ -80,10 +81,27 @@ fun SettingsAvatarButton(
             ) {
                 Icon(
                     Icons.Default.Person,
-                    contentDescription = stringResource(R.string.action_settings),
+                    contentDescription = if (showUpdateBadge) {
+                        stringResource(R.string.settings_update_avatar_description)
+                    } else {
+                        stringResource(R.string.action_settings)
+                    },
                     tint = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.size(18.dp)
                 )
+                if (showUpdateBadge) {
+                    // Inside the circle, not straddling its edge. The avatar is
+                    // clipped to a circle, so a badge half outside it would be
+                    // cut off; 6dp of inset is the least that keeps a 7dp dot
+                    // wholly within the circle's own corner.
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.TopEnd)
+                            .padding(6.dp)
+                            .size(7.dp)
+                            .background(MaterialTheme.colorScheme.primary, CircleShape)
+                    )
+                }
             }
         }
     }

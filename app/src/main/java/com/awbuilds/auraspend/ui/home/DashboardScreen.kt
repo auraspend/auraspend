@@ -1,5 +1,7 @@
 package com.awbuilds.auraspend.ui.home
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -11,6 +13,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ReceiptLong
 import androidx.compose.material.icons.filled.CloudOff
+import androidx.compose.material.icons.filled.SystemUpdate
 import androidx.compose.material.icons.outlined.Subscriptions
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
@@ -28,8 +31,12 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.awbuilds.auraspend.R
+import com.awbuilds.auraspend.data.update.AppUpdatePrompt
 import com.awbuilds.auraspend.domain.model.Budget
 import com.awbuilds.auraspend.domain.model.TransactionType
+import com.awbuilds.auraspend.ui.core.UpdateAwareSettingsAvatar
+import com.awbuilds.auraspend.ui.core.rememberAppUpdateController
+import com.awbuilds.auraspend.ui.core.rememberUpdatePrompt
 import com.awbuilds.auraspend.ui.designsystem.*
 import com.awbuilds.auraspend.ui.theme.extendedColors
 import java.time.LocalDate
@@ -71,6 +78,24 @@ fun DashboardScreen(
 
     LaunchedEffect(Unit) {
         viewModel.handleIntent(DashboardViewIntent.LoadDashboard)
+    }
+
+    // ── Updates. One silent check fills one state, and this screen is where it
+    // speaks: an urgent release goes straight to Play's own blocking flow, a
+    // finished download offers the restart, and anything else is the strip
+    // below the balance — which is dismissible, and stays dismissed until the
+    // app is actually updated (`UpdatePolicy` decides that, not this screen).
+    val updateController = rememberAppUpdateController()
+    val updatePrompt = rememberUpdatePrompt()
+    val updateLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.StartIntentSenderForResult()
+    ) { result -> updateController?.onUpdateFlowResult(result.resultCode) }
+    LaunchedEffect(updatePrompt) {
+        if (updatePrompt == AppUpdatePrompt.Immediate) {
+            // Keyed on the prompt, so a cancelled flow is not re-opened until
+            // the next launch rather than on the next recomposition.
+            updateController?.startImmediateUpdate(updateLauncher)
+        }
     }
 
     // Today's rows: Home answers "did that charge land" for *today*. Older days
@@ -135,7 +160,7 @@ fun DashboardScreen(
                     color = MaterialTheme.colorScheme.onBackground
                 )
             }
-            SettingsAvatarButton(onClick = onOpenSettings)
+            UpdateAwareSettingsAvatar(onClick = onOpenSettings)
         }
 
         LazyColumn(
@@ -195,6 +220,50 @@ fun DashboardScreen(
                     expense = state.monthlyExpense,
                     onOpenAnalytics = onNavigateToAnalytics
                 )
+            }
+
+            // ── An available update. Below the balance because it is about the
+            // app, not about the money: the rail and the ledger keep their
+            // position, and this stays one strip rather than becoming a third
+            // card in a row that is meant for decisions about spending.
+            if (updatePrompt == AppUpdatePrompt.Banner || updatePrompt == AppUpdatePrompt.Restart) {
+                item {
+                    val restart = updatePrompt == AppUpdatePrompt.Restart
+                    AuraNoticeBanner(
+                        title = stringResource(
+                            if (restart) R.string.update_banner_restart_title
+                            else R.string.update_banner_title
+                        ),
+                        message = stringResource(
+                            if (restart) R.string.update_banner_restart_body
+                            else R.string.update_banner_body
+                        ),
+                        icon = Icons.Default.SystemUpdate,
+                        actionLabel = stringResource(
+                            if (restart) R.string.action_restart else R.string.action_update
+                        ),
+                        onAction = {
+                            if (restart) {
+                                updateController?.completeUpdate()
+                            } else {
+                                updateController?.checkForUpdate(updateLauncher)
+                            }
+                        },
+                        // A finished download has nothing to dismiss: the only
+                        // way past it is the restart, and hiding it would make
+                        // the app look like it forgot the download.
+                        onDismiss = if (restart) {
+                            null
+                        } else {
+                            { updateController?.dismissBanner() }
+                        },
+                        modifier = Modifier.padding(
+                            start = AuraSpacing.gutter,
+                            end = AuraSpacing.gutter,
+                            top = 18.dp
+                        )
+                    )
+                }
             }
 
             // ── Anything that needs a decision, in one swipeable row

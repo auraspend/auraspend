@@ -40,7 +40,7 @@ import com.awbuilds.auraspend.ui.designsystem.AuraSpacing
 import com.awbuilds.auraspend.ui.designsystem.AuraSparkColumns
 import com.awbuilds.auraspend.ui.designsystem.AuraType
 import com.awbuilds.auraspend.ui.designsystem.AnimatedMoney
-import com.awbuilds.auraspend.ui.designsystem.SettingsAvatarButton
+import com.awbuilds.auraspend.ui.core.UpdateAwareSettingsAvatar
 import com.awbuilds.auraspend.ui.designsystem.categoryColor
 import com.awbuilds.auraspend.ui.designsystem.formatMoney
 import com.awbuilds.auraspend.ui.theme.extendedColors
@@ -260,7 +260,7 @@ fun AnalyticsScreen(
                     .weight(1f)
                     .semantics { heading() }
             )
-            SettingsAvatarButton(onClick = onOpenSettings)
+            UpdateAwareSettingsAvatar(onClick = onOpenSettings)
         }
         Spacer(modifier = Modifier.height(SelectorGap))
         AuraSegmentedControl(

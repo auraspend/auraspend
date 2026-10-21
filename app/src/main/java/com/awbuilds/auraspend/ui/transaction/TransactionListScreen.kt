@@ -52,7 +52,7 @@ import com.awbuilds.auraspend.ui.designsystem.AuraChip
 import com.awbuilds.auraspend.ui.designsystem.AuraSkeleton
 import com.awbuilds.auraspend.ui.designsystem.AuraSpacing
 import com.awbuilds.auraspend.ui.designsystem.AuraType
-import com.awbuilds.auraspend.ui.designsystem.SettingsAvatarButton
+import com.awbuilds.auraspend.ui.core.UpdateAwareSettingsAvatar
 import com.awbuilds.auraspend.ui.designsystem.TransactionEntryRow
 import com.awbuilds.auraspend.ui.designsystem.categoryColor
 import com.awbuilds.auraspend.ui.designsystem.categoryIconGlyph
@@ -207,7 +207,7 @@ fun TransactionListScreen(
                         modifier = Modifier.size(24.dp)
                     )
                 }
-                SettingsAvatarButton(onClick = onOpenSettings)
+                UpdateAwareSettingsAvatar(onClick = onOpenSettings)
             }
 
             // ── Search, always visible.

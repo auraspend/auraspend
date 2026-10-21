@@ -66,6 +66,7 @@ import com.awbuilds.auraspend.BuildConfig
 import com.awbuilds.auraspend.R
 import com.awbuilds.auraspend.data.ai.AiModelState
 import com.awbuilds.auraspend.data.classification.SmsNotifications
+import com.awbuilds.auraspend.data.update.AppUpdateAvailability
 import com.awbuilds.auraspend.data.update.AppUpdateState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
@@ -179,19 +180,28 @@ fun SettingsScreen(
     val fallbackUpdateState = remember { MutableStateFlow<AppUpdateState>(AppUpdateState.Idle) }
     val appUpdateState by (appUpdateController?.state ?: fallbackUpdateState)
         .collectAsStateWithLifecycle()
+    val fallbackAvailability = remember { MutableStateFlow<AppUpdateAvailability?>(null) }
+    // The silent check runs on every app start, so this row already knows what
+    // the banner on Home knows — opening Settings does not start a second check.
+    val updateAvailability by (appUpdateController?.availability ?: fallbackAvailability)
+        .collectAsStateWithLifecycle()
+    val readyToRestart = updateAvailability?.readyToRestart == true
     val updateLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.StartIntentSenderForResult()
     ) { result ->
         appUpdateController?.onUpdateFlowResult(result.resultCode)
     }
-    val updateSubtitle = when (appUpdateState) {
-        AppUpdateState.Checking -> stringResource(R.string.settings_update_checking)
-        AppUpdateState.UpToDate -> stringResource(R.string.settings_update_up_to_date)
-        AppUpdateState.Downloading -> stringResource(R.string.settings_update_downloading)
-        AppUpdateState.Downloaded -> stringResource(R.string.settings_update_ready)
-        AppUpdateState.Failed -> stringResource(R.string.settings_update_failed)
-        AppUpdateState.Idle, AppUpdateState.Unsupported ->
-            stringResource(R.string.settings_update_subtitle)
+    val updateSubtitle = when {
+        appUpdateState == AppUpdateState.Checking -> stringResource(R.string.settings_update_checking)
+        appUpdateState == AppUpdateState.UpToDate -> stringResource(R.string.settings_update_up_to_date)
+        appUpdateState == AppUpdateState.Downloading -> stringResource(R.string.settings_update_downloading)
+        appUpdateState == AppUpdateState.Failed -> stringResource(R.string.settings_update_failed)
+        readyToRestart || appUpdateState == AppUpdateState.Downloaded ->
+            stringResource(R.string.settings_update_ready)
+        // The silent check already found one: say so before the user taps, so
+        // the row is an answer rather than a question.
+        updateAvailability?.available == true -> stringResource(R.string.settings_update_available)
+        else -> stringResource(R.string.settings_update_subtitle)
     }
     var showDeleteDialog by remember { mutableStateOf(false) }
     var showRestoreDialog by remember { mutableStateOf(false) }
@@ -686,9 +696,11 @@ fun SettingsScreen(
                     busy = appUpdateState == AppUpdateState.Checking ||
                         appUpdateState == AppUpdateState.Downloading,
                     onClick = {
-                        when (appUpdateState) {
-                            AppUpdateState.Downloaded -> appUpdateController.completeUpdate()
-                            AppUpdateState.Checking, AppUpdateState.Downloading -> Unit
+                        when {
+                            readyToRestart || appUpdateState == AppUpdateState.Downloaded ->
+                                appUpdateController.completeUpdate()
+                            appUpdateState == AppUpdateState.Checking ||
+                                appUpdateState == AppUpdateState.Downloading -> Unit
                             else -> appUpdateController.checkForUpdate(updateLauncher)
                         }
                     }

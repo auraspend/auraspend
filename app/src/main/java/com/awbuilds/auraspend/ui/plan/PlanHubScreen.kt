@@ -45,7 +45,7 @@ import com.awbuilds.auraspend.ui.designsystem.AuraSectionLink
 import com.awbuilds.auraspend.ui.designsystem.AuraSpacing
 import com.awbuilds.auraspend.ui.designsystem.AuraType
 import com.awbuilds.auraspend.ui.designsystem.MoneyConfig
-import com.awbuilds.auraspend.ui.designsystem.SettingsAvatarButton
+import com.awbuilds.auraspend.ui.core.UpdateAwareSettingsAvatar
 import androidx.compose.ui.platform.LocalContext
 import com.awbuilds.auraspend.ui.designsystem.formatMoney
 import androidx.compose.ui.platform.LocalContext
@@ -204,7 +204,7 @@ fun PlanHubScreen(
                     modifier = Modifier.semantics { heading() }
                 )
             }
-            SettingsAvatarButton(onClick = onOpenSettings)
+            UpdateAwareSettingsAvatar(onClick = onOpenSettings)
         }
 
         // Everything below the pinned header scrolls. The hub is taller than a

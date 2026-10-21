@@ -205,12 +205,13 @@
                         <table>
                             <thead><tr><th scope="col">Build</th><th scope="col">Google Drive backup</th><th scope="col">In-app update check</th></tr></thead>
                             <tbody>
-                                <tr><td>Google Play (<code>prod</code>)</td><td>Yes</td><td>Yes — Settings → About → Check for updates</td></tr>
+                                <tr><td>Google Play (<code>prod</code>)</td><td>Yes</td><td>Yes — a daily check with Play, and Settings → About → Check for updates</td></tr>
                                 <tr><td>GitHub Releases APK (<code>prod</code>)</td><td>Yes</td><td>Yes</td></tr>
                                 <tr><td>F-Droid (<code>fdroid</code>)</td><td>No — F-Droid's inclusion policy excludes Google Play Services</td><td>No — F-Droid handles updates</td></tr>
                             </tbody>
                         </table>
                     </div>
+                    <p>The update check asks the Play Store app already on your device whether a newer version exists. Nothing about the question — or the answer — is sent to AuraSpend, which has no server to send it to; the record of which version you run stays between Android and Google Play, exactly as it does for every Play-installed app.</p>
                     <p>There is no analytics, advertising or telemetry in any of them, and no feature is held back behind a purchase. The differences above are recorded in the project's decision records, ADR 0012 and ADR 0013.</p>
                 </section>
 

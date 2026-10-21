@@ -12,6 +12,8 @@ import com.awbuilds.auraspend.data.classification.SmsIngestor
 import com.awbuilds.auraspend.data.local.BackupData
 import com.awbuilds.auraspend.data.security.AppLockManager
 import com.awbuilds.auraspend.data.update.AppUpdateController
+import com.awbuilds.auraspend.data.update.AppUpdateNotifier
+import com.awbuilds.auraspend.data.update.UpdateCheckWorker
 import com.awbuilds.auraspend.data.update.createAppUpdateController
 import com.awbuilds.auraspend.data.security.DbPassphrase
 import net.zetetic.database.sqlcipher.SupportOpenHelperFactory
@@ -96,6 +98,9 @@ open class AuraSpendApp : Application() {
      */
     val appUpdateController: AppUpdateController by lazy { createAppUpdateController(this) }
 
+    /** The shade copy of an available update, for people who are not in the app. */
+    val appUpdateNotifier: AppUpdateNotifier by lazy { AppUpdateNotifier(this) }
+
     private val applicationScope = CoroutineScope(Dispatchers.IO)
 
     /**
@@ -153,6 +158,12 @@ open class AuraSpendApp : Application() {
         applicationScope.launch {
             ModelDownloadManager.sync(this@AuraSpendApp)
             AutoClassificationWorker.schedule(this@AuraSpendApp)
+            // One daily check outside the app, so someone who never opens it still hears
+            // about a release. `IN_APP_UPDATES` is prod-only: the fdroid flavor has no Play
+            // Core and must not carry the request.
+            if (BuildConfig.IN_APP_UPDATES) {
+                UpdateCheckWorker.schedule(this@AuraSpendApp)
+            }
             // One pass on start. After a fresh install — or a data clear, which
             // resets the ingest cursor — the periodic pass is up to six hours
             // away and the live queue is empty, so **nothing reads the inbox**
@@ -185,6 +196,17 @@ open class AuraSpendApp : Application() {
                 // The Classification screen shows the same queue live, so the shade copy of
                 // that status is redundant while the app is on screen.
                 smsProgressNotifier.cancel()
+                // Play's own guidance is to read the install status on resume, not only when
+                // the user asks: a flexible download that finished while the app was closed is
+                // otherwise invisible. `checkSilently` is throttled to once a day and starts
+                // no flow — it only fills the state the banner, the avatar dot and the
+                // Settings row read.
+                if (BuildConfig.IN_APP_UPDATES) {
+                    appUpdateController.resumeDownloadedUpdate()
+                    appUpdateController.checkSilently()
+                    // The banner in the app now says the same thing better.
+                    appUpdateNotifier.cancel()
+                }
             }
 
             override fun onStop(owner: LifecycleOwner) {

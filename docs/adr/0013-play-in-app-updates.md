@@ -1,6 +1,8 @@
 # ADR 0013 — Play-only in-app updates
 
-**Status:** Accepted · 2026-10-17 · **Amends ADR 0012**
+**Status:** Accepted · 2026-10-17 · **Amends ADR 0012** · **Amended by ADR 0014**
+("The app does not force an update on launch" no longer holds for a release the
+owner marks urgent — see ADR 0014.)
 
 ## Context
 
