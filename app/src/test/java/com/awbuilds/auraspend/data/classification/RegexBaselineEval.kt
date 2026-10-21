@@ -115,8 +115,10 @@ object RegexBaselineEval {
                 expected = expected(case, field),
                 actual = actual(classified, field),
                 // Only score a date the corpus actually states. An undated
-                // message may legitimately resolve to "today" from wording
-                // like "pay today"; that is not a parse error.
+                // message inherits its arrival time, which the corpus does not
+                // record — the parser no longer reads "today" out of prose
+                // (`MessageDateFallbackTest`), so this is about the fixture's
+                // silence, not about a legitimate wall-clock answer.
                 applicable = field != "date" || case.date != null
             )
         }

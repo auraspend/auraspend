@@ -781,14 +781,20 @@ object BankMessageParser {
             return if (time != null) LocalDateTime.of(date, time) else date.atTime(12, 0)
         }
 
-        // Relative-day phrases.
-        val lower = message.lowercase(Locale.ENGLISH)
-        val now = LocalDateTime.now()
-        return when {
-            "yesterday" in lower -> now.minusDays(1)
-            "today" in lower -> now
-            else -> null
-        }
+        // No relative-day phrases. A body with no stated date returns null, and
+        // `SmsAutoClassifier.toTransaction` fills in the **message's arrival
+        // timestamp** — the one clock this parser cannot see.
+        //
+        // This used to lower-case the whole body and answer
+        // `LocalDateTime.now()` for "today". Measured on the owner's device
+        // (2026-10-21): a telecom advertisement that happened to say "match
+        // Today!" booked a 2021 message on the day the inbox was re-scanned,
+        // years after it arrived. The word appears in advertising copy far more
+        // often than in a statement of when money moved, and when it *does*
+        // describe a movement ("paid today") the arrival timestamp is the same
+        // day anyway — so the branch could only make a date worse, and it made
+        // this function depend on the wall clock.
+        return null
     }
 
     private fun parseDate(raw: String): LocalDate? {
