@@ -65,3 +65,9 @@ docs/store/variants/
 # board.png — is tracked; these are working shots and go stale the moment the
 # screens change.
 docs/design/interface-concept/implemented/
+
+# The promo films. Local-only by the owner's instruction: the rendered MP4s
+# carry third-party music whose licence terms are not stated, and this
+# repository is public and permanently archived. The sources are here too —
+# delete this one line to put the whole directory back under version control.
+promo/
