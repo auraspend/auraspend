@@ -3,7 +3,23 @@
 > Read this file and the latest file in `docs/handoffs/` before touching anything.
 > Update both (plus `CLAUDE.md` / `memory/` when you learn something durable) before ending a session.
 >
-> Latest: `docs/handoffs/0072-maestro-suite.md` — **the app has an end-to-end
+> Latest: `docs/handoffs/0073-release-0.1.93.md` — **0.1.93 is cut**:
+> versionCode 15, tag `v0.1.93`, run 39534961151 green, GitHub release
+> published with the AAB/APK/SHA256SUMS, and the Play closed-testing track
+> (`alpha`) holds it. The third patch of the 0.1.9 line, following the
+> project's own numbering. It carries no data, schema or classification
+> change, but it is **not** "presentation only": a settings row now toggles
+> when its title is tapped, as every other row in that screen already did.
+> What it does carry is the four accessibility fixes the Maestro suite
+> found — the Activity search field, the Quick Add merchant field and the
+> Settings switches had **no accessible name**, because the hint and the
+> title were siblings of the control rather than its label, inside a
+> clickable that merged them. 637 tests, lint baseline-only, the R8 gate
+> green on every check, store notes EN 340 / HI 335 characters. The site's
+> changelog shipped with it and the Pages run is green. The Play *state*
+> could not be read back — the service-account key for this app is only the
+> repository secret, and there is no copy on the machine.
+> Before: `docs/handoffs/0072-maestro-suite.md` — **the app has an end-to-end
 > UI test**: thirteen Maestro flows in `.maestro/flows/`, driven by
 > `tools/run_maestro.sh` (clean install → onboarding → the app's locale set to
 > en-IN → the demo data seeded → the flows → the data seeded again). It found
