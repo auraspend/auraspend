@@ -80,6 +80,13 @@ jobs:
       - name: Verify privacy claims state their exception
         run: ./tools/check_privacy_claims.sh
 
+      # The website claims to be a particular release in its structured data
+      # and used to name a version in its download buttons and meta
+      # descriptions. Those go stale the moment the next release is cut, and
+      # they did: the site said 0.1.91 while the app was at 0.1.93.
+      - name: Verify the site agrees with the app about the version
+        run: ./tools/check_site_version.sh
+
       - name: Build dev flavor (debug)
         run: ./gradlew assembleDevDebug
 

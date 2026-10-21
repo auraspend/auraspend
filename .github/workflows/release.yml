@@ -106,6 +106,12 @@ jobs:
       - name: Verify licence metadata and third-party attributions
         run: ./tools/check_license.sh
 
+      # The website claims to be a particular release in its structured data.
+      # It went stale once already, so the release cannot cut with a site that
+      # disagrees with the app about which version it is.
+      - name: Verify the site agrees with the app about the version
+        run: ./tools/check_site_version.sh
+
       - name: Build signed Play bundle and prod APK
         run: ./gradlew :app:bundleProdRelease :app:assembleProdRelease
 
