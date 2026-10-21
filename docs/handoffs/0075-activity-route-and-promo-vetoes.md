@@ -1,7 +1,8 @@
 # 0075 — the Activity route, and marketing that is not money
 
-**Date:** 2026-10-21 · **Branch:** `main` + `dev` · **Status: tagged;
-`versionCode` 17.**
+**Date:** 2026-10-21 · **Branch:** `main` + `dev` · **Status: tagged, run
+39632544834 green, uploaded to Play (closed testing, `alpha`). `versionCode`
+17.**
 
 ## What this is
 
@@ -157,6 +158,18 @@ stay external, read through an environment variable and deleted afterwards.
 
 This handoff follows its own rule: no message text, sender, amount or link from
 the owner's inbox appears above — only shapes, families and counts.
+
+## The run
+
+**39632544834**, every step green — licence and site-version gates, the signed
+bundle, **Upload to Google Play**, and "Publish the release if it is still a
+draft". The GitHub release is published with the AAB, the APK and
+`SHA256SUMS`; the local pre-flight build reported `versionCode=17
+versionName=0.1.95` signed by `CN=AuraSpend`.
+
+The site deployed with it: the changelog reads 0.1.95 at the top and its own
+summary line follows, because `check_site_version.sh` now checks that line as
+well as `softwareVersion`.
 
 ## Open
 
