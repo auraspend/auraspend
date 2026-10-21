@@ -30,17 +30,15 @@ android {
         applicationId = "com.awbuilds.auraspend"
         minSdk = 30
         targetSdk = 37
-        // 0.1.92 — the second patch of the 0.1.9 line (handoff 0069): the Home
-        // screen is rebuilt (hero, cash-flow chart, budget rings, subscriptions,
-        // accounts), the balances the bank states became a ledger (schema v9 —
-        // an additive migration), the start-up pass reads the inbox at once,
-        // payee and category extraction got sharper, and two real bugs are
-        // fixed: rupee amounts with paise were mis-stated, and the Activity
-        // header described a different set of rows from the list under it.
+        // 0.1.93 — patch on 0.1.92 (handoff 0072): the search field, the
+        // merchant field and the Settings switches had no accessible name, and
+        // a settings row's title did nothing when it was tapped. No data,
+        // schema or classification change, and the one behaviour change is
+        // that a row now toggles as every other row in that screen does.
         // versionCode must strictly increase for every store upload; Play
         // rejects an update that reuses one.
-        versionCode = 14
-        versionName = "0.1.92"
+        versionCode = 15
+        versionName = "0.1.93"
 
         // True in dev/prod; the `fdroid` flavor flips it to false (ADR 0012).
         // Screens read it to hide the Drive entry points rather than offer

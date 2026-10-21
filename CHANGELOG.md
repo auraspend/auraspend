@@ -10,6 +10,34 @@ internal APIs.
 
 ## [Unreleased]
 
+## [0.1.93] — 2026-10-21
+
+Patch on 0.1.92. **No data, schema or classification change** — but it is not
+"presentation only" either, because one thing behaves differently now: a
+settings row toggles when its title is tapped, which is what every other row in
+that screen already did.
+
+### Fixed
+
+- **The Activity search field had no accessible name.** The hint was a `Text`
+  sibling of the `BasicTextField`, inside a row with `.clickable` — and a
+  clickable merges its descendants, so the merged node took its *text* from the
+  field, which is empty. A screen reader announced a text field and not what it
+  was for. The Quick Add merchant field had the same shape.
+- **The Settings switches had no accessible name.** A `Switch` with no
+  description, on a row whose title and subtitle are siblings of it rather than
+  its label: "switch, off", and nothing after it. Four switches are affected,
+  plus the recurring switch in the transaction editor.
+- **Tapping a settings row's title did nothing.** Only the switch itself
+  toggled the lock. The row now toggles, and the switch still consumes its own
+  touches, so it cannot toggle twice.
+
+### Added
+
+- **An end-to-end UI suite** — thirteen Maestro flows, run by
+  `tools/run_maestro.sh`. It found the three defects above in its first hour,
+  and it is now the regression test for them.
+
 ## [0.1.92] — 2026-10-20
 
 The second patch of the 0.1.9 line, following the project's own numbering

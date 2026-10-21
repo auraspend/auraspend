@@ -1,6 +1,6 @@
-What's new in 0.1.92
+What's new in 0.1.93
 
-• The home screen is rebuilt: your balance, this month's money in and out, a seven-day spending chart, budget rings, your subscriptions, and the accounts your bank told us about.
-• Fixed: amounts with paise could be rounded wrongly — Rs 1,23,456.78 shown as Rs 1,23,456.80.
-• Fixed: the Activity header counted the whole month even when the list was filtered.
-• More shop and travel names are filed under the right category now.
+• Fixed: the search box and the merchant field had no label, so a screen reader could not say what they were.
+• Fixed: the settings switches had no label either.
+• Fixed: tapping a setting's name now turns it on or off, as every other row already did.
+• The app is now checked end to end by an automated UI test suite.

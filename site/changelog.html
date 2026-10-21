@@ -68,12 +68,32 @@
                 <span class="eyebrow">Changelog</span>
                 <h1>Every release, newest first.</h1>
                 <p class="lead">The project follows <a href="https://keepachangelog.com/en/1.1.0/" target="_blank" rel="noopener">Keep a Changelog</a>. Below is the summary of each release; the canonical, unabridged record is <a href="https://github.com/auraspend/auraspend/blob/main/CHANGELOG.md" target="_blank" rel="noopener">CHANGELOG.md</a> in the repository, and the reasoning behind each one is published in the project's handoff log.</p>
-                <p class="updated">14 releases · 0.1.0 (13 May 2026) → 0.1.92 (20 October 2026)</p>
+                <p class="updated">15 releases · 0.1.0 (13 May 2026) → 0.1.93 (21 October 2026)</p>
             </div>
         </section>
 
         <section class="section section--tight" style="padding-top:0">
             <div class="container container--prose">
+
+                <article class="release" id="v0-1-93">
+                    <div class="release__meta">
+                        <div class="release__version">0.1.93</div>
+                        <div class="release__date">21 October 2026</div>
+                    </div>
+                    <div class="release__body">
+                        <p>Patch on 0.1.92. No data, schema or classification change — but one thing behaves differently now, and three things a screen reader could not read are fixed.</p>
+                        <h3>Fixed</h3>
+                        <ul>
+                            <li><strong>The search field had no accessible name.</strong> The hint was drawn next to the field rather than attached to it, so a screen reader announced a text field and not what it was for. The merchant field in Quick Add had the same problem.</li>
+                            <li><strong>The settings switches had no accessible name either</strong> — "switch, off", and nothing after it.</li>
+                            <li><strong>Tapping a setting's name now turns it on or off</strong>, as every other row in that screen already did. Only the switch itself used to respond.</li>
+                        </ul>
+                        <h3>Added</h3>
+                        <ul>
+                            <li><strong>An end-to-end UI test suite</strong> — thirteen flows that drive the app the way a person does. It found the three fixes above in its first hour, and it is now what keeps them fixed.</li>
+                        </ul>
+                    </div>
+                </article>
 
                 <article class="release" id="v0-1-92">
                     <div class="release__meta">
