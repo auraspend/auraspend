@@ -3,7 +3,18 @@
 > Read this file and the latest file in `docs/handoffs/` before touching anything.
 > Update both (plus `CLAUDE.md` / `memory/` when you learn something durable) before ending a session.
 >
-> Latest: `docs/handoffs/0075-activity-route-and-promo-vetoes.md` — **0.1.95 is
+> Latest: `docs/handoffs/0076-message-date-fallback.md` — **a date from the
+> message, not from the scanner** (unreleased, after 0.1.95). A transaction was
+> dated with the day its inbox was scanned, years after the message arrived.
+> `BankMessageParser.detectDateTime` treated the **word** "today" anywhere in the
+> body as a date and answered `LocalDateTime.now()`, which made `parsed.date`
+> non-null and so made `toTransaction`'s honest fallback — the message's arrival
+> timestamp, built in 0036 — unreachable. The branch is gone; an undated body now
+> returns null and inherits its arrival time. It also made parsing depend on the
+> wall clock, which is why the evaluator carried an exception for it. Cost: a
+> body saying "yesterday" now gets the arrival day rather than arrival − 1. 679
+> tests, the 82-case corpus bit-identical.
+> Before: `docs/handoffs/0075-activity-route-and-promo-vetoes.md` — **0.1.95 is
 > cut**: versionCode 17. Two defects that looked unrelated. **Home's "see all"
 > opened Activity with `{query}` written into the search box** and every row
 > filtered out: the route constant was the destination *pattern*, so Navigation
