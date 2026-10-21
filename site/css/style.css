@@ -1562,6 +1562,22 @@ code {
     border-bottom: 2px solid var(--faint);
     transform: rotate(45deg) translate(-2px, -2px);
     transition: transform 0.18s ease;
+    /* The 3px that gave the FAQ list a horizontal scroll.
+     *
+     * A 14×14 box rotated 45° does not paint 14×14 — it paints its
+     * *diagonal*, 19.8×19.8, which is 2.9px wider than the box on each
+     * side. A rotated box's painted area counts towards the scrollable
+     * overflow of its container, so the summary was 3px wider than the
+     * column it sat in (323 in 320) even though nothing was clipped and
+     * the page never scrolled sideways.
+     *
+     * The margin gives the box the room its own rotation needs: the flex
+     * item's outer box becomes 20px, the element sits in the middle of it,
+     * and the painted diamond lands exactly on the column's edge. The
+     * chevron is the same size and shape as before — it moves 3px left,
+     * which is where it should have been all along.
+     */
+    margin: 3px;
 }
 
 .faq details[open] summary::after {
@@ -1933,12 +1949,21 @@ code {
     margin: 0;
     padding: 0;
     display: grid;
-    gap: var(--sp-sm);
+    /* Paired with the links' own padding below: 6px of gap plus 1px of
+       padding is the 8px it was before, so the column keeps its rhythm. */
+    gap: 6px;
 }
 
 .footer-grid a {
     color: var(--ink-2);
     font-size: var(--fs-small);
+    /* A link in a sentence is exempt from the target-size rule, because the
+       line-height of the text around it constrains it. A list of links is
+       not — these were a 23px line box, one pixel under the 24px minimum,
+       and a thumb on a phone is not 23px either. Inline-block makes the
+       link's own box its line box, so the padding is what carries it over. */
+    display: inline-block;
+    padding-block: 1px;
 }
 
 .footer-grid a:hover {
@@ -1970,6 +1995,43 @@ code {
 .js .reveal.is-in {
     opacity: 1;
     transform: none;
+}
+
+/* ── 27. The 404 ──────────────────────────────────────────────────────────
+   GitHub Pages serves this for any address that does not exist, so a
+   stranger who follows a stale link lands here rather than on GitHub's own
+   page. The numeral is set in the track colour — the same colour an empty
+   progress bar is — so it reads as part of the system rather than as an
+   alarm. */
+
+.notfound {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: var(--sp-4xl);
+    align-items: center;
+}
+
+.notfound__body {
+    max-width: 32rem;
+}
+
+.notfound__body h1 {
+    font-size: var(--fs-h1);
+    margin-bottom: var(--sp-md);
+}
+
+.notfound__body .lead {
+    margin-bottom: var(--sp-2xl);
+}
+
+.notfound__numeral {
+    font-size: clamp(6rem, 16vw, 13rem);
+    font-weight: 800;
+    letter-spacing: -0.05em;
+    line-height: 0.8;
+    color: var(--track);
+    font-variant-numeric: tabular-nums;
+    user-select: none;
 }
 
 /* ── 25. Responsive ────────────────────────────────────────────────────── */
@@ -2073,6 +2135,11 @@ code {
         --sp-6xl: 3.5rem;
         --sp-5xl: 3rem;
         --sp-4xl: 2.5rem;
+    }
+
+    .notfound {
+        grid-template-columns: minmax(0, 1fr);
+        gap: var(--sp-2xl);
     }
 
     .container {
