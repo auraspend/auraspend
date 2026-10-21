@@ -68,3 +68,10 @@ it is ever wanted back, `toTransaction` is the place — it holds the anchor.
 - Signed pre-flight: `versionCode=18 versionName=0.1.96`, `CN=AuraSpend`, APK
   43,438,072 bytes · AAB 24,543,633 bytes. Store notes EN 299 / HI 272
   characters.
+
+## The run
+
+**39647712342**, every step green — the site-version gate, the signed bundle,
+**Upload to Google Play**, and "Publish the release if it is still a draft". The
+GitHub release is published with the AAB, the APK and `SHA256SUMS`. The site
+deployed with it: the changelog reads 0.1.96 and its own summary line follows.
