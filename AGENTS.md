@@ -3,7 +3,28 @@
 > Read this file and the latest file in `docs/handoffs/` before touching anything.
 > Update both (plus `CLAUDE.md` / `memory/` when you learn something durable) before ending a session.
 >
-> Latest: `docs/handoffs/0073-release-0.1.93.md` — **0.1.93 is cut**:
+> Latest: `docs/handoffs/0074-release-0.1.94.md` — **0.1.94 is cut**:
+> versionCode 16, tag `v0.1.94`. The fourth patch of the 0.1.9 line, and a
+> **feature** release — unlike the three before it, which each had to say what
+> they were not. No schema migration, no data-model change, no classification
+> change, no new dependency. The Play build's update check now has **four
+> in-app surfaces and a notification**: one silent check (at most daily) feeds
+> a line in Settings → About, a dot on the header avatar, a dismissible strip on
+> Home, and — when a flexible download already finished — a restart offer on the
+> next launch (Play's install status is now read on every resume). A release can
+> be marked urgent: the upload passes `inAppUpdatePriority` from the
+> `PLAY_UPDATE_PRIORITY` repository variable, and priority 4–5 opens Play's
+> blocking flow on launch. A daily background worker notifies once per release,
+> only after three stale days, on its own `app_updates` channel. Every decision
+> is in `UpdatePolicy`, a pure object with 17 tests — five surfaces over one
+> check is how a helpful feature becomes the thing people turn off. **None of it
+> has been seen on a device**: `IN_APP_UPDATES` is prod-only and `isAvailable`
+> demands a Play-installed package, so a sideload hides every surface. 658
+> tests, lint baseline-only, fdroid compiles. The three approved site fixes ship
+> here too (chevron clipping, footer tap targets, a real 404 page), and the
+> download/privacy pages now describe the new behaviour instead of claiming "no
+> prompt on launch".
+> Before: `docs/handoffs/0073-release-0.1.93.md` — **0.1.93 is cut**:
 > versionCode 15, tag `v0.1.93`, run 39534961151 green, GitHub release
 > published with the AAB/APK/SHA256SUMS, and the Play closed-testing track
 > (`alpha`) holds it. The third patch of the 0.1.9 line, following the

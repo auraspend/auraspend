@@ -75,6 +75,27 @@
         <section class="section section--tight" style="padding-top:0">
             <div class="container container--prose">
 
+                <article class="release" id="v0-1-94">
+                    <div class="release__meta">
+                        <div class="release__version">0.1.94</div>
+                        <div class="release__date">21 October 2026</div>
+                    </div>
+                    <div class="release__body">
+                        <p>Patch on 0.1.93. No schema migration and no classification change — but the Play build's update check now has somewhere to speak, so this is not a presentation release either.</p>
+                        <h3>Added</h3>
+                        <ul>
+                            <li><strong>The update check is quiet and visible at once.</strong> One silent check, at most once a day, feeds a line in Settings → About, a dot on the header avatar, and one dismissible strip below the balance on Home. Nothing starts on its own unless the release is marked urgent.</li>
+                            <li><strong>A download that finished while the app was closed</strong> now offers its restart on the next launch, instead of waiting to be found in Settings.</li>
+                            <li><strong>A release can be marked urgent.</strong> Priority 4 or 5 opens Play's own full-screen update flow on launch; a routine release never interrupts.</li>
+                            <li><strong>One notification, for people who have not opened the app.</strong> An update waiting three days or more produces a single notification on its own channel — announced once per release, and never for an urgent one.</li>
+                        </ul>
+                        <h3>Site</h3>
+                        <ul>
+                            <li>A wrong address now serves <strong>a real 404 page</strong> in the site's own layout, the FAQ chevrons are no longer clipped, and footer links clear a 24 px tap target.</li>
+                        </ul>
+                    </div>
+                </article>
+
                 <article class="release" id="v0-1-93">
                     <div class="release__meta">
                         <div class="release__version">0.1.93</div>

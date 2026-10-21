@@ -10,6 +10,53 @@ internal APIs.
 
 ## [Unreleased]
 
+## [0.1.94] — 2026-10-21
+
+Patch on 0.1.93. **No schema migration, no data-model change and no
+classification change** — but this is not a presentation release either: the
+Play build's update check now has somewhere to speak, and something new can
+reach the user without the app being open.
+
+### Added
+
+- **The update check is quiet and visible at once.** One silent check — at most
+  once a day, and it never starts anything on its own — feeds four surfaces: a
+  line in Settings → About that says a newer version exists before you tap it, a
+  small dot on the header avatar, one dismissible strip below the balance on
+  Home, and the restart offer for a finished download. Which of them speaks, in
+  what order, and when to stay silent is a pure function (`UpdatePolicy`) with
+  seventeen tests, because five surfaces over one check is exactly how a
+  helpful feature becomes the thing people turn off.
+- **A finished download is no longer invisible.** Play's install status is read
+  on every resume, so a flexible download that completed while the app was
+  closed offers its restart the next time AuraSpend opens instead of waiting to
+  be found in Settings.
+- **A release can be marked urgent.** The upload now passes Play's
+  `inAppUpdatePriority` (repository variable `PLAY_UPDATE_PRIORITY`, 0 by
+  default). At priority 4 or 5 — and only when Play also permits the immediate
+  type — the app opens Play's own full-screen update flow on launch rather than
+  the strip. A routine release never interrupts.
+- **A daily background check, with its own notification channel.** For someone
+  who has not opened the app, an update waiting three days or more produces one
+  notification, announced once per release. It has a separate channel
+  (`app_updates`), so silencing updates does not silence classification, and it
+  is never sent for a release that would open the blocking flow.
+
+### Fixed (site)
+
+- **The FAQ's expand chevrons were clipped by 3 px.** The rotation paints a
+  longer diagonal than the box it turns in.
+- **Footer links had 19 px tap targets**; they now clear 24 px without changing
+  the footer's rhythm.
+- **A wrong address now serves a real 404 page**, in the site's own layout,
+  rather than GitHub's default.
+
+### Changed (site)
+
+- The download and privacy pages describe the new update behaviour, including
+  that the check asks the Play Store already on the device and reaches no
+  AuraSpend server — there is none.
+
 ## [0.1.93] — 2026-10-21
 
 Patch on 0.1.92. **No data, schema or classification change** — but it is not
