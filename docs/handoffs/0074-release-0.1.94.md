@@ -1,7 +1,8 @@
 # 0074 — 0.1.94: the update check gets a voice, and the site gets a 404
 
-**Date:** 2026-10-21 · **Branch:** `main` + `dev` · **Status: tagged;
-`versionCode` 16.**
+**Date:** 2026-10-21 · **Branch:** `main` + `dev` · **Status: tagged, run
+39589870607 green, uploaded to Play (closed testing, `alpha`). `versionCode`
+16.**
 
 ## The number
 
@@ -137,6 +138,27 @@ against a real Play Store.
 on a tester's device, then cut any later release and open the app — the strip,
 the dot and the Settings line should all appear without the user asking.
 
+## The run
+
+**39589870607**, every step green — the licence gate, the site-version gate, the
+signed bundle, **Upload to Google Play**, and "Publish the release if it is still
+a draft".
+
+- GitHub release `v0.1.94` **published** (not a draft) with
+  `AuraSpend-V0.1.94.Alpha.aab` (24,542,929 bytes),
+  `AuraSpend-V0.1.94.Alpha.apk` (43,438,072 bytes — byte-for-byte the size of
+  the local build, which is a small independent check that the tag built what
+  was verified here) and `SHA256SUMS` (188 bytes).
+- Play: the action created an Edit, validated the `alpha` track and committed
+  it, with `docs/store/whatsnew` as the notes and the R8 mapping attached.
+- The run sat at the `release` environment's approval gate first, which is the
+  intended shape: nothing reaches Play or a GitHub release without a human.
+
+**What cannot be read back from here**: the Play *state*. The service-account
+key exists only as the repository secret `PLAY_SERVICE_ACCOUNT_JSON`, and there
+is no copy on this machine. The committed Edit is the strongest signal
+available, and it is the same signal every previous release was cut on.
+
 ## The site rode along
 
 Three fixes the owner approved earlier were still uncommitted and ship here:
@@ -150,6 +172,19 @@ The download and privacy pages now describe the update behaviour instead of
 saying "no prompt on launch", which this release makes false. The privacy page
 gained the sentence that matters: the check asks the Play Store already on the
 device, and reaches no AuraSpend server — there is none.
+
+Two more were found **after** the tag went up. Both are site-only, so the release
+artifact is unaffected:
+
+- A wrong address served GitHub's default page. It now serves `site/404.html`,
+  verified live: `…/this-page-does-not-exist-0074` returns **404** carrying the
+  site's own copy ("That page is not here").
+- The changelog's own summary still read "→ 0.1.93". That line is a *current*
+  claim, and `check_site_version.sh` exempted the whole changelog because its
+  history is not stale — so nothing looked at it. It says 0.1.94 now, and a
+  **third check** verifies the target version *and* the count against the
+  entries on the page. It was shown failing on the stale line before the fix,
+  which is the only evidence that a gate works.
 
 ## Open (the others)
 
