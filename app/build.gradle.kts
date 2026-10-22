@@ -37,8 +37,8 @@ android {
         // that a row now toggles as every other row in that screen does.
         // versionCode must strictly increase for every store upload; Play
         // rejects an update that reuses one.
-        versionCode = 18
-        versionName = "0.1.96"
+        versionCode = 19
+        versionName = "0.1.97"
 
         // True in dev/prod; the `fdroid` flavor flips it to false (ADR 0012).
         // Screens read it to hide the Drive entry points rather than offer

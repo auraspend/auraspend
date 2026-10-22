@@ -1,4 +1,5 @@
-What's new in 0.1.96
+What's new in 0.1.97
 
-• Fixed: a transaction's date now comes from the message. A message that names no date is dated by when the SMS arrived, not by when the app scanned it — one row had been booked years after it arrived.
-• Fixed: the word "today" in advertising copy is no longer read as a date.
+• Fixed: a bank's balance is no longer booked as the transaction amount.
+• Fixed: statement summaries, and "your payment has been received" messages from a utility or an insurer, are no longer booked as income or as spending.
+• Fixed: real merchants are no longer filed as transfers, which had been removing them from your spending totals.

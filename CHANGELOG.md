@@ -10,6 +10,55 @@ internal APIs.
 
 ## [Unreleased]
 
+## [0.1.97] — 2026-10-22
+
+Patch on 0.1.96. **No schema, data-model or corpus change** — the 82-case
+golden corpus is bit-identical (80/82 exact, 97.6 %, type 98.8 %, category
+100 %, merchant 98.8 %, amount 98.8 %, date 17/17).
+
+But a real export exposed **five families of silent wrong rows**. They were
+invisible to the corpus because the corpus is bank shapes and these are all
+counterparty and statement shapes. Nothing in this release changes what the
+app already recorded; it changes what it stops recording wrong from now on.
+
+### Fixed
+
+- **A bank's balance could be booked as the transaction amount.** One bank
+  writes the movement bare and the balance rupee-marked, so the balance was the
+  only rupee figure in the body and the picker chose it — often on top of the
+  same deposit, recorded correctly from another message. Balance clauses are
+  now masked before amounts are collected, and a bare figure next to its verb
+  is read when nothing rupee-marked is left.
+- **A statement summary could be booked as one movement.** A numbered list of
+  legs ("1) … Cr 2) … Dr") closes with a balance, and the balance became the
+  amount. A numbered leg list is now a hard veto: a single movement never
+  numbers its legs.
+- **A counterparty's receipt could be booked as your income.** A utility, an
+  insurer, a lender and a courier each write "your payment has been received"
+  or "payment update", and every one carries a credit word. Five measured
+  signatures now veto it — and the counter-case is pinned: a payment
+  confirmation that is your **only** record of a real expense still books.
+- **Both legs of your own transfer could be booked as spending.** One message
+  can describe a debit from one of your accounts and the credit into another.
+  That is now a transfer, which the totals exclude.
+- **A "valid until" clause could put a transaction in the future.** A stated
+  date more than a day after the message arrived now falls back to the
+  arrival.
+- **Fragments reached the merchant column** — a clause cut mid-account, a
+  bare honorific, a bare number, a button label. Cleaning now happens in one
+  place, and **both** the parser and the on-device model go through it.
+- **Real merchants were filed as Transfer**, which removed them from every
+  spending total. Twelve families are now categorised: hospitals and
+  pharmacies whose names are abbreviated, fuel stations in the plural, a
+  supermarket that resolved two ways by spelling, a gold savings scheme,
+  restaurants, bakeries, sweets and a supermarket chain.
+
+### Note
+
+**This release is forward-only.** Transactions already in your database keep
+the amounts, dates and categories they were given. A re-ingest is the only
+way to correct history, and that is your call, not the app's.
+
 ## [0.1.96] — 2026-10-21
 
 Patch on 0.1.95. **No schema, data-model or classification-accuracy change** —

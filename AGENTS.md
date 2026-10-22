@@ -3,7 +3,27 @@
 > Read this file and the latest file in `docs/handoffs/` before touching anything.
 > Update both (plus `CLAUDE.md` / `memory/` when you learn something durable) before ending a session.
 >
-> Latest: `docs/handoffs/0076-message-date-fallback.md` — **0.1.96 is cut**: a
+> Latest: `docs/handoffs/0079-release-0.1.97.md` — **0.1.97 is cut**:
+> versionCode 19. A patch on 0.1.96, and **forward-only**: transactions already
+> in a user's database keep the amounts, dates and categories they were given,
+> and a re-ingest is the only way to correct history. No schema, data-model or
+> corpus change — the 82-case golden corpus is bit-identical (80/82, 97.6 %,
+> type 98.8, category 100). But a real export exposed **five families of silent
+> wrong rows**, invisible to the corpus because the corpus is bank shapes and
+> these are counterparty and statement shapes: a bank's **balance booked as the
+> transaction amount** (~30 rows, usually on top of the same deposit recorded
+> correctly from another message), a statement summary **booked as one
+> movement** (~8), a counterparty's receipt **booked as the user's income**
+> (~18), **both legs of an own-account move booked as spending** (~30), and a
+> "valid until" clause **putting a row in the future**. Balance clauses are
+> masked before amounts are collected, a numbered leg list is a hard veto, and
+> five measured receipt signatures veto a counterparty's confirmation — with
+> the counter-case pinned: a payment confirmation that is the user's **only**
+> record of a real expense still books. Merchant fragments are cleaned in one
+> place for **both** the parser and the on-device model, and twelve merchant
+> families that were hiding money as **Transfer** are now categorised.
+> **709 tests.**
+> Before: `docs/handoffs/0076-message-date-fallback.md` — **0.1.96 is cut**: a
 > date from the message, not from the scanner. A transaction was
 > dated with the day its inbox was scanned, years after the message arrived.
 > `BankMessageParser.detectDateTime` treated the **word** "today" anywhere in the

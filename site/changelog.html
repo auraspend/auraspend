@@ -68,12 +68,31 @@
                 <span class="eyebrow">Changelog</span>
                 <h1>Every release, newest first.</h1>
                 <p class="lead">The project follows <a href="https://keepachangelog.com/en/1.1.0/" target="_blank" rel="noopener">Keep a Changelog</a>. Below is the summary of each release; the canonical, unabridged record is <a href="https://github.com/auraspend/auraspend/blob/main/CHANGELOG.md" target="_blank" rel="noopener">CHANGELOG.md</a> in the repository, and the reasoning behind each one is published in the project's handoff log.</p>
-                <p class="updated">17 releases · 0.1.0 (13 May 2026) → 0.1.96 (21 October 2026)</p>
+                <p class="updated">18 releases · 0.1.0 (13 May 2026) → 0.1.97 (22 October 2026)</p>
             </div>
         </section>
 
         <section class="section section--tight" style="padding-top:0">
             <div class="container container--prose">
+
+                <article class="release" id="v0-1-97">
+                    <div class="release__meta">
+                        <div class="release__version">0.1.97</div>
+                        <div class="release__date">22 October 2026</div>
+                    </div>
+                    <div class="release__body">
+                        <p>Patch on 0.1.96. No database, data-model or classification change — the test corpus is bit-identical. But five families of <em>silent</em> wrong rows, found in a real export, are fixed.</p>
+                        <h3>Fixed</h3>
+                        <ul>
+                            <li><strong>A bank's balance could be booked as the transaction amount.</strong> One bank writes the movement bare and the balance rupee-marked, so the balance was the only rupee figure in the message and won. Balance clauses are now masked before amounts are read.</li>
+                            <li><strong>A statement summary could be booked as one movement.</strong> A numbered list of legs closed with a balance, and the balance was taken. A numbered leg list is now refused outright.</li>
+                            <li><strong>A counterparty's receipt could be booked as your income.</strong> “Your payment has been received” from a utility, an insurer or a lender carries a credit word. A payment confirmation that is your <em>only</em> record of a real expense still books.</li>
+                            <li><strong>Both legs of your own transfer could be booked as spending.</strong> One message describing a debit from one account and a credit into another is now a transfer, which the totals exclude.</li>
+                            <li><strong>Real merchants were filed as transfers</strong>, which removed them from every spending total. Hospitals, pharmacies, fuel stations, restaurants, bakeries, sweets and supermarkets are now categorised.</li>
+                        </ul>
+                        <p><strong>This release is forward-only.</strong> Transactions already in your database keep the amounts, dates and categories they were given; a re-ingest is the only way to correct history.</p>
+                    </div>
+                </article>
 
                 <article class="release" id="v0-1-96">
                     <div class="release__meta">
