@@ -69,9 +69,6 @@ def main():
         if page.name == "index.html":
             continue
         text = page.read_text(encoding="utf-8")
-        if "<!--@HEADER-->" not in text or "<!--@FOOTER-->" not in text:
-            print(f"  skip  {page.name} (no placeholders)")
-            continue
 
         page_header = header
         page_footer = footer
@@ -84,10 +81,34 @@ def main():
         if footer_current:
             page_footer = mark(page_footer, footer_current, True, "footer")
 
-        text = text.replace("<!--@HEADER-->", page_header)
-        text = text.replace("<!--@FOOTER-->", page_footer)
+        if "<!--@HEADER-->" in text and "<!--@FOOTER-->" in text:
+            # The page still carries the placeholders.
+            text = text.replace("<!--@HEADER-->", page_header)
+            text = text.replace("<!--@FOOTER-->", page_footer)
+            page.write_text(text, encoding="utf-8")
+            print(f"  ok    {page.name} (placeholders)")
+            stamped += 1
+            continue
+
+        # The chrome is already inlined — which is the state every page is in
+        # today, because the placeholders were filled in once and then edited
+        # by hand. Replacing the block is what makes "re-run this after
+        # changing the chrome in index.html" true: before this, the script
+        # found no placeholders on any page and changed nothing at all.
+        replaced = False
+        for tag, block in (("header", page_header), ("footer", page_footer)):
+            pattern = re.compile(rf"([ \t]*)<{tag}\b.*?</{tag}>", re.S)
+            match = pattern.search(text)
+            if not match:
+                continue
+            indent = match.group(1)
+            text = text[: match.start()] + indent + block.strip() + text[match.end() :]
+            replaced = True
+        if not replaced:
+            print(f"  skip  {page.name} (no header or footer block)")
+            continue
         page.write_text(text, encoding="utf-8")
-        print(f"  ok    {page.name}")
+        print(f"  ok    {page.name} (chrome replaced)")
         stamped += 1
 
     print(f"\nStamped {stamped} page(s).")

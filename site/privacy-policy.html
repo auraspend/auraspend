@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#EBE7DE" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#080807" media="(prefers-color-scheme: dark)">
+    <script>
+        // Applied before the first paint, so a stored choice never flashes the
+        // other theme — and so the scroll-reveal styles only apply when the
+        // script that undoes them is actually running.
+        (function () {
+            var root = document.documentElement;
+            root.classList.add("js");
+            try {
+                var stored = localStorage.getItem("auraspend-theme");
+                if (stored === "light" || stored === "dark") {
+                    root.setAttribute("data-theme", stored);
+                }
+            } catch (e) { /* private mode: follow the system theme */ }
+        })();
+    </script>
+    <title>Privacy Policy — AuraSpend</title>
+    <meta name="description" content="What AuraSpend keeps on your phone, what can leave it and when, every permission the app ships, and the rights you have over it.">
+    <link rel="canonical" href="https://auraspend.github.io/auraspend/privacy-policy.html">
+    <meta property="og:title" content="Privacy Policy — AuraSpend">
+    <meta property="og:description" content="What AuraSpend keeps on your phone, what can leave it and when, every permission the app ships, and the rights you have over it.">
+    <meta property="og:url" content="https://auraspend.github.io/auraspend/privacy-policy.html">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="AuraSpend">
+    <meta property="og:image" content="https://auraspend.github.io/auraspend/img/og.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Privacy Policy — AuraSpend">
+    <meta name="twitter:description" content="What AuraSpend keeps on your phone, what can leave it and when, every permission the app ships, and the rights you have over it.">
+    <meta name="twitter:image" content="https://auraspend.github.io/auraspend/img/og.png">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="img/icon-512.png">
+</head>
+<body>
+    <a class="skip-link" href="#main">Skip to content</a>
+
+<!--@HEADER-->
+
+    <main id="main">
+        <section class="page-head">
+            <div class="container container--prose">
+                <span class="eyebrow">Legal</span>
+                <h1>Privacy Policy</h1>
+                <p class="lead">Last updated: 2026</p>
+                <p class="updated">Applies to the Google Play build, the F-Droid build and to APKs built from the published source.</p>
+            </div>
+        </section>
+
+        <section class="section section--tight" style="padding-top:0">
+            <div class="container container--prose">
+                <section class="lsec">
+                    <h2>The short version</h2>
+<p>Your transactions, budgets and bank messages stay in an encrypted database on your phone. AuraSpend has no account, no analytics, no advertising and no crash reporting, and runs no server that receives your data. It touches the network in two optional cases: the categorisation model you choose to download, and a Google Drive backup you start yourself.</p>
+                </section>
+                <section class="lsec">
+                    <h2>What we collect</h2>
+<p>Nothing is collected by the developer. AuraSpend has no sign-up, and the developers receive no data from the app. The app stores the following on this device: transactions (amounts, dates, notes, categories and type), the categories, budgets, subscriptions and savings goals you create, the bank-message queue it has read, the messages it could not turn into a transaction, your preferences, and the corrections you make to classifications.</p>
+                </section>
+                <section class="lsec">
+                    <h2>What stays on your device</h2>
+<p>Everything above stays on this device, in a database encrypted with SQLCipher using a key held in the Android Keystore. Phone numbers, UPI references, UTRs and similar identifiers are masked out of the message text before it is stored. Android's own backup and device-to-device transfer are configured to exclude the database, the preferences and the model directory.</p>
+                </section>
+                <section class="lsec">
+                    <h2>Permissions, and why each is needed</h2>
+<p>AuraSpend requests only the permissions it uses, and asks for the two that are user-facing at the moment the feature that needs them is switched on. The list below is the app's merged manifest — every permission that ships, including the ones its libraries add — with what each one is for.</p>
+      <div class="table-wrap"><table style="width:100%;border-collapse:collapse;margin:1rem 0;font-size:.94rem">
+        <thead>
+          <tr style="text-align:left;border-bottom:1px solid var(--line)">
+            <th style="padding:8px 0">Permission</th>
+            <th style="padding:8px 0">Why</th>
+          </tr>
+        </thead>
+        <tbody>
+        <tr
+            style="border-bottom:1px solid var(--line)">
+          <td style="padding:8px 0"><code>READ_SMS</code></td>
+          <td style="padding:8px 0">Lets the app read the bank and card messages your phone already receives, so it can turn them into transactions. It is requested only when you switch on automatic categorisation, it is read-only, and the app never sends an SMS. You can decline it and use every other feature, entering expenses by hand or importing a CSV instead.</td>
+        </tr>
+        <tr
+            style="border-bottom:1px solid var(--line)">
+          <td style="padding:8px 0"><code>INTERNET</code></td>
+          <td style="padding:8px 0">Used for exactly two optional things: downloading the optional 22 MB categorisation model from Hugging Face, and the Google Drive backup and restore you start yourself. The app has no server of its own and makes no request for usage data, diagnostics or analytics.</td>
+        </tr>
+        <tr
+            style="border-bottom:1px solid var(--line)">
+          <td style="padding:8px 0"><code>ACCESS_NETWORK_STATE</code></td>
+          <td style="padding:8px 0">Lets the app check that a connection is available before it downloads the model or talks to Google Drive, so background work fails quietly instead of retrying on a dead network.</td>
+        </tr>
+        <tr
+            style="border-bottom:1px solid var(--line)">
+          <td style="padding:8px 0"><code>POST_NOTIFICATIONS</code></td>
+          <td style="padding:8px 0">Lets the app tell you when a background categorisation pass has finished, and — in the Google Play build — when a newer version is available. It is requested only after you have been told what the notifications are, and the app works with them declined.</td>
+        </tr>
+        <tr
+            style="border-bottom:1px solid var(--line)">
+          <td style="padding:8px 0"><code>USE_BIOMETRIC</code></td>
+          <td style="padding:8px 0">Used by the optional app lock: if you set a four-digit PIN, your fingerprint or face can unlock the app instead of it. Declining leaves the PIN as the only way in.</td>
+        </tr>
+        <tr
+            style="border-bottom:1px solid var(--line)">
+          <td style="padding:8px 0"><code>USE_FINGERPRINT</code></td>
+          <td style="padding:8px 0">The legacy fingerprint permission, kept by the AndroidX biometric library so that the app lock's biometric shortcut keeps working on older Android versions. It is only used if you switch the shortcut on.</td>
+        </tr>
+        <tr
+            style="border-bottom:1px solid var(--line)">
+          <td style="padding:8px 0"><code>WAKE_LOCK</code></td>
+          <td style="padding:8px 0">Held briefly by Android's background job scheduler while the periodic categorisation pass runs, so the phone is not kept awake for the whole pass.</td>
+        </tr>
+        <tr
+            style="border-bottom:1px solid var(--line)">
+          <td style="padding:8px 0"><code>RECEIVE_BOOT_COMPLETED</code></td>
+          <td style="padding:8px 0">Used by the background job scheduler to re-arm the periodic categorisation pass after the phone restarts, so an inbox that was waiting is picked up again without you opening the app.</td>
+        </tr>
+        <tr>
+          <td style="padding:8px 0"><code>FOREGROUND_SERVICE</code></td>
+          <td style="padding:8px 0">Allows a long background categorisation pass to run as a foreground service while it is working, so Android does not stop it part-way through and the pass can show its progress.</td>
+        </tr>
+        </tbody>
+      </table></div>
+      <p>The manifest also declares one app-scoped signature permission, <code>com.awbuilds.auraspend.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION</code>. The AndroidX libraries generate it so that broadcast receivers registered at runtime cannot be exported; it is never shown to you and grants nothing. Every other permission above is either requested by the app at the point of use or added by a library for a background job the app uses.</p>
+
+<section id="sms" class="lsec">
+                </section>
+                <section class="lsec">
+                    <h2>2. Bank SMS</h2>
+<p>If you turn on <strong>Auto-categorize messages</strong> in Settings, AuraSpend asks Android for permission to read SMS (<code>READ_SMS</code>). Only then does it read your inbox, and only for messages it can take as bank or card activity.</p>
+                    <ul>
+                        <li>Processing happens on your device. Message text is never uploaded.</li>
+                        <li>Messages that look like one-time passwords or alerts are skipped unless they also describe a movement of money. Messages that contain an amount but that no parser recognises are kept in a separate list for you to review, rather than discarded.</li>
+                        <li><strong>Identifiers are masked before storage.</strong> Phone numbers, UPI references, UTRs, folio ids and hash-like tokens are removed from the message text before it is written to the database, and from the notes and exports as well. Amounts, dates and the bank's own card mask are left intact so that the app still works. A one-off backfill masked the messages stored before this behaviour existed.</li>
+                        <li>You can turn the feature off at any time. Turning it off stops new messages being read. It does not delete the transactions it has already created.</li>
+                        <li>You can deny the permission and use AuraSpend fully. Expenses can be entered by hand, or imported from a CSV file.</li>
+                    </ul>
+                    <p>Android's Auto Backup is configured to exclude the app's database, its SMS queue, its preferences and the model directory, so these are not copied to Google's backup service, and they are not carried over in a device-to-device transfer.</p>
+</section>
+<section id="network" class="lsec">
+                </section>
+                <section class="lsec">
+                    <h2>3. Network use</h2>
+<p>AuraSpend requests the Internet permission for two optional features. Those are the only times the app connects to anything.</p>
+                    <div class="table-wrap">
+                        <table>
+                            <thead><tr><th scope="col">Connection</th><th scope="col">When</th><th scope="col">What is sent</th></tr></thead>
+                            <tbody>
+                                <tr><td><code>huggingface.co</code></td><td>Only when you tap to download the smart-categories model (about 22 MB).</td><td>A request for the model file and its tokenizer. The request carries no account or message content.</td></tr>
+                                <tr><td>Google (Drive API and sign-in)</td><td>Only when you back up to, or restore from, Google Drive.</td><td>Your Google sign-in and the backup file you asked to write or read. See section 4.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <p>Nothing else is contacted. The app has no server of its own.</p>
+</section>
+<section id="drive" class="lsec">
+                </section>
+                <section class="lsec">
+                    <h2>4. Google Drive</h2>
+<p>Google Drive is used for two things, and only when you ask: backing up your data to your own Drive, and restoring a backup. Both live under <strong>Settings → Data</strong>; restore is also offered during onboarding. This feature is not present in the F-Droid build — see section 8.</p>
+                    <ul>
+                        <li><strong>Scope:</strong> the app requests the <code>drive.file</code> scope. This lets it read and write only the files it creates, not the rest of your Drive.</li>
+                        <li><strong>Where it lives:</strong> the backup is a file named <code>auraspend_backup.json</code> in your own Google Drive.</li>
+                        <li><strong>Contents:</strong> transactions, categories, budgets, subscriptions, savings goals, the stored bank-message queue, the messages the app could not turn into a transaction, and the classification memory. Message bodies are stored with phone numbers, account fragments and reference ids masked, but they are still message text. The file is not encrypted by AuraSpend, so anyone who can open your Drive can read it.</li>
+                        <li><strong>Restore replaces data:</strong> restoring replaces the data on the device in a single transaction. If the restore fails, the existing data is left as it was.</li>
+                        <li><strong>Authentication:</strong> sign-in is handled by Google. We never see your Google password.</li>
+                    </ul>
+                    <p class="note">A backup runs only when you tap it, and it overwrites the previous backup file. There is no scheduled or background sync, and nothing is uploaded on its own.</p>
+                    <p>Google's handling of data in your Drive is governed by <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">Google's Privacy Policy</a>.</p>
+</section>
+<section id="model" class="lsec">
+                </section>
+                <section class="lsec">
+                    <h2>5. On-device model</h2>
+<p>The smart-categories model is a sentence encoder, about 22 MB, used to suggest categories. It is downloaded from Hugging Face only after you tap the download button, and it runs entirely on your phone. AuraSpend is fully functional without it — the parsing layer does the categorising on its own.</p>
+                    <ul>
+                        <li>The file is checked against a fixed SHA-256 digest before it is used. A file that does not match is rejected.</li>
+                        <li>You can delete the model in Settings. The app keeps working, and your transactions are not affected.</li>
+                    </ul>
+                    <p>Hugging Face's handling of requests is governed by <a href="https://huggingface.co/privacy" target="_blank" rel="noopener">its privacy policy</a>.</p>
+</section>
+<section id="retention" class="lsec">
+                </section>
+                <section class="lsec">
+                    <h2>6. Storage and deletion</h2>
+<p>Your data is stored on this device, and kept until you remove it.</p>
+                    <ul>
+                        <li><strong>Individual records:</strong> delete a transaction, budget, subscription, goal or category from its screen.</li>
+                        <li><strong>Everything at once, from inside the app:</strong> <strong>Settings → Data → Delete all data</strong> wipes every table, re-seeds the default categories and forgets the position of the SMS scan, so a fresh scan can pick your inbox up again. It asks for confirmation first.</li>
+                        <li><strong>Everything at once, from outside the app:</strong> uninstall AuraSpend. Android removes its local data with the app. Clearing the app's storage in Android's Settings does the same without uninstalling. The encrypted database and its write-ahead log go with it.</li>
+                        <li><strong>Bank-message queue:</strong> processed messages remain in the local queue. Uninstalling the app removes them.</li>
+                        <li><strong>Unrecognised messages:</strong> deleted automatically after 30 days, by the same background pass that classifies new messages.</li>
+                        <li><strong>Smart-categories model:</strong> delete it from Settings.</li>
+                        <li><strong>Drive backups:</strong> uninstalling does not delete backups in your Google Drive. Delete the <code>auraspend_backup.json</code> file in Drive to remove it.</li>
+                    </ul>
+</section>
+<section id="security" class="lsec">
+                </section>
+                <section class="lsec">
+                    <h2>7. Security</h2>
+<ul>
+                        <li><strong>The database is encrypted at rest.</strong> AuraSpend uses SQLCipher, and the passphrase is derived from a non-exportable key held in the Android Keystore. The passphrase is never written to disk, to a log, or into a backup. There is no fallback to plain text: if the key cannot be obtained, the app refuses to open the database rather than opening it unencrypted.</li>
+                        <li><strong>Identifiers are masked before storage</strong>, as described in section 2.</li>
+                        <li><strong>An optional app lock</strong> — a four-digit PIN stored only as a salted PBKDF2 hash, with a biometric shortcut where the hardware supports it. It locks on a cold start and again after a minute in the background. There is deliberately no back door: “forgot PIN” wipes the data through the same path as “Delete all data”.</li>
+                        <li><strong>Your data is kept in an on-device database that other apps cannot read.</strong></li>
+                        <li><strong>The app's release builds are signed</strong>, and the release process verifies the signatures before publishing. Each release publishes a SHA-256 checksum file alongside the artifacts.</li>
+                        <li><strong>Android's Auto Backup and device-to-device transfer</strong> exclude the database, the SMS queue, the preferences and the model directory.</li>
+                    </ul>
+                    <p>No software is perfectly secure. Your phone's lock screen and device encryption are the main protection for data on a lost or shared device. Drive backups are not encrypted by AuraSpend; treat them as you would any file in your Drive. CSV exports are likewise plain files that you choose where to put them.</p>
+</section>
+<section id="builds" class="lsec">
+                </section>
+                <section class="lsec">
+                    <h2>8. The three builds</h2>
+<p>AuraSpend ships in three forms. They contain the same application code; the differences are the packaging and the optional Google services.</p>
+                    <div class="table-wrap">
+                        <table>
+                            <thead><tr><th scope="col">Build</th><th scope="col">Google Drive backup</th><th scope="col">In-app update check</th></tr></thead>
+                            <tbody>
+                                <tr><td>Google Play (<code>prod</code>)</td><td>Yes</td><td>Yes — a daily check with Play, and Settings → About → Check for updates</td></tr>
+                                <tr><td>GitHub Releases APK (<code>prod</code>)</td><td>Yes</td><td>Yes</td></tr>
+                                <tr><td>F-Droid (<code>fdroid</code>)</td><td>No — F-Droid's inclusion policy excludes Google Play Services</td><td>No — F-Droid handles updates</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <p>The update check asks the Play Store app already on your device whether a newer version exists. Nothing about the question — or the answer — is sent to AuraSpend, which has no server to send it to; the record of which version you run stays between Android and Google Play, exactly as it does for every Play-installed app.</p>
+                    <p>There is no analytics, advertising or telemetry in any of them, and no feature is held back behind a purchase. The differences above are recorded in the project's decision records, ADR 0012 and ADR 0013.</p>
+</section>
+                </section>
+                <section class="lsec">
+                    <h2>Data you export</h2>
+<p>Every transaction can be exported to a CSV file from Settings → Data, and a CSV can be imported back. The export is a plain file that you choose where to put it.</p>
+                </section>
+                <section class="lsec">
+                    <h2>Deleting your data</h2>
+<p>Everything at once, from inside the app: Settings → Data → Delete all data wipes every table, re-seeds the default categories and forgets the position of the SMS scan, so a fresh scan can pick your inbox up again. It asks for confirmation first. Everything at once, from outside the app: uninstall AuraSpend — Android removes its local data with the app, encrypted database and write-ahead log included. A Drive backup is a file in your own Google Drive; uninstalling does not remove it, so delete <code>auraspend_backup.json</code> there if you want it gone.</p>
+                </section>
+                <section class="lsec">
+                    <h2>Children</h2>
+<p>AuraSpend is not directed at children and collects no data from anyone. Parents and guardians should supervise the use of any finance app by a minor.</p>
+                </section>
+                <section class="lsec">
+                    <h2>Your rights</h2>
+<p>Because no data is collected, there is nothing for us to disclose, correct or erase on your behalf. You have full access to, and full control over, everything the app holds: edit or delete any record, export it all to CSV, or wipe the lot from Settings → Data. If you are in the EEA, the UK, California or another region with similar rights, those rights apply to you.</p>
+                </section>
+                <section class="lsec">
+                    <h2>Changes to this policy</h2>
+<p>If a change ever affects what the app does with data, this page is updated in the same release as the change, and the store listing is updated to match. The change is recorded in the project's public history at <a href="https://github.com/auraspend/auraspend" rel="noopener">github.com/auraspend/auraspend</a>, so earlier versions can be compared.</p>
+                </section>
+                <section class="lsec">
+                    <h2>Contact</h2>
+<p>Questions about privacy can go to the project's issue tracker: <a href="https://github.com/auraspend/auraspend/issues" rel="noopener">github.com/auraspend/auraspend/issues</a>. For a privacy question about your own data, the app's Settings → Data screen is usually the faster answer.</p>
+                </section>
+            </div>
+        </section>
+    </main>
+
+<!--@FOOTER-->
+
+    <script src="js/site.js" defer></script>
+</body>
+</html>

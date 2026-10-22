@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#EBE7DE" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#080807" media="(prefers-color-scheme: dark)">
+    <script>
+        // Applied before the first paint, so a stored choice never flashes the
+        // other theme — and so the scroll-reveal styles only apply when the
+        // script that undoes them is actually running.
+        (function () {
+            var root = document.documentElement;
+            root.classList.add("js");
+            try {
+                var stored = localStorage.getItem("auraspend-theme");
+                if (stored === "light" || stored === "dark") {
+                    root.setAttribute("data-theme", stored);
+                }
+            } catch (e) { /* private mode: follow the system theme */ }
+        })();
+    </script>
+    <title>Terms of Service — AuraSpend</title>
+    <meta name="description" content="What you get, what you owe, and the limits of what a piece of software can promise.">
+    <link rel="canonical" href="https://auraspend.github.io/auraspend/terms-of-service.html">
+    <meta property="og:title" content="Terms of Service — AuraSpend">
+    <meta property="og:description" content="What you get, what you owe, and the limits of what a piece of software can promise.">
+    <meta property="og:url" content="https://auraspend.github.io/auraspend/terms-of-service.html">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="AuraSpend">
+    <meta property="og:image" content="https://auraspend.github.io/auraspend/img/og.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Terms of Service — AuraSpend">
+    <meta name="twitter:description" content="What you get, what you owe, and the limits of what a piece of software can promise.">
+    <meta name="twitter:image" content="https://auraspend.github.io/auraspend/img/og.png">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="img/icon-512.png">
+</head>
+<body>
+    <a class="skip-link" href="#main">Skip to content</a>
+
+<!--@HEADER-->
+
+    <main id="main">
+        <section class="page-head">
+            <div class="container container--prose">
+                <span class="eyebrow">Legal</span>
+                <h1>Terms of Service</h1>
+                <p class="lead">Last updated: 2026</p>
+                <p class="updated">Applies to the Google Play build, the F-Droid build, the GitHub Releases APK and to APKs built from the published source.</p>
+            </div>
+        </section>
+
+        <section class="section section--tight" style="padding-top:0">
+            <div class="container container--prose">
+                <section class="lsec">
+                    <h2>1. Agreement</h2>
+<p>By installing or using AuraSpend you agree to these terms. If you do not agree, do not use the app. AuraSpend is free software under AGPL-3.0-or-later: it is licensed to you, not sold, and you may use, study, change and share it under that licence. The app runs entirely on your device — there is no online service to disrupt.</p>
+                </section>
+                <section class="lsec">
+                    <h2>2. The licence</h2>
+<p>You get a personal, non-exclusive, non-transferable licence to use the app on devices you
+         own or control. The app is licensed to you, not sold. AuraSpend is free software under the GNU Affero General Public License v3.0 or later. Every build is the same code with the same features: there is no paywall, no in-app purchase and no premium tier, and no feature is held back. Any donation to the project is a gift, not a purchase, and it buys no feature.</p>
+                </section>
+                <section class="lsec">
+                    <h2>3. Acceptable use</h2>
+<p>Do not use the app to break the law, to infringe anyone else's rights, to attack or
+         disrupt the service, or to reverse engineer it except where that restriction is void by
+         law.</p>
+                </section>
+                <section class="lsec">
+                    <h2>4. Your data</h2>
+<p>You own the financial information you enter into the app. AuraSpend keeps it on your device: the transaction ledger, the categories, the budgets, the subscriptions, the goals, the bank-message queue and the classification memory, all in a SQLCipher-encrypted database. The app has no account and no server-side copy of anything. Two things can leave the device, and only when you start them: the optional categorisation model, and a backup file in your own Google Drive. Uninstalling the app deletes the local copy; the Drive file is yours to delete. You are responsible for keeping your own copies of anything important.</p>
+      <p>You can export everything to CSV at any time. Because there is no account and no server-side copy, we cannot recover data lost through device failure, uninstalling, or a lost phone. Export regularly if the data matters to you. See the <a href="privacy-policy.html">privacy policy</a>.</p>
+                </section>
+                <section class="lsec">
+                    <h2>5. No warranty</h2>
+<p>The app is provided “as is”, without warranties of any kind, to the fullest extent the law allows. We verify our calculations with automated tests — 709 unit tests and an 82-case golden corpus of real bank-message shapes — but we do not warrant that any output is suitable for your particular purpose, including any financial, tax, legal or safety-related use. <strong>Verify anything important against your own records and, where applicable, a qualified professional.</strong></p>
+                </section>
+                <section class="lsec">
+                    <h2>6. Limitation of liability</h2>
+<p>To the fullest extent permitted by law, the developers are not liable for indirect,
+         incidental, special, consequential or punitive damages, or for lost profits, revenue or
+         data, arising from use of the app.</p>
+                </section>
+                <section class="lsec">
+                    <h2>7. Changes</h2>
+<p>The app may be updated or discontinued. If these terms change materially, the updated
+         terms will be published on this page with a new date.</p>
+
+<section id="service" class="lsec">
+                </section>
+                <section class="lsec">
+                    <h2>2. The app</h2>
+<p>AuraSpend helps you record and review your personal spending. Its features include:</p>
+                    <ul>
+                        <li>Manual entry of income and expenses.</li>
+                        <li>Budgets per category, over a weekly, monthly or yearly period.</li>
+                        <li>Subscriptions, savings goals, and recurring payments detected from your messages.</li>
+                        <li>Optional reading of bank SMS, with a review step before anything is saved.</li>
+                        <li>Insights and charts of your cash flow and spending.</li>
+                        <li>CSV export and import.</li>
+                        <li>Optional backup to and restore from your own Google Drive.</li>
+                        <li>An optional app lock, and an encrypted database on the device.</li>
+                    </ul>
+                    <p>The App runs on your device and has no service of its own that holds your data. We may change or remove features in later releases. Where a change affects data you have stored, we will say so in the release notes.</p>
+</section>
+<section id="licence" class="lsec">
+                </section>
+                <section class="lsec">
+                    <h2>3. Open-source licence</h2>
+<h3>3.1 Your rights</h3>
+                    <p>The AuraSpend source code is licensed under the GNU Affero General Public License, version 3 or later (AGPL-3.0-or-later, "AGPL"). The full text is at <a href="https://www.gnu.org/licenses/agpl-3.0.en.html" target="_blank" rel="noopener">gnu.org/licenses/agpl-3.0.en.html</a>, in the <a href="https://github.com/auraspend/auraspend/blob/main/LICENSE" target="_blank" rel="noopener">LICENSE file</a> and in the App under <strong>Settings → About → Open-source licenses</strong>. The AGPL governs your rights to copy, modify and distribute the software. Nothing in these Terms restricts those rights.</p>
+                    <p>AuraSpend was licensed under the Apache License 2.0 up to and including release 0.1.0, and under the AGPL from release 0.1.1. Releases 0.1.0 and earlier remain available under Apache-2.0.</p>
+
+                    <h3>3.2 Your obligations under the AGPL</h3>
+                    <ul>
+                        <li><strong>Derivative works stay under the AGPL.</strong> If you distribute a modified version, you must license the whole of it under AGPL-3.0 to everyone who receives it.</li>
+                        <li><strong>Mark your changes.</strong> A modified version must carry notices that it was changed, and when.</li>
+                        <li><strong>Offer source over a network.</strong> If you run a modified AuraSpend and let users interact with it over a network, you must offer them its source (AGPL section 13). The App works offline, so this applies only if you build a networked service on top of it.</li>
+                        <li><strong>Keep the notices.</strong> Do not remove copyright or licence notices.</li>
+                    </ul>
+
+                    <h3>3.3 What these Terms do not restrict</h3>
+                    <p>These Terms do not add restrictions beyond the AGPL. In particular, they do not prohibit reverse engineering for interoperability or any other purpose the AGPL allows, and they do not stop you from modifying the software.</p>
+
+                    <h3>3.4 Trademarks</h3>
+                    <p>The name and logo "AuraSpend" are trademarks of AW Builds. The AGPL does not grant rights to them. You may say that your build is based on AuraSpend, but you may not describe a modified or unofficial build as endorsed or published by AW Builds, or use the name and logo in a way that suggests it is.</p>
+</section>
+<section id="price" class="lsec">
+                </section>
+                <section class="lsec">
+                    <h2>4. Price and builds</h2>
+<h3>4.1 No charge</h3>
+                    <p>AuraSpend has no paywall, no in-app purchases and no premium tier. Every feature is available in every build at no cost.</p>
+                    <h3>4.2 Builds</h3>
+                    <ul>
+                        <li><strong>Google Play build:</strong> the build prepared for Google Play under the application ID <code>com.awbuilds.auraspend</code>, published to the <code>alpha</code> closed-testing track.</li>
+                        <li><strong>GitHub Releases APK:</strong> the same app, signed with the same release key, for installing directly. The latest release is on <a href="https://github.com/auraspend/auraspend/releases" target="_blank" rel="noopener">GitHub Releases</a>, with a SHA-256 checksum file beside every artifact.</li>
+                        <li><strong>F-Droid build:</strong> the same app without Google Play Services, which means no Google Drive backup and no in-app update check. F-Droid handles updates there. Everything else is identical.</li>
+                        <li><strong>Your own build:</strong> you may build from the source. Builds you make are not published or endorsed by us, and you are responsible for them.</li>
+                    </ul>
+                    <p>The App contains no analytics, advertising or telemetry in any build. The difference between the builds is recorded in the project's decision records, ADR 0012 and ADR 0013.</p>
+                    <h3>4.3 Supporting the project</h3>
+                    <p>Support is voluntary. You can contribute code, documentation or bug reports through the project repository. Any donation is a gift. It is not a purchase, it buys no feature, and it is not refundable.</p>
+</section>
+<section id="third-party" class="lsec">
+                </section>
+                <section class="lsec">
+                    <h2>6. Third parties</h2>
+<p>Two optional features connect to services we do not run:</p>
+                    <ul>
+                        <li><strong>Hugging Face</strong> hosts the optional categorisation model. It is subject to <a href="https://huggingface.co/terms-of-service" target="_blank" rel="noopener">Hugging Face's Terms of Service</a>.</li>
+                        <li><strong>Google Drive and Google sign-in</strong> are used for backing up and restoring a backup. They are subject to the <a href="https://developers.google.com/terms" target="_blank" rel="noopener">Google API Terms of Service</a>.</li>
+                    </ul>
+                    <p>We are not responsible for those services or for their availability, accuracy or conduct.</p>
+</section>
+<section id="use" class="lsec">
+                </section>
+                <section class="lsec">
+                    <h2>7. Acceptable use</h2>
+<p>You agree not to:</p>
+                    <ul>
+                        <li>use the App for anything unlawful;</li>
+                        <li>use the App to provide financial advice to other people;</li>
+                        <li>present a modified or unofficial build as an official AuraSpend release.</li>
+                    </ul>
+</section>
+<section id="indemnity" class="lsec">
+                </section>
+                <section class="lsec">
+                    <h2>10. Indemnity</h2>
+<p>If your use of the App breaks these Terms or the law and that causes a claim against us, you will cover our reasonable costs of responding to it. This does not apply to claims caused by our own breach of these Terms.</p>
+</section>
+<section id="law" class="lsec">
+                </section>
+                <section class="lsec">
+                    <h2>11. Governing law and disputes</h2>
+<h3>11.1 Governing law</h3>
+                    <p>These Terms are governed by the laws of India and the courts of Kerala, India. If you live in the EEA, UK or another place that gives you consumer protections you cannot waive, those protections still apply.</p>
+                    <h3>11.2 Contact first</h3>
+                    <p>Please contact us at <a href="mailto:awbuilds.support@gmail.com">awbuilds.support@gmail.com</a> before starting a dispute. We will try to resolve it within 60 days.</p>
+</section>
+<section id="termination" class="lsec">
+                </section>
+                <section class="lsec">
+                    <h2>12. Ending use</h2>
+<p>You can stop using the App at any time by uninstalling it. We may stop distributing any build, or change these Terms, but we will not terminate a licence the AGPL grants you to the source code.</p>
+                    <p>Sections 3, 5, 8, 9, 10, 11 and 14 continue to apply after you stop using the App.</p>
+</section>
+<section id="general" class="lsec">
+                </section>
+                <section class="lsec">
+                    <h2>14. General</h2>
+<ul>
+                        <li><strong>Entire agreement:</strong> these Terms, the Privacy Policy and the AGPL are the whole agreement between you and AW Builds about the App.</li>
+                        <li><strong>Severability:</strong> if a part of these Terms is unenforceable, the rest still applies.</li>
+                        <li><strong>No waiver:</strong> a delay in enforcing a term is not a waiver of it.</li>
+                        <li><strong>Contact:</strong> <a href="mailto:awbuilds.support@gmail.com">awbuilds.support@gmail.com</a>, or <a href="https://github.com/auraspend/auraspend" target="_blank" rel="noopener">github.com/auraspend/auraspend</a>.</li>
+                    </ul>
+</section>
+                </section>
+                <section class="lsec">
+                    <h2>8. Contact</h2>
+<p><a href="https://github.com/auraspend/auraspend/issues" rel="noopener">github.com/auraspend/auraspend/issues</a></p>
+                </section>
+            </div>
+        </section>
+    </main>
+
+<!--@FOOTER-->
+
+    <script src="js/site.js" defer></script>
+</body>
+</html>
