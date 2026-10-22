@@ -1000,6 +1000,12 @@ application id): `:benchmark:connectedDevBenchmarkAndroidTest` — see README.
       environment variable (`ExternalCorpusEvalTest` is the pattern), no-op
       when it is absent, and never become a committed fixture. Delete a
       temporary copy when the measurement is done.
+    - **A user's report is data, not documentation.** An export, a message body,
+      an amount or a screenshot sent in to explain a bug is never written to
+      disk (not even a temporary CSV), never piped through a command that logs,
+      and never quoted in a plan, handoff, issue, commit or ticket. Analyse it in
+      memory; record **families and counts**, never rows. The bugs it proves are
+      still described in full — by shape.
     - This rule outranks convenience, review, and "it was already in the
       ticket". If an example is needed to explain a bug, invent one.
 
