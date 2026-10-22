@@ -109,6 +109,22 @@ beats:
 - The hero grew 25.0 → 25.8 s and the vertical 15.0 → 16.0 s. The extra
   seconds are what the reads needed.
 
+## The vertical got its own composition, not a crop
+
+1080×1920 is a different frame, and the first cut treated it as a wide one
+with the sides removed: every block sat in the top half, the type was sized
+for 1920, and the end card had no product in it at all. The polish pass:
+
+- the headline 78 → 96px, the message body 28 → 32px, the parse values
+  36 → 44px, the stat numbers 104 → 124px, the privacy statement 46 → 54px;
+- every block moved into the vertical safe zone (the top ~250px and the
+  bottom ~400px belong to the platform, not to the film);
+- the device grew 620 → 720px wide — 67% of the frame, with the violet
+  spotlight landing on the Swiggy row;
+- the end card now has the app in it: the lockup, the rule, the tagline and
+  the `Get the app` pill at the top, and the Home screen rising in below on
+  a spring.
+
 ## Six traps, all of which cost a render
 
 1. **GSAP owns `transform-origin`.** Its default is `50% 50%` and it
@@ -159,5 +175,3 @@ a `nested_structure_needs_subcomposition` warning on every scene.
 - A square (1080×1080) cut for the social feed is not made.
 - No captions. The Play promo slot does not require them, but the vertical
   cut would benefit if it is ever posted with sound off.
-- The vertical's end card has no device in it (there is no room beside the
-  text); the hero's does. Adding one means a second layout pass.
