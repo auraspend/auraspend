@@ -77,12 +77,16 @@ class MessageDateFallbackTest {
 
     @Test
     fun `a stated date still wins over the arrival time`() {
+        // A date the message states, and a plausible relationship to its
+        // arrival: the message arrived months later than the day it names.
+        // (A stated date *after* the arrival is clamped — see
+        // `AmountAndDateIntegrityTest`.)
         val transaction = SmsAutoClassifier.toTransaction(
-            classified("example-dated", "Rs 749.50 debited at EXAMPLE STORE on 15/03/2026"),
+            classified("example-dated", "Rs 749.50 debited at EXAMPLE STORE on 15/03/2021"),
             categoryId = "cat_other",
             receivedAt = receivedAt
         )
-        assertEquals(LocalDateTime.of(2026, 3, 15, 12, 0), transaction.date)
+        assertEquals(LocalDateTime.of(2021, 3, 15, 12, 0), transaction.date)
     }
 
     @Test

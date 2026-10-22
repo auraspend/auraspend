@@ -62,7 +62,10 @@ object AiSignalFusion {
             )
         val isSubscription = (ai?.isSubscription == true) || recurringByKeyword || subscriptionMerchant
 
-        val resolvedMerchant = base.merchant ?: ai?.merchant
+        // A model-supplied merchant is validated like any other: "60" and "Mr"
+        // reached the merchant column of a real export (2026-10-22) because the
+        // fusion accepted whatever the runtime returned.
+        val resolvedMerchant = base.merchant ?: BankMessageParser.sanitizeMerchant(ai?.merchant)
 
         // Precedence is deliberate and one-directional: a category the parser or
         // the user already resolved always wins, and the keyword map is consulted

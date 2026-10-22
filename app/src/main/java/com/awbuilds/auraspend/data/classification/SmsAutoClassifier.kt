@@ -223,6 +223,26 @@ object SmsAutoClassifier {
         "(?i)\\b(?:pack|data|gb|benefits?)\\b[^!\\n]{0,40}?\\b(?:credited|added|activated)\\b"
     )
 
+    /**
+     * A merchant or utility acknowledging the user's payment. The message names
+     * a credit verb ("received", "credited"), so it reads as income — but it is
+     * the counterparty's receipt, and the bank already recorded the payment.
+     * Left in, each one double-counts the same money in both directions
+     * (measured on a real export, 2026-10-22: a utility reminder, a courier
+     * receipt, an insurer's acknowledgement and a lender's "payment update").
+     *
+     * Scoped to phrasing no bank uses for a credit of its own, because a real
+     * payment confirmation the user needed ("your payment … has been received.
+     * Receipt No…") must still be booked as the expense it is.
+     */
+    private val merchantReceiptPatterns = listOf(
+        Regex("(?i)\\bcontinue\\s+enjoying\\b"),
+        Regex("(?i)\\bwe\\s+are\\s+happy\\s+to\\s+inform\\s+you\\b"),
+        Regex("(?i)\\bpayment\\s+update\\b"),
+        Regex("(?i)\\bsuccessfully\\s+received\\s+against\\s+your\\s+order\\b"),
+        Regex("(?i)\\bplz\\s+submit\\s+proposal\\b")
+    )
+
     /** A "wallet" credit that wants a click is a lead, not a statement. */
     private val walletLinkPattern = Regex(
         "(?i)\\bwallet\\b[\\s\\S]{0,140}?\\b(?:https?://|www\\.|click\\s+(?:it|to|here))\\b"
@@ -302,6 +322,13 @@ object SmsAutoClassifier {
         // resurrected by exactly that loop) — and the memory runs after the
         // ingest guards, never before them.
         Regex("(?i)\\bpayment\\s+due\\s+date\\b|\\btotal\\s+amount\\s+payable\\b"),
+
+        // Statement summaries list several movements and close with a balance:
+        // "Tran for A/C XX0116 1) … Cr 2) … Dr 3) …". The amount picker found
+        // the closing balance and booked a six-figure phantom (measured on a
+        // real export, 2026-10-22). A single movement never numbers its legs,
+        // so the numbered list is the signature.
+        Regex("(?i)\\btran\\s+for\\s+a/?c\\b[\\s\\S]{0,400}?\\b1\\)"),
         // ── Credit-card bill settlements are the user's own money moving
         // between their own pockets, and both announcements look like
         // transactions alone:
@@ -400,6 +427,19 @@ object SmsAutoClassifier {
     ): Transaction {
         val parsed = classified.parsed
         val balanceInfo = BankMessageParser.detectBalanceAndInstrument(parsed.rawMessage)
+        // The message's own arrival, when the queue row carried one.
+        val arrival = if (receivedAt > 0L) {
+            LocalDateTime.ofInstant(Instant.ofEpochMilli(receivedAt), ZoneId.systemDefault())
+        } else {
+            null
+        }
+        // A date read from a validity/expiry clause can sit in the future — a
+        // document's "valid until" date became the transaction's day. A payment
+        // cannot have happened after the message arrived; if the stated date is
+        // more than a day past it, the arrival is the honest answer.
+        val statedDate = parsed.date?.takeIf { stated ->
+            arrival == null || !stated.isAfter(arrival.plusDays(1))
+        }
         val subscriptionCategory = if (classified.isSubscription) "cat_subscription" else null
         val effectiveCategory = subscriptionCategory ?: categoryId ?: parsed.categoryId ?: "cat_other"
         return Transaction(
@@ -418,12 +458,7 @@ object SmsAutoClassifier {
             // which booked a July message as the October day the drain reached it
             // (owner's device, 2026-10-13). The provider's arrival timestamp is
             // the honest fallback.
-            date = parsed.date
-                ?: if (receivedAt > 0L) {
-                    LocalDateTime.ofInstant(Instant.ofEpochMilli(receivedAt), ZoneId.systemDefault())
-                } else {
-                    LocalDateTime.now()
-                },
+            date = statedDate ?: arrival ?: LocalDateTime.now(),
             type = parsed.type ?: TransactionType.EXPENSE,
             isRecurring = classified.isSubscription,
             sourceSmsId = classified.sms.id.takeIf { it.isNotBlank() }
@@ -586,6 +621,7 @@ object SmsAutoClassifier {
                 return true
             }
             if (couponPattern.containsMatchIn(message)) return true
+            if (merchantReceiptPatterns.any { it.containsMatchIn(message) }) return true
             if (futureCreditPattern.containsMatchIn(message)) return true
             if (spendMarketingPattern.containsMatchIn(message)) return true
             if (discountPattern.containsMatchIn(message)) return true

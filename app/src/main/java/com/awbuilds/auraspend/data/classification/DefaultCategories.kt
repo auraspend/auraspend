@@ -167,7 +167,7 @@ val categoryKeywordMap: Map<String, String> = mapOf(
     // Chains the other parser filed as shopping and this one left blank.
     "big bazaar" to "cat_shopping",
     "bazaar" to "cat_shopping",
-    "a2z" to "cat_shopping",
+    "a2z" to "cat_grocery",
     "croma" to "cat_shopping",
     "reliance digital" to "cat_shopping",
     "vijay sales" to "cat_shopping",
@@ -323,7 +323,24 @@ val categoryKeywordMap: Map<String, String> = mapOf(
     // counterparty is a person-to-person transfer, and that decision is made in
     // `BankMessageParser.categoryIdFor` where the direction (received → income,
     // sent → expense) is known.
-    "to self" to "cat_transfer"
+    "to self" to "cat_transfer",
+    // ── Families from a real export (2026-10-22) ──────────────────────────────
+    // Merchants that were landing in Other, or worse in Transfer — which hides
+    // them from the spending totals entirely. Word-bounded, longest-key-wins,
+    // so none of these can fire inside a longer name.
+    "kims" to "cat_healthcare",
+    "bawa" to "cat_healthcare",
+    "fuels" to "cat_transport",
+    "a to z" to "cat_grocery",
+    "safe gold" to "cat_investment",
+    "lulu" to "cat_grocery",
+    "social kitchen" to "cat_food",
+    "ruchi" to "cat_food",
+    "sweets" to "cat_food",
+    "bakery" to "cat_food",
+    "kalyan silks" to "cat_shopping",
+    "fashion house" to "cat_shopping",
+    "stationery" to "cat_shopping",
 )
 
 /**

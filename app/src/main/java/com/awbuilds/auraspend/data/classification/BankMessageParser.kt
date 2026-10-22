@@ -263,6 +263,34 @@ object BankMessageParser {
     /** Bare decimal amounts like "amounting to 1500.00" (last-resort). */
     private val bareAmount = Regex("""\b([1-9][0-9]{2,9}\.[0-9]{2})\b""")
 
+    /**
+     * A balance clause and its figure: "BAL-Rs.6221.41", "Bal Rs 41.45",
+     * "Total Bal:Rs.89,326CR", "Avail.bal INR 17,833.59".
+     *
+     * Blanked out before amounts are collected. One message family writes the
+     * **movement bare** ("4500 credited to your A/c …") and the balance
+     * rupee-marked, so the balance used to be the only rupee figure in the body
+     * and won the pick — ~30 rows of a real export booked the account balance as
+     * income (2026-10-22).
+     */
+    private val balanceClause = Regex(
+        """(?i)\b(?:avlbl\s*amt|avail(?:able)?\s*\.?\s*(?:bal(?:ance)?|amt|limit)?|""" +
+            """ava(?:i)?l\s*\.?\s*(?:bal(?:ance)?|limit)?|""" +
+            """total\s*(?:available\s*)?(?:bal(?:ance)?|avl)|bal(?:ance)?)\b""" +
+            """\s*(?:is\s*)?[.:\-]?\s*(?:rs\.?|inr|₹)\s*[0-9][0-9,]*(?:\.[0-9]{1,2})?"""
+    )
+
+    /**
+     * A bare figure immediately followed by its verb: "4500 credited to your
+     * A/c". Only the family above needs it, and only when no rupee-marked
+     * movement figure exists — which is exactly why it is a fallback and not a
+     * primary pattern.
+     */
+    private val bareAmountBeforeVerb = Regex(
+        """(?<![A-Za-z0-9.,])([1-9][0-9]{1,8}(?:\.[0-9]{1,2})?)\s+(?:credited|debited)\b""",
+        RegexOption.IGNORE_CASE
+    )
+
     /** Boilerplate whose numbers must never become the transaction amount. */
     private val balanceContext = Regex(
         """(?i)\b(?:avl|available|avail|a/c\s*bal|bal|balance|updated|limit|outstanding|total\s*due|min(?:imum)?\s*due|due|credit\s*limit|remaining|utilised|utilized|reward|points|cash\s*limit)[a-z\s.:-]{0,18}$"""
@@ -323,6 +351,20 @@ object BankMessageParser {
                 ?.replace(",", "")?.toDoubleOrNull()
         }
         return Triple(balance, last4, isCard)
+    }
+
+    /**
+     * A merchant name from **any** source, or null when it is not one.
+     *
+     * The on-device classifier fills a missing merchant, and its output was never
+     * validated: a bare number and a bare honorific both reached the merchant
+     * column of a real export (2026-10-22). One choke-point, so a future source
+     * cannot skip it.
+     */
+    internal fun sanitizeMerchant(raw: String?): String? {
+        if (raw.isNullOrBlank()) return null
+        val cleaned = cleanMerchant(raw) ?: return null
+        return cleaned.takeIf { looksLikeMerchant(it) }
     }
 
     /** Replaces each match with spaces of equal length so indexes keep working. */
@@ -440,8 +482,20 @@ object BankMessageParser {
         // Generic descriptors are not merchant identities. Without these the
         // "towards" pattern returned "school fees", "house rent", "general
         // store" and "donation" as merchants, which then hijacked the category.
-        "school fees", "house rent", "general store", "donation"
+        "school fees", "house rent", "general store", "donation",
+        // Clause fragments and calls to action, measured on a real export
+        // (2026-10-22): "debit of A" (the clause was cut mid-account),
+        // "view now"/"view details" (a button), and "amount of".
+        "debit of", "credit of", "amount of", "view now", "view details", "view more",
+        "tran for", "a/c no", "account no"
     )
+
+    /**
+     * A bare honorific is a fragment of a name, not a name: "Mr" reached the
+     * merchant column once per row on a real export (2026-10-22), and the same
+     * message named no one else.
+     */
+    private val bareHonorifics = setOf("mr", "mrs", "ms", "miss", "dr", "sri", "smt", "shri", "sir")
 
     // ─────────────────────────────────────────────────────────────────────────
     // Date & time parsing
@@ -565,7 +619,13 @@ object BankMessageParser {
             """[A-Za-z][A-Za-z &.]{1,30}\s+account\b|""" +
             """\bself[-\s]?transfer\b|""" +
             // An explicit own-account transfer label.
-            """\b(?:own|self|linked)\s+(?:account|a/c)\s+transfer\b"""
+            """\b(?:own|self|linked)\s+(?:account|a/c)\s+transfer\b|""" +
+            // One SMS describing **both legs** of a move between the user's own
+            // accounts: "A/c X9780 debited for Rs.3450.00 … and XX179 credited".
+            // The credited thing is an account number, never a second amount —
+            // that is what keeps a genuine debit-plus-refund out of this shape.
+            """\bdebited\b[^\n]{0,110}?\band\b\s*(?:a\s*/?\s*c\.?|account|acct)?\s*""" +
+            """(?:[x*]{2,}\d{2,}|\d{3,})\s*[^\n]{0,12}?\bcredited\b"""
     )
 
     internal fun detectType(message: String): TransactionType? {
@@ -628,8 +688,9 @@ object BankMessageParser {
 
         val candidates = mutableListOf<Candidate>()
 
-        // Blank out credit/available-limit clauses first — see [creditLimitClause].
-        val searchable = maskOut(message, creditLimitClause)
+        // Blank out credit/available-limit clauses and balance clauses first —
+        // see [creditLimitClause] and [balanceClause].
+        val searchable = maskOut(maskOut(message, creditLimitClause), balanceClause)
 
         // No per-transaction currency yet: a foreign amount must not be booked
         // with the rupee symbol. The pipeline will surface it as unrecognized.
@@ -639,25 +700,41 @@ object BankMessageParser {
         val inr = inrCurrencyMarker.find(searchable)
         if (foreign != null && (inr == null || foreign.range.first < inr.range.first)) return null
 
-        fun collect(regex: Regex) {
+        fun collect(regex: Regex, into: MutableList<Candidate> = candidates) {
             for (m in regex.findAll(searchable)) {
                 val value = parseIndianNumber(m.groupValues[1]) ?: continue
                 if (value <= 0.0 || value >= 100_000_000.0) continue
-                candidates.add(Candidate(value, m.range.first, m.range.last))
+                into.add(Candidate(value, m.range.first, m.range.last))
             }
         }
 
         collect(prefixedAmount)
         collect(suffixedAmount)
-        if (candidates.isEmpty()) collect(bareAmount)
+        if (candidates.isEmpty()) {
+            // The movement may be written bare while every rupee figure was a
+            // balance — see [balanceClause].
+            collect(bareAmountBeforeVerb)
+            if (candidates.isEmpty()) collect(bareAmount)
+        }
 
         if (candidates.isEmpty()) return null
 
-        // Drop candidates sitting in balance/limit boilerplate.
-        val usable = candidates.filter { c ->
+        fun outsideBoilerplate(list: List<Candidate>): List<Candidate> = list.filter { c ->
             val lookBehindStart = maxOf(0, c.start - 30)
             !balanceContext.containsMatchIn(message.substring(lookBehindStart, c.start))
-        }.ifEmpty { candidates } // all-in-boilerplate edge case: fall back to all
+        }
+
+        // Drop candidates sitting in balance/limit boilerplate.
+        var usable = outsideBoilerplate(candidates)
+        if (usable.isEmpty()) {
+            // Every rupee figure was a balance or a limit. Try the bare form
+            // before the old "use them anyway" fallback, which is what booked a
+            // balance when the movement itself carried no currency marker.
+            val bare = mutableListOf<Candidate>()
+            collect(bareAmountBeforeVerb, bare)
+            usable = outsideBoilerplate(bare)
+        }
+        if (usable.isEmpty()) usable = candidates
 
         // Prefer the candidate nearest to a debit/credit verb.
         val verbs = (debitRegexes + creditRegexes).mapNotNull { r ->
@@ -906,6 +983,7 @@ object BankMessageParser {
         if (s.isEmpty()) return null
 
         val lower = s.lowercase(Locale.ENGLISH)
+        if (lower in bareHonorifics) return null
         val tokens = lower.split(Regex("[^a-z0-9&]+")).filter { it.isNotBlank() }
         // Token-aware: "Kotak Bank a" used to survive because the old check only
         // looked at the string prefix, so "bank" in the middle was invisible.

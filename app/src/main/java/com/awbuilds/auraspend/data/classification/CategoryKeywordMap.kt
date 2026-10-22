@@ -70,7 +70,7 @@ object CategoryKeywordMap {
         // Chains the other parser filed as shopping and this one left blank.
         "big bazaar" to "cat_shopping",
         "bazaar" to "cat_shopping",
-        "a2z" to "cat_shopping",
+        "a2z" to "cat_grocery",
         "store" to "cat_shopping",
         // Transport
         "uber" to "cat_transport",
@@ -139,7 +139,23 @@ object CategoryKeywordMap {
         "broadband" to "cat_bills",
         "recharge" to "cat_bills",
         "bescom" to "cat_bills",
-        "water" to "cat_bills"
+        "water" to "cat_bills",
+    // ── Families from a real export (2026-10-22) ──────────────────────────────
+    // Merchants that were landing in Other, or worse in Transfer — which hides
+    // them from the spending totals entirely. Word-bounded, longest-key-wins,
+    // so none of these can fire inside a longer name.
+        "kims" to "cat_healthcare",
+        "bawa" to "cat_healthcare",
+        "fuels" to "cat_transport",
+        "a to z" to "cat_grocery",
+        "safe gold" to "cat_investment",
+        "lulu" to "cat_grocery",
+        "social kitchen" to "cat_food",
+        "ruchi" to "cat_food",
+        "sweets" to "cat_food",
+        "kalyan silks" to "cat_shopping",
+        "fashion house" to "cat_shopping",
+        "stationery" to "cat_shopping",
     )
 
     /**
