@@ -10,6 +10,38 @@ internal APIs.
 
 ## [Unreleased]
 
+## [0.1.98] — 2026-11-04
+
+A presentation release, and a subtraction rather than an addition. **No schema,
+data-model, corpus or classification change** — the 82-case golden corpus is
+bit-identical (80/82 exact, 97.6 %, type 98.8 %, category 100 %, merchant
+98.8 %, amount 98.8 %).
+
+### Changed
+
+- **Page navigation is instant.** There is no slide, no fade and no zoom
+  between screens: the destination is there in the frame after the tap.
+  Tab switches had been instant since 0.1.91; every other destination still
+  moved, and the motion was doing damage. A push slid the new page in by an
+  eighth of the screen over 200 ms while the outgoing page faded out in 100 ms,
+  so the last half of the move played over empty background. Back was worse: it
+  nudged the page an eighth of the width and then removed it mid-screen, which
+  read as a nudge followed by a blink. Measured on a Moto G40 at 60 fps, a push
+  held 18 frames of motion over 166 ms and a Back 17 frames over 223 ms; both
+  are now one frame, and the only motion left around a tap is the touch ripple.
+  One fewer full-screen layer to composite is also the cheapest option on the
+  mid-range phones this app targets.
+
+### Fixed (site)
+
+- **The privacy and terms pages are generated from one source** rather than
+  hand-written twice, and the generated privacy policy gains the
+  "Permissions, and why each is needed" section the hand-written page never
+  had.
+- **`tools/stamp_site_chrome.py` works again.** It was a silent no-op — it
+  looked for placeholders that had been filled in by hand years earlier — so
+  "re-run it after changing the chrome" was untrue.
+
 ## [0.1.97] — 2026-10-22
 
 Patch on 0.1.96. **No schema, data-model or corpus change** — the 82-case

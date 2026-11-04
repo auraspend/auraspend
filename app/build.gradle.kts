@@ -30,15 +30,14 @@ android {
         applicationId = "com.awbuilds.auraspend"
         minSdk = 30
         targetSdk = 37
-        // 0.1.93 — patch on 0.1.92 (handoff 0072): the search field, the
-        // merchant field and the Settings switches had no accessible name, and
-        // a settings row's title did nothing when it was tapped. No data,
-        // schema or classification change, and the one behaviour change is
-        // that a row now toggles as every other row in that screen does.
+        // 0.1.98 — a presentation release (handoff 0081): page navigation is
+        // instant. No slide and no fade between destinations; the motion layer
+        // that made Back nudge the page and then blink it out is deleted. No
+        // data, schema, corpus or classification change.
         // versionCode must strictly increase for every store upload; Play
         // rejects an update that reuses one.
-        versionCode = 19
-        versionName = "0.1.97"
+        versionCode = 20
+        versionName = "0.1.98"
 
         // True in dev/prod; the `fdroid` flavor flips it to false (ADR 0012).
         // Screens read it to hide the Drive entry points rather than offer

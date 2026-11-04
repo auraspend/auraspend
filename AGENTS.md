@@ -3,7 +3,39 @@
 > Read this file and the latest file in `docs/handoffs/` before touching anything.
 > Update both (plus `CLAUDE.md` / `memory/` when you learn something durable) before ending a session.
 >
-> Latest: `docs/handoffs/0079-release-0.1.97.md` — **0.1.97 is cut**:
+> Latest: `docs/handoffs/0081-release-0.1.98.md` — **0.1.98 is prepared, not
+> tagged**: `versionCode` 20. A presentation release and a subtraction: **page
+> navigation is instant, with no transition at all** (0080). No slide, no fade,
+> no zoom between destinations; the motion layer that made Back nudge the page
+> and then blink it out is deleted. Measured at 60 fps on the Moto G40: a push
+> held 18 frames over 166 ms, a Back 17 over 223; both are **one frame** now.
+> **No schema, data-model, corpus or classification change** — the 82-case
+> corpus is bit-identical (80/82 exact, 97.6 %, type 98.8, category 100). Also
+> carries the dev-only site commit: the legal pages are generated from one
+> source and `stamp_site_chrome.py` works again. **A release gate was lying**:
+> `tools/verify_r8_release.sh` only built when an artifact was *missing*, so a
+> version bump left it reading 0.1.96's APK and printing "all checks passed" —
+> it now always invokes Gradle and lets it decide. 709 tests, lint
+> baseline-only, F-Droid compiles, R8/native/16 KB all green against the 0.1.98
+> artifacts, site version gate green. Open: the tag is the owner's call.
+> Before: `docs/handoffs/0080-instant-navigation.md` — **page navigation is
+> instant, everywhere**: no slide, no fade, no zoom. The motion layer in
+> `NavGraph.kt` is deleted (tab switches were already instant since 0064; pushes
+> slid an eighth of a screen over 200 ms while the old page faded in 100 ms, and
+> **Back nudged the page an eighth and then blinked it out mid-screen**). Owner's
+> call: no animation at all. `NavHost` pins all four transitions to `None` — and
+> **those four `None`s are load-bearing**, because `navigation-compose`'s own
+> default is a **700 ms crossfade**, so deleting a destination's override without
+> them makes navigation seven times slower, silently, with every gate green (a
+> JVM test cannot see a transition). Measured on the Moto G40 at 60 fps: push
+> 18 frames / 166 ms → **one frame**, back 17 / 223 → **one frame**, the tab
+> switch (the control) unchanged at 32–46 ms of tap ripple. The chrome no longer
+> lags behind the cut. Known: predictive back has no preview any more (the
+> gesture cuts on release, which is what instant means), and the detail body
+> paints ~47 ms after the cut because the row is read from the encrypted database
+> on arrival — hidden by the old motion, not caused by this change. 709 tests,
+> lint baseline-only; **no version bump, uncommitted**.
+> Before: `docs/handoffs/0079-release-0.1.97.md` — **0.1.97 is cut**:
 > versionCode 19. A patch on 0.1.96, and **forward-only**: transactions already
 > in a user's database keep the amounts, dates and categories they were given,
 > and a re-ingest is the only way to correct history. No schema, data-model or
