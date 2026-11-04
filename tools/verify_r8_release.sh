@@ -34,14 +34,19 @@ good() { printf '   ok    %s\n' "$1"; }
 # on CI, `assembleProdRelease` yields mapping.txt and the config analyzer, so
 # checking only those two skipped the build and then failed on a bundle that
 # was never made. Anything the checks below read must trigger the build.
+#
+# **Always build, and let Gradle decide it is up to date.** The old guard only
+# built when an artifact was *missing*, which is exactly the release it cannot
+# catch: bumping versionCode leaves every artifact present, so the gate read
+# last release's bundle and APK and reported a pass for a tree that had never
+# been built (found cutting 0.1.98 — the APK on disk was still 0.1.96). A
+# cached Gradle run costs a few seconds; a false pass costs a release.
 # `${VARIANT^}` is bash 4+; macOS ships bash 3.2, so capitalise portably.
 VARIANT_CAP="$(printf '%s' "${VARIANT:0:1}" | tr '[:lower:]' '[:upper:]')${VARIANT:1}"
-if [[ ! -f "$MAPPING" || ! -f "$ANALYZER" || -z "$(ls "${AAB_OUT}"/*.aab 2>/dev/null)" ]]; then
-  note "Building ${VARIANT}Release (bundle + APK)"
-  ./gradlew "bundle${VARIANT_CAP}Release" "assemble${VARIANT_CAP}Release" --console=plain -q \
-    || { echo "build failed"; exit 1; }
-  ./gradlew ":app:analyze${VARIANT_CAP}ReleaseR8Config" --console=plain -q || true
-fi
+note "Building ${VARIANT}Release (bundle + APK)"
+./gradlew "bundle${VARIANT_CAP}Release" "assemble${VARIANT_CAP}Release" --console=plain -q \
+  || { echo "build failed"; exit 1; }
+./gradlew ":app:analyze${VARIANT_CAP}ReleaseR8Config" --console=plain -q || true
 
 note "1. R8 scores vs Play's 25% floor (enforced February 2027)"
 if [[ -f "$ANALYZER" ]]; then
