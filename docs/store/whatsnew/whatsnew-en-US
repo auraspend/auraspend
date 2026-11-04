@@ -1,5 +1,4 @@
-What's new in 0.1.97
+What's new in 0.1.98
 
-• Fixed: a bank's balance is no longer booked as the transaction amount.
-• Fixed: statement summaries, and "your payment has been received" messages from a utility or an insurer, are no longer booked as income or as spending.
-• Fixed: real merchants are no longer filed as transfers, which had been removing them from your spending totals.
+• Page changes are now instant: screens no longer slide or fade. Moving between them is immediate, and the app draws less on the way, which helps on older phones.
+• Nothing else changed — no database, data or classification change in this release.

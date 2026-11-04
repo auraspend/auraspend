@@ -3,14 +3,8 @@ package com.awbuilds.auraspend.ui.navigation
 import android.content.Context
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHostState
@@ -23,7 +17,6 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
-import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -154,35 +147,6 @@ private inline fun <reified VM : ViewModel> factoryOf(
     initializer { create() }
 }
 
-/**
- * Screen transitions.
- *
- * **A tab switch is instant**, which is what Material's bottom navigation does
- * and what makes the app feel quick. A cross-fade between two full screens puts
- * *each* into its own alpha layer for the whole animation, and that fill rate is
- * what the mid-range phones this app targets do not have to spare — it was
- * showing up as 37 % janky frames on a transition (handoff 0064).
- *
- * Pushed screens keep a subtle push. The fade is gone from the entering and
- * popping screens so those animations translate one opaque surface instead of
- * compositing two with alpha.
- */
-private const val TRANSITION_MS = 200
-private val pushEnter: EnterTransition =
-    slideInHorizontally(tween(TRANSITION_MS)) { it / 8 }
-
-private val pushExit: ExitTransition = fadeOut(tween(TRANSITION_MS / 2))
-
-private val popEnter: EnterTransition = fadeIn(tween(TRANSITION_MS))
-
-private val popExit: ExitTransition =
-    slideOutHorizontally(tween(TRANSITION_MS)) { it / 8 }
-
-/** Both ends of this transition are top-level tabs, so it is a tab switch. */
-private fun AnimatedContentTransitionScope<NavBackStackEntry>.isTabSwitch(): Boolean =
-    initialState.destination.route in Routes.topLevel &&
-        targetState.destination.route in Routes.topLevel
-
 private fun NavHostController.navigateToTab(route: String) {
     navigate(route) {
         popUpTo(Routes.HOME) { saveState = true }
@@ -191,6 +155,17 @@ private fun NavHostController.navigateToTab(route: String) {
     }
 }
 
+/**
+ * Page navigation is **instant, everywhere** (handoff 0080).
+ *
+ * There was a motion layer here before 0080: tab switches were already instant,
+ * pushed screens slid in by an eighth of the width over 200 ms while the
+ * outgoing page faded over 100 ms, and Back nudged the page an eighth of the
+ * width and *then* cut — a nudge-then-blink. The owner asked for instant
+ * navigation, so the whole layer is gone rather than retuned: one fewer thing
+ * to composite is also the cheapest option on the mid-range phones this app
+ * targets, which is the fill-rate finding from handoff 0064.
+ */
 @Composable
 fun AuraSpendNavHost(
     repository: TransactionRepository,
@@ -229,14 +204,19 @@ fun AuraSpendNavHost(
             showQuickAdd = true
         }
     ) {
+        // **The four `None`s are load-bearing.** `navigation-compose`'s own
+        // default is a 700 ms crossfade, so deleting a destination's transition
+        // without pinning `None` here makes navigation slower, not instant —
+        // and it fails silently. A JVM test cannot see it; the frame count on
+        // a device is the evidence (handoff 0080).
         NavHost(
             navController = navController,
             startDestination = Routes.SPLASH,
             modifier = Modifier.fillMaxSize(),
-            enterTransition = { if (isTabSwitch()) EnterTransition.None else pushEnter },
-            exitTransition = { if (isTabSwitch()) ExitTransition.None else pushExit },
-            popEnterTransition = { if (isTabSwitch()) EnterTransition.None else popEnter },
-            popExitTransition = { if (isTabSwitch()) ExitTransition.None else popExit }
+            enterTransition = { EnterTransition.None },
+            exitTransition = { ExitTransition.None },
+            popEnterTransition = { EnterTransition.None },
+            popExitTransition = { ExitTransition.None }
         ) {
             composable(Routes.SPLASH) {
                 SplashScreen(
@@ -354,13 +334,7 @@ fun AuraSpendNavHost(
 
             // ── Pushed destinations ───────────────────────────────────────────
 
-            composable(
-                route = Routes.SETTINGS,
-                enterTransition = { pushEnter },
-                exitTransition = { pushExit },
-                popEnterTransition = { popEnter },
-                popExitTransition = { popExit }
-            ) {
+            composable(Routes.SETTINGS) {
                 SettingsDestination(
                     repository = repository,
                     navController = navController,
@@ -373,13 +347,7 @@ fun AuraSpendNavHost(
                 )
             }
 
-            composable(
-                route = Routes.UNRECOGNIZED_SMS,
-                enterTransition = { pushEnter },
-                exitTransition = { pushExit },
-                popEnterTransition = { popEnter },
-                popExitTransition = { popExit }
-            ) {
+            composable(Routes.UNRECOGNIZED_SMS) {
                 val app = LocalContext.current.applicationContext as AuraSpendApp
                 // Reads the same Flow the dashboard badge and this screen observe.
                 // Deleting the row first means a file that fails to save loses
@@ -400,13 +368,7 @@ fun AuraSpendNavHost(
                 )
             }
 
-            composable(
-                route = Routes.CLASSIFICATION,
-                enterTransition = { pushEnter },
-                exitTransition = { pushExit },
-                popEnterTransition = { popEnter },
-                popExitTransition = { popExit }
-            ) {
+            composable(Routes.CLASSIFICATION) {
                 val categories by repository.getAllCategories()
                     .collectAsState(initial = emptyList())
                 val viewModel = viewModel<ClassificationViewModel>(
@@ -432,13 +394,7 @@ fun AuraSpendNavHost(
                 )
             }
 
-            composable(
-                route = Routes.BUDGETS,
-                enterTransition = { pushEnter },
-                exitTransition = { pushExit },
-                popEnterTransition = { popEnter },
-                popExitTransition = { popExit }
-            ) {
+            composable(Routes.BUDGETS) {
                 val viewModel = viewModel<BudgetViewModel>(
                     factory = factoryOf { BudgetViewModel(repository) }
                 )
@@ -448,49 +404,25 @@ fun AuraSpendNavHost(
                 )
             }
 
-            composable(
-                route = Routes.LICENSES,
-                enterTransition = { pushEnter },
-                exitTransition = { pushExit },
-                popEnterTransition = { popEnter },
-                popExitTransition = { popExit }
-            ) {
+            composable(Routes.LICENSES) {
                 LicenseScreen(onBack = { navController.popBackStack() })
             }
 
-            composable(
-                route = Routes.SUBSCRIPTIONS,
-                enterTransition = { pushEnter },
-                exitTransition = { pushExit },
-                popEnterTransition = { popEnter },
-                popExitTransition = { popExit }
-            ) {
+            composable(Routes.SUBSCRIPTIONS) {
                 RecurringScreen(
                     repository = repository,
                     onBack = { navController.popBackStack() }
                 )
             }
 
-            composable(
-                route = Routes.GOALS,
-                enterTransition = { pushEnter },
-                exitTransition = { pushExit },
-                popEnterTransition = { popEnter },
-                popExitTransition = { popExit }
-            ) {
+            composable(Routes.GOALS) {
                 com.awbuilds.auraspend.ui.savings.SavingsGoalsScreen(
                     repository = repository,
                     onBack = { navController.popBackStack() }
                 )
             }
 
-            composable(
-                route = Routes.ADD_TRANSACTION,
-                enterTransition = { pushEnter },
-                exitTransition = { pushExit },
-                popEnterTransition = { popEnter },
-                popExitTransition = { popExit }
-            ) {
+            composable(Routes.ADD_TRANSACTION) {
                 NewTransactionScreen(
                     repository = repository,
                     onBack = { navController.popBackStack() }
@@ -500,10 +432,6 @@ fun AuraSpendNavHost(
             composable(
                 route = Routes.TRANSACTION_DETAIL,
                 arguments = listOf(navArgument("transactionId") { type = NavType.StringType }),
-                enterTransition = { pushEnter },
-                exitTransition = { pushExit },
-                popEnterTransition = { popEnter },
-                popExitTransition = { popExit }
             ) { entry ->
                 val transactionId = entry.arguments?.getString("transactionId") ?: return@composable
                 TransactionDetailScreen(
@@ -515,13 +443,7 @@ fun AuraSpendNavHost(
                 )
             }
 
-            composable(
-                route = Routes.CATEGORIES,
-                enterTransition = { pushEnter },
-                exitTransition = { pushExit },
-                popEnterTransition = { popEnter },
-                popExitTransition = { popExit }
-            ) {
+            composable(Routes.CATEGORIES) {
                 val scope = rememberCoroutineScope()
                 val categories by repository.getAllCategories()
                     .collectAsState(initial = emptyList())
