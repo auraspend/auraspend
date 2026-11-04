@@ -3,8 +3,10 @@
 > Read this file and the latest file in `docs/handoffs/` before touching anything.
 > Update both (plus `CLAUDE.md` / `memory/` when you learn something durable) before ending a session.
 >
-> Latest: `docs/handoffs/0081-release-0.1.98.md` — **0.1.98 is prepared, not
-> tagged**: `versionCode` 20. A presentation release and a subtraction: **page
+> Latest: `docs/handoffs/0081-release-0.1.98.md` — **0.1.98 is cut**:
+> `versionCode` 20, tag `v0.1.98` on `9fa54f8`, run 41790973951 green, GitHub
+> release published with the AAB/APK/SHA256SUMS, and the Play closed-testing
+> track (`alpha`) holds it. A presentation release and a subtraction: **page
 > navigation is instant, with no transition at all** (0080). No slide, no fade,
 > no zoom between destinations; the motion layer that made Back nudge the page
 > and then blink it out is deleted. Measured at 60 fps on the Moto G40: a push
@@ -17,7 +19,8 @@
 > version bump left it reading 0.1.96's APK and printing "all checks passed" —
 > it now always invokes Gradle and lets it decide. 709 tests, lint
 > baseline-only, F-Droid compiles, R8/native/16 KB all green against the 0.1.98
-> artifacts, site version gate green. Open: the tag is the owner's call.
+> artifacts, site version gate green. Open: predictive back has no preview any
+> more, and the detail body paints ~47 ms after the cut.
 > Before: `docs/handoffs/0080-instant-navigation.md` — **page navigation is
 > instant, everywhere**: no slide, no fade, no zoom. The motion layer in
 > `NavGraph.kt` is deleted (tab switches were already instant since 0064; pushes
