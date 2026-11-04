@@ -393,6 +393,14 @@ and it clears the thresholds anyway at ~99% each. Verified by
 classes survive un-renamed. Re-run it after touching dependencies or keep rules; it is
 **not** in CI yet, deliberately deferred.
 
+**A gate is only as fresh as what it reads.** Until 0.1.98 the script ran Gradle only
+when an artifact was *missing*, so a version bump — which leaves every artifact in
+place — made it scan the *previous* release's APK and bundle and print "all checks
+passed" for a tree that had never been built. It now always invokes Gradle and lets
+it decide whether the build is up to date (seconds, cached). The general lesson is
+worth more than the fix: nothing else in the suite checks that a gate checked the
+right input.
+
 Corollary worth keeping: **the ONNX Runtime AAR ships no consumer ProGuard rules and
 registers its natives dynamically in `JNI_OnLoad`**, which looks like a guaranteed
 release crash. It is not — AGP's default file keeps any class declaring a `native`
@@ -494,3 +502,16 @@ macrobenchmark module now links the prod **release** variant via
 `matchingFallbacks` (running benchmarks locally needs the release keystore).
 Feature parity and the no-analytics rule are unchanged; see ADR 0010, which
 supersedes ADR 0008's naming while keeping its substance.
+
+## D8 — Page navigation is instant, with no transition (2026-11-04)
+The owner asked for navigation with no animation. `NavHost` pins all four
+transitions to `None` and the per-destination overrides are deleted; there is no
+slide, fade or zoom between destinations. **The four `None`s are load-bearing**:
+`navigation-compose`'s default is a 700 ms crossfade, so a destination without an
+override gets the slow default instead of nothing, and no JVM test can see it —
+the evidence is a frame-by-frame screen recording on a device (handoff 0080).
+This supersedes 0064's split ("tabs instant, pushes keep a subtle push"): the old
+pop moved the page an eighth of a width and then removed it mid-screen, which
+read as a nudge followed by a cut. Sheets, press states, chart draw-ins and
+`AnimatedMoney` are *not* page navigation and keep their animation. Predictive
+back has no preview by design now: the gesture cuts on release.
