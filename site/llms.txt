@@ -39,7 +39,6 @@ AuraSpend is made by AW Builds. It is free with no paid tier. It is published on
 - Price: free. No ads, no in-app purchase, no premium tier.
 - Platform: Android 11 (API 30) and later, arm64-v8a and armeabi-v7a. No iOS, no web app.
 - Publisher: AW Builds.
-- Sibling apps: Hydra (water tracker, https://abhijithwrrr.github.io/hydra/) and Bloom (daily planner, https://abhijithwrrr.github.io/bloom/).
 
 ## Last updated
 
