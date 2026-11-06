@@ -47,7 +47,7 @@ testRunner = "1.7.0"
 # so every Compose assertion on the current emulator image died in onIdle.
 espresso = "3.7.0"
 
-onnxruntime = "1.22.0"
+onnxruntime = "1.31.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
