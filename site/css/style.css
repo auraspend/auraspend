@@ -1546,6 +1546,19 @@ code {
     width: 30%;
 }
 
+/* A five-column comparison needs more room than the 46rem prose measure.
+   The table breaks out of the column symmetrically, so the text stays
+   readable without changing the page's grid. */
+.prose > .ledger-table {
+    width: min(64rem, calc(100vw - 3rem));
+    margin-inline: calc((100% - min(64rem, calc(100vw - 3rem))) / 2);
+    margin-block: var(--sp-2xl);
+}
+
+.prose > .ledger-table td:first-child {
+    width: 18%;
+}
+
 .ledger-table--two thead th:nth-child(1) {
     width: 50%;
 }

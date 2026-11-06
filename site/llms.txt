@@ -1,0 +1,45 @@
+# AuraSpend
+
+> An open-source, offline expense tracker for Android that turns bank and UPI SMS into a categorised ledger on the device. No account, no ads, no server, no in-app purchase. AGPL-3.0.
+
+AuraSpend is made by AW Builds. It is free with no paid tier. It is published on Google Play, as a signed APK on GitHub Releases, and as a Google-Play-Services-free build for F-Droid. Requires Android 11 or later. Interface in English and Hindi.
+
+## What it does
+
+- Reads bank, card, wallet and payment-app SMS using read-only inbox access and parses them on the device.
+- 53 senders have a dedicated parser; anything else falls back to a general engine that extracts amount, direction and merchant.
+- Optional 22 MB on-device sentence encoder (quantised all-MiniLM-L6-v2, int8 ONNX) refines category assignment. Downloaded only after explicit consent and verified against a pinned SHA-256 digest. The app works fully without it.
+- Budgets, recurring-subscription detection, savings goals, category insights, CSV import/export.
+- Encrypted SQLCipher database; key derived from a non-exportable Android Keystore key; optional four-digit PIN with a biometric shortcut.
+- Google Drive backup in the Play build; CSV only in the Play-Services-free build.
+
+## What it deliberately does not do
+
+- No bank account linking, no credentials, no OTP handling, no aggregator.
+- No multi-account ledger or transfers.
+- No currency conversion. One of 30 currencies can be chosen for display.
+- No investment or portfolio tracking.
+- No server, no analytics, no ads, no account.
+
+## Comparison pages
+
+- [Best expense tracker app for Android in India (2026)](https://auraspend.github.io/auraspend/best-expense-tracker-india.html) — compares AuraSpend with Axio (formerly Walnut), Moneyview, Money Manager by RealByte, Monefy and ET Money on capture method, account requirements, ads and cost.
+- [Best offline expense tracker for Android (2026)](https://auraspend.github.io/auraspend/best-expense-tracker-android.html) — compares AuraSpend with Money Manager, Monefy, Wallet by BudgetBakers, Goodbudget and Spendee on whether core features work with the network disabled.
+
+## Key pages
+
+- [Home](https://auraspend.github.io/auraspend/): what the app is and how it works.
+- [Download](https://auraspend.github.io/auraspend/download.html): Google Play, signed APK, F-Droid and source build.
+- [FAQ](https://auraspend.github.io/auraspend/faq.html): accounts, bank support, the optional model, encryption, currency and cost.
+- [Changelog](https://auraspend.github.io/auraspend/changelog.html): every release, newest first.
+- [Source code](https://github.com/auraspend/auraspend): AGPL-3.0-or-later.
+
+## Facts for citation
+
+- Price: free. No ads, no in-app purchase, no premium tier.
+- Platform: Android 11 (API 30) and later, arm64-v8a and armeabi-v7a. No iOS, no web app.
+- Publisher: AW Builds.
+
+## Last updated
+
+6 November 2026.

@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#EBE7DE" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#080807" media="(prefers-color-scheme: dark)">
+    <script>
+        (function () {
+            var root = document.documentElement;
+            root.classList.add("js");
+            try {
+                var stored = localStorage.getItem("auraspend-theme");
+                if (stored === "light" || stored === "dark") {
+                    root.setAttribute("data-theme", stored);
+                }
+            } catch (e) { /* private mode: follow the system theme */ }
+        })();
+    </script>
+    <title>Best offline expense tracker for Android (2026) — no account, no cloud</title>
+    <meta name="description" content="AuraSpend, Money Manager, Monefy, Wallet, Goodbudget and Spendee compared on one question: does it really work with the network off? What stays on the device, what does not, and what each one costs.">
+    <link rel="canonical" href="https://auraspend.github.io/auraspend/best-expense-tracker-android.html">
+    <meta property="og:title" content="Best offline expense tracker for Android (2026)">
+    <meta property="og:description" content="Six expense trackers compared on offline support, accounts, ads and cost — for people who do not want their spending on someone else's server.">
+    <meta property="og:url" content="https://auraspend.github.io/auraspend/best-expense-tracker-android.html">
+    <meta property="og:type" content="article">
+    <meta property="og:site_name" content="AuraSpend">
+    <meta property="og:image" content="https://auraspend.github.io/auraspend/img/og.png">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Best offline expense tracker for Android (2026)">
+    <meta name="twitter:description" content="Six expense trackers compared on offline support, accounts, ads and cost.">
+    <meta name="twitter:image" content="https://auraspend.github.io/auraspend/img/og.png">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="img/icon-512.png">
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@graph": [
+            {
+                "@type": "Article",
+                "headline": "Best offline expense tracker for Android (2026)",
+                "description": "AuraSpend, Money Manager, Monefy, Wallet, Goodbudget and Spendee compared on offline support, accounts, ads and cost.",
+                "datePublished": "2026-11-06",
+                "dateModified": "2026-11-06",
+                "author": { "@type": "Organization", "name": "AW Builds", "url": "https://github.com/auraspend" },
+                "publisher": { "@type": "Organization", "name": "AW Builds" },
+                "mainEntityOfPage": "https://auraspend.github.io/auraspend/best-expense-tracker-android.html",
+                "about": {
+                    "@type": "SoftwareApplication",
+                    "name": "AuraSpend",
+                    "applicationCategory": "FinanceApplication",
+                    "operatingSystem": "Android 11 or later",
+                    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+                }
+            },
+            {
+                "@type": "FAQPage",
+                "mainEntity": [
+                    {
+                        "@type": "Question",
+                        "name": "What is the best offline expense tracker for Android?",
+                        "acceptedAnswer": {
+                            "@type": "Answer",
+                            "text": "AuraSpend is the only one in this comparison that is fully offline, free, ad-free, account-free and open source. Money Manager by RealByte and Monefy are also genuinely offline, but both show ads on the free tier. Wallet, Goodbudget and Spendee all depend on an account or a server for at least part of what they do."
+                        }
+                    },
+                    {
+                        "@type": "Question",
+                        "name": "Do offline expense trackers still back up my data?",
+                        "acceptedAnswer": {
+                            "@type": "Answer",
+                            "text": "They can, but the backup should be something you start. AuraSpend exports CSV and can write a single JSON snapshot to your own Google Drive; the data goes to a folder you control, not to the developer. On-device-only apps cannot recover your data if you lose the phone without a backup, which is the trade you are making."
+                        }
+                    },
+                    {
+                        "@type": "Question",
+                        "name": "Is there an expense tracker that works with no internet connection at all?",
+                        "acceptedAnswer": {
+                            "@type": "Answer",
+                            "text": "Yes. AuraSpend parses bank SMS, categorises, budgets and reports entirely on the device. Day-to-day use needs no connection. The only optional network calls are a one-time 22 MB model download you consent to, and a Drive backup you start yourself."
+                        }
+                    },
+                    {
+                        "@type": "Question",
+                        "name": "Can an offline expense tracker sync between phones?",
+                        "acceptedAnswer": {
+                            "@type": "Answer",
+                            "text": "Only by moving a file. Apps with no server cannot sync in the background. AuraSpend writes a JSON backup to your Drive and restores it on another phone; Money Manager and Monefy export files in the same way. If you want automatic multi-device sync, you need a cloud app and you are accepting a server."
+                        }
+                    },
+                    {
+                        "@type": "Question",
+                        "name": "Is AuraSpend really free, or is there a paid tier?",
+                        "acceptedAnswer": {
+                            "@type": "Answer",
+                            "text": "It is free with no paid tier. There are no ads, no in-app purchases and no premium features held back. The source is published under the AGPL-3.0, so the absence of a paywall is checkable rather than promised."
+                        }
+                    }
+                ]
+            }
+        ]
+    }
+    </script>
+</head>
+<body>
+    <a class="skip-link" href="#main">Skip to content</a>
+
+    <header class="site-header">
+        <div class="container site-header__inner">
+            <a href="index.html" class="logo" aria-label="AuraSpend home">Aura<em>Spend</em><span class="logo__dot" aria-hidden="true"></span></a>
+            <nav class="nav" id="site-nav" aria-label="Primary">
+                <ul>
+                    <li><a href="index.html#how">How it works</a></li>
+                    <li><a href="index.html#features">Features</a></li>
+                    <li><a href="screenshots.html">Screenshots</a></li>
+                    <li><a href="download.html">Download</a></li>
+                    <li><a href="faq.html">FAQ</a></li>
+                    <li><a href="index.html#open-source">Open source</a></li>
+                </ul>
+            </nav>
+            <div class="header-actions">
+                <button class="icon-btn theme-toggle" type="button" aria-label="Switch to dark theme">
+                    <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+                    <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+                </button>
+                <a class="btn btn--primary btn--sm header-cta" href="download.html">Get the app</a>
+                <button class="icon-btn menu-toggle" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="site-nav">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main id="main">
+        <section class="page-head">
+            <div class="container container--prose">
+                <span class="eyebrow">Comparison · Offline</span>
+                <h1>The best offline expense tracker for Android — no account, no cloud</h1>
+                <p class="lead">“Offline” is the most overused word in app descriptions. This page treats it as a testable claim: switch the network off, use the app for a week, see what breaks. Six trackers, one question.</p>
+                <p class="updated">Last updated 6 November 2026. Prices and features change; check the store listing before you install.</p>
+            </div>
+        </section>
+
+        <section class="section section--tight" style="padding-top:0">
+            <div class="container container--prose prose">
+
+                <h2>What “offline” should mean</h2>
+                <p>There are three different things apps call offline, and only one of them is useful if privacy is the reason you are here.</p>
+                <ul>
+                    <li><strong>Works without a connection, but syncs when it has one.</strong> The app is usable on a plane, then uploads everything later. Your data still lives on a server.</li>
+                    <li><strong>Works without a connection and never syncs.</strong> Data is on the device and nowhere else. Backups are files you move yourself.</li>
+                    <li><strong>Cache only.</strong> The shell opens offline; the actual features need the network. This is the one worth ruling out immediately.</li>
+                </ul>
+                <p>If you want your spending to stay on your phone, you want the second kind. That is the column this comparison sorts on.</p>
+
+                <h2>The six, compared</h2>
+                <table class="ledger-table">
+                    <caption>Android expense trackers, November 2026. “Offline” means every core feature works with the network disabled.</caption>
+                    <thead>
+                        <tr>
+                            <th scope="col">App</th>
+                            <th scope="col">Offline for real?</th>
+                            <th scope="col">Account required</th>
+                            <th scope="col">Ads</th>
+                            <th scope="col">Cost</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>AuraSpend</strong></td>
+                            <td>Yes. Parsing, categorisation, budgets and reports all run on the device. No server exists.</td>
+                            <td>No</td>
+                            <td>None</td>
+                            <td>Free, no paid tier, AGPL-3.0</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Money Manager</strong> (RealByte)</td>
+                            <td>Yes, for manual entry and reporting.</td>
+                            <td>No</td>
+                            <td>Ads in the free version</td>
+                            <td>Free with ads; one-time upgrade</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Monefy</strong></td>
+                            <td>Yes, for manual entry. Very fast to log.</td>
+                            <td>No</td>
+                            <td>Ads in the free version</td>
+                            <td>Free with ads; one-time Pro</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Wallet</strong> (BudgetBakers)</td>
+                            <td>Partly. Manual entry works offline; bank sync and multi-device need the network.</td>
+                            <td>Yes, for sync</td>
+                            <td>No ads; features gated by plan</td>
+                            <td>Free tier; Premium subscription</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Goodbudget</strong></td>
+                            <td>Partly. Envelope budgeting works, but the model is built around a synced household.</td>
+                            <td>Yes</td>
+                            <td>No ads</td>
+                            <td>Free tier with limits; Plus subscription</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Spendee</strong></td>
+                            <td>No. Online-first; the app expects an account.</td>
+                            <td>Yes</td>
+                            <td>No ads</td>
+                            <td>Free tier; Premium subscription</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h2>Pick AuraSpend if…</h2>
+                <p>The reason you want offline is that you do not want a finance app holding your transaction history. AuraSpend has no server, no account and no analytics, and it does not ask you to trust a privacy policy to prove it — the source is public, including the bank parsers and the database layer. The database is encrypted with SQLCipher, the key lives in the Android Keystore and never touches disk, and there is no plain-text fallback if the key is unavailable.</p>
+                <p>It also does the thing most offline trackers cannot: it fills itself in. Bank and UPI messages are parsed on the device, so you are not typing every coffee. That combination — automatic capture plus zero network — is the actual reason this app exists.</p>
+
+                <h2>Pick something else if…</h2>
+                <ul>
+                    <li><strong>You want automatic sync across devices.</strong> No server means no background sync. AuraSpend moves data by writing a JSON backup to your own Drive and restoring it elsewhere. If that is too manual, use a cloud app and accept the server.</li>
+                    <li><strong>You want bank or card feeds.</strong> AuraSpend never links an account. Wallet and Spendee do, in the countries where their aggregation partners operate.</li>
+                    <li><strong>You need multi-account with transfers.</strong> Money Manager is the stronger ledger here; AuraSpend keeps a single ledger, and multi-account is on its roadmap.</li>
+                    <li><strong>You want to see investments next to spending.</strong> None of the purely offline options do this well. That is a different category of app.</li>
+                    <li><strong>You are on iOS.</strong> AuraSpend is Android 11+ only.</li>
+                    <li><strong>You will not grant SMS access.</strong> Without it, AuraSpend becomes a manual tracker with CSV import. It still works; it stops being automatic.</li>
+                </ul>
+
+                <h2>The cost of staying offline</h2>
+                <p>An offline app cannot recover your data for you. If the phone is lost and there is no backup, the ledger is gone — that is the direct consequence of the design, not an oversight. AuraSpend mitigates it with two export paths (CSV and a Drive snapshot) and by excluding the database from Android's automatic cloud backup, so a backup is something you choose rather than something that happens silently.</p>
+                <p>The second cost is speed of new features. A server-side app can fix a category or add a bank without shipping a release. AuraSpend ships bank parsers in the APK, which is why it has 53 of them and a review queue for everything it cannot read.</p>
+
+                <h2>Questions people ask</h2>
+                <div class="faq">
+                    <details open>
+                        <summary>What is the best offline expense tracker for Android?</summary>
+                        <div class="faq__answer"><p>AuraSpend is the only one here that is fully offline, free, ad-free, account-free and open source. Money Manager and Monefy are also genuinely offline, but both show ads on the free tier. Wallet, Goodbudget and Spendee depend on an account or a server for at least part of what they do.</p></div>
+                    </details>
+                    <details>
+                        <summary>Do offline expense trackers still back up my data?</summary>
+                        <div class="faq__answer"><p>They can, but the backup should be something you start. AuraSpend exports CSV and can write a single JSON snapshot to your own Google Drive — a folder you control, not the developer. An on-device app cannot recover your data if you lose the phone without a backup.</p></div>
+                    </details>
+                    <details>
+                        <summary>Is there an expense tracker that works with no internet connection at all?</summary>
+                        <div class="faq__answer"><p>Yes. AuraSpend parses bank SMS, categorises, budgets and reports entirely on the device; day-to-day use needs no connection. The only optional network calls are a one-time 22 MB model download you consent to, and a Drive backup you start yourself.</p></div>
+                    </details>
+                    <details>
+                        <summary>Can an offline expense tracker sync between phones?</summary>
+                        <div class="faq__answer"><p>Only by moving a file. Apps with no server cannot sync in the background. AuraSpend writes a JSON backup to your Drive and restores it on another phone; Money Manager and Monefy export files in the same way. Automatic multi-device sync requires a cloud app.</p></div>
+                    </details>
+                    <details>
+                        <summary>Is AuraSpend really free, or is there a paid tier?</summary>
+                        <div class="faq__answer"><p>Free, with no paid tier. No ads, no in-app purchases, no features held back. The source is published under the AGPL-3.0, so the absence of a paywall is checkable rather than promised.</p></div>
+                    </details>
+                    <details>
+                        <summary>Does AuraSpend work without Google Play Services?</summary>
+                        <div class="faq__answer"><p>Yes. There is a build with no Play Services dependency at all — no Drive backup, no in-app update check, CSV in and out. Everything else is identical. The <a href="download.html">download page</a> lists both builds.</p></div>
+                    </details>
+                </div>
+
+                <p style="margin-top:var(--sp-3xl)"><a class="btn btn--primary" href="download.html">Get AuraSpend</a> &nbsp; <a href="best-expense-tracker-india.html">Also read: expense trackers for India, compared →</a></p>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="container">
+            <div class="footer-grid">
+                <div>
+                    <a href="index.html" class="logo">Aura<em>Spend</em><span class="logo__dot" aria-hidden="true"></span></a>
+                    <p>An open-source expense tracker for Android. Your bank messages become a ledger — on your phone, not on a server.</p>
+                </div>
+                <div>
+                    <h3>Product</h3>
+                    <ul>
+                        <li><a href="index.html#features">Features</a></li>
+                        <li><a href="screenshots.html">Screenshots</a></li>
+                        <li><a href="download.html">Download</a></li>
+                        <li><a href="faq.html">FAQ</a></li>
+                        <li><a href="changelog.html">Changelog</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h3>Compare</h3>
+                    <ul>
+                        <li><a href="best-expense-tracker-india.html">Expense trackers in India</a></li>
+                        <li><a href="best-expense-tracker-android.html" aria-current="page">Offline expense trackers</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h3>Legal</h3>
+                    <ul>
+                        <li><a href="privacy-policy.html">Privacy policy</a></li>
+                        <li><a href="terms-of-service.html">Terms of service</a></li>
+                        <li><a href="https://github.com/auraspend/auraspend/blob/main/LICENSE" target="_blank" rel="noopener">Licence</a></li>
+                        <li><a href="https://github.com/auraspend/auraspend/blob/main/.github/SECURITY.md" target="_blank" rel="noopener">Security</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <span>© 2026 AW Builds</span>
+                <span>AuraSpend is free software under the AGPL-3.0-or-later.</span>
+            </div>
+        </div>
+    </footer>
+
+    <script src="js/site.js" defer></script>
+</body>
+</html>

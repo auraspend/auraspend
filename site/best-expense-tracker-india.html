@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#EBE7DE" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#080807" media="(prefers-color-scheme: dark)">
+    <script>
+        (function () {
+            var root = document.documentElement;
+            root.classList.add("js");
+            try {
+                var stored = localStorage.getItem("auraspend-theme");
+                if (stored === "light" || stored === "dark") {
+                    root.setAttribute("data-theme", stored);
+                }
+            } catch (e) { /* private mode: follow the system theme */ }
+        })();
+    </script>
+    <title>Best expense tracker app for Android in India (2026) — AuraSpend</title>
+    <meta name="description" content="An honest comparison of the expense trackers Indians actually install: AuraSpend, Axio (Walnut), Moneyview, Money Manager, Monefy and ET Money. How each one captures spending, what it costs, and what it does with your messages.">
+    <link rel="canonical" href="https://auraspend.github.io/auraspend/best-expense-tracker-india.html">
+    <meta property="og:title" content="Best expense tracker app for Android in India (2026)">
+    <meta property="og:description" content="Six Android expense trackers compared on how they capture spending, what they cost, and what they do with your bank messages.">
+    <meta property="og:url" content="https://auraspend.github.io/auraspend/best-expense-tracker-india.html">
+    <meta property="og:type" content="article">
+    <meta property="og:site_name" content="AuraSpend">
+    <meta property="og:image" content="https://auraspend.github.io/auraspend/img/og.png">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Best expense tracker app for Android in India (2026)">
+    <meta name="twitter:description" content="Six Android expense trackers compared on capture method, cost and privacy.">
+    <meta name="twitter:image" content="https://auraspend.github.io/auraspend/img/og.png">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="img/icon-512.png">
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@graph": [
+            {
+                "@type": "Article",
+                "headline": "Best expense tracker app for Android in India (2026)",
+                "description": "An honest comparison of AuraSpend, Axio (Walnut), Moneyview, Money Manager, Monefy and ET Money for Android users in India.",
+                "datePublished": "2026-11-06",
+                "dateModified": "2026-11-06",
+                "author": { "@type": "Organization", "name": "AW Builds", "url": "https://github.com/auraspend" },
+                "publisher": { "@type": "Organization", "name": "AW Builds" },
+                "mainEntityOfPage": "https://auraspend.github.io/auraspend/best-expense-tracker-india.html",
+                "about": {
+                    "@type": "SoftwareApplication",
+                    "name": "AuraSpend",
+                    "applicationCategory": "FinanceApplication",
+                    "operatingSystem": "Android 11 or later",
+                    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "INR" }
+                },
+                "mentions": [
+                    { "@type": "SoftwareApplication", "name": "Axio (formerly Walnut)", "applicationCategory": "FinanceApplication", "operatingSystem": "Android" },
+                    { "@type": "SoftwareApplication", "name": "Moneyview Money Manager", "applicationCategory": "FinanceApplication", "operatingSystem": "Android" },
+                    { "@type": "SoftwareApplication", "name": "Money Manager by RealByte", "applicationCategory": "FinanceApplication", "operatingSystem": "Android, iOS" },
+                    { "@type": "SoftwareApplication", "name": "Monefy", "applicationCategory": "FinanceApplication", "operatingSystem": "Android, iOS" },
+                    { "@type": "SoftwareApplication", "name": "ET Money", "applicationCategory": "FinanceApplication", "operatingSystem": "Android, iOS" }
+                ]
+            },
+            {
+                "@type": "FAQPage",
+                "mainEntity": [
+                    {
+                        "@type": "Question",
+                        "name": "Which expense tracker app is best for Android in India?",
+                        "acceptedAnswer": {
+                            "@type": "Answer",
+                            "text": "It depends on how you want spending captured. If you want automatic tracking from bank SMS with no account and no ads, AuraSpend is the strongest fit. If you want a lending product bundled in, Moneyview and Axio do that. If you prefer typing every entry yourself, Money Manager by RealByte is the most complete manual ledger. There is no single winner."
+                        }
+                    },
+                    {
+                        "@type": "Question",
+                        "name": "Do Indian expense trackers need my SMS permission?",
+                        "acceptedAnswer": {
+                            "@type": "Answer",
+                            "text": "The automatic ones do. UPI apps do not expose a transaction feed, so apps that appear to track UPI automatically are reading your bank's transaction SMS alerts. That needs broad SMS read access and it silently misses anything you pay in cash. Manual trackers ask for no SMS permission at all."
+                        }
+                    },
+                    {
+                        "@type": "Question",
+                        "name": "Is there a free expense tracker with no ads and no account?",
+                        "acceptedAnswer": {
+                            "@type": "Answer",
+                            "text": "AuraSpend is free with no ads, no in-app purchase, no account and no server. It is also open source under the AGPL-3.0, so the claim can be checked in the code rather than taken on trust. Monefy and Money Manager are free to install but show ads until you buy the paid version."
+                        }
+                    },
+                    {
+                        "@type": "Question",
+                        "name": "Why did Walnut stop working for so many people?",
+                        "acceptedAnswer": {
+                            "@type": "Answer",
+                            "text": "Walnut became Axio, and the product's centre of gravity moved to pay-later and personal credit. The SMS tracker still exists inside Axio, but it is no longer the reason the app is installed, and Axio's own FAQ has said there is no cross-device sync. Long-time Walnut users typically move to a simpler tracker."
+                        }
+                    },
+                    {
+                        "@type": "Question",
+                        "name": "Can an expense tracker read UPI transactions automatically?",
+                        "acceptedAnswer": {
+                            "@type": "Answer",
+                            "text": "Only indirectly. UPI apps do not expose a transaction feed to third parties. Apps that appear automatic are parsing your bank's SMS alerts, which works until a bank changes its message format or you mute bank SMS. Cash spending is never captured that way."
+                        }
+                    },
+                    {
+                        "@type": "Question",
+                        "name": "Does AuraSpend connect to my bank account?",
+                        "acceptedAnswer": {
+                            "@type": "Answer",
+                            "text": "No. It never asks for a card number, customer ID, net banking password or OTP, and it cannot send an SMS. It reads the bank messages already on your phone using read-only inbox access, parses them on the device, and asks before saving anything."
+                        }
+                    }
+                ]
+            }
+        ]
+    }
+    </script>
+</head>
+<body>
+    <a class="skip-link" href="#main">Skip to content</a>
+
+    <header class="site-header">
+        <div class="container site-header__inner">
+            <a href="index.html" class="logo" aria-label="AuraSpend home">Aura<em>Spend</em><span class="logo__dot" aria-hidden="true"></span></a>
+            <nav class="nav" id="site-nav" aria-label="Primary">
+                <ul>
+                    <li><a href="index.html#how">How it works</a></li>
+                    <li><a href="index.html#features">Features</a></li>
+                    <li><a href="screenshots.html">Screenshots</a></li>
+                    <li><a href="download.html">Download</a></li>
+                    <li><a href="faq.html">FAQ</a></li>
+                    <li><a href="index.html#open-source">Open source</a></li>
+                </ul>
+            </nav>
+            <div class="header-actions">
+                <button class="icon-btn theme-toggle" type="button" aria-label="Switch to dark theme">
+                    <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+                    <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+                </button>
+                <a class="btn btn--primary btn--sm header-cta" href="download.html">Get the app</a>
+                <button class="icon-btn menu-toggle" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="site-nav">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main id="main">
+        <section class="page-head">
+            <div class="container container--prose">
+                <span class="eyebrow">Comparison · India</span>
+                <h1>The best expense tracker for Android in India, honestly compared</h1>
+                <p class="lead">Most “best expense tracker India” lists are written by an app on the list, or by a lender that wants your phone number. This one is written by an app on the list too — so it names what each competitor does better, and where AuraSpend loses.</p>
+                <p class="updated">Last updated 6 November 2026. Prices and features change; check the store listing before you install.</p>
+            </div>
+        </section>
+
+        <section class="section section--tight" style="padding-top:0">
+            <div class="container container--prose prose">
+
+                <h2>The short answer</h2>
+                <p>Indian spending splits across UPI, cards and cash, and no single app handles all three well. Pick by how you want spending captured, not by star rating.</p>
+                <ul>
+                    <li><strong>You want automatic tracking from bank SMS, with no account, no ads and no server:</strong> AuraSpend.</li>
+                    <li><strong>You want tracking and a credit line in one app:</strong> Axio (the app formerly called Walnut) or Moneyview.</li>
+                    <li><strong>You want to type every entry and see a full double-entry ledger:</strong> Money Manager by RealByte.</li>
+                    <li><strong>You want the fastest manual entry and nothing else:</strong> Monefy.</li>
+                    <li><strong>You want your mutual funds and your spending in one place:</strong> ET Money.</li>
+                </ul>
+
+                <h2>How the six actually compare</h2>
+                <table class="ledger-table">
+                    <caption>Android apps available in India, November 2026. Cost describes the free tier and what removes its limits.</caption>
+                    <thead>
+                        <tr>
+                            <th scope="col">App</th>
+                            <th scope="col">How it captures spending</th>
+                            <th scope="col">Account and cloud</th>
+                            <th scope="col">Ads or upsells</th>
+                            <th scope="col">Cost</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>AuraSpend</strong></td>
+                            <td>Bank and UPI SMS, parsed on the device. 53 bank senders have their own parser; everything else falls back to a general engine.</td>
+                            <td>No account. Nothing leaves the phone. Optional Drive backup to your own Drive.</td>
+                            <td>None. No ads, no trackers, no loans, no in-app purchase.</td>
+                            <td>Free. Every feature, every build. AGPL-3.0.</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Axio</strong> (formerly Walnut)</td>
+                            <td>SMS parsing. The original automatic tracker for India.</td>
+                            <td>Account required. No cross-device sync, per Axio's own FAQ.</td>
+                            <td>Pay-later, personal loans and fixed deposits are promoted in-app.</td>
+                            <td>Free, monetised through credit products.</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Moneyview Money Manager</strong></td>
+                            <td>SMS parsing, plus budgets and bill reminders.</td>
+                            <td>Account required, cloud-based.</td>
+                            <td>Personal loans are the core business.</td>
+                            <td>Free.</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Money Manager</strong> (RealByte)</td>
+                            <td>Manual, double-entry style, with accounts and transfers.</td>
+                            <td>On-device; backups are files you manage.</td>
+                            <td>Ads in the free version.</td>
+                            <td>Free with ads; one-time paid upgrade removes them.</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Monefy</strong></td>
+                            <td>Manual, one tap per expense, very fast.</td>
+                            <td>On-device; optional file backup.</td>
+                            <td>Ads in the free version.</td>
+                            <td>Free with ads; one-time Pro unlock.</td>
+                        </tr>
+                        <tr>
+                            <td><strong>ET Money</strong></td>
+                            <td>SMS parsing and bank statement import.</td>
+                            <td>Account required.</td>
+                            <td>Investment products promoted throughout.</td>
+                            <td>Free, monetised through mutual funds.</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h2>Pick AuraSpend if…</h2>
+                <p>You want the tracking to happen without you, and you do not want to pay for it with an account, an ad slot or a loan offer. AuraSpend reads the bank message you already received, parses it on the phone, and puts it in a review queue — nothing reaches your ledger until you swipe it there. It works with no internet connection at all, and the app has no server of its own to send anything to.</p>
+                <p>It is also the only app in this table whose claims are checkable: the source is public under the AGPL-3.0, including the bank parsers. If you want to know exactly what it does with a message, you can read the code that does it.</p>
+
+                <h2>Pick something else if…</h2>
+                <p>This is the part most comparison pages skip.</p>
+                <ul>
+                    <li><strong>You want your bank accounts linked, not parsed.</strong> AuraSpend does not connect to a bank and never will — there is no account, no credential, no aggregator. If you want balances pulled automatically from every account, you want a bank-linked product, not this one.</li>
+                    <li><strong>You track investments alongside spending.</strong> ET Money is built around mutual funds; AuraSpend has budgets, subscriptions and savings goals, but no portfolio.</li>
+                    <li><strong>You need multiple accounts and transfers between them.</strong> Money Manager handles accounts and transfers as first-class objects. AuraSpend is a single-ledger app, and multi-account with transfers is still on its roadmap.</li>
+                    <li><strong>You spend in more than one currency.</strong> AuraSpend lets you pick one of 30 currencies for display and keeps it. There is no conversion and no per-transaction currency.</li>
+                    <li><strong>You pay mostly in cash.</strong> SMS parsing cannot see cash. Any app in this table that claims otherwise is guessing.</li>
+                    <li><strong>You want a credit line.</strong> Axio and Moneyview do that. AuraSpend deliberately does not.</li>
+                </ul>
+
+                <h2>What “automatic” really means in India</h2>
+                <p>There is no consumer open-banking rail that a small app can use here. Account Aggregator exists, but it is built for lenders doing credit assessment, not for a ₹0 budgeting app. So every “automatic” tracker in the table takes the same shortcut: it reads your bank's transaction SMS.</p>
+                <p>That has three consequences worth knowing before you grant the permission.</p>
+                <ul>
+                    <li><strong>It reads every bank message, not just transactions.</strong> OTPs, balance alerts, loan offers and salary credits are all in the same inbox.</li>
+                    <li><strong>It breaks silently.</strong> When a bank changes its alert format, the transaction is missed. Apps with per-bank parsers recover faster than apps with one general parser.</li>
+                    <li><strong>It cannot see cash, and it can miss UPI</strong> if a payment app sends its own notification instead of a bank SMS.</li>
+                </ul>
+                <p>AuraSpend's answer to the first point is to parse on the device and mask phone numbers, UPI references, UTRs and folio ids before anything is stored. Its answer to the second is 53 sender-specific parsers plus a review queue that shows what it could not read instead of dropping it. Neither answer fixes the third.</p>
+
+                <h2>Questions people ask before installing</h2>
+                <div class="faq">
+                    <details open>
+                        <summary>Which expense tracker app is best for Android in India?</summary>
+                        <div class="faq__answer"><p>It depends on how you want spending captured. For automatic tracking from bank SMS with no account and no ads, AuraSpend is the strongest fit. For tracking bundled with credit, Moneyview and Axio. For a full manual ledger, Money Manager by RealByte. There is no single winner, and any list that says otherwise is selling something.</p></div>
+                    </details>
+                    <details>
+                        <summary>Do Indian expense trackers need my SMS permission?</summary>
+                        <div class="faq__answer"><p>The automatic ones do. UPI apps do not expose a transaction feed, so apps that appear to track UPI automatically are reading your bank's transaction SMS alerts. That needs broad SMS read access. Manual trackers ask for no SMS permission at all.</p></div>
+                    </details>
+                    <details>
+                        <summary>Is there a free expense tracker with no ads and no account?</summary>
+                        <div class="faq__answer"><p>AuraSpend is free with no ads, no in-app purchase, no account and no server, and the source is open under the AGPL-3.0. Monefy and Money Manager are free to install but show ads until you buy the paid version.</p></div>
+                    </details>
+                    <details>
+                        <summary>Why did Walnut stop working for so many people?</summary>
+                        <div class="faq__answer"><p>Walnut became Axio, and the product's centre of gravity moved to pay-later and personal credit. The SMS tracker still exists inside Axio, but it is no longer the reason the app is installed, and Axio's own FAQ has said there is no cross-device sync.</p></div>
+                    </details>
+                    <details>
+                        <summary>Can an expense tracker read UPI transactions automatically?</summary>
+                        <div class="faq__answer"><p>Only indirectly. UPI apps do not expose a transaction feed to third parties, so apps that appear automatic are parsing your bank's SMS alerts. That works until a bank changes its message format or you mute bank SMS, and it never captures cash.</p></div>
+                    </details>
+                    <details>
+                        <summary>Does AuraSpend connect to my bank account?</summary>
+                        <div class="faq__answer"><p>No. It never asks for a card number, customer ID, net banking password or OTP, and it cannot send an SMS. It reads the bank messages already on your phone using read-only inbox access, parses them on the device, and asks before saving anything. The <a href="faq.html">full FAQ</a> covers what it does with those messages.</p></div>
+                    </details>
+                </div>
+
+                <p style="margin-top:var(--sp-3xl)"><a class="btn btn--primary" href="download.html">Get AuraSpend</a> &nbsp; <a href="best-expense-tracker-android.html">Also read: the best offline expense trackers for Android →</a></p>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="container">
+            <div class="footer-grid">
+                <div>
+                    <a href="index.html" class="logo">Aura<em>Spend</em><span class="logo__dot" aria-hidden="true"></span></a>
+                    <p>An open-source expense tracker for Android. Your bank messages become a ledger — on your phone, not on a server.</p>
+                </div>
+                <div>
+                    <h3>Product</h3>
+                    <ul>
+                        <li><a href="index.html#features">Features</a></li>
+                        <li><a href="screenshots.html">Screenshots</a></li>
+                        <li><a href="download.html">Download</a></li>
+                        <li><a href="faq.html">FAQ</a></li>
+                        <li><a href="changelog.html">Changelog</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h3>Compare</h3>
+                    <ul>
+                        <li><a href="best-expense-tracker-india.html" aria-current="page">Expense trackers in India</a></li>
+                        <li><a href="best-expense-tracker-android.html">Offline expense trackers</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h3>Legal</h3>
+                    <ul>
+                        <li><a href="privacy-policy.html">Privacy policy</a></li>
+                        <li><a href="terms-of-service.html">Terms of service</a></li>
+                        <li><a href="https://github.com/auraspend/auraspend/blob/main/LICENSE" target="_blank" rel="noopener">Licence</a></li>
+                        <li><a href="https://github.com/auraspend/auraspend/blob/main/.github/SECURITY.md" target="_blank" rel="noopener">Security</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <span>© 2026 AW Builds</span>
+                <span>AuraSpend is free software under the AGPL-3.0-or-later.</span>
+            </div>
+        </div>
+    </footer>
+
+    <script src="js/site.js" defer></script>
+</body>
+</html>
