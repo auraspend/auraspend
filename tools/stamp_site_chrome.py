@@ -33,8 +33,8 @@ CURRENT_NAV = {
 
 # Footer links, per file, that should be marked as the current page.
 CURRENT_FOOTER = {
-    "privacy.html": "privacy.html",
-    "terms.html": "terms.html",
+    "privacy-policy.html": "privacy-policy.html",
+    "terms-of-service.html": "terms-of-service.html",
     "changelog.html": "changelog.html",
     "download.html": "download.html",
     "faq.html": "faq.html",

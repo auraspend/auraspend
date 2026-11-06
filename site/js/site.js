@@ -58,22 +58,23 @@
 
     function paint() {
         var dark = active() === "dark";
-        var button = document.querySelector(".theme-toggle");
-        if (button) {
-            button.setAttribute(
-                "aria-label",
-                dark ? "Switch to light theme" : "Switch to dark theme"
-            );
+        var input = document.querySelector(".theme-toggle__input");
+        if (input) {
+            /* The checkbox is the control; the markup is its picture. Setting
+               `checked` here does not fire `change`, so this cannot loop. The
+               input is a role="switch" named "Dark theme", so its checked state
+               is the accessible announcement — no aria-label rewrite needed. */
+            input.checked = dark;
         }
         paintScreenshots(dark);
     }
 
     /* ── Theme toggle ─────────────────────────────────────────────────── */
 
-    var toggle = document.querySelector(".theme-toggle");
+    var toggle = document.querySelector(".theme-toggle__input");
     if (toggle) {
-        toggle.addEventListener("click", function () {
-            var next = active() === "dark" ? "light" : "dark";
+        toggle.addEventListener("change", function () {
+            var next = toggle.checked ? "dark" : "light";
             root.setAttribute("data-theme", next);
             try {
                 localStorage.setItem(STORAGE_KEY, next);

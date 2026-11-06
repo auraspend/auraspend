@@ -45,6 +45,7 @@ source.
 | Component | Licence | Where |
 |---|---|---|
 | [PennyWise AI](https://github.com/sarim2000/pennywiseai-tracker) — SMS amount/limit patterns, merchant and UPI-handle intelligence, ingest guards, and the sender IDs behind the sender-routed per-bank parsers | AGPL-3.0 | `data/classification/BankMessageParser.kt`, `data/classification/SmsAutoClassifier.kt`, `data/classification/bank/` (adapted 2026-10-13) |
+| [Uiverse switch "jolly-chicken-91"](https://uiverse.io/RiccardoRapelli/jolly-chicken-91) — the website's day/night theme switch (structure, clouds, stars and motion) | MIT (`MIT-RiccardoRapelli-ThemeSwitch.txt`) | `site/css/style.css`, `site/index.html` (adapted 2026-11-06; the colours are the site's own Quiet Ledger tokens) |
 
 ## Downloaded at runtime, not redistributed
 

@@ -3,11 +3,31 @@
 > Read this file and the latest file in `docs/handoffs/` before touching anything.
 > Update both (plus `CLAUDE.md` / `memory/` when you learn something durable) before ending a session.
 >
-> Latest: `docs/handoffs/0083-auraspend-live-on-play.md` — **AuraSpend is live on
+> Latest: `docs/handoffs/0084-theme-toggle-uiverse.md` — **the site's theme switch
+> is the Uiverse day/night pill**: the header's moon/sun icon button is replaced by
+> RiccardoRapelli's MIT-licensed switch (sun ↔ moon knob, drifting clouds, stars at
+> night), adapted to the Quiet Ledger palette — a lavender daylight sky and the warm
+> ink night — rather than copied in its blue/yellow/black. The visual follows the
+> page's resolved theme through `--toggle-*` variables, so first paint and no-JS are
+> correct; the checkbox is the real control (`role="switch"`, "Dark theme", a 44 px
+> tap target) and `site.js` now listens for `change` instead of `click`.
+> `stamp_site_chrome.py`'s footer map still named the retired `privacy.html` /
+> `terms.html` slugs and aborted; fixed, and the two legal pages are stamped with
+> the shared chrome for the first time. The header CTA hides at ≤480 px so the 60 px
+> switch and the menu keep their targets. All ten pages checked in headless Chrome
+> (light/dark, 360–1280; toggle, persistence, no console errors, no overflow); site
+> version, licence and privacy gates green. **No app code changed.**
+> Before: `docs/handoffs/0083-auraspend-live-on-play.md` — **AuraSpend is live on
 > Google Play**: the site's Play channel lost its closed-testing copy and gained a real
 > install button, the three download metas say "Google Play", and the README's closing
 > paragraph (three releases stale, still claiming 0.1.91 was in review) now links Play
 > and names no version.
+> Before: `docs/handoffs/0082-marketing-posters-canva.md` — **Reddit launch &
+> marketing posters via Canva**: Four promotional posters designed at 1080×1350
+> (4:5 portrait) and exported to `docs/marketing/reddit/` for AuraSpend's
+> production launch on Google Play (launch announcement, privacy manifesto, daily
+> UPI/kharcha automation, and 4-grid feature breakdown). Direct Canva edit links
+> and Reddit post copy in `walkthrough.md`.
 > Before: `docs/handoffs/0081-release-0.1.98.md` — **0.1.98 is cut**:
 > `versionCode` 20, tag `v0.1.98` on `9fa54f8`, run 41790973951 green, GitHub
 > release published with the AAB/APK/SHA256SUMS, and the Play closed-testing
