@@ -172,7 +172,7 @@ fun SavingsGoalsScreen(
                     }
                 }
 
-                items(goals, key = { it.id }) { goal ->
+                items(goals, key = { it.id }, contentType = { "savings_goal_card" }) { goal ->
                     GoalCard(
                         goal = goal,
                         onAddFunds = {

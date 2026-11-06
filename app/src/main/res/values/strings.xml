@@ -467,9 +467,9 @@
     <string name="classification_manual_merchant">Merchant / Payee</string>
     <string name="classification_manual_note">Note</string>
     <string name="classification_no_categories">No categories available</string>
-    <string name="classification_permission_title">SMS Permission Required</string>
-    <string name="classification_permission_message">Allow access to read bank SMS messages for auto-classification.</string>
-    <string name="classification_grant_permission">Grant Permission</string>
+    <string name="classification_permission_title">Transactional SMS Access</string>
+    <string name="classification_permission_message" formatted="false">AuraSpend reads only transactional messages from banks, cards, and UPI to automatically track expenses.\n\n• 100% on-device processing via local rules &amp; offline models\n• Zero data transmission: your messages never leave your phone\n• Personal conversations and OTPs are strictly ignored</string>
+    <string name="classification_grant_permission">I understand &amp; continue</string>
     <string name="classification_no_sms_title">No bank SMS messages found</string>
     <string name="classification_no_sms_message">New bank messages will appear here once detected.</string>
     <string name="classification_ai_progress">AI is categorizing: %1$d of %2$d</string>
@@ -691,4 +691,12 @@
     <string name="analytics_more_than_last">%1$s more</string>
     <string name="plan_spent_against">Spent against budgets</string>
     <string name="analytics_less_than_last">%1$s less</string>
+
+    <!-- Launcher Shortcuts -->
+    <string name="shortcut_quick_add_short">Quick Add</string>
+    <string name="shortcut_quick_add_long">Add an expense</string>
+    <string name="shortcut_activity_short">Activity</string>
+    <string name="shortcut_activity_long">View transaction history</string>
+    <string name="shortcut_review_sms_short">Review SMS</string>
+    <string name="shortcut_review_sms_long">Triage detected transactions</string>
 </resources>

@@ -90,7 +90,7 @@ fun HierarchicalCategoryDialog(
                     modifier = Modifier.weight(1f),
                     verticalArrangement = Arrangement.spacedBy(AuraSpacing.sm)
                 ) {
-                    items(hierarchicalCategoryMap.keys.toList()) { parentCategory ->
+                    items(hierarchicalCategoryMap.keys.toList(), key = { it }, contentType = { "parent_category" }) { parentCategory ->
                         val isExpanded = selectedParent == parentCategory
 
                         Column(

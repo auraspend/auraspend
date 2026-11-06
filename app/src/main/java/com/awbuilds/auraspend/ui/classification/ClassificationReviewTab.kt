@@ -18,6 +18,7 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Done
 import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.Sms
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -571,15 +572,46 @@ internal fun ManualEntryFields(
 @Composable
 internal fun SmsPermissionRequired(onGrant: () -> Unit) {
     Box(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = AuraSpacing.gutter),
         contentAlignment = Alignment.Center
     ) {
-        AuraEmptyState(
-            icon = Icons.Default.Lock,
-            title = stringResource(R.string.classification_permission_title),
-            message = stringResource(R.string.classification_permission_message),
-            actionLabel = stringResource(R.string.classification_grant_permission),
-            onAction = onGrant
-        )
+        AuraCard(
+            style = AuraCardStyle.Tonal,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Icon(
+                Icons.Default.Security,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(36.dp)
+            )
+            Spacer(modifier = Modifier.height(AuraSpacing.sm))
+            Text(
+                stringResource(R.string.classification_permission_title),
+                style = MaterialTheme.typography.titleLarge,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Spacer(modifier = Modifier.height(AuraSpacing.xs))
+            Text(
+                stringResource(R.string.classification_permission_message),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Spacer(modifier = Modifier.height(AuraSpacing.lg))
+            Button(
+                onClick = onGrant,
+                shape = RoundedCornerShape(12.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = 48.dp)
+            ) {
+                Text(
+                    stringResource(R.string.classification_grant_permission),
+                    style = MaterialTheme.typography.labelLarge
+                )
+            }
+        }
     }
 }

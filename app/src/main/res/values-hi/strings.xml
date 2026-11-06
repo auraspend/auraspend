@@ -452,9 +452,9 @@
     <string name="classification_manual_merchant">व्यापारी / प्राप्तकर्ता</string>
     <string name="classification_manual_note">नोट</string>
     <string name="classification_no_categories">कोई श्रेणी उपलब्ध नहीं</string>
-    <string name="classification_permission_title">SMS अनुमति आवश्यक</string>
-    <string name="classification_permission_message">स्वतः वर्गीकरण के लिए बैंक SMS संदेश पढ़ने की अनुमति दें।</string>
-    <string name="classification_grant_permission">अनुमति दें</string>
+    <string name="classification_permission_title">लेन-देन SMS एक्सेस</string>
+    <string name="classification_permission_message" formatted="false">AuraSpend खर्चों को स्वतः ट्रैक करने के लिए केवल बैंकों, कार्डों और UPI के लेन-देन संदेश पढ़ता है।\n\n• स्थानीय नियमों और ऑफ़लाइन मॉडल के माध्यम से 100% ऑन-डिवाइस प्रोसेसिंग\n• शून्य डेटा ट्रांसमिशन: आपके संदेश कभी भी आपके फ़ोन से बाहर नहीं जाते\n• व्यक्तिगत बातचीत और OTP को पूरी तरह से अनदेखा किया जाता है</string>
+    <string name="classification_grant_permission">समझ गया और जारी रखें</string>
     <string name="classification_no_sms_title">कोई बैंक SMS संदेश नहीं मिला</string>
     <string name="classification_no_sms_message">पहचाने जाने पर नए बैंक संदेश यहाँ दिखाई देंगे।</string>
     <string name="classification_ai_progress">AI वर्गीकृत कर रहा है: %1$d / %2$d</string>
@@ -684,4 +684,12 @@
     <string name="analytics_more_than_last">%1$s अधिक</string>
     <string name="plan_spent_against">बजट के मुकाबले खर्च</string>
     <string name="analytics_less_than_last">%1$s कम</string>
+
+    <!-- Launcher Shortcuts -->
+    <string name="shortcut_quick_add_short">त्वरित जोड़ें</string>
+    <string name="shortcut_quick_add_long">नया खर्च जोड़ें</string>
+    <string name="shortcut_activity_short">गतिविधि</string>
+    <string name="shortcut_activity_long">लेनदेन का इतिहास देखें</string>
+    <string name="shortcut_review_sms_short">SMS समीक्षा</string>
+    <string name="shortcut_review_sms_long">पहचाने गए लेन-देन की समीक्षा करें</string>
 </resources>

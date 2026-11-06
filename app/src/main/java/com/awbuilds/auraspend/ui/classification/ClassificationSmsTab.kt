@@ -100,7 +100,7 @@ internal fun SmsListTab(
                 ),
                 verticalArrangement = Arrangement.spacedBy(AuraSpacing.sm)
             ) {
-                items(state.smsMessages) { sms ->
+                items(state.smsMessages, key = { it.id }, contentType = { "sms_message" }) { sms ->
                     SmsItem(
                         sms = sms,
                         onClick = {
@@ -475,7 +475,7 @@ internal fun AutoDetectTab(
                         }
                     }
                 }
-                items(state.pendingSmsList, key = { it.sms.id }) { classified ->
+                items(state.pendingSmsList, key = { it.sms.id }, contentType = { "pending_sms" }) { classified ->
                     // Triage inbox: swipe right to save, left to dismiss.
                     //
                     // Everything here is awaiting a decision — saved and dismissed
@@ -751,7 +751,7 @@ private fun androidx.compose.foundation.lazy.LazyListScope.skippedItems(
             )
         }
     }
-    items(skipped, key = { "skipped_${it.sms.id}" }) { classified ->
+    items(skipped, key = { "skipped_${it.sms.id}" }, contentType = { "skipped_sms" }) { classified ->
         SkippedMessageRow(classified) {
             viewModel.handleIntent(ClassificationViewIntent.RestoreSkippedSms(classified.sms.id))
         }

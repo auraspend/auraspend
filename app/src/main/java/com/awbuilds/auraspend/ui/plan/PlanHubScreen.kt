@@ -385,7 +385,7 @@ fun PlanHubScreen(
                     contentPadding = PaddingValues(horizontal = AuraSpacing.gutter),
                     horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    items(goals, key = { it.id }) { goal ->
+                    items(goals, key = { it.id }, contentType = { "goal_card" }) { goal ->
                         GoalCard(goal = goal, onClick = onOpenGoals)
                     }
                 }

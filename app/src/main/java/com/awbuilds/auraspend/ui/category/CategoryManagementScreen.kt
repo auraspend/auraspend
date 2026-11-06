@@ -104,7 +104,7 @@ fun CategoryManagementScreen(
                     ),
                     verticalArrangement = Arrangement.spacedBy(AuraSpacing.sm)
                 ) {
-                    items(categories, key = { it.id }) { category ->
+                    items(categories, key = { it.id }, contentType = { "category_card" }) { category ->
                         CategoryCard(
                             category = category,
                             onEdit = { editCategory = category },

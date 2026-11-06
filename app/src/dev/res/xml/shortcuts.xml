@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut
+        android:shortcutId="shortcut_quick_add"
+        android:enabled="true"
+        android:icon="@drawable/ic_shortcut_add"
+        android:shortcutShortLabel="@string/shortcut_quick_add_short"
+        android:shortcutLongLabel="@string/shortcut_quick_add_long">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="com.awbuilds.auraspend.dev"
+            android:targetClass="com.awbuilds.auraspend.MainActivity">
+            <extra android:name="shortcut_action" android:value="quick_add" />
+        </intent>
+    </shortcut>
+    <shortcut
+        android:shortcutId="shortcut_activity"
+        android:enabled="true"
+        android:icon="@drawable/ic_shortcut_activity"
+        android:shortcutShortLabel="@string/shortcut_activity_short"
+        android:shortcutLongLabel="@string/shortcut_activity_long">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="com.awbuilds.auraspend.dev"
+            android:targetClass="com.awbuilds.auraspend.MainActivity">
+            <extra android:name="shortcut_action" android:value="activity" />
+        </intent>
+    </shortcut>
+    <shortcut
+        android:shortcutId="shortcut_review_sms"
+        android:enabled="true"
+        android:icon="@drawable/ic_shortcut_sms"
+        android:shortcutShortLabel="@string/shortcut_review_sms_short"
+        android:shortcutLongLabel="@string/shortcut_review_sms_long">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="com.awbuilds.auraspend.dev"
+            android:targetClass="com.awbuilds.auraspend.MainActivity">
+            <extra android:name="shortcut_action" android:value="classification" />
+        </intent>
+    </shortcut>
+</shortcuts>

@@ -231,7 +231,7 @@ fun QuickAddSheet(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(7.dp)
                 ) {
-                    items(categories, key = { it.id }) { category ->
+                    items(categories, key = { it.id }, contentType = { "category_chip" }) { category ->
                         AuraChip(
                             label = category.name,
                             selected = category.id == selectedCategoryId,

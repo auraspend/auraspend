@@ -1,6 +1,7 @@
 package com.awbuilds.auraspend
 
 import android.content.Context
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -25,9 +26,11 @@ import kotlinx.coroutines.launch
 class MainActivity : FragmentActivity() {
 
     private val locked = mutableStateOf(false)
+    private val pendingShortcut = mutableStateOf<String?>(null)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        extractShortcut(intent)
 
         enableEdgeToEdge()
 
@@ -91,10 +94,24 @@ class MainActivity : FragmentActivity() {
                         onCurrencyChanged = { code ->
                             currencyCode = code
                             writeStoredCurrencyCode(prefs, code)
-                        }
+                        },
+                        shortcutAction = pendingShortcut.value,
+                        onShortcutHandled = { pendingShortcut.value = null }
                     )
                 }
             }
+        }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        extractShortcut(intent)
+    }
+
+    private fun extractShortcut(intent: Intent?) {
+        val action = intent?.getStringExtra("shortcut_action")
+        if (action != null) {
+            pendingShortcut.value = action
         }
     }
 

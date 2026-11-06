@@ -178,7 +178,7 @@ fun RecurringScreen(
                         }
                     }
 
-                    items(subscriptions) { sub ->
+                    items(subscriptions, key = { it.id }, contentType = { "subscription_item" }) { sub ->
                         val category = categories.find { it.id == sub.categoryId }
                         val categoryColor = category?.let { Color(it.color.toLong()) }
                             ?: MaterialTheme.colorScheme.onSurfaceVariant
@@ -299,7 +299,7 @@ fun RecurringScreen(
                             )
                         }
                     }
-                    items(detected, key = { it.name.lowercase() }) { det ->
+                    items(detected, key = { it.name.lowercase() }, contentType = { "detected_subscription" }) { det ->
                         val detCategory = categories.find { it.id == det.categoryId }
                         val detColor = detCategory?.let { Color(it.color.toLong()) }
                             ?: MaterialTheme.colorScheme.onSurfaceVariant

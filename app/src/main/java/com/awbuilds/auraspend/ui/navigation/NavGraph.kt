@@ -66,6 +66,7 @@ import com.awbuilds.auraspend.ui.theme.AppThemeMode
 import com.awbuilds.auraspend.ui.transaction.NewTransactionScreen
 import com.awbuilds.auraspend.ui.transaction.QuickAddSheet
 import com.awbuilds.auraspend.ui.transaction.TransactionDetailScreen
+import com.awbuilds.auraspend.ui.transaction.TransactionDetailViewModel
 import com.awbuilds.auraspend.ui.transaction.TransactionListScreen
 import com.awbuilds.auraspend.ui.transaction.TransactionListViewModel
 import kotlinx.coroutines.Dispatchers
@@ -175,7 +176,9 @@ fun AuraSpendNavHost(
     onDynamicColorChanged: (Boolean) -> Unit = {},
     /** The picked ISO code, or null to follow the device locale. */
     currencyCode: String? = null,
-    onCurrencyChanged: (String?) -> Unit = {}
+    onCurrencyChanged: (String?) -> Unit = {},
+    shortcutAction: String? = null,
+    onShortcutHandled: () -> Unit = {}
 ) {
     val navController = rememberNavController()
     val context = LocalContext.current
@@ -194,6 +197,26 @@ fun AuraSpendNavHost(
     var showQuickAdd by remember { mutableStateOf(false) }
     var quickAddType by remember { mutableStateOf(TransactionType.EXPENSE) }
     val repositoryScope = rememberCoroutineScope()
+
+    LaunchedEffect(shortcutAction, startOnboarding) {
+        if (!startOnboarding && shortcutAction != null) {
+            when (shortcutAction) {
+                "quick_add" -> {
+                    quickAddType = TransactionType.EXPENSE
+                    showQuickAdd = true
+                    onShortcutHandled()
+                }
+                "activity" -> {
+                    navController.navigateToTab(Routes.ACTIVITY)
+                    onShortcutHandled()
+                }
+                "classification" -> {
+                    navController.navigate(Routes.CLASSIFICATION)
+                    onShortcutHandled()
+                }
+            }
+        }
+    }
 
     AuraAppChrome(
         showChrome = showChrome,
@@ -434,10 +457,19 @@ fun AuraSpendNavHost(
                 arguments = listOf(navArgument("transactionId") { type = NavType.StringType }),
             ) { entry ->
                 val transactionId = entry.arguments?.getString("transactionId") ?: return@composable
+                val app = context.applicationContext as? AuraSpendApp
+                val viewModel = viewModel<TransactionDetailViewModel>(
+                    factory = factoryOf {
+                        TransactionDetailViewModel(
+                            transactionId = transactionId,
+                            repository = repository,
+                            messageLookup = smsMessageLookup,
+                            classificationMemory = app?.classificationMemory
+                        )
+                    }
+                )
                 TransactionDetailScreen(
-                    transactionId = transactionId,
-                    repository = repository,
-                    messageLookup = smsMessageLookup,
+                    viewModel = viewModel,
                     onBack = { navController.popBackStack() },
                     onOpenTransaction = { id -> navController.navigate(Routes.transactionDetail(id)) }
                 )

@@ -178,7 +178,7 @@ fun BudgetScreen(
                     }
                 }
 
-                items(state.budgets) { budget ->
+                items(state.budgets, key = { it.id }, contentType = { "budget_card" }) { budget ->
                     val category = state.categories.find { it.id == budget.categoryId }
                     // Raw ratio, not clamped: the ring's sweep caps itself, and the row
                     // already says "Over by ₹X" — clamping here made every over-budget

@@ -359,7 +359,7 @@ fun DashboardScreen(
                         ),
                         horizontalArrangement = Arrangement.spacedBy(AuraSpacing.sm)
                     ) {
-                        items(state.budgets, key = { it.id }) { budget ->
+                        items(state.budgets, key = { it.id }, contentType = { "budget_ring" }) { budget ->
                             val category = state.categories.find { it.id == budget.categoryId }
                             AuraBudgetRingCard(
                                 name = category?.name ?: stringResource(R.string.home_unknown_category),
