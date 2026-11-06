@@ -158,9 +158,9 @@ Drive backup is optional and user-owned in every build: the backup lives in
 **your own Google Drive**, and the project operates no servers and never sees
 it.
 
-- **Installed from Google Play (closed testing)** — sign in with your Google
-  account; the Play-signed build is registered for Drive sign-in, so this works
-  out of the box.
+- **Installed from Google Play** — sign in with your Google account; the
+  Play-signed build is registered for Drive sign-in, so this works out of the
+  box.
 - **Self-built** — Google Sign-In authorizes against an OAuth client
   registered for the app's package id **and signing certificate**, so a build
   signed with your own key needs its own OAuth client in a Google Cloud
@@ -409,11 +409,10 @@ PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
 You should have received a copy of the GNU Affero General Public License along
 with this program. If not, see <https://www.gnu.org/licenses/>.
 
-AuraSpend is on Google Play **closed testing**: 0.1.91 is the current alpha
-build, sent for review, and is not in production yet. Signed APKs are published
-on [GitHub Releases](https://github.com/auraspend/auraspend/releases) — the
-latest is v0.1.91 — and you can always
-[build the app from source](#building-a-release).
+AuraSpend is on [Google Play](https://play.google.com/store/apps/details?id=com.awbuilds.auraspend).
+Signed APKs are published on
+[GitHub Releases](https://github.com/auraspend/auraspend/releases), and you can
+always [build the app from source](#building-a-release).
 The full license text is in [`LICENSE`](LICENSE) and is readable in the app
 under **Settings → About → Open-source licenses**.
 

@@ -3,7 +3,12 @@
 > Read this file and the latest file in `docs/handoffs/` before touching anything.
 > Update both (plus `CLAUDE.md` / `memory/` when you learn something durable) before ending a session.
 >
-> Latest: `docs/handoffs/0081-release-0.1.98.md` — **0.1.98 is cut**:
+> Latest: `docs/handoffs/0083-auraspend-live-on-play.md` — **AuraSpend is live on
+> Google Play**: the site's Play channel lost its closed-testing copy and gained a real
+> install button, the three download metas say "Google Play", and the README's closing
+> paragraph (three releases stale, still claiming 0.1.91 was in review) now links Play
+> and names no version.
+> Before: `docs/handoffs/0081-release-0.1.98.md` — **0.1.98 is cut**:
 > `versionCode` 20, tag `v0.1.98` on `9fa54f8`, run 41790973951 green, GitHub
 > release published with the AAB/APK/SHA256SUMS, and the Play closed-testing
 > track (`alpha`) holds it. A presentation release and a subtraction: **page
