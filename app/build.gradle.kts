@@ -36,8 +36,8 @@ android {
         // data, schema, corpus or classification change.
         // versionCode must strictly increase for every store upload; Play
         // rejects an update that reuses one.
-        versionCode = 20
-        versionName = "0.1.98"
+        versionCode = 21
+        versionName = "0.1.99"
 
         // True in dev/prod; the `fdroid` flavor flips it to false (ADR 0012).
         // Screens read it to hide the Drive entry points rather than offer

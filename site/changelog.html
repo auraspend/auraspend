@@ -89,12 +89,36 @@
                 <span class="eyebrow">Changelog</span>
                 <h1>Every release, newest first.</h1>
                 <p class="lead">The project follows <a href="https://keepachangelog.com/en/1.1.0/" target="_blank" rel="noopener">Keep a Changelog</a>. Below is the summary of each release; the canonical, unabridged record is <a href="https://github.com/auraspend/auraspend/blob/main/CHANGELOG.md" target="_blank" rel="noopener">CHANGELOG.md</a> in the repository, and the reasoning behind each one is published in the project's handoff log.</p>
-                <p class="updated">19 releases · 0.1.0 (13 May 2026) → 0.1.98 (4 November 2026)</p>
+                <p class="updated">20 releases · 0.1.0 (13 May 2026) → 0.1.99 (6 November 2026)</p>
             </div>
         </section>
 
         <section class="section section--tight" style="padding-top:0">
             <div class="container container--prose">
+
+                <article class="release" id="v0-1-99">
+                    <div class="release__meta">
+                        <div class="release__version">0.1.99</div>
+                        <div class="release__date">6 November 2026</div>
+                    </div>
+                    <div class="release__body">
+                        <p>A small feature release on 0.1.98. No database, data-model or classification change — the test corpus is bit-identical.</p>
+                        <h3>Added</h3>
+                        <ul>
+                            <li><strong>App shortcuts.</strong> Long-press the AuraSpend icon for <em>Quick Add</em>, <em>Activity</em> and <em>Review SMS</em>. Each opens the thing it names, including when the app is already running.</li>
+                            <li><strong>A written reason for the SMS permission.</strong> Before Android's prompt, the app says what it reads, what it ignores, and that parsing stays on the device — in English and Hindi.</li>
+                        </ul>
+                        <h3>Changed</h3>
+                        <ul>
+                            <li><strong>The transaction detail screen now runs on a ViewModel.</strong> State, lookups and saving moved out of the composable, with a 214-line test suite behind it. The same screen, with a testable spine.</li>
+                        </ul>
+                        <h3>Site</h3>
+                        <ul>
+                            <li><strong>A day/night switch in the header</strong>, replacing the moon/sun icon button, adapted to the site's own palette.</li>
+                            <li><strong>Two comparison pages</strong> published: expense trackers in India, and offline expense trackers for Android.</li>
+                        </ul>
+                    </div>
+                </article>
 
                 <article class="release" id="v0-1-98">
                     <div class="release__meta">

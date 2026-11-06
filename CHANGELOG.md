@@ -10,6 +10,22 @@ internal APIs.
 
 ## [Unreleased]
 
+## [0.1.99] — 2026-11-06
+
+### Added
+
+- **App shortcuts.** Long-press the AuraSpend icon for Quick Add, Activity and Review SMS. Each one opens the thing it names, including when the app is already running.
+- **A written reason for the SMS permission.** Before Android's prompt, the app now says what it reads (transactional bank, card and UPI messages), what it ignores (OTPs and personal messages) and that parsing stays on the device — in English and Hindi.
+
+### Changed
+
+- **The transaction detail screen now runs on a ViewModel.** State, lookups and saving moved out of the composable into `TransactionDetailViewModel`, with a 214-line test suite behind it. No schema or data-model change: the same screen, with a testable spine.
+
+### Site
+
+- The header's moon/sun icon button is replaced by an MIT-licensed day/night switch, adapted to the site's palette.
+- Two comparison pages are published: expense trackers in India, and offline expense trackers for Android.
+
 ## [0.1.98] — 2026-11-04
 
 A presentation release, and a subtraction rather than an addition. **No schema,

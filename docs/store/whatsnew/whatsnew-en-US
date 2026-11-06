@@ -1,4 +1,5 @@
-What's new in 0.1.98
+What's new in 0.1.99
 
-• Page changes are now instant: screens no longer slide or fade. Moving between them is immediate, and the app draws less on the way, which helps on older phones.
-• Nothing else changed — no database, data or classification change in this release.
+• Long-press the AuraSpend icon for Quick Add, Activity and Review SMS.
+• A clearer SMS permission screen: what is read, what is ignored, and that it never leaves your phone.
+• Transaction details now run on a tested ViewModel, so they open more reliably. Your data is unchanged.
