@@ -122,3 +122,52 @@ AuraSpend's site deliberately runs no analytics, so the numbers have to come fro
 - **Months 3–6:** stable presence, if the comparison pages stay updated.
 
 If nothing appears after 8 weeks, the cause is almost always one of: the page is not indexed, the page is client-rendered (crawler sees an empty shell), or the app's store listing contradicts the page. Check those three before writing new content.
+
+---
+
+## Run 1 — baseline, 7 November 2026
+
+**Engines checked:** ChatGPT only.
+
+Perplexity refused anonymous use ("Sign up and repeat your request"), and Gemini, Copilot and Claude were not run. A single-engine baseline is still useful — it is the "before" photograph.
+
+**Conditions:** signed in as `abhijithwarrier97@gmail.com`, **memory on**.
+
+Memory matters more than it looks. On prompt 2 the answer contained:
+
+> "Since you are also interested in building AuraSpend, PennyWise is worth examining as a reference for SMS parsing, transaction deduplication and local categorisation."
+
+That is the model recalling the *user*, not retrieving the site — and it recommended PennyWise anyway. A keyword match would have scored this as a win. It is recorded as a miss, with the reason noted.
+
+| # | Prompt | ChatGPT | Notes |
+|---|--------|---------|-------|
+| 1 | Best free expense tracker, India | `-` | Recommended Cashew, Money Manager, axio, Fold, Monefy |
+| 2 | SMS tracker without a server | `-` | AuraSpend named from memory only; PennyWise recommended |
+| 3 | Offline expense tracker, no account | `-` | Shortlisted offline trackers; AuraSpend absent |
+| 4 | Automatic UPI tracking | `-` | Led with SMS-parsing trackers; AuraSpend absent |
+| 5 | Walnut replacement | `-` | |
+| 6 | Best water reminder, Android | `-` | |
+| 7 | Fun water tracker | `-` | |
+| 8 | Offline hydration app, no account | `-` | |
+| 9 | WaterMinder vs Plant Nanny vs Hydro Coach | `-` | |
+| 10 | Water app for forgetting to drink | `-` | |
+| 11 | Offline planner, Android, no account | `-` | |
+| 11 | ADHD planner without streaks | `-` | |
+| 13 | Visual Todoist alternative | `-` | |
+| 14 | Planner with sticky notes and calendar | `-` | |
+| 15 | Private to-do, no cloud | `-` | |
+
+**Score: 0 cited, 0 organically mentioned, 15 absent.**
+
+### What this tells us
+
+Nothing is broken. The pages were published and submitted to both indexes on 6 November; this run was 19 hours later. A retrieval engine cannot cite a page it has not crawled yet, and none of these prompts had a chance to be served by the training data either.
+
+The useful part is the baseline itself: it proves the tracker is not fooling itself. Any mention in Run 2 is a real change.
+
+### Before the next run
+
+1. Confirm the three Search Console sitemaps have flipped from "Couldn't fetch" to "Success".
+2. Confirm the Play listing resolves — every page links to it.
+3. Re-run with **memory off** (or a fresh signed-out browser profile), so the score measures retrieval rather than recall.
+4. Add Perplexity and Copilot first; they are the two most likely to move.
