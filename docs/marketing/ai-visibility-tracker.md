@@ -152,7 +152,7 @@ That is the model recalling the *user*, not retrieving the site — and it recom
 | 9 | WaterMinder vs Plant Nanny vs Hydro Coach | `-` | |
 | 10 | Water app for forgetting to drink | `-` | |
 | 11 | Offline planner, Android, no account | `-` | |
-| 11 | ADHD planner without streaks | `-` | |
+| 12 | ADHD planner without streaks | `-` | |
 | 13 | Visual Todoist alternative | `-` | |
 | 14 | Planner with sticky notes and calendar | `-` | |
 | 15 | Private to-do, no cloud | `-` | |
