@@ -3,7 +3,16 @@
 > Read this file and the latest file in `docs/handoffs/` before touching anything.
 > Update both (plus `CLAUDE.md` / `memory/` when you learn something durable) before ending a session.
 >
-> Latest: `docs/handoffs/0084-theme-toggle-uiverse.md` — **the site's theme switch
+> Latest: `docs/handoffs/0085-play-store-listing-aso-update.md` — **Play Store listing
+> ASO update & publisher tooling**: Title (30/30: `AuraSpend: SMS Expense Tracker`),
+> Short Description (80/80: `Automatic SMS expense tracker, budget planner & money manager. Private, offline.`),
+> and Full Description (3,852/4,000 chars) updated in `fastlane/metadata/android/en-US/`
+> and `docs/store/play-listing-en-US.md`. Note on GPP: Triple-T Gradle Play Publisher
+> plugin is incompatible with AGP 9.3.1 (`BaseAppModuleExtension` removed in AGP 9),
+> so publishing is handled via the Google Play Developer API (`androidpublisher` v3)
+> via `tools/update_play_listing.py` dispatched securely through `.github/workflows/play-listing.yml`
+> with the release service-account secret. All gates green.
+> Before: `docs/handoffs/0084-theme-toggle-uiverse.md` — **the site's theme switch
 > is the Uiverse day/night pill**: the header's moon/sun icon button is replaced by
 > RiccardoRapelli's MIT-licensed switch (sun ↔ moon knob, drifting clouds, stars at
 > night), adapted to the Quiet Ledger palette — a lavender daylight sky and the warm

@@ -1,15 +1,52 @@
-Turn your bank's SMS into organised spending — entirely on your phone.
+Turn your bank SMS into an effortless, private money manager.
 
-AuraSpend reads your bank and payment messages locally and turns them into
-transactions, budgets, subscriptions and category insights. No accounts, no
-servers, no analytics, no ads: your messages never leave the device.
+AuraSpend is an automatic SMS expense tracker, budget planner, and daily money manager built for India. It reads your transactional bank SMS directly on your phone, converting them into organised expenses, monthly budgets, and spending insights — 100% offline, with no account registration and no bank logins required.
 
-• Automatic categorisation: 50+ per-bank parsers, refined by an optional
-  on-device encoder (~22 MB MiniLM, downloaded only after an explicit consent
-  tap; SHA-256 verified). The app works without it.
-• Budgets, recurring-subscription detection, savings goals, CSV export and
-  import.
-• English and Hindi, Material 3 with light, dark and AMOLED themes.
+Tired of typing every ₹20 chai or UPI payment? AuraSpend automates expense tracking so you always know where your money goes.
 
-This build ships without Google Play Services: Google Drive backup is not
-available here. CSV export/import moves your data in and out.
+KEY FEATURES
+
+1. AUTOMATIC SMS EXPENSE TRACKER
+• Instant Expense Logging: Automatically turns bank SMS alerts into organised, categorised expenses.
+• Multi-Account & Card Tracker: Tracks credit card spends, debit card purchases, ATM cash withdrawals, net banking, refunds, and bank transfers.
+• UPI Payment Tracker: Automatically logs UPI payments made via Google Pay, PhonePe, Paytm, CRED, and BHIM.
+• 50+ Indian Financial Institutions: Supports major banks including HDFC Bank, SBI, ICICI Bank, Axis Bank, Kotak Mahindra, PNB, and Bank of Baroda.
+• Smart Merchant Detection: Accurately identifies merchant names, UPI IDs, and transaction types.
+
+2. SMART BUDGET PLANNER & BUDGET APP
+• Monthly Budget Planner: Set monthly budgets for overall spending or specific expense categories.
+• Visual Budget Rings: Monitor budget health and category limits at a single glance before you spend.
+• Prevent Overspending: Know exactly how much safe-to-spend money you have left each month.
+
+3. SUBSCRIPTION MANAGER & BILL TRACKER
+• Recurring Subscriptions: Automatically detects repeat payments like Netflix, Spotify, YouTube, gym, and cloud storage.
+• Bill Management: Track repeat household bills, rent, electricity, Wi-Fi, insurance premiums, and SIP investments in one unified Plan hub.
+
+4. DAILY EXPENSE MANAGER & SPENDING TRACKER
+• Daily Expense Tracking: Clean visual timeline of your daily income and expense transactions.
+• Spending Analytics & Reports: Clear category breakdowns, 7-day cash flow charts, and month-over-month spending trends.
+• Quick Cash Logging: Easily record cash expenses in seconds with smart category and merchant suggestions.
+• Powerful Search & Filters: Filter past transactions by merchant, category, account, card, or date range.
+
+5. PRIVATE, OFFLINE & SECURE BY DESIGN
+• 100% On-Device Processing: Your bank SMS messages are parsed and analysed entirely on your phone.
+• No Bank Login Required: AuraSpend never asks for net banking credentials, bank account numbers, or OTPs.
+• Strictly Read-Only SMS: Reads only transactional bank messages. Never reads personal chats, never sends SMS, and never touches OTPs.
+• Data Ownership: Your financial data stays on your phone unless you choose to back it up to your personal Google Drive.
+• Encrypted & Protected: Encrypted local database with PIN and biometric app lock support.
+• Ad-Free Money Manager: No ads, no analytics trackers, and no third-party data broker SDKs.
+• Open Source: Fully open source under AGPL-3.0 for verified transparency.
+
+6. BUILT FOR INDIA
+• Indian Number Formatting: Native Lakh and Crore (₹) formats with INR and 30+ currencies.
+• Bilingual: Available in English and Hindi (हिन्दी).
+• Clean Design: Distraction-free design with Light, Dark, and AMOLED themes.
+• Complete Data Portability: Export your complete transaction history to CSV anytime.
+
+WHO IS THIS EXPENSE TRACKER FOR?
+• Salaried professionals managing monthly salary, credit card bills, and household expenses.
+• Students and young professionals building healthy budgeting habits without spreadsheets.
+• Families tracking daily household hisab-kitab, groceries, school fees, and rent.
+• Anyone looking for a private, ad-free money manager and spending tracker.
+
+Take control of your personal finances today. Download AuraSpend and experience automatic, private SMS expense tracking!
