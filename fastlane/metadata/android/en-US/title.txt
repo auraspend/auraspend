@@ -1,1 +1,1 @@
-AuraSpend
+AuraSpend: SMS Expense Tracker

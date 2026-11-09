@@ -1,0 +1,25 @@
+name: Update Play Store Listing
+
+# Dispatch-only workflow to update the Play Store listing (title, short description, full description)
+# using the PLAY_SERVICE_ACCOUNT_JSON secret in the release environment.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  update-listing:
+    runs-on: ubuntu-latest
+    environment: release
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install Google auth
+        run: pip install --quiet google-auth
+      - name: Update Play Store Listing
+        env:
+          PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+        run: python tools/update_play_listing.py

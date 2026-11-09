@@ -1,1 +1,1 @@
-Offline money manager that reads your bank SMS on-device
+Automatic SMS expense tracker, budget planner & money manager. Private, offline.
